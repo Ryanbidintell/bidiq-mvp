@@ -1476,7 +1476,12 @@
   "has_contract_language": true or false if contract terms are present
 }
 
-If a field is not found, use null. For project_name, look for titles, headers, "Project:", "Re:", subject lines, or prominent text that names the project.
+CRITICAL - Location Extraction:
+- For project_address: Look for "Project Location:", "Site Address:", "Project Site:", "Location:", or any street address near the project name
+- For project_city and project_state: ALWAYS extract these even if full address isn't found. Look in headers, footers, near "Location:", in the project title, or anywhere a city/state appears in context of the project
+- Construction bid documents often have location in: title page, project details section, scope of work header, or site information
+- Even if you only see "Springfield Office Building" or "Kansas City Hospital Addition", extract the city from the project name
+- If a field is not found, use null. For project_name, look for titles, headers, "Project:", "Re:", subject lines, or prominent text that names the project.
 
 Here is the bid document text:
 
