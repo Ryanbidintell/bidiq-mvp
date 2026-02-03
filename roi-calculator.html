@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BidIQ ROI Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #111113;
+            --bg-card: #18181b;
+            --bg-hover: #27272a;
+            --bg-input: #18181b;
+            --border: #27272a;
+            --border-light: #3f3f46;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-dim: rgba(59, 130, 246, 0.15);
+            --success: #22c55e;
+            --success-bg: rgba(34, 197, 94, 0.15);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.15);
+            --radius: 8px;
+            --radius-lg: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .calculator-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .calculator-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .calculator-header h2 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .calculator-header h2 span {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .calculator-header p {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        @media (max-width: 768px) {
+            .calculator-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .calculator-inputs {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+        }
+
+        .calculator-inputs h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .input-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .input-label span {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .input-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent);
+            background: var(--accent-dim);
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .input-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--bg-secondary);
+            appearance: none;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .input-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: 3px solid var(--bg-card);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+
+        .input-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .input-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .preset-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .preset-btn.active {
+            background: var(--accent-dim);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .calculator-results {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .results-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+        }
+
+        .results-card.highlight {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+            border-color: var(--success);
+        }
+
+        .results-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .results-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .results-row:last-child {
+            border-bottom: none;
+        }
+
+        .results-row .label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .results-row .value {
+            font-family: 'Space Mono', monospace;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .results-row .value.positive {
+            color: var(--success);
+        }
+
+        .results-row .value.negative {
+            color: var(--text-muted);
+        }
+
+        .big-number {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .big-number .value {
+            font-family: 'Space Mono', monospace;
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--success);
+            line-height: 1;
+        }
+
+        .big-number .label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .roi-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--success-bg);
+            color: var(--success);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        .comparison-bar {
+            margin-top: 16px;
+        }
+
+        .comparison-bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .comparison-bar-track {
+            height: 24px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .comparison-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success) 0%, #22d3ee 100%);
+            border-radius: 12px;
+            transition: width 0.5s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+        }
+
+        .comparison-bar-fill span {
+            font-size: 11px;
+            font-weight: 600;
+            color: #000;
+        }
+
+        .cta-section {
+            text-align: center;
+            margin-top: 32px;
+            padding: 32px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+        }
+
+        .cta-section h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .cta-section p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .fine-print {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 16px;
+        }
+
+        /* Animation for results */
+        .animate-in {
+            animation: fadeSlideIn 0.3s ease-out;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <div class="calculator-header">
+            <h2>Calculate Your <span>ROI</span></h2>
+            <p>See how much time and money BidIQ can save your estimating team</p>
+        </div>
+
+        <div class="calculator-grid">
+            <!-- Inputs -->
+            <div class="calculator-inputs">
+                <h3>📊 Your Current Situation</h3>
+
+                <div class="input-group">
+                    <div class="input-label">
+                        <span>Time to review a bid (minutes)</span>
+                        <span class="input-value" id="timeValue">45 min</span>
+                    </div>
+                    <input type="range" class="input-slider" id="timeSlider" min="15" max="120" value="45" oninput="updateCalculations()">
+                    <div class="input-hint">How long does it take to review documents and decide GO/NO-GO?</div>
+                    <div class="preset-buttons">
+                        <button class="preset-btn" onclick="setPreset('time', 20)">Quick (20m)</button>
+                        <button class="preset-btn active" onclick="setPreset('time', 45)">Typical (45m)</button>
+                        <button class="preset-btn" onclick="setPreset('time', 90)">Complex (90m)</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <div class="input-label">
+                        <span>Bids reviewed per month</span>
+                        <span class="input-value" id="bidsValue">15 bids</span>
+                    </div>
+                    <input type="range" class="input-slider" id="bidsSlider" min="5" max="60" value="15" oninput="updateCalculations()">
+                    <div class="input-hint">How many bid opportunities do you evaluate monthly?</div>
+                    <div class="preset-buttons">
+                        <button class="preset-btn" onclick="setPreset('bids', 8)">Light (8)</button>
+                        <button class="preset-btn active" onclick="setPreset('bids', 15)">Moderate (15)</button>
+                        <button class="preset-btn" onclick="setPreset('bids', 30)">Heavy (30)</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <div class="input-label">
+                        <span>Estimator hourly cost</span>
+                        <span class="input-value" id="rateValue">$65/hr</span>
+                    </div>
+                    <input type="range" class="input-slider" id="rateSlider" min="35" max="150" value="65" step="5" oninput="updateCalculations()">
+                    <div class="input-hint">Fully loaded cost (salary + benefits + overhead)</div>
+                    <div class="preset-buttons">
+                        <button class="preset-btn" onclick="setPreset('rate', 45)">Jr ($45)</button>
+                        <button class="preset-btn active" onclick="setPreset('rate', 65)">Mid ($65)</button>
+                        <button class="preset-btn" onclick="setPreset('rate', 95)">Sr ($95)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="calculator-results">
+                <div class="results-card">
+                    <h3>⏱️ Time Savings</h3>
+                    <div class="results-row">
+                        <span class="label">Current time spent (monthly)</span>
+                        <span class="value" id="currentTimeMonthly">11.3 hrs</span>
+                    </div>
+                    <div class="results-row">
+                        <span class="label">With BidIQ (80% faster)</span>
+                        <span class="value positive" id="bidiqTime">2.3 hrs</span>
+                    </div>
+                    <div class="results-row">
+                        <span class="label">Hours saved per month</span>
+                        <span class="value positive" id="hoursSavedMonthly">9.0 hrs</span>
+                    </div>
+                    <div class="results-row">
+                        <span class="label">Hours saved per year</span>
+                        <span class="value positive" id="hoursSavedYearly">108 hrs</span>
+                    </div>
+                </div>
+
+                <div class="results-card">
+                    <h3>💰 Cost Savings</h3>
+                    <div class="results-row">
+                        <span class="label">Current cost (monthly)</span>
+                        <span class="value" id="currentCostMonthly">$731</span>
+                    </div>
+                    <div class="results-row">
+                        <span class="label">Monthly savings</span>
+                        <span class="value positive" id="savingsMonthly">$585</span>
+                    </div>
+                    <div class="results-row">
+                        <span class="label">Annual savings</span>
+                        <span class="value positive" id="savingsYearly">$7,020</span>
+                    </div>
+                </div>
+
+                <div class="results-card highlight">
+                    <h3>📈 Return on Investment</h3>
+                    <div class="big-number">
+                        <div class="value" id="roiValue">5.9x</div>
+                        <div class="label">return on your BidIQ subscription</div>
+                    </div>
+                    <div class="comparison-bar">
+                        <div class="comparison-bar-label">
+                            <span>BidIQ Cost: <strong id="subscriptionCost">$99</strong>/mo</span>
+                            <span>You Save: <strong id="netSavings">$486</strong>/mo</span>
+                        </div>
+                        <div class="comparison-bar-track">
+                            <div class="comparison-bar-fill" id="savingsBar" style="width: 85%;">
+                                <span id="savingsPercent">83% savings</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div class="roi-badge" id="roiBadge">
+                            ✓ Pays for itself in <span id="paybackDays">5</span> days
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <h3>Ready to save <span id="ctaHours">108</span> hours this year?</h3>
+            <p>Join the beta and start making smarter bid decisions today.</p>
+            <a href="#apply" class="btn btn-primary" onclick="showPage('apply')">
+                Apply for Beta Access →
+            </a>
+            <p class="fine-print">
+                * Assumes 80% reduction in decision time based on beta user feedback. 
+                Actual results may vary. BidIQ subscription is $99/month after beta period.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const BIDIQ_MONTHLY_COST = 99;
+        const TIME_REDUCTION_PERCENT = 0.80; // 80% faster with BidIQ
+
+        function updateCalculations() {
+            // Get input values
+            const timeMinutes = parseInt(document.getElementById('timeSlider').value);
+            const bidsPerMonth = parseInt(document.getElementById('bidsSlider').value);
+            const hourlyRate = parseInt(document.getElementById('rateSlider').value);
+
+            // Update displayed values
+            document.getElementById('timeValue').textContent = `${timeMinutes} min`;
+            document.getElementById('bidsValue').textContent = `${bidsPerMonth} bids`;
+            document.getElementById('rateValue').textContent = `$${hourlyRate}/hr`;
+
+            // Calculate current situation
+            const currentHoursMonthly = (timeMinutes * bidsPerMonth) / 60;
+            const currentCostMonthly = currentHoursMonthly * hourlyRate;
+
+            // Calculate with BidIQ (80% time savings)
+            const bidiqHoursMonthly = currentHoursMonthly * (1 - TIME_REDUCTION_PERCENT);
+            const bidiqCostMonthly = bidiqHoursMonthly * hourlyRate;
+
+            // Calculate savings
+            const hoursSavedMonthly = currentHoursMonthly - bidiqHoursMonthly;
+            const hoursSavedYearly = hoursSavedMonthly * 12;
+            const savingsMonthly = currentCostMonthly - bidiqCostMonthly;
+            const savingsYearly = savingsMonthly * 12;
+
+            // Calculate ROI
+            const netSavingsMonthly = savingsMonthly - BIDIQ_MONTHLY_COST;
+            const roi = savingsMonthly / BIDIQ_MONTHLY_COST;
+            const savingsPercent = ((savingsMonthly - BIDIQ_MONTHLY_COST) / savingsMonthly) * 100;
+            const paybackDays = Math.ceil((BIDIQ_MONTHLY_COST / savingsMonthly) * 30);
+
+            // Update time savings display
+            document.getElementById('currentTimeMonthly').textContent = `${currentHoursMonthly.toFixed(1)} hrs`;
+            document.getElementById('bidiqTime').textContent = `${bidiqHoursMonthly.toFixed(1)} hrs`;
+            document.getElementById('hoursSavedMonthly').textContent = `${hoursSavedMonthly.toFixed(1)} hrs`;
+            document.getElementById('hoursSavedYearly').textContent = `${Math.round(hoursSavedYearly)} hrs`;
+
+            // Update cost savings display
+            document.getElementById('currentCostMonthly').textContent = `$${Math.round(currentCostMonthly).toLocaleString()}`;
+            document.getElementById('savingsMonthly').textContent = `$${Math.round(savingsMonthly).toLocaleString()}`;
+            document.getElementById('savingsYearly').textContent = `$${Math.round(savingsYearly).toLocaleString()}`;
+
+            // Update ROI display
+            document.getElementById('roiValue').textContent = `${roi.toFixed(1)}x`;
+            document.getElementById('subscriptionCost').textContent = `$${BIDIQ_MONTHLY_COST}`;
+            document.getElementById('netSavings').textContent = `$${Math.round(netSavingsMonthly).toLocaleString()}`;
+            
+            // Update savings bar
+            const barWidth = Math.min(Math.max(savingsPercent, 10), 95);
+            document.getElementById('savingsBar').style.width = `${barWidth}%`;
+            document.getElementById('savingsPercent').textContent = `${Math.round(savingsPercent)}% net savings`;
+
+            // Update payback badge
+            document.getElementById('paybackDays').textContent = paybackDays;
+
+            // Update CTA
+            document.getElementById('ctaHours').textContent = Math.round(hoursSavedYearly);
+
+            // Handle edge case where savings don't cover subscription
+            if (netSavingsMonthly <= 0) {
+                document.getElementById('roiBadge').innerHTML = '⚠️ Consider reviewing more bids to maximize value';
+                document.getElementById('roiBadge').style.background = 'rgba(245, 158, 11, 0.15)';
+                document.getElementById('roiBadge').style.color = '#f59e0b';
+            } else {
+                document.getElementById('roiBadge').innerHTML = `✓ Pays for itself in <span id="paybackDays">${paybackDays}</span> days`;
+                document.getElementById('roiBadge').style.background = 'rgba(34, 197, 94, 0.15)';
+                document.getElementById('roiBadge').style.color = '#22c55e';
+            }
+
+            // Update preset button states
+            updatePresetButtons();
+        }
+
+        function setPreset(type, value) {
+            if (type === 'time') {
+                document.getElementById('timeSlider').value = value;
+            } else if (type === 'bids') {
+                document.getElementById('bidsSlider').value = value;
+            } else if (type === 'rate') {
+                document.getElementById('rateSlider').value = value;
+            }
+            updateCalculations();
+        }
+
+        function updatePresetButtons() {
+            const time = parseInt(document.getElementById('timeSlider').value);
+            const bids = parseInt(document.getElementById('bidsSlider').value);
+            const rate = parseInt(document.getElementById('rateSlider').value);
+
+            // Clear all active states
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+
+            // Set active based on current values (with some tolerance)
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                const onclick = btn.getAttribute('onclick');
+                if (onclick.includes("'time'")) {
+                    const presetValue = parseInt(onclick.match(/\d+/g)[0]);
+                    if (Math.abs(time - presetValue) < 10) btn.classList.add('active');
+                } else if (onclick.includes("'bids'")) {
+                    const presetValue = parseInt(onclick.match(/\d+/g)[0]);
+                    if (Math.abs(bids - presetValue) < 5) btn.classList.add('active');
+                } else if (onclick.includes("'rate'")) {
+                    const presetValue = parseInt(onclick.match(/\d+/g)[0]);
+                    if (Math.abs(rate - presetValue) < 15) btn.classList.add('active');
+                }
+            });
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', updateCalculations);
+    </script>
+</body>
+</html>
