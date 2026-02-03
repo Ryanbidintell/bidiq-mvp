@@ -8,10 +8,19 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================
+-- DROP EXISTING TABLES (if any)
+-- ============================================
+DROP TABLE IF EXISTS projects CASCADE;
+DROP TABLE IF EXISTS general_contractors CASCADE;
+DROP TABLE IF EXISTS user_keywords CASCADE;
+DROP TABLE IF EXISTS user_settings CASCADE;
+DROP TABLE IF EXISTS beta_applications CASCADE;
+
+-- ============================================
 -- 1. BETA APPLICATIONS TABLE
 -- Stores beta application submissions
 -- ============================================
-CREATE TABLE IF NOT EXISTS beta_applications (
+CREATE TABLE beta_applications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     contact_name TEXT NOT NULL,
     company_name TEXT NOT NULL,
@@ -37,7 +46,7 @@ CREATE INDEX IF NOT EXISTS idx_beta_applications_status ON beta_applications(sta
 -- 2. USER SETTINGS TABLE
 -- Stores user preferences and scoring weights
 -- ============================================
-CREATE TABLE IF NOT EXISTS user_settings (
+CREATE TABLE user_settings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     city TEXT,
@@ -65,7 +74,7 @@ CREATE INDEX IF NOT EXISTS idx_user_settings_user_id ON user_settings(user_id);
 -- 3. USER KEYWORDS TABLE
 -- Stores good/bad keywords for each user
 -- ============================================
-CREATE TABLE IF NOT EXISTS user_keywords (
+CREATE TABLE user_keywords (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     good_keywords TEXT[] DEFAULT ARRAY[]::TEXT[],
@@ -81,7 +90,7 @@ CREATE INDEX IF NOT EXISTS idx_user_keywords_user_id ON user_keywords(user_id);
 -- 4. GENERAL CONTRACTORS TABLE
 -- Stores GC database with risk tags
 -- ============================================
-CREATE TABLE IF NOT EXISTS general_contractors (
+CREATE TABLE general_contractors (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -106,7 +115,7 @@ COMMENT ON COLUMN general_contractors.risk_tags IS 'User-defined risk tags: slow
 -- 5. PROJECTS TABLE
 -- Stores analyzed bids and outcomes
 -- ============================================
-CREATE TABLE IF NOT EXISTS projects (
+CREATE TABLE projects (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     
