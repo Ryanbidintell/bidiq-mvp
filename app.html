@@ -6,6 +6,8 @@
     <title>BidIntell - Decision Intelligence for Construction Bidding</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="lib/contractRiskDetection.js"></script>
+    <script src="lib/buildingTypeExtraction.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -1295,7 +1297,11 @@
                     bad_found: project.badFound || [],
                     trades_found: project.tradesFound || [],
                     user_agreement: project.userFeedback?.agreement || 'agree',
-                    user_agreement_note: project.userFeedback?.note || null
+                    user_agreement_note: project.userFeedback?.note || null,
+                    // Layer 0 Intelligence Data
+                    market_metro_area: project.marketMetroArea || null,
+                    building_type: project.buildingType?.type || null,
+                    contract_risks: project.contractRisks || null
                 }).select().single();
                 
                 if (error) throw error;
@@ -1659,14 +1665,29 @@ ${truncatedText}`;
                 // Use Claude API for smart extraction
                 const extracted = await extractWithClaude(fullText);
 
+                updateProgress(55, 'Detecting contract risks...');
+
+                // Layer 0: AI Contract Risk Detection
+                const contractRisks = await detectContractRisks(fullText, CLAUDE_API_KEY);
+
+                updateProgress(58, 'Identifying building type...');
+
+                // Layer 0: Building Type Extraction
+                const buildingType = await extractBuildingType(
+                    extracted.project_name || 'Unknown Project',
+                    extracted.scope_summary || '',
+                    fullText,
+                    CLAUDE_API_KEY
+                );
+
                 updateProgress(60, 'Searching for keywords...');
-                
+
                 const settings = await getSettings();
                 const keywords = await getKeywords();
                 const goodFound = searchKeywords(allPages, keywords.good);
                 const badFound = searchKeywords(allPages, keywords.bad);
 
-                updateProgress(70, 'Checking trade divisions...');
+                updateProgress(72, 'Checking trade divisions...');
                 
                 // Search trades
                 const tradesFound = [];
@@ -1680,9 +1701,14 @@ ${truncatedText}`;
                     }
                 }
 
-                updateProgress(80, 'Calculating location distance...');
-                
-                const scores = await calculateScores(extracted, settings, goodFound, badFound, tradesFound);
+                updateProgress(85, 'Calculating BidIntell score...');
+
+                // Layer 0: Derive market metro area from project location
+                const marketMetroArea = extracted.project_city && extracted.project_state
+                    ? `${extracted.project_city} Metro, ${extracted.project_state}`
+                    : null;
+
+                const scores = await calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks);
 
                 updateProgress(95, 'Generating report...');
 
@@ -1692,6 +1718,10 @@ ${truncatedText}`;
                     gcs: [...selectedGCs],
                     files: uploadedFiles.map(f => f.name),
                     goodFound, badFound, tradesFound,
+                    // Layer 0 Intelligence Data
+                    contractRisks,
+                    buildingType,
+                    marketMetroArea,
                     createdAt: new Date().toISOString()
                 };
 
@@ -1838,7 +1868,7 @@ ${truncatedText}`;
             return match ? match[1].trim() : null;
         }
 
-        async function calculateScores(extracted, settings, goodFound, badFound, tradesFound) {
+        async function calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks = null) {
             const components = {};
             let weights = { ...settings.weights };
 
@@ -1871,7 +1901,7 @@ ${truncatedText}`;
             } else if (!settings.locationMatters) { components.location.reason = 'Location scoring disabled'; components.location.score = 0; }
             else { components.location.reason = 'Set your office location in Settings'; }
 
-            // Keywords
+            // Keywords & Contract Risk
             let kwScore = 50;
             const kwDetails = [];
             for (const item of goodFound) { kwScore += 8; kwDetails.push({ keyword: item.keyword, type: 'good', effect: '+8', pages: item.pages }); }
@@ -1879,8 +1909,17 @@ ${truncatedText}`;
             if (extracted.has_contract_language) {
                 for (const item of badFound) { kwScore -= penalty; kwDetails.push({ keyword: item.keyword, type: 'bad', effect: `-${penalty}`, pages: item.pages }); }
             }
+
+            // Apply AI Contract Risk Detection penalty
+            let aiRiskPenalty = 0;
+            if (contractRisks && contractRisks.hasContractLanguage && contractRisks.risksDetected && contractRisks.risksDetected.length > 0) {
+                aiRiskPenalty = calculateContractRiskPenalty(contractRisks, settings.riskTolerance);
+                kwScore -= aiRiskPenalty;
+            }
+
             kwScore = Math.max(0, Math.min(100, kwScore));
-            components.keywords = { score: kwScore, weight: weights.keywords, reason: `Found ${goodFound.length} good terms, ${badFound.length} risk terms${!extracted.has_contract_language ? ' (no contract language detected)' : ''}`, details: kwDetails, hasContract: extracted.has_contract_language };
+            const kwReason = `Found ${goodFound.length} good terms, ${badFound.length} risk terms${!extracted.has_contract_language ? ' (no contract language detected)' : ''}${aiRiskPenalty > 0 ? ` | AI detected ${contractRisks.risksDetected.length} contract risks (-${aiRiskPenalty})` : ''}`;
+            components.keywords = { score: kwScore, weight: weights.keywords, reason: kwReason, details: kwDetails, hasContract: extracted.has_contract_language, aiRisks: contractRisks || null };
 
             // GC
             let gcScore = 50;
@@ -1957,6 +1996,24 @@ ${truncatedText}`;
                 locationStr = [analysis.extracted.project_city, analysis.extracted.project_state].filter(Boolean).join(', ');
             }
 
+            // Display building type
+            let buildingTypeHtml = '';
+            if (analysis.buildingType && analysis.buildingType.type) {
+                buildingTypeHtml = `
+                    <div style="margin-top:12px;">
+                        ${formatBuildingTypeForDisplay(analysis.buildingType)}
+                    </div>`;
+            }
+
+            // Display AI Contract Risks
+            let contractRisksHtml = '';
+            if (analysis.contractRisks && analysis.contractRisks.hasContractLanguage) {
+                const risksDisplay = formatContractRisksForDisplay(analysis.contractRisks);
+                if (risksDisplay.hasRisks) {
+                    contractRisksHtml = risksDisplay.html;
+                }
+            }
+
             // Generate GC risk warnings
             let gcRiskHtml = '';
             const gcRisks = [];
@@ -1988,9 +2045,11 @@ ${truncatedText}`;
                         <div class="score-report-rec">${analysis.scores.recommendation} — ${recText}</div>
                         <p style="color:var(--text-primary);margin-top:12px;font-size:16px;font-weight:600;">${projectName}</p>
                         ${locationStr ? `<p style="color:var(--text-muted);font-size:13px;">${locationStr}</p>` : ''}
+                        ${buildingTypeHtml}
                         ${capMsg}
                         ${similarBidHtml}
                         ${volumeHtml}
+                        ${contractRisksHtml}
                         ${gcRiskHtml}
                     </div>
                     ${renderComponent('📍', 'Location Fit', analysis.scores.components.location)}
