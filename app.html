@@ -1075,6 +1075,15 @@
             sampleBidUploaded: false
         };
 
+        // Helper function to get ISO week number
+        function getWeekNumber(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
         // CSI Divisions - SORTED NUMERICALLY
         const CSI_DIVISIONS = [
             ['01', 'General Requirements'],
@@ -1358,6 +1367,7 @@
             dataCache.projects = null; // Invalidate cache
             
             try {
+                const now = new Date();
                 const { data, error } = await supabaseClient.from('projects').insert({
                     user_id: currentUser.id,
                     extracted_data: project.extracted,
@@ -1374,7 +1384,11 @@
                     // Layer 0 Intelligence Data
                     market_metro_area: project.marketMetroArea || null,
                     building_type: project.buildingType?.type || null,
-                    contract_risks: project.contractRisks || null
+                    contract_risks: project.contractRisks || null,
+                    // Time-series data for fast aggregation
+                    created_year: now.getFullYear(),
+                    created_month: now.getMonth() + 1,
+                    created_week: getWeekNumber(now)
                 }).select().single();
                 
                 if (error) throw error;

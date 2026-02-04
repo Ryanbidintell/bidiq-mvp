@@ -36,10 +36,18 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS margin_band VARCHAR(20) CHECK (mar
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS time_to_outcome_days INTEGER;
 
 -- Add time-series helper columns for fast querying
--- Cast to date first to make the expression immutable
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_year INTEGER GENERATED ALWAYS AS (EXTRACT(YEAR FROM created_at::date)) STORED;
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_month INTEGER GENERATED ALWAYS AS (EXTRACT(MONTH FROM created_at::date)) STORED;
-ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_week INTEGER GENERATED ALWAYS AS (EXTRACT(WEEK FROM created_at::date)) STORED;
+-- Note: These are regular columns, not generated, to avoid immutability issues
+-- They will be populated by the application when creating projects
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_year INTEGER;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_month INTEGER;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_week INTEGER;
+
+-- Backfill existing projects with time-series data
+UPDATE projects
+SET created_year = EXTRACT(YEAR FROM created_at::date),
+    created_month = EXTRACT(MONTH FROM created_at::date),
+    created_week = EXTRACT(WEEK FROM created_at::date)
+WHERE created_year IS NULL;
 
 -- Add indexes for fast Layer 1-3 intelligence queries
 CREATE INDEX IF NOT EXISTS idx_projects_market_time ON projects(user_id, market_metro_area, created_at DESC);
