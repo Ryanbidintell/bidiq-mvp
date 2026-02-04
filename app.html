@@ -419,10 +419,36 @@
                 <header class="page-header"><h2 class="page-title">Dashboard</h2><p class="page-subtitle">Your bid intelligence at a glance</p></header>
                 <div class="page-content">
                     <div class="stats-grid">
-                        <div class="stat-card accent"><div class="stat-label">Bids Analyzed</div><div class="stat-value" id="statBids">0</div></div>
-                        <div class="stat-card success"><div class="stat-label">Win Rate</div><div class="stat-value" id="statWinRate">--</div></div>
-                        <div class="stat-card info"><div class="stat-label">Pending Outcomes</div><div class="stat-value" id="statPending">0</div></div>
-                        <div class="stat-card warning"><div class="stat-label">Hours Saved</div><div class="stat-value" id="statHours">0</div></div>
+                        <div class="stat-card accent">
+                            <div class="stat-label">Total Bids Analyzed</div>
+                            <div class="stat-value" id="statBids">0</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;"><span id="statBidsThisWeek">0</span> this week</div>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="stat-label">Win Rate</div>
+                            <div class="stat-value" id="statWinRate">--</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;"><span id="statWinCount">0</span> wins / <span id="statLossCount">0</span> losses</div>
+                        </div>
+                        <div class="stat-card info">
+                            <div class="stat-label">Avg BidIntell Score</div>
+                            <div class="stat-value" id="statAvgScore">--</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;"><span id="statHighScoreCount">0</span> above 80</div>
+                        </div>
+                        <div class="stat-card warning">
+                            <div class="stat-label">Hours Saved</div>
+                            <div class="stat-value" id="statHours">0</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;"><span id="statDecisions">0</span> faster decisions</div>
+                        </div>
+                        <div class="stat-card" style="background:linear-gradient(135deg,var(--accent-dim),rgba(239,68,68,0.1));border-color:var(--accent);">
+                            <div class="stat-label">Contract Risks Found</div>
+                            <div class="stat-value" id="statContractRisks">0</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">across <span id="statRiskyProjects">0</span> projects</div>
+                        </div>
+                        <div class="stat-card" style="background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(59,130,246,0.1));border-color:var(--success);">
+                            <div class="stat-label">Data Moat Health</div>
+                            <div class="stat-value" id="statDataMoat">--</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;"><span id="statOutcomeRate">0</span>% outcomes recorded</div>
+                        </div>
                     </div>
                     <div class="card">
                         <div class="card-header"><h3 class="card-title">Recent Activity</h3><button class="btn btn-primary btn-sm" onclick="switchTab('analyze')">+ Analyze New Bid</button></div>
@@ -2536,44 +2562,145 @@ ${truncatedText}`;
         function printReport() {
             if (!currentAnalysis) return;
             const a = currentAnalysis;
+
+            // Generate building type display
+            let buildingTypeHtml = '';
+            if (a.buildingType && a.buildingType.label) {
+                buildingTypeHtml = `<div class="badge">${a.buildingType.icon || '🏗️'} ${a.buildingType.label}</div>`;
+            }
+
+            // Generate contract risks display
+            let contractRisksHtml = '';
+            if (a.contractRisks && a.contractRisks.hasContractLanguage && a.contractRisks.risksDetected && a.contractRisks.risksDetected.length > 0) {
+                const riskIcons = { high: '🔴', medium: '🟠', low: '🟡' };
+                contractRisksHtml = `
+                    <div class="section risk-section">
+                        <div class="section-title">⚠️ Contract Risks Detected (${a.contractRisks.risksDetected.length})</div>
+                        <p style="font-size:13px;color:#666;margin-bottom:12px;">Overall Risk Level: <strong>${a.contractRisks.overallRiskLevel.toUpperCase()}</strong></p>
+                        ${a.contractRisks.risksDetected.map(risk => {
+                            const riskLabels = {
+                                pay_if_paid: 'Pay-if-Paid Clause',
+                                liquidated_damages: 'Liquidated Damages',
+                                indemnification: 'Broad Indemnification',
+                                no_damages_delay: 'No Damages for Delay',
+                                consequential_waiver: 'Consequential Damages Waiver',
+                                high_retainage: 'High Retainage',
+                                slow_payment: 'Slow Payment Terms',
+                                termination_convenience: 'Termination for Convenience',
+                                excessive_warranty: 'Excessive Warranty Period',
+                                insurance_requirements: 'High Insurance Requirements'
+                            };
+                            return `
+                                <div style="margin-bottom:12px;padding:10px;background:#fff;border-left:4px solid ${risk.severity === 'high' ? '#ef4444' : risk.severity === 'medium' ? '#f59e0b' : '#fbbf24'};">
+                                    <div style="font-weight:600;margin-bottom:4px;">${riskIcons[risk.severity]} ${riskLabels[risk.type] || risk.type}</div>
+                                    <div style="font-size:12px;color:#666;font-style:italic;margin-bottom:4px;">"${risk.excerpt}"</div>
+                                    <div style="font-size:12px;color:#333;">${risk.explanation}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            }
+
+            // Generate keywords found display
+            let keywordsHtml = '';
+            if (a.goodFound && a.goodFound.length > 0) {
+                keywordsHtml = `
+                    <div class="section">
+                        <div class="section-title">✓ Favorable Terms Found (${a.goodFound.length})</div>
+                        <p style="font-size:13px;">${a.goodFound.map(k => k.keyword).join(', ')}</p>
+                    </div>
+                `;
+            }
+
             const printContent = `
                 <html>
                 <head>
                     <title>BidIntell Report - ${a.extracted.project_name || 'Bid Analysis'}</title>
                     <style>
-                        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-                        h1 { font-size: 24px; margin-bottom: 8px; }
-                        .score { font-size: 48px; font-weight: bold; color: ${a.scores.recommendation === 'GO' ? '#22c55e' : a.scores.recommendation === 'REVIEW' ? '#f59e0b' : '#ef4444'}; }
-                        .rec { font-size: 18px; color: #666; margin-bottom: 24px; }
-                        .section { margin: 20px 0; padding: 16px; background: #f5f5f5; border-radius: 8px; }
-                        .section-title { font-weight: 600; margin-bottom: 8px; }
-                        .component { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ddd; }
+                        @media print {
+                            @page { margin: 0.75in; }
+                            body { padding: 0; }
+                            .section { page-break-inside: avoid; }
+                        }
+                        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; line-height: 1.5; }
+                        .header { border-bottom: 3px solid #3b82f6; padding-bottom: 16px; margin-bottom: 24px; }
+                        h1 { font-size: 28px; margin-bottom: 4px; color: #18181b; }
+                        .subtitle { color: #71717a; font-size: 14px; margin-bottom: 8px; }
+                        .badge { display: inline-block; padding: 6px 12px; background: #f5f5f5; border-radius: 6px; font-size: 13px; font-weight: 600; margin-top: 8px; }
+                        .score-box { text-align: center; padding: 24px; background: linear-gradient(135deg, #f5f5f5, #e5e5e5); border-radius: 12px; margin: 24px 0; }
+                        .score { font-size: 64px; font-weight: bold; color: ${a.scores.recommendation === 'GO' ? '#22c55e' : a.scores.recommendation === 'REVIEW' ? '#f59e0b' : '#ef4444'}; line-height: 1; }
+                        .rec { font-size: 20px; color: #52525b; margin-top: 8px; font-weight: 600; }
+                        .rec-detail { font-size: 14px; color: #71717a; margin-top: 4px; }
+                        .section { margin: 20px 0; padding: 16px; background: #fafafa; border-radius: 8px; border: 1px solid #e5e5e7; }
+                        .risk-section { background: #fef2f2; border-color: #fecaca; }
+                        .section-title { font-weight: 700; margin-bottom: 12px; font-size: 15px; color: #18181b; }
+                        .component { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e5e7; align-items: center; }
                         .component:last-child { border-bottom: none; }
-                        .meta { color: #666; font-size: 12px; margin-top: 24px; }
+                        .component-label { font-size: 14px; color: #52525b; }
+                        .component-score { font-size: 18px; font-weight: 700; color: #18181b; }
+                        .meta { color: #a1a1aa; font-size: 11px; margin-top: 32px; text-align: center; padding-top: 16px; border-top: 1px solid #e5e5e7; }
+                        .logo { font-size: 20px; font-weight: 800; color: #3b82f6; letter-spacing: -0.5px; }
                     </style>
                 </head>
                 <body>
-                    <h1>${a.extracted.project_name || 'Untitled Project'}</h1>
-                    <p style="color:#666;">${[a.extracted.project_city, a.extracted.project_state].filter(Boolean).join(', ') || 'Location unknown'}</p>
-                    <div class="score">${a.scores.final}</div>
-                    <div class="rec">${a.scores.recommendation} — ${{ GO: 'Strong fit', REVIEW: 'Mixed signals', PASS: 'Poor fit' }[a.scores.recommendation]}</div>
-                    
-                    <div class="section">
-                        <div class="section-title">Score Breakdown</div>
-                        <div class="component"><span>📍 Location Fit (${a.scores.components.location.weight}%)</span><span>${a.scores.components.location.score}/100</span></div>
-                        <div class="component"><span>🔑 Keywords & Contract (${a.scores.components.keywords.weight}%)</span><span>${a.scores.components.keywords.score}/100</span></div>
-                        <div class="component"><span>🏢 GC Relationship (${a.scores.components.gc.weight}%)</span><span>${a.scores.components.gc.score}/100</span></div>
-                        <div class="component"><span>🔧 Trade Match (${a.scores.components.trade.weight}%)</span><span>${a.scores.components.trade.score}/100</span></div>
+                    <div class="header">
+                        <div class="logo">BidIntell</div>
+                        <h1>${a.extracted.project_name || 'Untitled Project'}</h1>
+                        <div class="subtitle">${[a.extracted.project_city, a.extracted.project_state].filter(Boolean).join(', ') || 'Location unknown'} ${a.extracted.project_address ? '• ' + a.extracted.project_address : ''}</div>
+                        ${buildingTypeHtml}
                     </div>
-                    
-                    <div class="section">
-                        <div class="section-title">GCs Bidding</div>
-                        <p>${a.gcs.map(g => g.name + ' (' + '★'.repeat(g.rating) + ')').join(', ')}</p>
+
+                    <div class="score-box">
+                        <div class="score">${a.scores.final}</div>
+                        <div class="rec">${a.scores.recommendation}</div>
+                        <div class="rec-detail">${{ GO: 'Strong fit for your business', REVIEW: 'Mixed signals - review carefully', PASS: 'Poor fit based on your criteria' }[a.scores.recommendation]}</div>
                     </div>
-                    
-                    ${a.extracted.bid_deadline ? '<div class="section"><div class="section-title">Bid Deadline</div><p>' + a.extracted.bid_deadline + '</p></div>' : ''}
-                    
-                    <div class="meta">Generated by BidIntell • ${new Date().toLocaleDateString()}</div>
+
+                    <div class="section">
+                        <div class="section-title">📊 Score Breakdown</div>
+                        <div class="component">
+                            <span class="component-label">📍 Location Fit (${a.scores.components.location.weight}% weight)</span>
+                            <span class="component-score">${a.scores.components.location.score}/100</span>
+                        </div>
+                        <div style="font-size:12px;color:#71717a;margin-top:4px;padding-left:24px;">${a.scores.components.location.reason}</div>
+
+                        <div class="component" style="margin-top:12px;">
+                            <span class="component-label">🔑 Keywords & Contract (${a.scores.components.keywords.weight}% weight)</span>
+                            <span class="component-score">${a.scores.components.keywords.score}/100</span>
+                        </div>
+                        <div style="font-size:12px;color:#71717a;margin-top:4px;padding-left:24px;">${a.scores.components.keywords.reason}</div>
+
+                        <div class="component" style="margin-top:12px;">
+                            <span class="component-label">🏢 GC Relationship (${a.scores.components.gc.weight}% weight)</span>
+                            <span class="component-score">${a.scores.components.gc.score}/100</span>
+                        </div>
+                        <div style="font-size:12px;color:#71717a;margin-top:4px;padding-left:24px;">${a.scores.components.gc.reason}</div>
+
+                        <div class="component" style="margin-top:12px;">
+                            <span class="component-label">🔧 Trade Match (${a.scores.components.trade.weight}% weight)</span>
+                            <span class="component-score">${a.scores.components.trade.score}/100</span>
+                        </div>
+                        <div style="font-size:12px;color:#71717a;margin-top:4px;padding-left:24px;">${a.scores.components.trade.reason}</div>
+                    </div>
+
+                    ${contractRisksHtml}
+
+                    ${keywordsHtml}
+
+                    <div class="section">
+                        <div class="section-title">🏗️ General Contractors Bidding (${a.gcs.length})</div>
+                        ${a.gcs.map(g => `<div style="padding:8px 0;border-bottom:1px solid #e5e5e7;display:flex;justify-content:space-between;"><span>${g.name}</span><span style="color:#f59e0b;">${'★'.repeat(g.rating)}${'☆'.repeat(5 - g.rating)}</span></div>`).join('')}
+                    </div>
+
+                    ${a.extracted.bid_deadline ? '<div class="section"><div class="section-title">📅 Bid Deadline</div><p style="font-size:15px;font-weight:600;color:#18181b;">' + a.extracted.bid_deadline + '</p></div>' : ''}
+
+                    ${a.extracted.scope_summary ? '<div class="section"><div class="section-title">📋 Scope Summary</div><p style="font-size:13px;color:#52525b;">' + a.extracted.scope_summary + '</p></div>' : ''}
+
+                    <div class="meta">
+                        Generated by BidIntell on ${new Date().toLocaleString()}<br>
+                        Analysis ID: ${a.id} • Analyzed ${a.files.length} document${a.files.length !== 1 ? 's' : ''}
+                    </div>
                 </body>
                 </html>
             `;
@@ -2647,15 +2774,76 @@ ${truncatedText}`;
         }
 
         // Dashboard
+        // Animate number counting
+        function animateValue(elementId, start, end, duration = 600, suffix = '') {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            const range = end - start;
+            const increment = range / (duration / 16);
+            let current = start;
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                    element.textContent = Math.round(end) + suffix;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.round(current) + suffix;
+                }
+            }, 16);
+        }
+
         async function loadDashboard() {
             const projects = await getProjects();
             const settings = await getSettings();
-            document.getElementById('statBids').textContent = projects.length;
+
+            // Total bids analyzed
+            animateValue('statBids', 0, projects.length);
+
+            // Bids this week
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            const bidsThisWeek = projects.filter(p => new Date(p.created_at) >= oneWeekAgo).length;
+            animateValue('statBidsThisWeek', 0, bidsThisWeek);
+
+            // Win rate
             const won = projects.filter(p => p.outcome === 'won').length;
             const lost = projects.filter(p => p.outcome === 'lost').length;
-            document.getElementById('statWinRate').textContent = (won + lost) > 0 ? Math.round(won / (won + lost) * 100) + '%' : '--';
-            document.getElementById('statPending').textContent = projects.filter(p => p.outcome === 'pending').length;
-            document.getElementById('statHours').textContent = Math.round(projects.length * settings.decisionTime / 60);
+            const winRate = (won + lost) > 0 ? Math.round((won / (won + lost)) * 100) : 0;
+            document.getElementById('statWinRate').textContent = winRate > 0 ? winRate + '%' : '--';
+            document.getElementById('statWinCount').textContent = won;
+            document.getElementById('statLossCount').textContent = lost;
+
+            // Average score
+            const projectsWithScores = projects.filter(p => p.scores && p.scores.final);
+            const avgScore = projectsWithScores.length > 0
+                ? Math.round(projectsWithScores.reduce((sum, p) => sum + p.scores.final, 0) / projectsWithScores.length)
+                : 0;
+            document.getElementById('statAvgScore').textContent = avgScore > 0 ? avgScore : '--';
+            const highScoreCount = projectsWithScores.filter(p => p.scores.final >= 80).length;
+            document.getElementById('statHighScoreCount').textContent = highScoreCount;
+
+            // Hours saved
+            const hoursSaved = Math.round(projects.length * settings.decisionTime / 60);
+            animateValue('statHours', 0, hoursSaved);
+            document.getElementById('statDecisions').textContent = projects.length;
+
+            // Contract risks detected
+            let totalRisks = 0;
+            let riskyProjects = 0;
+            projects.forEach(p => {
+                if (p.contract_risks && p.contract_risks.risksDetected && p.contract_risks.risksDetected.length > 0) {
+                    totalRisks += p.contract_risks.risksDetected.length;
+                    riskyProjects++;
+                }
+            });
+            animateValue('statContractRisks', 0, totalRisks);
+            document.getElementById('statRiskyProjects').textContent = riskyProjects;
+
+            // Data moat health (% of projects with outcomes)
+            const projectsWithOutcomes = projects.filter(p => p.outcome && p.outcome !== 'pending').length;
+            const outcomeRate = projects.length > 0 ? Math.round((projectsWithOutcomes / projects.length) * 100) : 0;
+            document.getElementById('statDataMoat').textContent = outcomeRate > 0 ? outcomeRate + '%' : '--';
+            document.getElementById('statOutcomeRate').textContent = outcomeRate;
 
             const recent = projects.slice(0, 5);
             if (recent.length === 0) {
