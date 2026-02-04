@@ -2563,7 +2563,35 @@ ${truncatedText}`;
                     <button class="btn btn-primary" style="flex:1;padding:12px;" onclick="saveProjectToDb()">✓ Save to Projects</button>
                     <button class="btn btn-secondary" onclick="printReport()">🖨 Print Report</button>
                     <button class="btn btn-secondary" onclick="resetAnalysis()">Start Over</button>
-                </div>`;
+                </div>
+                <script>
+                    // Add visual feedback for agreement radio buttons
+                    setTimeout(() => {
+                        document.querySelectorAll('input[name="userAgreement"]').forEach(radio => {
+                            radio.addEventListener('change', function() {
+                                document.querySelectorAll('.override-option').forEach(label => {
+                                    label.style.borderColor = 'transparent';
+                                    label.style.background = 'var(--bg-secondary)';
+                                });
+                                const selectedLabel = this.closest('.override-option');
+                                if (selectedLabel) {
+                                    selectedLabel.style.borderColor = 'var(--accent)';
+                                    selectedLabel.style.background = 'var(--accent-dim)';
+                                }
+                            });
+                        });
+                        // Highlight the default checked option
+                        const checkedRadio = document.querySelector('input[name="userAgreement"]:checked');
+                        if (checkedRadio) {
+                            const selectedLabel = checkedRadio.closest('.override-option');
+                            if (selectedLabel) {
+                                selectedLabel.style.borderColor = 'var(--accent)';
+                                selectedLabel.style.background = 'var(--accent-dim)';
+                            }
+                        }
+                    }, 100);
+                </script>
+            `;
 
             if (analysis.scores.components.location.needsAddress) {
                 const loc = document.querySelector('.score-component');
