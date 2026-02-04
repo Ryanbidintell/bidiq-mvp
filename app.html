@@ -1164,7 +1164,8 @@
                         trade: data.weights_trade || 20
                     },
                     decisionTime: data.decision_time || 45,
-                    defaultStars: data.default_stars || 3
+                    defaultStars: data.default_stars || 3,
+                    onboarding_completed: data.onboarding_completed || false
                 };
                 return dataCache.settings;
             } catch (e) {
