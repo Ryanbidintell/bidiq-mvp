@@ -1174,10 +1174,17 @@
         }
 
         async function saveSettingsStorage(s) {
-            if (!supabaseClient || !currentUser) return;
+            if (!supabaseClient || !currentUser) {
+                console.warn('⚠️ Cannot save settings - not authenticated');
+                return;
+            }
 
             try {
-                console.log('Saving settings with trades:', s.trades);
+                console.log('💾 Saving settings to database...', {
+                    trades: s.trades,
+                    onboarding_completed: s.onboarding_completed
+                });
+
                 const { data, error } = await supabaseClient.from('user_settings').upsert({
                     user_id: currentUser.id,
                     city: s.city,
@@ -1193,11 +1200,12 @@
                     weights_trade: s.weights.trade,
                     decision_time: s.decisionTime,
                     default_stars: s.defaultStars,
+                    onboarding_completed: s.onboarding_completed !== undefined ? s.onboarding_completed : false,
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'user_id' });
 
                 if (error) {
-                    console.error('Save settings error:', error);
+                    console.error('❌ Save settings error:', error);
                     throw error;
                 }
 
@@ -1718,17 +1726,46 @@
                 onboarding_completed: true
             };
 
-            await saveSettings(settings);
-            closeModal('onboardingModal');
-            await loadAll();
-            switchTab('analyze');
+            console.log('💾 Saving onboarding settings...', settings);
+
+            try {
+                // Save settings and WAIT for completion
+                await saveSettingsStorage(settings); // Use saveSettingsStorage directly, not saveSettings()
+
+                // Force clear the cache so getSettings() fetches fresh data
+                dataCache.settings = null;
+
+                // Verify it saved
+                const savedSettings = await getSettings();
+                console.log('✅ Settings saved, onboarding_completed:', savedSettings.onboarding_completed);
+
+                if (!savedSettings.onboarding_completed) {
+                    console.error('❌ Onboarding flag did not save! Settings:', savedSettings);
+                    alert('Settings saved but onboarding flag may not have persisted. You may see onboarding again on next visit.');
+                }
+
+                // Close modal and reload
+                closeModal('onboardingModal');
+
+                // Load everything (but onboarding check will pass now)
+                await loadAll();
+
+                // Switch to analyze tab
+                switchTab('analyze');
+
+                console.log('🎉 Onboarding complete!');
+            } catch (error) {
+                console.error('❌ Onboarding completion error:', error);
+                alert('Failed to save onboarding settings: ' + error.message);
+            }
         }
 
         async function skipOnboarding() {
             if (confirm('Are you sure you want to skip setup? You can configure settings later, but BidIntell won\'t be fully optimized for your business yet.')) {
                 const settings = await getSettings();
                 settings.onboarding_completed = true;
-                await saveSettings(settings);
+                await saveSettingsStorage(settings); // Use saveSettingsStorage directly
+                dataCache.settings = null; // Clear cache
                 closeModal('onboardingModal');
                 await loadAll();
             }
@@ -3751,13 +3788,20 @@ ${truncatedText}`;
         async function loadAll() {
             await loadSettings();
 
-            // Check if onboarding is needed
+            // Check if onboarding is needed (only if user is authenticated)
             const settings = await getSettings();
-            if (!settings.onboarding_completed && currentUser) {
+            console.log('📋 loadAll - checking onboarding:', {
+                onboarding_completed: settings.onboarding_completed,
+                currentUser: !!currentUser
+            });
+
+            if (!settings.onboarding_completed && currentUser && supabaseClient) {
+                console.log('🎯 Showing onboarding...');
                 renderOnboardingStep(1);
                 document.getElementById('onboardingModal').classList.add('active');
                 return; // Don't load other data until onboarding is complete
             } else {
+                console.log('✅ Skipping onboarding - already completed or not authenticated');
                 document.getElementById('onboardingModal').classList.remove('active');
             }
 
