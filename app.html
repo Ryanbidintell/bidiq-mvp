@@ -805,6 +805,40 @@
         </div>
     </div>
 
+    <!-- Onboarding Modal -->
+    <div class="modal-overlay" id="onboardingModal" style="background: rgba(0,0,0,0.95);">
+        <div class="modal" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="border-bottom: 2px solid var(--accent);">
+                <div>
+                    <h3 class="modal-title">Welcome to BidIntell 🎯</h3>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Let's get you set up in 7 quick steps</p>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div style="padding: 16px 24px 0; background: var(--bg-secondary);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 12px; color: var(--text-muted);">Step <span id="onboardingCurrentStep">1</span> of 7</span>
+                    <span style="font-size: 12px; color: var(--text-muted);"><span id="onboardingProgress">14</span>% complete</span>
+                </div>
+                <div style="height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden;">
+                    <div id="onboardingProgressBar" style="height: 100%; width: 14%; background: linear-gradient(90deg, var(--accent), var(--success)); transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+
+            <div class="modal-body" id="onboardingBody" style="min-height: 320px; padding-top: 24px;">
+                <!-- Step content will be dynamically loaded here -->
+            </div>
+
+            <div class="modal-footer" style="border-top: 2px solid var(--border-color); padding: 16px 24px;">
+                <button class="btn btn-secondary" id="onboardingBackBtn" onclick="onboardingBack()" style="display: none;">← Back</button>
+                <div style="flex: 1;"></div>
+                <button class="btn btn-secondary" id="onboardingSkipBtn" onclick="skipOnboarding()" style="margin-right: 8px;">Skip for now</button>
+                <button class="btn btn-primary" id="onboardingNextBtn" onclick="onboardingNext()">Next →</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ============================================
         // SUPABASE CONFIGURATION
@@ -1002,6 +1036,19 @@
         let currentAnalysis = null;
         let newGCRatingValue = 3;
 
+        // Onboarding State
+        let onboardingStep = 1;
+        let onboardingData = {
+            city: '',
+            state: '',
+            trades: [],
+            locationImportance: 50,
+            riskTolerance: 'medium',
+            capacity: 'steady',
+            gcsAdded: 0,
+            sampleBidUploaded: false
+        };
+
         // CSI Divisions - SORTED NUMERICALLY
         const CSI_DIVISIONS = [
             ['01', 'General Requirements'],
@@ -1036,7 +1083,7 @@
         // Data cache for performance
         let dataCache = { settings: null, keywords: null, gcs: null, projects: null };
         
-        const DEFAULT_SETTINGS = { city: '', state: '', radius: 50, locationMatters: true, trades: ['23', '26'], riskTolerance: 'medium', capacity: 'steady', weights: { location: 25, keywords: 30, gc: 25, trade: 20 }, decisionTime: 45, defaultStars: 3 };
+        const DEFAULT_SETTINGS = { city: '', state: '', radius: 50, locationMatters: true, trades: ['23', '26'], riskTolerance: 'medium', capacity: 'steady', weights: { location: 25, keywords: 30, gc: 25, trade: 20 }, decisionTime: 45, defaultStars: 3, onboarding_completed: false };
 
         // ============================================
         // SUPABASE DATA FUNCTIONS
@@ -1355,7 +1402,297 @@
         // Modals
         function openModal(id) { document.getElementById(id).classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('active'); }));
+        document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o && id !== 'onboardingModal') o.classList.remove('active'); }));
+
+        // ============================================
+        // ONBOARDING FLOW
+        // ============================================
+
+        function renderOnboardingStep(step) {
+            onboardingStep = step;
+            const body = document.getElementById('onboardingBody');
+            const backBtn = document.getElementById('onboardingBackBtn');
+            const nextBtn = document.getElementById('onboardingNextBtn');
+            const skipBtn = document.getElementById('onboardingSkipBtn');
+
+            // Update progress
+            const progress = Math.round((step / 7) * 100);
+            document.getElementById('onboardingCurrentStep').textContent = step;
+            document.getElementById('onboardingProgress').textContent = progress;
+            document.getElementById('onboardingProgressBar').style.width = progress + '%';
+
+            // Show/hide back button
+            backBtn.style.display = step === 1 ? 'none' : 'inline-flex';
+            skipBtn.style.display = step === 7 ? 'none' : 'inline-block';
+            nextBtn.textContent = step === 7 ? 'Complete Setup 🎉' : 'Next →';
+
+            // Render step content
+            if (step === 1) {
+                body.innerHTML = `
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">🏢</div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 12px;">Where's your office located?</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 32px;">This helps us calculate travel distance for project fit scoring</p>
+                        <div style="max-width: 400px; margin: 0 auto;">
+                            <div class="form-group" style="text-align: left;">
+                                <label class="form-label">Office City</label>
+                                <input type="text" class="form-input" id="onboarding_city" placeholder="Kansas City" value="${onboardingData.city}">
+                            </div>
+                            <div class="form-group" style="text-align: left;">
+                                <label class="form-label">State</label>
+                                <select class="form-select" id="onboarding_state">
+                                    <option value="">Select state...</option>
+                                    ${['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'].map(s => `<option value="${s}" ${onboardingData.state === s ? 'selected' : ''}>${s}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (step === 2) {
+                body.innerHTML = `
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">🔧</div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 12px;">What trades do you perform?</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 32px;">Select all divisions your company works in (choose at least one)</p>
+                        <div style="max-width: 500px; margin: 0 auto; text-align: left;">
+                            <div id="onboarding_trades" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 400px; overflow-y: auto; padding: 12px; background: var(--bg-secondary); border-radius: var(--radius);">
+                                ${CSI_DIVISIONS.map(([code, name]) => `
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; background: var(--bg-tertiary); border-radius: var(--radius); border: 2px solid ${onboardingData.trades.includes(code) ? 'var(--accent)' : 'transparent'};">
+                                        <input type="checkbox" value="${code}" ${onboardingData.trades.includes(code) ? 'checked' : ''} onchange="updateOnboardingTrade(this)" style="accent-color: var(--accent);">
+                                        <span style="font-size: 13px;"><strong>${code}</strong> ${name}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (step === 3) {
+                body.innerHTML = `
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">📍</div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 12px;">How important is project location?</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 32px;">Adjust the slider based on how much location matters to your business</p>
+                        <div style="max-width: 500px; margin: 0 auto;">
+                            <div style="background: var(--bg-secondary); padding: 32px; border-radius: var(--radius);">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                                    <span style="font-size: 13px; color: var(--text-muted);">Not Important (0%)</span>
+                                    <span style="font-size: 20px; font-weight: 700; color: var(--accent);" id="locationImportanceValue">${onboardingData.locationImportance}%</span>
+                                    <span style="font-size: 13px; color: var(--text-muted);">Critical (100%)</span>
+                                </div>
+                                <input type="range" min="0" max="100" value="${onboardingData.locationImportance}" id="onboarding_locationImportance" oninput="document.getElementById('locationImportanceValue').textContent = this.value + '%'" style="width: 100%; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--bg-tertiary) 0%, var(--accent) 100%); outline: none; -webkit-appearance: none; appearance: none; cursor: pointer;">
+                                <div style="margin-top: 16px; padding: 12px; background: var(--bg-tertiary); border-radius: var(--radius); font-size: 12px; color: var(--text-secondary);">
+                                    <strong>💡 Tip:</strong> If you work locally, set this high (70-100%). If you travel for work or location doesn't matter, set it low (0-30%).
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (step === 4) {
+                body.innerHTML = `
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">⚖️</div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 12px;">What's your risk tolerance?</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 32px;">How cautious should BidIntell be when scoring contract risks?</p>
+                        <div style="max-width: 500px; margin: 0 auto;">
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                ${[
+                                    { value: 'low', icon: '🛡️', label: 'Low Tolerance', desc: 'Flag every potential risk - I want to be very careful' },
+                                    { value: 'medium', icon: '⚖️', label: 'Medium Tolerance', desc: 'Balance risk awareness with opportunity - recommended' },
+                                    { value: 'high', icon: '🚀', label: 'High Tolerance', desc: 'Only warn about major red flags - I can handle risk' }
+                                ].map(opt => `
+                                    <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.riskTolerance === opt.value ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
+                                        <input type="radio" name="onboarding_riskTolerance" value="${opt.value}" ${onboardingData.riskTolerance === opt.value ? 'checked' : ''} onchange="onboardingData.riskTolerance = this.value; renderOnboardingStep(4);" style="margin-top: 4px; accent-color: var(--accent);">
+                                        <div style="flex: 1; text-align: left;">
+                                            <div style="font-size: 16px; margin-bottom: 4px;">${opt.icon} <strong>${opt.label}</strong></div>
+                                            <div style="font-size: 13px; color: var(--text-muted);">${opt.desc}</div>
+                                        </div>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (step === 5) {
+                body.innerHTML = `
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">🏗️</div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 12px;">Current workload capacity?</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 32px;">This helps us adjust recommendations based on your bandwidth</p>
+                        <div style="max-width: 500px; margin: 0 auto;">
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                ${[
+                                    { value: 'hungry', icon: '🔴', label: 'Hungry for Work', desc: 'We need projects ASAP - be less selective' },
+                                    { value: 'steady', icon: '🟢', label: 'Steady & Balanced', desc: 'Normal capacity - use standard criteria' },
+                                    { value: 'maxed', icon: '🟡', label: 'At Capacity', desc: 'We\'re full - only show best fits' }
+                                ].map(opt => `
+                                    <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.capacity === opt.value ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
+                                        <input type="radio" name="onboarding_capacity" value="${opt.value}" ${onboardingData.capacity === opt.value ? 'checked' : ''} onchange="onboardingData.capacity = this.value; renderOnboardingStep(5);" style="margin-top: 4px; accent-color: var(--accent);">
+                                        <div style="flex: 1; text-align: left;">
+                                            <div style="font-size: 16px; margin-bottom: 4px;">${opt.icon} <strong>${opt.label}</strong></div>
+                                            <div style="font-size: 13px; color: var(--text-muted);">${opt.desc}</div>
+                                        </div>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (step === 6) {
+                body.innerHTML = `
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">🤝</div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 12px;">Add your first General Contractor</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 32px;">You can add more later, but let's start with one you work with often</p>
+                        <div style="max-width: 400px; margin: 0 auto; text-align: left;">
+                            <div class="form-group">
+                                <label class="form-label">GC Company Name</label>
+                                <input type="text" class="form-input" id="onboarding_gcName" placeholder="Turner Construction">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Your Rating</label>
+                                <div style="display: flex; gap: 8px; font-size: 32px; margin-top: 8px;">
+                                    ${[1,2,3,4,5].map(i => `<span onclick="onboardingData.gcRating = ${i}; renderOnboardingStep(6);" style="cursor: pointer; color: ${i <= (onboardingData.gcRating || 3) ? 'var(--warning)' : 'var(--text-muted)'};">★</span>`).join('')}
+                                </div>
+                                <div class="form-hint">How would you rate working with this GC?</div>
+                            </div>
+                            <div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius); font-size: 12px; color: var(--text-secondary); margin-top: 16px;">
+                                <strong>💡 Tip:</strong> You can skip this and add GCs later from the GC Manager tab
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (step === 7) {
+                body.innerHTML = `
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 12px;">You're all set!</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 32px;">BidIntell is configured and ready to analyze your bids</p>
+                        <div style="max-width: 500px; margin: 0 auto; text-align: left;">
+                            <div style="background: var(--bg-secondary); padding: 20px; border-radius: var(--radius); margin-bottom: 20px;">
+                                <h4 style="color: var(--text-primary); margin-bottom: 12px;">✅ Your Setup Summary:</h4>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.8;">
+                                    <div>📍 Office: <strong>${onboardingData.city}, ${onboardingData.state}</strong></div>
+                                    <div>🔧 Trades: <strong>${onboardingData.trades.length} selected</strong></div>
+                                    <div>📍 Location Importance: <strong>${onboardingData.locationImportance}%</strong></div>
+                                    <div>⚖️ Risk Tolerance: <strong>${onboardingData.riskTolerance}</strong></div>
+                                    <div>🏗️ Capacity: <strong>${onboardingData.capacity}</strong></div>
+                                    <div>🤝 GCs Added: <strong>${onboardingData.gcsAdded}</strong></div>
+                                </div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, var(--accent-dim), rgba(34, 197, 94, 0.1)); padding: 20px; border-radius: var(--radius); border: 2px solid var(--accent);">
+                                <h4 style="color: var(--text-primary); margin-bottom: 8px;">🚀 Next Step: Analyze Your First Bid</h4>
+                                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                    Go to the <strong>Analyze</strong> tab and upload a bid document. BidIntell will use AI to extract project details, detect contract risks, identify building type, and give you an intelligent GO/REVIEW/PASS recommendation.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function onboardingNext() {
+            // Validate current step
+            if (onboardingStep === 1) {
+                const city = document.getElementById('onboarding_city')?.value.trim();
+                const state = document.getElementById('onboarding_state')?.value;
+                if (!city || !state) {
+                    alert('Please enter your office city and state');
+                    return;
+                }
+                onboardingData.city = city;
+                onboardingData.state = state;
+            } else if (onboardingStep === 2) {
+                if (onboardingData.trades.length === 0) {
+                    alert('Please select at least one trade division');
+                    return;
+                }
+            } else if (onboardingStep === 3) {
+                onboardingData.locationImportance = parseInt(document.getElementById('onboarding_locationImportance')?.value || 50);
+            } else if (onboardingStep === 6) {
+                const gcName = document.getElementById('onboarding_gcName')?.value.trim();
+                if (gcName) {
+                    // Add the GC
+                    const newGC = {
+                        name: gcName,
+                        rating: onboardingData.gcRating || 3,
+                        bids: 0,
+                        wins: 0
+                    };
+                    await saveGC(newGC);
+                    onboardingData.gcsAdded++;
+                }
+            }
+
+            // Move to next step or complete
+            if (onboardingStep === 7) {
+                await completeOnboarding();
+            } else {
+                renderOnboardingStep(onboardingStep + 1);
+            }
+        }
+
+        function onboardingBack() {
+            if (onboardingStep > 1) {
+                renderOnboardingStep(onboardingStep - 1);
+            }
+        }
+
+        function updateOnboardingTrade(checkbox) {
+            const code = checkbox.value;
+            if (checkbox.checked) {
+                if (!onboardingData.trades.includes(code)) {
+                    onboardingData.trades.push(code);
+                }
+            } else {
+                onboardingData.trades = onboardingData.trades.filter(t => t !== code);
+            }
+            // Re-render to update border colors
+            renderOnboardingStep(2);
+        }
+
+        async function completeOnboarding() {
+            // Calculate location weight based on importance
+            const locationWeight = Math.round(onboardingData.locationImportance * 0.35); // Max 35%
+            const remainingWeight = 100 - locationWeight;
+            const keywordsWeight = Math.round(remainingWeight * 0.40); // 40% of remaining
+            const gcWeight = Math.round(remainingWeight * 0.35); // 35% of remaining
+            const tradeWeight = 100 - locationWeight - keywordsWeight - gcWeight; // Remainder
+
+            const settings = {
+                city: onboardingData.city,
+                state: onboardingData.state,
+                radius: 100,
+                locationMatters: onboardingData.locationImportance > 0,
+                trades: onboardingData.trades,
+                riskTolerance: onboardingData.riskTolerance,
+                capacity: onboardingData.capacity,
+                weights: {
+                    location: locationWeight,
+                    keywords: keywordsWeight,
+                    gc: gcWeight,
+                    trade: tradeWeight
+                },
+                decisionTime: 45,
+                defaultStars: 3,
+                onboarding_completed: true
+            };
+
+            await saveSettings(settings);
+            closeModal('onboardingModal');
+            await loadAll();
+            switchTab('analyze');
+        }
+
+        async function skipOnboarding() {
+            if (confirm('Are you sure you want to skip setup? You can configure settings later, but BidIntell won\'t be fully optimized for your business yet.')) {
+                const settings = await getSettings();
+                settings.onboarding_completed = true;
+                await saveSettings(settings);
+                closeModal('onboardingModal');
+                await loadAll();
+            }
+        }
 
         // File upload
         const uploadZone = document.getElementById('uploadZone');
@@ -3115,6 +3452,17 @@ ${truncatedText}`;
         // Load all data on app init
         async function loadAll() {
             await loadSettings();
+
+            // Check if onboarding is needed
+            const settings = await getSettings();
+            if (!settings.onboarding_completed && currentUser) {
+                renderOnboardingStep(1);
+                document.getElementById('onboardingModal').classList.add('active');
+                return; // Don't load other data until onboarding is complete
+            } else {
+                document.getElementById('onboardingModal').classList.remove('active');
+            }
+
             await loadKeywords();
             await loadGCDatabase();
             await loadProjects();

@@ -1,0 +1,383 @@
+BidIntell Company-Level Data Model
+
+What to Track, Why, and How It Compounds
+
+Guiding Rules (Non-Negotiable)
+
+Track what changes decisions, not what looks impressive
+
+Prefer ranges, categories, and signals over exact numbers
+
+Everything must age well (time-series friendly)
+
+Nothing should ever feel like surveillance
+
+TIER 1 — REQUIRED COMPANY CONTEXT
+
+(Collected once, lightly editable)
+
+This is the minimum identity + operating context needed for scoring and aggregation.
+
+1. Company Identity
+
+What
+
+Company name (normalized)
+
+Primary office location (city, state)
+
+Service metros / regions
+
+Why
+
+Location scoring
+
+Market aggregation
+
+Trade × metro intelligence
+
+Sensitivity
+
+Low
+
+2. Trades Performed (CSI Divisions)
+
+What
+
+Primary trade(s)
+
+Secondary trade(s) (optional)
+
+Why
+
+Trade Match scoring
+
+Capacity aggregation
+
+Market pressure indices
+
+Sensitivity
+
+Low
+
+3. Company Size (Bucketed)
+
+What (choose one)
+
+1–10 employees
+
+11–25
+
+26–50
+
+51–100
+
+100+
+
+Why
+
+Context for win rates
+
+Competition modeling
+
+Capacity inference without asking payroll
+
+Sensitivity
+
+Medium (but safe when bucketed)
+
+4. Typical Project Size (Range)
+
+What
+
+<$250k
+
+$250k–$1M
+
+$1M–$5M
+
+$5M–$20M
+
+$20M+
+
+Why
+
+Fit scoring
+
+Competition realism
+
+BidIndex calibration
+
+Sensitivity
+
+Medium
+
+5. Risk Tolerance (Already in product)
+
+What
+
+Low / Medium / High
+
+Why
+
+Contract risk penalties
+
+Clause interpretation
+
+Explains override behavior
+
+Sensitivity
+
+Low
+
+TIER 2 — DECISION CONTEXT (CRITICAL)
+
+(Captured gradually through usage)
+
+This is where BidIntell becomes defensible.
+
+6. Capacity Posture (State, Not Numbers)
+
+What
+
+Hungry / Steady / Maxed
+
+Captured
+
+At onboarding
+
+Monthly pulse
+
+Implicitly via declines (“capacity constraints”)
+
+Why
+
+Recommendation context
+
+Capacity Pressure Index
+
+Explains bid behavior shifts
+
+Sensitivity
+
+Medium
+Mitigation
+
+Never exposed individually
+
+Aggregated only
+
+7. Service Radius Behavior (Observed, Not Declared)
+
+What
+
+How far they actually bid vs stated radius
+
+Why
+
+Location Fit calibration
+
+Market expansion detection
+
+Competitive behavior insight
+
+Sensitivity
+
+Low
+Key Insight
+
+Observed behavior > stated preferences
+
+8. Competition Sensitivity
+
+What
+
+Win rate vs GC count
+
+Decline likelihood vs competition
+
+Why
+
+Bid Market Index
+
+Personalized competition penalties
+
+Market participation forecasting
+
+Sensitivity
+
+Low
+
+TIER 3 — PERFORMANCE & OUTCOME SIGNALS
+
+(Captured passively, weighted by confidence)
+
+This is where your intelligence layers gain credibility.
+
+9. Outcome History (Structured)
+
+What
+
+Win / Loss / Ghost
+
+Decision confidence (1–5)
+
+Time-to-outcome
+
+Why
+
+GC behavior intelligence
+
+Bid Market Index
+
+Algorithm refinement
+
+Sensitivity
+
+Medium
+Mitigation
+
+Personal by default
+
+Aggregated only at scale
+
+10. Margin Bands (Optional, Delayed)
+
+What
+
+Margin range buckets (e.g. <10%, 10–20%, 20%+)
+
+Why
+
+Personal ROI intelligence
+
+Market stress detection
+
+Future premium insights
+
+Sensitivity
+
+High
+Rule
+
+Do not require this early
+
+Only ask after trust is established
+
+TIER 4 — CAPACITY & WORKLOAD INTELLIGENCE
+
+(Opt-in, monthly, lightweight)
+
+This feeds the Capacity Pressure Index.
+
+11. Workload Pulse (Monthly)
+
+What
+
+Current workload status
+
+Trades impacted
+
+Optional crew range
+
+Confidence (1–5)
+
+Why
+
+Market capacity modeling
+
+Forward-looking risk signals
+
+Explains bid scarcity
+
+Sensitivity
+
+High
+Mitigation
+
+Opt-in
+
+Aggregated
+
+Lagged
+
+Minimum sample enforced
+
+TIER 5 — TRUST & CORRECTION SIGNALS
+
+(This is rare and extremely valuable)
+
+12. Agreement / Override Behavior
+
+What
+
+Agree / Score too high / Score too low
+
+Optional explanation
+
+Why
+
+Detect false positives/negatives
+
+Train scoring logic
+
+Identify systemic bias
+
+Sensitivity
+
+Low
+Value
+
+This is one of your strongest proprietary signals
+
+13. Confidence Discipline
+
+What
+
+Confidence score attached to:
+
+Outcomes
+
+Capacity updates
+
+Major corrections
+
+Why
+
+Weight data quality
+
+Prevent garbage aggregation
+
+Protect market intelligence credibility
+
+Sensitivity
+
+Low
+
+What You Should NOT Track (Ever)
+
+These kill trust and are unnecessary:
+
+❌ Revenue
+❌ Payroll
+❌ Exact backlog dollars
+❌ Customer names
+❌ Individual crew assignments
+❌ Pricing formulas
+
+If you need them, you’ve designed the wrong system.
+
+How This All Compounds (Big Picture)
+Data Type	Enables
+Company context	Accurate personalization
+Decisions + overrides	Explainable intelligence
+Outcomes + confidence	Behavioral truth
+Capacity posture	Market pressure modeling
+Aggregation	Bid Market Index
+Time series	Predictive power
+Trust	$100M outcome
+The One Design Rule to Enforce Everywhere
+
+Ask for the least sensitive version of the signal that still changes a decision.
+
+You’ve already done this instinctively — this framework just formalizes it.

@@ -17,6 +17,9 @@ ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS service_metros TEXT[]; -- Mul
 -- Add TIER 2 decision context tracking
 ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS last_capacity_update TIMESTAMPTZ;
 
+-- Add onboarding completion tracking
+ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT FALSE;
+
 -- ============================================
 -- Layer 0 Intelligence Columns (Projects Table)
 -- ============================================
