@@ -2938,7 +2938,7 @@ ${fullText.substring(0, 40000)}`;
                     weights: weights,
                     decisionTime: data.decision_time || 45,  // INTEGER minutes instead of 'normal'
                     defaultStars: data.default_stars || 3,
-                    onboarding_completed: data.onboarding_completed || false
+                    onboarding_completed: data.onboarding_completed === true  // Explicit boolean check
                 };
                 return dataCache.settings;
             } catch (e) {
@@ -10327,16 +10327,19 @@ Respond now:`;
                 const settings = await getSettings();
                 console.log('📋 loadAll - checking onboarding:', {
                     onboarding_completed: settings.onboarding_completed,
-                    currentUser: !!currentUser
+                    onboarding_type: typeof settings.onboarding_completed,
+                    currentUser: !!currentUser,
+                    userId: currentUser?.id
                 });
 
-                if (!settings.onboarding_completed && currentUser && supabaseClient) {
-                    console.log('🎯 Showing onboarding...');
+                // Only show onboarding if explicitly NOT completed (must be false, not undefined)
+                if (settings.onboarding_completed !== true && currentUser && supabaseClient) {
+                    console.log('🎯 Showing onboarding because onboarding_completed =', settings.onboarding_completed);
                     renderOnboardingStep(1);
                     document.getElementById('onboardingModal').classList.add('active');
                     return; // Don't load other data until onboarding is complete
                 } else {
-                    console.log('✅ Skipping onboarding - already completed or not authenticated');
+                    console.log('✅ Skipping onboarding - onboarding_completed:', settings.onboarding_completed);
                     document.getElementById('onboardingModal').classList.remove('active');
                 }
 
