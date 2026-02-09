@@ -7693,9 +7693,22 @@ ${truncatedText}`;
                             const recClass = recommendation === 'GO' ? 'success' : recommendation === 'REVIEW' ? 'warning' : '';
                             const outcomeClass = p.outcome === 'won' ? 'success' : p.outcome === 'lost' ? 'danger' : p.outcome === 'ghost' ? 'muted' : '';
 
-                            // Fix date handling - handle null/undefined
+                            // Fix date handling - show bid deadline if available, otherwise created date
                             let date = 'No date';
-                            if (p.created_at) {
+                            if (extracted.bid_deadline) {
+                                try {
+                                    date = new Date(extracted.bid_deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                } catch(e) {
+                                    // If bid_deadline is invalid, try created_at
+                                    if (p.created_at) {
+                                        try {
+                                            date = new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                        } catch(e2) {
+                                            date = 'Invalid date';
+                                        }
+                                    }
+                                }
+                            } else if (p.created_at) {
                                 try {
                                     date = new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                                 } catch(e) {
@@ -7706,6 +7719,14 @@ ${truncatedText}`;
                             // Handle both old (project_city) and new (city) field names
                             const city = extracted.city || extracted.project_city || '';
                             const state = extracted.state || extracted.project_state || '';
+
+                            // Get GC names from gcs array (not from extracted fields)
+                            let gcDisplay = 'Unknown';
+                            if (p.gcs && Array.isArray(p.gcs) && p.gcs.length > 0) {
+                                gcDisplay = p.gcs.map(gc => gc.name).join(', ');
+                            } else if (extracted.general_contractor || extracted.gc_name) {
+                                gcDisplay = extracted.general_contractor || extracted.gc_name;
+                            }
 
                             // Show score display
                             const scoreDisplay = score > 0 ? `${score} - ${recommendation}` : 'No score yet';
@@ -7719,7 +7740,7 @@ ${truncatedText}`;
                                         <div style="font-weight:600;">${extracted.project_name || 'Unnamed Project'}</div>
                                         <div style="font-size:12px; color:var(--text-muted);">${(typeof extracted.building_type === 'object' ? extracted.building_type?.type : extracted.building_type) || 'Unknown Type'}</div>
                                     </td>
-                                    <td>${extracted.general_contractor || extracted.gc_name || 'Unknown'}</td>
+                                    <td>${gcDisplay}</td>
                                     <td>${city}${city && state ? ', ' : ''}${state}</td>
                                     <td><span class="score-badge ${recClass}">${scoreDisplay}</span></td>
                                     <td><span class="outcome-badge ${outcomeClass}">${(p.outcome || 'pending').toUpperCase()}</span></td>
