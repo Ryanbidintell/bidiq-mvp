@@ -9158,59 +9158,72 @@ Respond now:`;
         }
 
         function initAddressAutocomplete() {
+            console.log('🗺️ Initializing address autocomplete...');
+
             if (!window.google || !window.google.maps || !window.google.maps.places) {
-                console.warn('Google Maps Places API not loaded yet');
+                console.warn('⚠️ Google Maps Places API not loaded yet - retrying in 1 second...');
+                setTimeout(initAddressAutocomplete, 1000);
                 return;
             }
 
             const input = document.getElementById('settingStreet');
-            if (!input) return;
+            if (!input) {
+                console.warn('⚠️ settingStreet input not found - retrying in 500ms...');
+                setTimeout(initAddressAutocomplete, 500);
+                return;
+            }
 
-            // Create autocomplete object
-            addressAutocomplete = new google.maps.places.Autocomplete(input, {
-                types: ['address'],
-                componentRestrictions: { country: 'us' }
-            });
+            try {
+                // Create autocomplete object
+                addressAutocomplete = new google.maps.places.Autocomplete(input, {
+                    types: ['address'],
+                    componentRestrictions: { country: 'us' }
+                });
 
-            // Listen for place selection
-            addressAutocomplete.addListener('place_changed', () => {
-                const place = addressAutocomplete.getPlace();
+                console.log('✅ Google Maps autocomplete initialized');
 
-                if (!place.address_components) {
-                    console.warn('No address components in selected place');
-                    return;
-                }
+                // Listen for place selection
+                addressAutocomplete.addListener('place_changed', () => {
+                    const place = addressAutocomplete.getPlace();
 
-                // Parse address components
-                let street = '';
-                let city = '';
-                let state = '';
-                let zip = '';
-
-                for (const component of place.address_components) {
-                    const types = component.types;
-
-                    if (types.includes('street_number')) {
-                        street = component.long_name + ' ';
-                    } else if (types.includes('route')) {
-                        street += component.long_name;
-                    } else if (types.includes('locality')) {
-                        city = component.long_name;
-                    } else if (types.includes('administrative_area_level_1')) {
-                        state = component.short_name;
-                    } else if (types.includes('postal_code')) {
-                        zip = component.long_name;
+                    if (!place.address_components) {
+                        console.warn('No address components in selected place');
+                        return;
                     }
-                }
 
-                // Auto-fill the form fields
-                if (street) document.getElementById('settingStreet').value = street.trim();
-                if (city) document.getElementById('settingCity').value = city;
-                if (state) document.getElementById('settingState').value = state;
-                if (zip) document.getElementById('settingZip').value = zip;
+                    // Parse address components
+                    let street = '';
+                    let city = '';
+                    let state = '';
+                    let zip = '';
 
-                console.log('✅ Address autocompleted:', { street, city, state, zip });
-            });
+                    for (const component of place.address_components) {
+                        const types = component.types;
+
+                        if (types.includes('street_number')) {
+                            street = component.long_name + ' ';
+                        } else if (types.includes('route')) {
+                            street += component.long_name;
+                        } else if (types.includes('locality')) {
+                            city = component.long_name;
+                        } else if (types.includes('administrative_area_level_1')) {
+                            state = component.short_name;
+                        } else if (types.includes('postal_code')) {
+                            zip = component.long_name;
+                        }
+                    }
+
+                    // Auto-fill the form fields
+                    if (street) document.getElementById('settingStreet').value = street.trim();
+                    if (city) document.getElementById('settingCity').value = city;
+                    if (state) document.getElementById('settingState').value = state;
+                    if (zip) document.getElementById('settingZip').value = zip;
+
+                    console.log('✅ Address autocompleted:', { street, city, state, zip });
+                });
+            } catch (error) {
+                console.error('❌ Error initializing autocomplete:', error);
+            }
         }
 
         // Settings
