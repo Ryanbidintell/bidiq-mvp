@@ -8162,7 +8162,6 @@ ${truncatedText}`;
                     { label: 'Project Name', value: p.extracted.project_name },
                     { label: 'Building Type', value: (typeof p.extracted.building_type === 'object' ? p.extracted.building_type?.type : p.extracted.building_type) },
                     { label: 'Location', value: locationValue },
-                    { label: 'General Contractors', value: gcDisplay },
                     { label: 'Building Size', value: formatSF(p.extracted.project_size_sf) },
                     { label: 'Owner', value: p.extracted.owner_name || p.extracted.owner || 'Not found' },
                     { label: 'Architect', value: architectDisplay }
