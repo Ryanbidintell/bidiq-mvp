@@ -204,12 +204,14 @@
         .keyword-tag .remove:hover { opacity: 1; }
         
         /* GC selector */
-        .gc-selector { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--bg-input); }
-        .gc-selector-search { display: flex; gap: 8px; border-bottom: 1px solid var(--border); padding-right: 8px; }
-        .gc-selector-search input { flex: 1; padding: 10px 12px; background: transparent; border: none; color: var(--text-primary); font-size: 13px; }
+        .gc-selector { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--bg-input); position: relative; }
+        .gc-selector-search { display: flex; gap: 12px; padding: 8px 12px; align-items: center; }
+        .gc-selector-search input { flex: 1; padding: 10px 12px; background: transparent; border: none; color: var(--text-primary); font-size: 14px; }
         .gc-selector-search input:focus { outline: none; }
         .gc-selector-search input::placeholder { color: var(--text-muted); }
-        .gc-selector-list { max-height: 200px; overflow-y: auto; }
+        .gc-selector-search .btn { margin-left: 8px; white-space: nowrap; }
+        .gc-selector-list { max-height: 200px; overflow-y: auto; display: none; border-top: 1px solid var(--border); }
+        .gc-selector-list.show { display: block; }
         .gc-selector-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--border); }
         .gc-selector-item:last-child { border-bottom: none; }
         .gc-selector-item:hover { background: var(--bg-hover); }
@@ -4774,13 +4776,21 @@ ${fullText.substring(0, 40000)}`;
             const gcs = await getGCs();
             const search = document.getElementById('gcSearchInput').value.toLowerCase();
             const filtered = gcs.filter(g => g.name.toLowerCase().includes(search));
+            const listEl = document.getElementById('gcSelectorList');
+
+            // Show/hide list based on input
+            if (search.trim().length > 0) {
+                listEl.classList.add('show');
+            } else {
+                listEl.classList.remove('show');
+            }
 
             if (filtered.length === 0 && gcs.length === 0) {
-                document.getElementById('gcSelectorList').innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">No GCs in database yet.<br>Type a name above and click "Add New"</div>';
+                listEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">No GCs in database yet.<br>Type a name above and click "Add New"</div>';
             } else if (filtered.length === 0) {
-                document.getElementById('gcSelectorList').innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">No matches found.<br>Click "Add New" to add this GC</div>';
+                listEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">No matches found.<br>Click "Add New" to add this GC</div>';
             } else {
-                document.getElementById('gcSelectorList').innerHTML = filtered.map(gc => {
+                listEl.innerHTML = filtered.map(gc => {
                     const isSelected = selectedGCs.find(s => s.name === gc.name);
                     const winRate = gc.bids > 0 ? Math.round(gc.wins / gc.bids * 100) + '% win' : '';
                     return `<div class="gc-selector-item ${isSelected ? 'selected' : ''}" onclick="toggleGC('${gc.name.replace(/'/g, "\\'")}')">
