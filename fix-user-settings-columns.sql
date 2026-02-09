@@ -21,6 +21,9 @@ BEGIN
         AND column_name = 'decision_time'
         AND data_type = 'text'
     ) THEN
+        -- First, drop the default
+        ALTER TABLE user_settings ALTER COLUMN decision_time DROP DEFAULT;
+
         -- Convert TEXT values to INTEGER minutes
         UPDATE user_settings
         SET decision_time = CASE
@@ -32,12 +35,11 @@ BEGIN
         -- Change column type to INTEGER
         ALTER TABLE user_settings
         ALTER COLUMN decision_time TYPE INTEGER USING decision_time::integer;
+
+        -- Now set the INTEGER default
+        ALTER TABLE user_settings ALTER COLUMN decision_time SET DEFAULT 45;
     END IF;
 END $$;
-
--- Set default if not set
-ALTER TABLE user_settings
-ALTER COLUMN decision_time SET DEFAULT 45;
 
 -- Verify columns
 SELECT column_name, data_type, column_default
