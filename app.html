@@ -9011,6 +9011,7 @@ BID CONTEXT:
 - GCs Bidding: ${context.gcs.map(gc => `${gc.name} (${gc.rating}★)`).join(', ') || 'None'}
 - Contract Risks: ${context.contract_risks}
 - User Company: ${context.user_company_type}
+- User Trades: ${context.user_trades.join(', ') || 'Not specified'}
 - User Capacity: ${context.user_capacity}
 - Risk Tolerance: ${context.user_risk_tolerance}
 
@@ -9022,6 +9023,7 @@ YOUR ROLE:
 - Use "I" and refer to yourself as ${advisorName}
 
 IMPORTANT:
+- You ALREADY KNOW the user's trade/company type from the context above - NEVER ask "What's your trade?"
 - Be specific about THIS bid, not generic advice
 - If they ask about scores, explain what's driving them
 - If they ask "should I bid", give a clear recommendation with reasoning
@@ -11426,7 +11428,7 @@ Respond now:`;
                 const advisorName = settings.ai_advisor_name || 'Sam';
                 const advisorTone = settings.ai_advisor_tone || 'supportive';
 
-                // Build context
+                // Build context with user profile
                 let contextInfo = `You are ${advisorName}, the user's AI advisor in BidIntell (a construction bid analysis tool). `;
 
                 if (advisorTone === 'supportive') {
@@ -11437,11 +11439,26 @@ Respond now:`;
                     contextInfo += `You love data, statistics, and detailed analysis.`;
                 }
 
+                // Add user profile context - CRITICAL so AI knows their business
+                contextInfo += `\n\nUser Profile:`;
+                contextInfo += `\n- Company Type: ${settings.company_type || settings.companyType || 'subcontractor'}`;
+                if (settings.trades && settings.trades.length > 0) {
+                    contextInfo += `\n- Trades: ${settings.trades.join(', ')}`;
+                }
+                if (settings.product_lines && settings.product_lines.length > 0) {
+                    contextInfo += `\n- Product Lines: ${settings.product_lines.join(', ')}`;
+                }
+                contextInfo += `\n- Office Location: ${settings.city || 'Unknown'}, ${settings.state || '?'}`;
+                contextInfo += `\n- Service Area: ${settings.search_radius || settings.radius || '?'} miles`;
+                contextInfo += `\n- Capacity: ${settings.capacity || 'moderate'}`;
+
                 // Add current project context if viewing one
                 if (window.currentReportProject) {
                     const p = window.currentReportProject;
                     contextInfo += `\n\nCurrent project context: "${p.extracted?.project_name || 'Unknown'}" - Score: ${p.scores?.final || 0}/100 (${p.scores?.recommendation || 'N/A'}), Location: ${p.extracted?.city || '?'}, ${p.extracted?.state || '?'}, GCs: ${(p.gcs || []).map(gc => gc.name).join(', ') || 'None'}`;
                 }
+
+                contextInfo += `\n\nIMPORTANT: You already know the user's trade and business details above. Never ask "What's your trade?" - you should already know!`;
 
                 // Build conversation history
                 const messages = [
