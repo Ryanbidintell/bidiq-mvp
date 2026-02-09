@@ -4815,8 +4815,14 @@ ${fullText.substring(0, 40000)}`;
             const gc = gcs.find(g => g.name === name);
             if (!gc) return;
             const idx = selectedGCs.findIndex(s => s.name === name);
-            if (idx >= 0) selectedGCs.splice(idx, 1);
-            else selectedGCs.push({ ...gc });
+            if (idx >= 0) {
+                // Removing GC
+                selectedGCs.splice(idx, 1);
+            } else {
+                // Adding GC - clear search box and hide list
+                selectedGCs.push({ ...gc });
+                document.getElementById('gcSearchInput').value = '';
+            }
             await renderGCSelector();
             updateCompetition();
             updateAnalyzeBtn();
