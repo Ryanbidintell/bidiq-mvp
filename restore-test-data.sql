@@ -73,7 +73,8 @@ INSERT INTO projects (
     user_id,
     extracted_data,
     scores,
-    outcome
+    outcome,
+    outcome_confidence
 ) VALUES (
     'd1989508-1d5e-4494-b3f8-d2899665d8b3',
     '{
@@ -98,7 +99,8 @@ INSERT INTO projects (
             "trade": {"score": 90, "reason": "Matches your trades"}
         }
     }'::jsonb,
-    'won'
+    'won',
+    5
 )
 ON CONFLICT DO NOTHING;
 
