@@ -1579,6 +1579,7 @@
                             <h3 class="card-title">📋 Project Details</h3>
                             <div style="display: flex; gap: 8px;">
                                 <button class="btn btn-sm btn-primary" onclick="reanalyzeProject()" id="reanalyzeBtn">🔄 Re-analyze</button>
+                                <button class="btn btn-sm btn-secondary" onclick="showReuploadModal()" id="reuploadBtn">📤 Upload New Documents</button>
                                 <button class="btn btn-sm btn-secondary" onclick="showOutcomeFromReport()">+ Add Outcome</button>
                                 <button class="btn btn-sm btn-secondary" onclick="printReport()">🖨 Print Report</button>
                                 <button class="btn btn-sm btn-primary" onclick="saveReportEdits()">💾 Save Changes</button>
@@ -1783,6 +1784,63 @@
                         <span>Add GC</span>
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reupload Documents Modal -->
+    <div class="modal-overlay" id="reuploadModal" style="display: none;">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">📤 Upload New Documents</h3>
+                <button class="modal-close" onclick="closeReuploadModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 16px; color: var(--text-secondary);">
+                    Upload new bid documents to re-analyze this project with updated information.
+                </p>
+
+                <!-- File Upload Zone -->
+                <div id="reuploadDropZone" style="
+                    border: 2px dashed var(--border-color);
+                    border-radius: var(--radius);
+                    padding: 40px;
+                    text-align: center;
+                    background: var(--bg-secondary);
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    margin-bottom: 16px;
+                " ondragover="event.preventDefault(); this.style.borderColor='var(--accent)'; this.style.background='rgba(59, 130, 246, 0.1)';"
+                   ondragleave="this.style.borderColor='var(--border-color)'; this.style.background='var(--bg-secondary)';"
+                   ondrop="handleReuploadDrop(event)"
+                   onclick="document.getElementById('reuploadFileInput').click()">
+                    <div style="font-size: 48px; margin-bottom: 12px;">📄</div>
+                    <div style="font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">
+                        Drop PDFs here or click to browse
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-muted);">
+                        Supported: PDF files up to 50MB
+                    </div>
+                </div>
+
+                <input type="file" id="reuploadFileInput" accept=".pdf" multiple style="display: none;" onchange="handleReuploadFiles(this.files)">
+
+                <!-- File List -->
+                <div id="reuploadFileList" style="margin-bottom: 16px;"></div>
+
+                <!-- Progress -->
+                <div id="reuploadProgress" style="display: none; margin-bottom: 16px;">
+                    <div style="margin-bottom: 8px; font-size: 14px; color: var(--text-primary);" id="reuploadProgressText">Processing...</div>
+                    <div style="height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden;">
+                        <div id="reuploadProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--success)); transition: width 0.3s ease;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeReuploadModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="processReupload()" id="reuploadProcessBtn" disabled>
+                    <span>🔄 Re-analyze with New Documents</span>
+                </button>
             </div>
         </div>
     </div>
@@ -8426,6 +8484,209 @@ ${truncatedText}`;
                 // Re-enable button
                 btn.disabled = false;
                 btn.innerHTML = '🔄 Re-analyze';
+            }
+        }
+
+        // Reupload Documents for Re-analysis
+        let reuploadFiles = [];
+
+        function showReuploadModal() {
+            const project = window.currentReportProject;
+            if (!project) {
+                alert('No project loaded');
+                return;
+            }
+
+            // Reset state
+            reuploadFiles = [];
+            document.getElementById('reuploadFileList').innerHTML = '';
+            document.getElementById('reuploadProcessBtn').disabled = true;
+            document.getElementById('reuploadProgress').style.display = 'none';
+
+            // Show modal
+            document.getElementById('reuploadModal').style.display = 'flex';
+        }
+
+        function closeReuploadModal() {
+            document.getElementById('reuploadModal').style.display = 'none';
+            reuploadFiles = [];
+        }
+
+        function handleReuploadDrop(event) {
+            event.preventDefault();
+            const dropZone = event.currentTarget;
+            dropZone.style.borderColor = 'var(--border-color)';
+            dropZone.style.background = 'var(--bg-secondary)';
+
+            const files = Array.from(event.dataTransfer.files).filter(f => f.type === 'application/pdf');
+            handleReuploadFiles(files);
+        }
+
+        function handleReuploadFiles(files) {
+            if (!files || files.length === 0) return;
+
+            const fileArray = Array.from(files).filter(f => f.type === 'application/pdf');
+
+            if (fileArray.length === 0) {
+                showBanner('❌ Please upload PDF files only', 'error');
+                return;
+            }
+
+            // Check file sizes (50MB limit)
+            const oversized = fileArray.filter(f => f.size > 50 * 1024 * 1024);
+            if (oversized.length > 0) {
+                showBanner(`❌ Files over 50MB: ${oversized.map(f => f.name).join(', ')}`, 'error');
+                return;
+            }
+
+            reuploadFiles = fileArray;
+
+            // Display file list
+            const listHTML = reuploadFiles.map((file, idx) => `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-secondary); border-radius: var(--radius); margin-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 24px;">📄</span>
+                        <div>
+                            <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);">${file.name}</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                        </div>
+                    </div>
+                    <button onclick="removeReuploadFile(${idx})" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 20px; padding: 4px 8px;" title="Remove">✕</button>
+                </div>
+            `).join('');
+
+            document.getElementById('reuploadFileList').innerHTML = listHTML;
+            document.getElementById('reuploadProcessBtn').disabled = false;
+        }
+
+        function removeReuploadFile(idx) {
+            reuploadFiles.splice(idx, 1);
+            handleReuploadFiles(reuploadFiles);
+            if (reuploadFiles.length === 0) {
+                document.getElementById('reuploadProcessBtn').disabled = true;
+            }
+        }
+
+        async function processReupload() {
+            if (reuploadFiles.length === 0) {
+                showBanner('❌ Please upload at least one PDF file', 'error');
+                return;
+            }
+
+            const project = window.currentReportProject;
+            if (!project) {
+                alert('No project loaded');
+                return;
+            }
+
+            const btn = document.getElementById('reuploadProcessBtn');
+            const progressDiv = document.getElementById('reuploadProgress');
+            const progressBar = document.getElementById('reuploadProgressBar');
+            const progressText = document.getElementById('reuploadProgressText');
+
+            try {
+                // Disable button
+                btn.disabled = true;
+                btn.innerHTML = '⏳ Processing...';
+                progressDiv.style.display = 'block';
+
+                // Step 1: Extract text from PDFs
+                progressText.textContent = 'Extracting text from PDFs...';
+                progressBar.style.width = '20%';
+
+                let combinedText = '';
+                for (let i = 0; i < reuploadFiles.length; i++) {
+                    const file = reuploadFiles[i];
+                    progressText.textContent = `Extracting text from ${file.name} (${i + 1}/${reuploadFiles.length})...`;
+                    const text = await extractTextFromPDF(file);
+                    combinedText += `\n\n--- ${file.name} ---\n\n${text}`;
+                }
+
+                if (combinedText.length < 100) {
+                    throw new Error('Could not extract text from PDFs');
+                }
+
+                // Step 2: Extract data with AI
+                progressText.textContent = 'Analyzing documents with AI...';
+                progressBar.style.width = '50%';
+
+                const extracted = await extractWithAI(combinedText);
+
+                // Step 3: Recalculate scores
+                progressText.textContent = 'Calculating scores...';
+                progressBar.style.width = '70%';
+
+                const settings = await getSettings();
+                selectedGCs = project.gcs || [];
+
+                const scores = await calculateScores(
+                    extracted,
+                    settings,
+                    project.goodFound || [],
+                    project.badFound || [],
+                    project.tradesFound || [],
+                    project.contractRisks || [],
+                    null
+                );
+
+                // Step 4: Run Intelligence Engine
+                progressText.textContent = 'Running intelligence engine...';
+                progressBar.style.width = '85%';
+
+                const userHistory = await getProjects();
+                const validationStatus = validateBidData({ ...project, extracted, scores }, settings);
+                const aiAdvisorOutput = generateAdvisorResponse({ ...project, extracted, scores }, settings, userHistory);
+                const intelligenceTags = tagForAnalytics({ ...project, extracted, scores }, settings);
+
+                // Step 5: Update database
+                progressText.textContent = 'Saving to database...';
+                progressBar.style.width = '95%';
+
+                const { error } = await supabaseClient.from('projects').update({
+                    extracted_data: extracted,
+                    full_text: combinedText, // Save new full text
+                    scores: scores,
+                    validation_status: validationStatus,
+                    ai_advisor_output: aiAdvisorOutput,
+                    intelligence_tags: intelligenceTags,
+                    updated_at: new Date().toISOString()
+                }).eq('id', project.id);
+
+                if (error) throw error;
+
+                // Update window.currentReportProject
+                window.currentReportProject = {
+                    ...project,
+                    extracted,
+                    full_text: combinedText,
+                    scores,
+                    distance: scores.distance,
+                    validation_status: validationStatus,
+                    ai_advisor_output: aiAdvisorOutput,
+                    intelligence_tags: intelligenceTags
+                };
+
+                // Clear cache
+                dataCache.projects = null;
+
+                // Complete
+                progressText.textContent = 'Complete!';
+                progressBar.style.width = '100%';
+
+                // Close modal and show success
+                setTimeout(() => {
+                    closeReuploadModal();
+                    showBanner('✅ Project re-analyzed with new documents', 'success');
+                    viewReport(project.id);
+                }, 500);
+
+            } catch (error) {
+                console.error('❌ Reupload failed:', error);
+                showBanner('❌ Failed to process documents: ' + error.message, 'error');
+                progressDiv.style.display = 'none';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>🔄 Re-analyze with New Documents</span>';
             }
         }
 
