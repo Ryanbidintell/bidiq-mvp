@@ -204,19 +204,19 @@
         .keyword-tag .remove:hover { opacity: 1; }
         
         /* GC selector */
-        .gc-selector { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--bg-input); position: relative; }
+        .gc-selector { border: 1px solid var(--border); border-radius: var(--radius); overflow: visible; background: var(--bg-input); position: relative; }
         .gc-selector-search { display: flex; gap: 12px; padding: 8px 12px; align-items: center; }
         .gc-selector-search input { flex: 1; padding: 10px 12px; background: transparent; border: none; color: var(--text-primary); font-size: 14px; }
         .gc-selector-search input:focus { outline: none; }
         .gc-selector-search input::placeholder { color: var(--text-muted); }
         .gc-selector-search .btn { margin-left: 8px; white-space: nowrap; }
-        .gc-selector-list { max-height: 200px; overflow-y: auto; display: none; border-top: 1px solid var(--border); }
+        .gc-selector-list { position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; display: none; border: 1px solid var(--border); border-top: none; background: var(--bg-input); z-index: 100; box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
         .gc-selector-list.show { display: block; }
         .gc-selector-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--border); }
         .gc-selector-item:last-child { border-bottom: none; }
         .gc-selector-item:hover { background: var(--bg-hover); }
         .gc-selector-item.selected { background: var(--accent-dim); }
-        .gc-selected-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+        .gc-selected-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 20px; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 2px solid var(--border-color); min-height: 60px; }
         .gc-selected-tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; }
         .gc-selected-tag .remove { cursor: pointer; color: var(--text-muted); }
         .gc-selected-tag .remove:hover { color: var(--danger); }
