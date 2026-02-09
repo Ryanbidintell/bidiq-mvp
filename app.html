@@ -1819,7 +1819,7 @@
                         Drop PDFs here or click to browse
                     </div>
                     <div style="font-size: 13px; color: var(--text-muted);">
-                        Supported: PDF files up to 50MB
+                        Supported: PDF files (large files may take longer to process)
                     </div>
                 </div>
 
@@ -8532,12 +8532,8 @@ ${truncatedText}`;
                 return;
             }
 
-            // Check file sizes (50MB limit)
-            const oversized = fileArray.filter(f => f.size > 50 * 1024 * 1024);
-            if (oversized.length > 0) {
-                showBanner(`❌ Files over 50MB: ${oversized.map(f => f.name).join(', ')}`, 'error');
-                return;
-            }
+            // Note: No file size limit - matches original upload behavior
+            // Large files are handled by PDF.js and text truncation in extractTextFromPDF
 
             reuploadFiles = fileArray;
 
