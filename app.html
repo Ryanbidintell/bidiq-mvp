@@ -7989,6 +7989,75 @@ ${truncatedText}`;
                     recsHTML += `<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);"><p style="margin-bottom: 12px;">${explanationHTML}</p></div>`;
                 }
 
+                // AI Analysis Summary (plain English)
+                const buildingTypeLabel = (typeof p.extracted.building_type === 'object' ? p.extracted.building_type?.type : p.extracted.building_type) || 'Not specified';
+                const summaryParts = [];
+                summaryParts.push(`This ${buildingTypeLabel.toLowerCase()} project is located ${p.scores.components.location.details?.dist || 'an unknown distance'} miles from your office.`);
+                if (p.scores.components.location.score >= 80) {
+                    summaryParts.push('The location is within your preferred service area.');
+                } else if (p.scores.components.location.score >= 60) {
+                    summaryParts.push('The location is at the edge of your service area.');
+                } else {
+                    summaryParts.push('The location may be outside your typical service area.');
+                }
+
+                const goodKeywords = (p.good_keywords || []).length;
+                if (goodKeywords > 0) {
+                    summaryParts.push(`We found ${goodKeywords} favorable term${goodKeywords !== 1 ? 's' : ''} in the bid documents.`);
+                }
+
+                const riskKeywords = (p.contract_risks || []).length;
+                if (riskKeywords > 0) {
+                    summaryParts.push(`However, ${riskKeywords} contract risk${riskKeywords !== 1 ? 's were' : ' was'} identified that may impact your decision.`);
+                }
+
+                if (p.gcs && p.gcs.length > 0) {
+                    const knownGCs = p.gcs.filter(gc => gc.rating >= 3);
+                    if (knownGCs.length > 0) {
+                        summaryParts.push(`You have good relationships with ${knownGCs.length} of the ${p.gcs.length} general contractor${p.gcs.length !== 1 ? 's' : ''} bidding.`);
+                    } else {
+                        summaryParts.push(`You have limited history with the ${p.gcs.length} general contractor${p.gcs.length !== 1 ? 's' : ''} on this project.`);
+                    }
+                }
+
+                const aiSummary = summaryParts.join(' ');
+
+                // How to Improve Your Chances
+                const improvements = [];
+                if (p.scores.components.location.score < 80) {
+                    improvements.push('Consider factoring in travel time and logistics costs for this location.');
+                }
+                if (p.scores.components.gc.score < 70) {
+                    improvements.push('Reach out to the GCs early to build rapport and clarify scope questions.');
+                }
+                if (riskKeywords > 0) {
+                    improvements.push('Have your attorney review the contract terms, especially the identified risk clauses.');
+                }
+                if (p.scores.components.keywords.score < 70) {
+                    improvements.push('Request clarification on any ambiguous scope items before submitting your bid.');
+                }
+                if (p.scores.components.trade.score < 80) {
+                    improvements.push('Highlight your relevant experience in similar projects to strengthen your bid.');
+                }
+                if (improvements.length === 0) {
+                    improvements.push('Your profile is a strong match. Submit a competitive price and emphasize your reliability.');
+                    improvements.push('Follow up with the GC after submission to demonstrate your interest.');
+                }
+
+                // Display AI Summary and Improvements
+                recsHTML += `
+                    <div style="margin-top: 20px; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border-left: 4px solid var(--accent);">
+                        <h4 style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: var(--text-primary);">📊 AI Analysis Summary</h4>
+                        <p style="margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-secondary);">${aiSummary}</p>
+                    </div>
+                    <div style="margin-top: 16px; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border-left: 4px solid var(--success);">
+                        <h4 style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: var(--text-primary);">💡 How to Improve Your Chances</h4>
+                        <ul style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.8; color: var(--text-secondary);">
+                            ${improvements.map(tip => `<li>${tip}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+
                 // Add interactive Q&A with Sam
                 const advisorName = (await getSettings()).ai_advisor_name || 'Sam';
                 recsHTML += `
