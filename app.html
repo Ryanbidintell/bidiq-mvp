@@ -1593,6 +1593,16 @@
                         </div>
                     </div>
 
+                    <!-- General Contractors Bidding Card -->
+                    <div class="card" style="margin-bottom: 24px;">
+                        <div class="card-header">
+                            <h3 class="card-title">🏢 General Contractors Bidding</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="reportGCsContent"></div>
+                        </div>
+                    </div>
+
                     <!-- Score Report Card -->
                     <div class="card" style="margin-bottom: 24px;">
                         <div class="card-header">
@@ -6628,6 +6638,26 @@ ${truncatedText}`;
                         </div>
                     </div>
                 </div>
+
+                <!-- General Contractors Bidding -->
+                <div style="margin-top:20px;padding:16px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);">
+                    <div style="font-weight:600;margin-bottom:12px;color:var(--text-primary);">🏢 General Contractors Bidding</div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;">
+                        ${(a.gcs || []).map(gc => {
+                            const winRate = gc.bids > 0 ? Math.round((gc.wins / gc.bids) * 100) : 0;
+                            const stars = '★'.repeat(gc.rating) + '☆'.repeat(5 - gc.rating);
+                            return `
+                                <div style="padding:12px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-color);">
+                                    <div style="font-weight:600;font-size:14px;margin-bottom:4px;">${gc.name}</div>
+                                    <div style="color:var(--accent);font-size:16px;margin-bottom:4px;">${stars}</div>
+                                    <div style="font-size:12px;color:var(--text-muted);">
+                                        ${gc.bids > 0 ? `${gc.wins} wins / ${gc.bids} bids (${winRate}%)` : 'No history yet'}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
             `;
         }
 
@@ -7955,6 +7985,28 @@ ${truncatedText}`;
                     </div>
                 `;
                 document.getElementById('reportScoreContent').innerHTML = scoreHTML;
+
+                // Populate GCs content
+                let gcsHTML = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">';
+                if (p.gcs && p.gcs.length > 0) {
+                    p.gcs.forEach(gc => {
+                        const winRate = gc.bids > 0 ? Math.round((gc.wins / gc.bids) * 100) : 0;
+                        const stars = '★'.repeat(gc.rating) + '☆'.repeat(5 - gc.rating);
+                        gcsHTML += `
+                            <div style="padding: 16px; background: var(--bg-tertiary); border-radius: var(--radius); border: 1px solid var(--border-color);">
+                                <div style="font-weight: 600; font-size: 15px; margin-bottom: 6px; color: var(--text-primary);">${gc.name}</div>
+                                <div style="color: var(--accent); font-size: 18px; margin-bottom: 6px;">${stars}</div>
+                                <div style="font-size: 13px; color: var(--text-muted);">
+                                    ${gc.bids > 0 ? `${gc.wins} wins / ${gc.bids} bids (${winRate}% win rate)` : 'No history yet'}
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    gcsHTML += '<div style="padding: 20px; text-align: center; color: var(--text-muted);">No GCs specified for this project</div>';
+                }
+                gcsHTML += '</div>';
+                document.getElementById('reportGCsContent').innerHTML = gcsHTML;
 
                 // Populate recommendations - Use Intelligence Engine output if available
                 let recsHTML = '<div style="line-height: 1.6;">';
