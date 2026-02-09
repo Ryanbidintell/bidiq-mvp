@@ -3386,7 +3386,76 @@ ${fullText.substring(0, 40000)}`;
                 throw e; // Re-throw so calling code can handle it
             }
         }
-        
+
+        async function saveProjectManually() {
+            const btn = document.getElementById('saveProjectBtn');
+            if (!btn) return;
+
+            // Prevent double-saves
+            if (btn.dataset.saved === 'true') {
+                console.log('Project already saved');
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '💾 Saving...';
+
+                if (!supabaseClient || !currentUser) {
+                    alert('❌ Not logged in. Please sign in to save projects.');
+                    btn.disabled = false;
+                    btn.innerHTML = '💾 Save to Projects';
+                    return;
+                }
+
+                if (!currentAnalysis) {
+                    alert('❌ No analysis to save.');
+                    btn.disabled = false;
+                    btn.innerHTML = '💾 Save to Projects';
+                    return;
+                }
+
+                // Save project to database
+                const savedProject = await saveProject(currentAnalysis);
+
+                if (savedProject && savedProject.id) {
+                    currentAnalysis.id = savedProject.id;
+                    console.log('✅ Project saved manually:', savedProject.id);
+
+                    // Clear projects cache to force refresh
+                    dataCache.projects = null;
+
+                    // Update GC bid counts
+                    const gcs = await getGCs();
+                    for (const sg of currentAnalysis.gcs) {
+                        const gc = gcs.find(g => g.name === sg.name);
+                        if (gc) {
+                            gc.bids = (gc.bids || 0) + 1;
+                            await saveGC(gc);
+                        }
+                    }
+
+                    // Refresh dashboard to show new project
+                    await loadDashboard();
+
+                    // Update button to show saved
+                    btn.innerHTML = '✓ Saved to Projects';
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-success');
+                    btn.dataset.saved = 'true';
+
+                    console.log('📊 Dashboard refreshed with new project');
+                } else {
+                    throw new Error('Failed to save project');
+                }
+            } catch (error) {
+                console.error('❌ Save failed:', error);
+                alert('❌ Failed to save project: ' + error.message);
+                btn.disabled = false;
+                btn.innerHTML = '💾 Save to Projects';
+            }
+        }
+
         async function updateProjectOutcome(id, outcome, outcomeData) {
             if (!supabaseClient || !currentUser) {
                 throw new Error('Not authenticated');
@@ -6008,40 +6077,8 @@ ${truncatedText}`;
                     intelligenceTags
                 };
 
-                // FIX BUG 8: Auto-save to database
-                updateProgress(98, 'Saving to database...');
-                try {
-                    if (supabaseClient && currentUser) {
-                        const savedProject = await saveProject(currentAnalysis);
-                        if (savedProject && savedProject.id) {
-                            currentAnalysis.id = savedProject.id; // Update with DB ID
-                            console.log('✅ Project auto-saved to database:', savedProject.id);
-
-                            // Clear projects cache to force refresh
-                            dataCache.projects = null;
-
-                            // Update GC bid counts
-                            const gcs = await getGCs();
-                            for (const sg of currentAnalysis.gcs) {
-                                const gc = gcs.find(g => g.name === sg.name);
-                                if (gc) {
-                                    gc.bids = (gc.bids || 0) + 1;
-                                    await saveGC(gc);
-                                }
-                            }
-
-                            // Refresh dashboard to show new project
-                            await loadDashboard();
-
-                            console.log('📊 Dashboard refreshed with new project');
-                        }
-                    } else {
-                        console.warn('⚠️ Not logged in - project not saved to database');
-                    }
-                } catch (saveError) {
-                    console.error('❌ Auto-save failed (non-fatal):', saveError);
-                    // Don't block the UI if save fails - user can manually save later
-                }
+                // No auto-save - user must click "Save to Projects" button
+                console.log('📊 Analysis complete. Ready to save manually.');
 
                 updateProgress(100, 'Done!');
                 await new Promise(r => setTimeout(r, 300)); // Brief pause to show 100%
@@ -6699,7 +6736,7 @@ ${truncatedText}`;
                     </div>
                 </div>
                 <div style="display:flex;gap:12px;margin-top:20px;align-items:center;">
-                    <div style="flex:1;padding:12px;background:var(--success-bg);border-radius:var(--radius);text-align:center;color:var(--success);font-weight:600;">✓ Saved to Projects</div>
+                    <button id="saveProjectBtn" class="btn btn-primary" onclick="saveProjectManually()" style="flex:1;">💾 Save to Projects</button>
                     <button class="btn btn-secondary" onclick="printReport()">🖨 Print Report</button>
                     <button class="btn btn-secondary" onclick="resetAnalysis()">Start Over</button>
                 </div>
@@ -7060,9 +7097,18 @@ ${truncatedText}`;
             // Clean project location
             const location = [a.extracted.project_city, a.extracted.project_state].filter(Boolean).join(', ') || 'Location TBD';
 
-            // Building type
-            const buildingType = a.buildingType?.label || 'Not specified';
-            const buildingIcon = a.buildingType?.icon || '🏗️';
+            // Building type - handle both object and string formats
+            let buildingType, buildingIcon;
+            if (typeof a.buildingType === 'object' && a.buildingType !== null) {
+                buildingType = a.buildingType.label || a.buildingType.type || 'Not specified';
+                buildingIcon = a.buildingType.icon || '🏗️';
+            } else if (typeof a.buildingType === 'string') {
+                buildingType = a.buildingType.charAt(0).toUpperCase() + a.buildingType.slice(1);
+                buildingIcon = '🏗️';
+            } else {
+                buildingType = 'Not specified';
+                buildingIcon = '🏗️';
+            }
 
             // Bid deadline
             const deadline = a.extracted.bid_deadline || 'Not specified';
