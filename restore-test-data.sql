@@ -68,15 +68,12 @@ INSERT INTO keywords (user_id, keyword, type) VALUES
     ('d1989508-1d5e-4494-b3f8-d2899665d8b3', 'prevailing wage', 'risk')
 ON CONFLICT DO NOTHING;
 
--- 4. Add a sample project
+-- 4. Add a sample project (minimal fields only)
 INSERT INTO projects (
     user_id,
     extracted_data,
     scores,
-    gcs,
-    files,
-    outcome,
-    user_agreement_note
+    outcome
 ) VALUES (
     'd1989508-1d5e-4494-b3f8-d2899665d8b3',
     '{
@@ -87,7 +84,9 @@ INSERT INTO projects (
         "bid_date": "2026-03-15",
         "project_value": "$2.5M",
         "scope_summary": "Complete electrical renovation of 3-story medical office building including new panels, lighting, and data infrastructure.",
-        "general_contractor": "JE Dunn Construction"
+        "general_contractor": "JE Dunn Construction",
+        "gcs": ["JE Dunn Construction"],
+        "files": ["Sample Medical Office Building.pdf"]
     }'::jsonb,
     '{
         "final": 85,
@@ -99,10 +98,7 @@ INSERT INTO projects (
             "trade": {"score": 90, "reason": "Matches your trades"}
         }
     }'::jsonb,
-    ARRAY['JE Dunn Construction'],
-    ARRAY['Sample Medical Office Building.pdf'],
-    'won',
-    'Great project - on time and profitable'
+    'won'
 )
 ON CONFLICT DO NOTHING;
 
