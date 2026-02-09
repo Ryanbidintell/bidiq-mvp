@@ -2885,7 +2885,7 @@ ${fullText.substring(0, 40000)}`;
                         ai_advisor_name: 'Sam',
                         ai_advisor_tone: 'supportive',
                         weights: DEFAULT_SETTINGS.weights,
-                        decision_time: 'normal',
+                        decision_time: 45,  // INTEGER minutes instead of 'normal'
                         default_stars: 3,
                         onboarding_completed: false
                     };
@@ -2926,7 +2926,7 @@ ${fullText.substring(0, 40000)}`;
                     ai_advisor_name: data.ai_advisor_name || 'Sam',
                     ai_advisor_tone: data.ai_advisor_tone || 'supportive',
                     weights: weights,
-                    decisionTime: data.decision_time || 'normal',
+                    decisionTime: data.decision_time || 45,  // INTEGER minutes instead of 'normal'
                     defaultStars: data.default_stars || 3,
                     onboarding_completed: data.onboarding_completed || false
                 };
@@ -4676,7 +4676,7 @@ ${fullText.substring(0, 40000)}`;
                     gc: gcWeight,
                     trade: tradeWeight
                 },
-                decision_time: 'normal',
+                decision_time: 45,  // INTEGER minutes instead of 'normal'
                 default_stars: 3,
                 onboarding_completed: true
             };
