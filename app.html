@@ -3070,6 +3070,10 @@ ${fullText.substring(0, 40000)}`;
                     onboarding_completed: s.onboarding_completed
                 });
 
+                // Validate capacity value
+                const validCapacities = ['low', 'moderate', 'high'];
+                const capacity = validCapacities.includes(s.capacity) ? s.capacity : 'moderate';
+
                 const { data, error } = await supabaseClient.from('user_settings').upsert({
                     user_id: currentUser.id,
                     company_type: s.company_type || s.companyType || 'subcontractor',
@@ -3085,7 +3089,7 @@ ${fullText.substring(0, 40000)}`;
                     trades: s.trades,
                     client_types: s.client_types || [],
                     risk_tolerance: s.risk_tolerance || s.riskTolerance,
-                    capacity: s.capacity,
+                    capacity: capacity,
                     ai_advisor_name: s.ai_advisor_name || 'Sam',
                     ai_advisor_tone: s.ai_advisor_tone || 'supportive',
                     weights: s.weights,
@@ -5218,23 +5222,24 @@ ${fullText.substring(0, 40000)}`;
                         return { ...coords, method: 'known' };
                     }
                 }
-            } else {
-                console.log('  🏠 Full street address detected - skipping city center, using precise geocoding');
-            }
 
-            // Also check if fallbackCity alone matches any known city (case insensitive)
-            if (fallbackCity && fallbackState) {
-                const cityLower = fallbackCity.toLowerCase().trim();
-                const stateLower = fallbackState.toLowerCase().trim();
-                const lookupKey = `${cityLower}, ${stateLower}`;
+                // Also check if fallbackCity alone matches any known city (case insensitive)
+                // Only do this if NO street address detected
+                if (fallbackCity && fallbackState) {
+                    const cityLower = fallbackCity.toLowerCase().trim();
+                    const stateLower = fallbackState.toLowerCase().trim();
+                    const lookupKey = `${cityLower}, ${stateLower}`;
 
-                for (const [key, coords] of Object.entries(knownCities)) {
-                    if (key === lookupKey || key.startsWith(cityLower + ',')) {
-                        console.log(`  🎯🎯🎯 USING KNOWN COORDINATES (matched city):`, lookupKey);
-                        console.log('  Coordinates:', coords);
-                        return { ...coords, method: 'known' };
+                    for (const [key, coords] of Object.entries(knownCities)) {
+                        if (key === lookupKey || key.startsWith(cityLower + ',')) {
+                            console.log(`  🎯🎯🎯 USING KNOWN COORDINATES (matched city):`, lookupKey);
+                            console.log('  Coordinates:', coords);
+                            return { ...coords, method: 'known' };
+                        }
                     }
                 }
+            } else {
+                console.log('  🏠 Full street address detected - skipping city center, using precise geocoding');
             }
 
             console.log('  ⚠️ NO KNOWN CITY MATCH FOUND - will use geocoding API');
@@ -6753,7 +6758,7 @@ ${truncatedText}`;
                 <div style="margin-top:20px;padding:16px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);">
                     <div style="font-weight:600;margin-bottom:12px;color:var(--text-primary);">🏢 General Contractors Bidding</div>
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;">
-                        ${(a.gcs || []).map(gc => {
+                        ${(gcs || []).map(gc => {
                             const winRate = gc.bids > 0 ? Math.round((gc.wins / gc.bids) * 100) : 0;
                             const stars = '★'.repeat(gc.rating) + '☆'.repeat(5 - gc.rating);
                             return `
