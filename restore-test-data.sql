@@ -71,18 +71,19 @@ ON CONFLICT DO NOTHING;
 -- 4. Add a sample project
 INSERT INTO projects (
     user_id,
-    file_name,
     extracted_data,
     scores,
     gcs,
+    files,
     outcome,
-    notes
+    user_agreement_note
 ) VALUES (
     'd1989508-1d5e-4494-b3f8-d2899665d8b3',
-    'Sample Medical Office Building.pdf',
     '{
         "project_name": "Medical Office Building Renovation",
         "location": "Kansas City, MO",
+        "city": "Kansas City",
+        "state": "MO",
         "bid_date": "2026-03-15",
         "project_value": "$2.5M",
         "scope_summary": "Complete electrical renovation of 3-story medical office building including new panels, lighting, and data infrastructure.",
@@ -99,6 +100,7 @@ INSERT INTO projects (
         }
     }'::jsonb,
     ARRAY['JE Dunn Construction'],
+    ARRAY['Sample Medical Office Building.pdf'],
     'won',
     'Great project - on time and profitable'
 )
