@@ -11303,6 +11303,7 @@ Respond now:`;
         async function toggleAIChat() {
             const panel = document.getElementById('aiChatPanel');
             const button = document.getElementById('aiChatButton');
+            const feedbackBtn = document.getElementById('feedbackButton');
 
             aiChatOpen = !aiChatOpen;
 
@@ -11310,6 +11311,11 @@ Respond now:`;
                 panel.classList.add('open');
                 button.classList.add('active');
                 button.innerHTML = '✕';
+
+                // Hide beta feedback button when chat is open
+                if (feedbackBtn) {
+                    feedbackBtn.style.display = 'none';
+                }
 
                 // Update advisor name in header
                 const settings = await getSettings();
@@ -11327,6 +11333,11 @@ Respond now:`;
                 panel.classList.remove('open');
                 button.classList.remove('active');
                 button.innerHTML = '💬';
+
+                // Show beta feedback button again when chat closes
+                if (feedbackBtn) {
+                    feedbackBtn.style.display = 'flex';
+                }
             }
         }
 
