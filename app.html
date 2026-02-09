@@ -2619,7 +2619,15 @@ Return JSON with this exact format:
 
             try {
                 const response = await callAI('extract_building_type', truncatedText, prompt);
-                const result = JSON.parse(response);
+
+                // Strip markdown code blocks if present (AI sometimes returns ```json...```)
+                let jsonStr = response;
+                if (response.includes('```')) {
+                    const match = response.match(/```(?:json)?\s*([\s\S]*?)```/);
+                    if (match) jsonStr = match[1];
+                }
+
+                const result = JSON.parse(jsonStr.trim());
                 return result;
             } catch (error) {
                 console.error('Building type extraction failed:', error);
@@ -5616,11 +5624,8 @@ ${truncatedText}`;
                     bid_deadline: bidDeadline
                 });
 
-                // Track API usage for cost analysis
-                if (data.usage) {
-                    const cost = calculateAPICost('anthropic', 'claude-sonnet-4.5', data.usage.input_tokens || 0, data.usage.output_tokens || 0);
-                    await trackAPIUsage('extraction', 'anthropic', 'claude-sonnet-4.5', data.usage.input_tokens || 0, data.usage.output_tokens || 0, cost, null, true, null, null);
-                }
+                // Note: API usage tracking not available from backend callAI function
+                // Backend handles API calls internally, usage data not returned
 
                 return {
                     project_name: projectName,
