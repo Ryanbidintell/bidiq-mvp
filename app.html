@@ -11489,13 +11489,16 @@ Respond now:`;
                 return;
             }
 
+            // Store matches for later retrieval
+            dropdown.gcMatches = matches;
+
             // Render suggestions
-            dropdown.innerHTML = matches.map(gc => {
+            dropdown.innerHTML = matches.map((gc, index) => {
                 const winRate = gc.bids > 0 ? Math.round((gc.wins / gc.bids) * 100) : null;
                 const ratingStars = '★'.repeat(gc.rating) + '☆'.repeat(5 - gc.rating);
 
                 return `
-                    <div class="gc-autocomplete-item" onclick='selectGCAutocomplete(${JSON.stringify(gc)})'>
+                    <div class="gc-autocomplete-item" data-gc-index="${index}">
                         <div>
                             <div class="gc-autocomplete-name">${gc.name}</div>
                             ${gc.location ? `<div class="gc-autocomplete-meta">${gc.location}</div>` : ''}
@@ -11509,6 +11512,18 @@ Respond now:`;
             }).join('');
 
             dropdown.classList.add('active');
+
+            // Add click event delegation for items
+            dropdown.addEventListener('click', (e) => {
+                const item = e.target.closest('.gc-autocomplete-item');
+                if (item && dropdown.gcMatches) {
+                    const index = parseInt(item.dataset.gcIndex);
+                    const gc = dropdown.gcMatches[index];
+                    if (gc) {
+                        selectGCAutocomplete(gc);
+                    }
+                }
+            });
         }
 
         function selectGCAutocomplete(gc) {
