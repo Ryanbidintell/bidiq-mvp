@@ -6612,11 +6612,11 @@ ${truncatedText}`;
                         </div>
                         <div>
                             <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Location</div>
-                            <div style="font-weight:500;font-size:14px;">${extracted.city || 'Unknown'}, ${extracted.state || '?'}</div>
+                            <div style="font-weight:500;font-size:14px;">${extracted.city || extracted.project_city || 'Unknown'}, ${extracted.state || extracted.project_state || '?'}</div>
                         </div>
                         <div>
                             <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Building Size</div>
-                            <div style="font-weight:500;font-size:14px;">${formatSF(extracted.project_size_sf)}</div>
+                            <div style="font-weight:500;font-size:14px;">${extracted.project_size_sf ? formatSF(extracted.project_size_sf) : 'Not found'}</div>
                         </div>
                         <div>
                             <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Owner</div>
