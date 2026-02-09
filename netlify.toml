@@ -6,6 +6,12 @@
 [build.environment]
   NODE_VERSION = "18"
 
+[dev]
+  command = ""
+  port = 8888
+  publish = "."
+  autoLaunch = false
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
