@@ -8669,11 +8669,28 @@ ${truncatedText}`;
                 progressText.textContent = 'Complete!';
                 progressBar.style.width = '100%';
 
+                console.log('✅ Reupload complete, refreshing report in 500ms...');
+                console.log('   Project ID:', project.id);
+                console.log('   Cache cleared:', dataCache.projects === null);
+
                 // Close modal and show success
-                setTimeout(() => {
-                    closeReuploadModal();
-                    showBanner('✅ Project re-analyzed with new documents', 'success');
-                    viewReport(project.id);
+                setTimeout(async () => {
+                    try {
+                        closeReuploadModal();
+                        showBanner('✅ Project re-analyzed with new documents', 'success');
+
+                        // Force cache clear again just to be sure
+                        dataCache.projects = null;
+
+                        console.log('🔄 Calling viewReport to refresh...');
+                        await viewReport(project.id);
+                        console.log('✅ Report refreshed successfully');
+                    } catch (refreshError) {
+                        console.error('❌ Failed to refresh report:', refreshError);
+                        showBanner('⚠️ Re-analysis complete, refreshing page...', 'info');
+                        // Fallback: Just reload the page to show updated report
+                        setTimeout(() => location.reload(), 1000);
+                    }
                 }, 500);
 
             } catch (error) {
