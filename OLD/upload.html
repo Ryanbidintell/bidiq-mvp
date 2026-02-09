@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BidIQ - Upload</title>
+    <style>
+        body { font-family: Arial; padding: 40px; max-width: 600px; margin: auto; }
+        h1 { color: #333; }
+        #result { margin-top: 20px; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🎯 BidIQ - Upload Bid</h1>
+    
+    <p>1. Select a PDF file:</p>
+    <input type="file" id="pdfFile" accept=".pdf">
+    
+    <p>2. Click upload:</p>
+    <button id="uploadBtn">Upload to BidIQ</button>
+    
+    <div id="result"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        window.onload = function() {
+            var sb = window.supabase.createClient(
+                "https://szifhqmrddmdkgschkkw.supabase.co",
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6aWZocW1yZGRtZGtnc2Noa2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwOTkyMDUsImV4cCI6MjA4NDY3NTIwNX0.XSStBZABbfJRMkGqwG-uh2X6nco7GqtiIxUg_0HHlZE"
+            );
+            
+            document.getElementById('uploadBtn').onclick = async function() {
+                var fileInput = document.getElementById('pdfFile');
+                var file = fileInput.files[0];
+                var result = document.getElementById('result');
+                
+                if (!file) {
+                    result.className = 'error';
+                    result.innerHTML = '❌ Please select a file first!';
+                    return;
+                }
+                
+                result.className = 'info';
+                result.innerHTML = '⏳ Uploading...';
+                
+                try {
+                    // Clean filename - remove special characters
+                    var cleanName = file.name
+                        .replace(/[^a-zA-Z0-9.-]/g, '_')
+                        .replace(/__+/g, '_');
+                    var filename = Date.now() + '_' + cleanName;
+                    
+                    var response = await sb.storage
+                        .from('bid-documents')
+                        .upload(filename, file);
+                    
+                    if (response.error) {
+                        throw response.error;
+                    }
+                    
+                    var urlResponse = sb.storage
+                        .from('bid-documents')
+                        .getPublicUrl(filename);
+                    
+                    result.className = 'success';
+                    result.innerHTML = '✅ SUCCESS!<br><br>File: ' + file.name + '<br><br>URL: ' + urlResponse.data.publicUrl;
+                    
+                } catch (err) {
+                    result.className = 'error';
+                    result.innerHTML = '❌ Error: ' + err.message;
+                }
+            };
+        };
+    </script>
+</body>
+</html>

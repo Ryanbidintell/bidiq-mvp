@@ -1,0 +1,2743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BidIntell - Decision Intelligence for Construction Bidding</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #111113;
+            --bg-card: #18181b;
+            --bg-hover: #27272a;
+            --bg-input: #18181b;
+            --border: #27272a;
+            --border-light: #3f3f46;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-dim: rgba(59, 130, 246, 0.15);
+            --success: #22c55e;
+            --success-bg: rgba(34, 197, 94, 0.15);
+            --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.15);
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.15);
+            --info: #3b82f6;
+            --info-bg: rgba(59, 130, 246, 0.15);
+            --radius: 8px;
+            --radius-lg: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; line-height: 1.5; }
+        .app { display: flex; min-height: 100vh; }
+        
+        /* Auth Screen */
+        .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary)); }
+        .auth-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 40px; width: 100%; max-width: 400px; }
+        .auth-logo { text-align: center; margin-bottom: 32px; }
+        .auth-logo .logo-icon { font-size: 48px; margin-bottom: 8px; }
+        .auth-logo h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 36px; font-weight: 800; }
+        .auth-logo h1 span { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .auth-logo .tagline { font-family: 'Space Mono', monospace; color: var(--accent); font-size: 11px; letter-spacing: 1px; margin-top: 12px; text-transform: uppercase; }
+        .auth-logo .tagline-sub { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+        .auth-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+        .auth-tab { flex: 1; padding: 10px; text-align: center; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; font-weight: 500; color: var(--text-secondary); transition: all 0.2s; }
+        .auth-tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+        .auth-form { display: none; }
+        .auth-form.active { display: block; }
+        .auth-error { background: var(--danger-bg); border: 1px solid rgba(239,68,68,0.3); color: var(--danger); padding: 12px; border-radius: var(--radius); margin-bottom: 16px; font-size: 13px; display: none; }
+        .auth-success { background: var(--success-bg); border: 1px solid rgba(16,185,129,0.3); color: var(--success); padding: 12px; border-radius: var(--radius); margin-bottom: 16px; font-size: 13px; display: none; }
+        .user-info { font-size: 12px; color: var(--text-muted); padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+        .user-info span { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .logout-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 11px; padding: 4px 8px; border-radius: 4px; }
+        .logout-btn:hover { background: var(--danger-bg); color: var(--danger); }
+        
+        /* Sidebar */
+        .sidebar { width: 240px; background: var(--bg-secondary); border-right: 1px solid var(--border); position: fixed; height: 100vh; display: flex; flex-direction: column; }
+        .logo { padding: 20px; border-bottom: 1px solid var(--border); }
+        .logo h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .logo h1 span { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .logo p { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; }
+        .nav { flex: 1; padding: 12px 8px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius); color: var(--text-secondary); cursor: pointer; margin-bottom: 4px; font-weight: 500; font-size: 14px; transition: all 0.2s; }
+        .nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
+        .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+        .nav-item svg { width: 18px; height: 18px; }
+        .sidebar-footer { padding: 12px; border-top: 1px solid var(--border); }
+        .capacity-box { background: var(--bg-card); border-radius: var(--radius); padding: 10px; }
+        .capacity-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; }
+        .capacity-value { font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .capacity-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .capacity-hungry .capacity-dot { background: var(--danger); }
+        .capacity-steady .capacity-dot { background: var(--success); }
+        .capacity-maxed .capacity-dot { background: var(--warning); }
+        
+        /* Main */
+        .main { flex: 1; margin-left: 240px; }
+        .page-header { padding: 20px 24px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
+        .page-title { font-size: 22px; font-weight: 700; }
+        .page-subtitle { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+        .page-content { padding: 24px; max-width: 1200px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; position: relative; }
+        .stat-card.accent { border-left: 3px solid var(--accent); }
+        .stat-card.success { border-left: 3px solid var(--success); }
+        .stat-card.info { border-left: 3px solid var(--info); }
+        .stat-card.warning { border-left: 3px solid var(--warning); }
+        .stat-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .stat-value { font-size: 28px; font-weight: 700; font-family: 'Space Mono', monospace; }
+        
+        /* Cards */
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 20px; }
+        .card-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .card-title { font-weight: 600; font-size: 15px; }
+        .card-body { padding: 18px; }
+        
+        /* Help text */
+        .help-text { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; padding: 12px; background: var(--bg-input); border-radius: var(--radius); border-left: 3px solid var(--info); }
+        .help-text strong { color: var(--text-secondary); }
+        
+        /* Tooltips */
+        .tooltip-trigger { cursor: help; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: var(--bg-input); border-radius: 50%; font-size: 10px; color: var(--text-muted); margin-left: 4px; }
+        .tooltip-trigger:hover { background: var(--border); color: var(--text-primary); }
+        
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: var(--radius); font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; border: none; font-family: inherit; }
+        .btn-primary { background: var(--accent); color: #000; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-secondary { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--bg-hover); border-color: var(--border-light); }
+        .btn-sm { padding: 6px 10px; font-size: 12px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* Forms */
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+        .form-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+        .form-input, .form-select { width: 100%; padding: 10px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 13px; font-family: inherit; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: var(--accent); background: var(--bg-secondary); }
+        .form-input::placeholder { color: var(--text-muted); }
+        .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .form-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        
+        /* Section headers */
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+        .section-title { font-size: 16px; font-weight: 600; }
+        .section-description { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+        
+        /* Upload */
+        .upload-zone { border: 2px dashed var(--border); border-radius: var(--radius-lg); padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg-input); }
+        .upload-zone:hover { border-color: var(--accent); background: var(--accent-dim); }
+        .upload-zone svg { width: 40px; height: 40px; color: var(--text-muted); margin-bottom: 12px; }
+        .upload-zone h3 { color: var(--text-primary); font-size: 15px; margin-bottom: 4px; }
+        .upload-zone p { color: var(--text-muted); font-size: 13px; }
+        .file-list { margin-top: 12px; }
+        .file-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 6px; font-size: 13px; }
+        .file-item .remove { margin-left: auto; color: var(--text-muted); cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+        .file-item .remove:hover { color: var(--danger); background: var(--danger-bg); }
+        
+        /* Score badges */
+        .score-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 16px; font-weight: 600; font-size: 13px; font-family: 'Space Mono', monospace; }
+        .score-badge.go { background: var(--success-bg); color: var(--success); }
+        .score-badge.review { background: var(--warning-bg); color: var(--warning); }
+        .score-badge.pass { background: var(--danger-bg); color: var(--danger); }
+        
+        .outcome-badge { display: inline-flex; padding: 3px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; text-transform: capitalize; }
+        .outcome-badge.won { background: var(--success-bg); color: var(--success); }
+        .outcome-badge.lost { background: var(--danger-bg); color: var(--danger); }
+        .outcome-badge.ghost { background: var(--bg-input); color: var(--text-muted); }
+        .outcome-badge.pending { background: var(--info-bg); color: var(--info); }
+        .outcome-badge.declined { background: var(--bg-input); color: var(--text-secondary); }
+        
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 600px; max-height: 90vh; overflow: auto; }
+        .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-size: 16px; font-weight: 700; }
+        .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 24px; line-height: 1; padding: 4px; }
+        .modal-close:hover { color: var(--text-primary); }
+        .modal-body { padding: 20px; }
+        .modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+        
+        /* Score report */
+        .score-report { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+        .score-report-header { padding: 24px; text-align: center; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+        .score-report-value { font-size: 64px; font-weight: 700; font-family: 'Space Mono', monospace; line-height: 1; }
+        .score-report-value.go { color: var(--success); }
+        .score-report-value.review { color: var(--warning); }
+        .score-report-value.pass { color: var(--danger); }
+        .score-report-rec { font-size: 18px; font-weight: 600; margin-top: 8px; }
+        .score-component { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        .score-component:last-child { border-bottom: none; }
+        .score-component-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .score-component-title { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+        .score-component-value { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 15px; }
+        .score-component-bar { height: 8px; background: var(--bg-input); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+        .score-component-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+        .score-component-fill.high { background: var(--success); }
+        .score-component-fill.medium { background: var(--warning); }
+        .score-component-fill.low { background: var(--danger); }
+        .score-component-reason { font-size: 13px; color: var(--text-secondary); }
+        .score-component-details { margin-top: 10px; padding: 10px; background: var(--bg-input); border-radius: var(--radius); font-size: 12px; }
+        
+        .keyword-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin: 2px; }
+        .keyword-tag.good { background: var(--success-bg); color: var(--success); }
+        .keyword-tag.bad { background: var(--danger-bg); color: var(--danger); }
+        .keyword-tag .remove { cursor: pointer; opacity: 0.7; margin-left: 2px; }
+        .keyword-tag .remove:hover { opacity: 1; }
+        
+        /* GC selector */
+        .gc-selector { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--bg-input); }
+        .gc-selector-search { display: flex; border-bottom: 1px solid var(--border); }
+        .gc-selector-search input { flex: 1; padding: 10px 12px; background: transparent; border: none; color: var(--text-primary); font-size: 13px; }
+        .gc-selector-search input:focus { outline: none; }
+        .gc-selector-search input::placeholder { color: var(--text-muted); }
+        .gc-selector-list { max-height: 200px; overflow-y: auto; }
+        .gc-selector-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--border); }
+        .gc-selector-item:last-child { border-bottom: none; }
+        .gc-selector-item:hover { background: var(--bg-hover); }
+        .gc-selector-item.selected { background: var(--accent-dim); }
+        .gc-selected-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+        .gc-selected-tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; }
+        .gc-selected-tag .remove { cursor: pointer; color: var(--text-muted); }
+        .gc-selected-tag .remove:hover { color: var(--danger); }
+        
+        .competition-indicator { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: var(--radius); font-size: 13px; font-weight: 500; margin-top: 12px; }
+        .competition-indicator.low { background: var(--success-bg); color: var(--success); }
+        .competition-indicator.moderate { background: var(--info-bg); color: var(--info); }
+        .competition-indicator.high { background: var(--warning-bg); color: var(--warning); }
+        .competition-indicator.very-high { background: var(--danger-bg); color: var(--danger); }
+        
+        /* Weight sliders - IMPROVED */
+        .weights-container { background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+        .weight-slider { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .weight-slider:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        .weight-slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .weight-slider-label { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+        .weight-slider-value { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 16px; color: var(--accent); background: var(--accent-dim); padding: 2px 8px; border-radius: 4px; }
+        .weight-slider input[type="range"] { width: 100%; height: 8px; border-radius: 4px; background: var(--bg-secondary); appearance: none; cursor: pointer; }
+        .weight-slider input[type="range"]::-webkit-slider-thumb { appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--bg-card); }
+        .weight-slider input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.1); }
+        .weight-slider-hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+        .weight-total { text-align: center; padding: 12px; background: var(--bg-secondary); border-radius: var(--radius); margin-top: 16px; font-size: 15px; }
+        .weight-total-value { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 18px; margin-left: 8px; }
+        .weight-total-value.valid { color: var(--success); }
+        .weight-total-value.invalid { color: var(--danger); }
+        
+        /* Toggle improved */
+        .toggle { display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 13px; padding: 8px 0; }
+        .toggle-switch { width: 44px; height: 24px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; position: relative; transition: all 0.2s; flex-shrink: 0; }
+        .toggle-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: var(--text-muted); border-radius: 50%; transition: all 0.2s; }
+        .toggle input { display: none; }
+        .toggle input:checked + .toggle-switch { background: var(--accent); border-color: var(--accent); }
+        .toggle input:checked + .toggle-switch::after { left: 23px; background: #000; }
+        
+        /* Checkbox group improved */
+        .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; font-size: 13px; transition: all 0.2s; }
+        .checkbox-item:hover { border-color: var(--border-light); background: var(--bg-hover); }
+        .checkbox-item.selected { background: var(--accent-dim); border-color: var(--accent); }
+        .checkbox-item input { display: none; }
+        .checkbox-item .check { width: 16px; height: 16px; border: 2px solid var(--border); border-radius: 3px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .checkbox-item.selected .check { background: var(--accent); border-color: var(--accent); }
+        .checkbox-item.selected .check::after { content: '✓'; color: #000; font-size: 10px; font-weight: bold; }
+        
+        /* Keywords config improved */
+        .keywords-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .keywords-section { background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; }
+        .keywords-section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+        .keywords-section-header h4 { font-size: 14px; font-weight: 600; }
+        .keywords-section.good .keywords-section-header h4 { color: var(--success); }
+        .keywords-section.bad .keywords-section-header h4 { color: var(--danger); }
+        .keywords-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; min-height: 36px; padding: 8px; background: var(--bg-secondary); border-radius: var(--radius); }
+        .keywords-input-row { display: flex; gap: 8px; }
+        .keywords-input-row input { flex: 1; padding: 8px 10px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 13px; }
+        .keywords-input-row input:focus { outline: none; border-color: var(--accent); }
+        
+        /* GC list */
+        .gc-list { display: grid; gap: 10px; }
+        .gc-item { display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); }
+        .gc-item-info { flex: 1; }
+        .gc-item-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+        .gc-item-stats { font-size: 12px; color: var(--text-muted); }
+        .gc-item-rating { display: flex; gap: 2px; }
+        .star { font-size: 18px; cursor: pointer; color: var(--border); transition: color 0.1s; }
+        .star:hover { color: var(--accent-hover); }
+        .star.filled { color: var(--accent); }
+        
+        /* Empty state */
+        .empty-state { text-align: center; padding: 40px 20px; }
+        .empty-state svg { width: 48px; height: 48px; color: var(--text-muted); margin-bottom: 12px; }
+        .empty-state h3 { font-size: 16px; margin-bottom: 6px; color: var(--text-secondary); }
+        .empty-state p { color: var(--text-muted); margin-bottom: 16px; font-size: 13px; }
+        
+        /* Loading */
+        .loading { display: flex; align-items: center; justify-content: center; padding: 40px; }
+        .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Address prompt */
+        .address-prompt { background: var(--warning-bg); border: 1px solid rgba(245,158,11,0.3); border-radius: var(--radius); padding: 14px; margin-top: 12px; }
+        .address-prompt-title { font-weight: 600; color: var(--warning); margin-bottom: 8px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+        .address-prompt-row { display: flex; gap: 8px; }
+        .address-prompt-row input { flex: 1; }
+        
+        /* Table */
+        .projects-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .projects-table th { text-align: left; padding: 12px 14px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); background: var(--bg-input); }
+        .projects-table td { padding: 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        .projects-table tr:hover td { background: var(--bg-hover); }
+        .project-name { font-weight: 600; }
+        .project-location { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        
+        /* Settings sections */
+        .settings-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 24px; overflow: hidden; }
+        .settings-card-header { padding: 16px 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+        .settings-card-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+        .settings-card-description { font-size: 12px; color: var(--text-muted); }
+        .settings-card-body { padding: 20px; }
+        
+        @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; } .stats-grid { grid-template-columns: 1fr; } .form-row, .keywords-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <!-- Auth Screen -->
+    <div class="auth-container" id="authScreen">
+        <div class="auth-box">
+            <div class="auth-logo">
+                <div class="logo-icon">🎯</div>
+                <h1><span>BidIntell</span></h1>
+                <div class="tagline">Decision Intelligence</div>
+                <div class="tagline-sub">for Construction Bidding</div>
+            </div>
+            <div class="auth-tabs">
+                <div class="auth-tab active" data-form="login">Sign In</div>
+                <div class="auth-tab" data-form="signup">Sign Up</div>
+            </div>
+            <div class="auth-error" id="authError"></div>
+            <div class="auth-success" id="authSuccess"></div>
+            <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="loginEmail" placeholder="you@company.com" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div style="position: relative;">
+                        <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" style="padding-right: 45px;">
+                        <button type="button" onclick="togglePassword('loginPassword', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px 8px; font-size: 12px;">Show</button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="loginBtn" style="width:100%;padding:12px;margin-top:8px">Sign In</button>
+            </form>
+            <form class="auth-form" id="signupForm" onsubmit="handleSignup(event)">
+                <div class="form-group">
+                    <label class="form-label">Company Name</label>
+                    <input type="text" class="form-input" id="signupCompany" placeholder="Your Company" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="signupEmail" placeholder="you@company.com" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div style="position: relative;">
+                        <input type="password" class="form-input" id="signupPassword" placeholder="Min 6 characters" minlength="6" required autocomplete="new-password" style="padding-right: 45px;">
+                        <button type="button" onclick="togglePassword('signupPassword', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px 8px; font-size: 12px;">Show</button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="signupBtn" style="width:100%;padding:12px;margin-top:8px">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="app" id="mainApp" style="display:none">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>🎯 <span>BidIntell</span></h1>
+                <p>Decision Intelligence</p>
+            </div>
+            <nav class="nav">
+                <div class="nav-item active" data-tab="dashboard">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                    Dashboard
+                </div>
+                <div class="nav-item" data-tab="analyze">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                    Analyze Bid
+                </div>
+                <div class="nav-item" data-tab="projects">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                    Projects
+                </div>
+                <div class="nav-item" data-tab="gcs">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                    GC Database
+                </div>
+                <div class="nav-item" data-tab="keywords">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                    Keywords
+                </div>
+                <div class="nav-item" data-tab="settings">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    Settings
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="capacity-box capacity-steady" id="capacityIndicator">
+                    <div class="capacity-label">Current Capacity</div>
+                    <div class="capacity-value"><span class="capacity-dot"></span><span id="capacityText">Steady</span></div>
+                </div>
+                <div class="user-info"><span id="userEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ea9f998f98aa8f928b879a868fc4898587">[email&#160;protected]</a></span><button class="logout-btn" onclick="handleLogout()">Logout</button></div>
+            </div>
+        </aside>
+
+        <main class="main">
+            <!-- Dashboard Tab -->
+            <div class="tab-content active" id="tab-dashboard">
+                <header class="page-header"><h2 class="page-title">Dashboard</h2><p class="page-subtitle">Your bid intelligence at a glance</p></header>
+                <div class="page-content">
+                    <div class="stats-grid">
+                        <div class="stat-card accent"><div class="stat-label">Bids Analyzed</div><div class="stat-value" id="statBids">0</div></div>
+                        <div class="stat-card success"><div class="stat-label">Win Rate</div><div class="stat-value" id="statWinRate">--</div></div>
+                        <div class="stat-card info"><div class="stat-label">Pending Outcomes</div><div class="stat-value" id="statPending">0</div></div>
+                        <div class="stat-card warning"><div class="stat-label">Hours Saved</div><div class="stat-value" id="statHours">0</div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3 class="card-title">Recent Activity</h3><button class="btn btn-primary btn-sm" onclick="switchTab('analyze')">+ Analyze New Bid</button></div>
+                        <div class="card-body" id="recentActivity"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analyze Tab -->
+            <div class="tab-content" id="tab-analyze">
+                <header class="page-header"><h2 class="page-title">Analyze Bid</h2><p class="page-subtitle">Upload documents and get your personalized GO/NO-GO recommendation</p></header>
+                <div class="page-content">
+                    <div class="card">
+                        <div class="card-header"><h3 class="card-title">Step 1: Upload Bid Documents</h3></div>
+                        <div class="card-body">
+                            <div class="help-text">
+                                <strong>Upload any PDF documents from the bid package:</strong> bid invitation, specifications, drawings, or addenda. BidIntell will extract project details and search for keywords automatically.
+                            </div>
+                            <div class="upload-zone" id="uploadZone">
+                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
+                                <h3>Drop PDF files here or click to browse</h3>
+                                <p>Supports multiple files • Max 50MB each</p>
+                            </div>
+                            <input type="file" id="fileInput" accept=".pdf" multiple style="display: none;">
+                            <div class="file-list" id="fileList"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header"><h3 class="card-title">Step 2: Select GCs Bidding This Project</h3></div>
+                        <div class="card-body">
+                            <div class="help-text">
+                                <strong>Which general contractors are bidding on this project?</strong> Select all that apply. More GCs = more competition = score adjusts accordingly. If a GC isn't in your database yet, type their name and click "Add".
+                            </div>
+                            <div class="gc-selector">
+                                <div class="gc-selector-search">
+                                    <input type="text" id="gcSearchInput" placeholder="Search GCs or type new name...">
+                                    <button class="btn btn-primary btn-sm" onclick="addNewGCFromSearch()" style="border-radius: 0;">+ Add New</button>
+                                </div>
+                                <div class="gc-selector-list" id="gcSelectorList"></div>
+                            </div>
+                            <div class="gc-selected-list" id="selectedGCsList"></div>
+                            <div id="competitionIndicator"></div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="analyzeBtn" onclick="analyzeBid()" disabled style="width: 100%; padding: 14px; font-size: 15px;">
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                        Analyze Bid
+                    </button>
+                    <div id="analysisResult" style="margin-top: 24px;"></div>
+                </div>
+            </div>
+
+            <!-- Projects Tab -->
+            <div class="tab-content" id="tab-projects">
+                <header class="page-header"><h2 class="page-title">Projects</h2><p class="page-subtitle">Track all your analyzed bids and outcomes</p></header>
+                <div class="page-content">
+                    <div class="card">
+                        <div class="card-header"><h3 class="card-title">All Projects</h3><button class="btn btn-secondary btn-sm" onclick="exportCSV()">📥 Export CSV</button></div>
+                        <div class="card-body" style="padding: 0;" id="projectsList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GC Database Tab -->
+            <div class="tab-content" id="tab-gcs">
+                <header class="page-header"><h2 class="page-title">GC Database</h2><p class="page-subtitle">Track your relationships and win rates with each general contractor</p></header>
+                <div class="page-content">
+                    <div class="help-text">
+                        <strong>Your GC relationships are a key factor in bid scoring.</strong> Rate each GC based on your experience working with them (1-5 stars). As you record bid outcomes, win rates are calculated automatically.
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3 class="card-title">Your General Contractors</h3><button class="btn btn-primary btn-sm" onclick="showAddGCModal()">+ Add GC</button></div>
+                        <div class="card-body"><div id="gcDatabaseList" class="gc-list"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Keywords Tab -->
+            <div class="tab-content" id="tab-keywords">
+                <header class="page-header"><h2 class="page-title">Keywords</h2><p class="page-subtitle">Configure contract terms to look for in bid documents</p></header>
+                <div class="page-content">
+                    <div class="help-text">
+                        <strong>BidIntell searches your uploaded documents for these terms.</strong><br>
+                        • <span style="color: var(--success)">Good terms</span> add +8 points each to your score<br>
+                        • <span style="color: var(--danger)">Risk terms</span> subtract points based on your risk tolerance setting (-5 to -15)<br><br>
+                        <strong>How to add keywords:</strong> Type a keyword in the box below and press Enter or click Add. To add multiple keywords at once, separate them with commas (e.g., "design-assist, negotiated, preferred").
+                    </div>
+                    <div class="keywords-grid">
+                        <div class="keywords-section good">
+                            <div class="keywords-section-header"><h4>✓ Good Terms (+8 points each)</h4></div>
+                            <div class="keywords-list" id="goodKeywordsList"></div>
+                            <div class="keywords-input-row">
+                                <input type="text" id="goodKeywordInput" placeholder="Type keyword(s) separated by commas..." onkeypress="if(event.key==='Enter'){event.preventDefault();addGoodKeyword();}">
+                                <button class="btn btn-sm btn-secondary" onclick="addGoodKeyword()">Add</button>
+                            </div>
+                        </div>
+                        <div class="keywords-section bad">
+                            <div class="keywords-section-header"><h4>⚠ Risk Terms (penalty varies by risk tolerance)</h4></div>
+                            <div class="keywords-list" id="badKeywordsList"></div>
+                            <div class="keywords-input-row">
+                                <input type="text" id="badKeywordInput" placeholder="Type keyword(s) separated by commas..." onkeypress="if(event.key==='Enter'){event.preventDefault();addBadKeyword();}">
+                                <button class="btn btn-sm btn-secondary" onclick="addBadKeyword()">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="tab-settings">
+                <header class="page-header"><h2 class="page-title">Settings</h2><p class="page-subtitle">Configure BidIntell to match your business</p></header>
+                <div class="page-content">
+                    
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">📍 Business Location</div>
+                            <div class="settings-card-description">Where is your office? This is used to calculate distance to each project.</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div class="form-row-3">
+                                <div class="form-group"><label class="form-label">Office City</label><input type="text" class="form-input" id="settingCity" placeholder="Kansas City"></div>
+                                <div class="form-group"><label class="form-label">State</label><input type="text" class="form-input" id="settingState" placeholder="MO" maxlength="2" style="text-transform: uppercase;"></div>
+                                <div class="form-group"><label class="form-label">Service Radius</label><select class="form-select" id="settingRadius"><option value="25">25 miles</option><option value="50" selected>50 miles</option><option value="100">100 miles</option><option value="150">150 miles</option><option value="200">200+ miles</option></select></div>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" id="settingLocationMatters" checked>
+                                <span class="toggle-switch"></span>
+                                <span><strong>Include location in scoring</strong> - Turn off if you bid work regardless of distance</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">🔧 Your Trades</div>
+                            <div class="settings-card-description">Select the CSI divisions you work in. BidIntell searches bid docs for these divisions to calculate your Trade Match score.</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div class="checkbox-grid" id="tradesCheckboxes"></div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">⚖️ Score Weights</div>
+                            <div class="settings-card-description">How important is each factor to YOUR bid decisions? Adjust the sliders so they total exactly 100%. For example, if location doesn't matter much to you, reduce it and increase GC relationships.</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div class="weights-container">
+                                <div class="weight-slider" id="weightLocation">
+                                    <div class="weight-slider-header">
+                                        <span class="weight-slider-label">📍 Location Fit</span>
+                                        <span class="weight-slider-value">25%</span>
+                                    </div>
+                                    <input type="range" min="0" max="60" value="25">
+                                    <div class="weight-slider-hint">How much does distance from your office matter?</div>
+                                </div>
+                                <div class="weight-slider" id="weightKeywords">
+                                    <div class="weight-slider-header">
+                                        <span class="weight-slider-label">🔑 Keywords & Contract Terms</span>
+                                        <span class="weight-slider-value">30%</span>
+                                    </div>
+                                    <input type="range" min="0" max="60" value="30">
+                                    <div class="weight-slider-hint">How much do contract terms (risk clauses, preferences) influence your decision?</div>
+                                </div>
+                                <div class="weight-slider" id="weightGC">
+                                    <div class="weight-slider-header">
+                                        <span class="weight-slider-label">🏢 GC Relationship & Competition</span>
+                                        <span class="weight-slider-value">25%</span>
+                                    </div>
+                                    <input type="range" min="0" max="60" value="25">
+                                    <div class="weight-slider-hint">How much does your relationship with the GC (and number of competitors) matter?</div>
+                                </div>
+                                <div class="weight-slider" id="weightTrade">
+                                    <div class="weight-slider-header">
+                                        <span class="weight-slider-label">🔧 Trade Match</span>
+                                        <span class="weight-slider-value">20%</span>
+                                    </div>
+                                    <input type="range" min="0" max="60" value="20">
+                                    <div class="weight-slider-hint">How important is it that your specific trades appear in the specs?</div>
+                                </div>
+                                <div class="weight-total">
+                                    Total: <span class="weight-total-value valid" id="weightTotal">100%</span>
+                                    <span id="weightWarning" style="display: none; color: var(--danger); font-size: 12px; margin-left: 10px;">Must equal 100%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">⚡ Risk & Capacity</div>
+                            <div class="settings-card-description">These settings affect how BidIntell scores and recommends bids based on your current situation.</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Risk Tolerance</label>
+                                    <select class="form-select" id="settingRiskTolerance">
+                                        <option value="low">Low - Avoid risky contracts (-15 pts per risk term)</option>
+                                        <option value="medium" selected>Medium - Standard approach (-10 pts per risk term)</option>
+                                        <option value="high">High - Comfortable with risk (-5 pts per risk term)</option>
+                                    </select>
+                                    <div class="form-hint">How much should risk terms (liquidated damages, pay-if-paid, etc.) penalize a bid?</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Current Capacity</label>
+                                    <select class="form-select" id="settingCapacity">
+                                        <option value="hungry">🔴 Hungry - Need work, more aggressive recommendations</option>
+                                        <option value="steady" selected>🟢 Steady - Normal workload, balanced recommendations</option>
+                                        <option value="maxed">🟡 Maxed - At capacity, only recommend the best fits</option>
+                                    </select>
+                                    <div class="form-hint">This affects the recommendation messaging (not the score itself)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">🎛️ Other Preferences</div>
+                            <div class="settings-card-description">Additional settings for calculations and defaults</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Avg. Decision Time (minutes)</label>
+                                    <input type="number" class="form-input" id="settingDecisionTime" value="45" min="5" max="240">
+                                    <div class="form-hint">How long does it typically take you to review a bid? Used for "Hours Saved" calculation.</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Default GC Rating</label>
+                                    <select class="form-select" id="settingDefaultStars">
+                                        <option value="1">1 star</option>
+                                        <option value="2">2 stars</option>
+                                        <option value="3" selected>3 stars (neutral)</option>
+                                        <option value="4">4 stars</option>
+                                        <option value="5">5 stars</option>
+                                    </select>
+                                    <div class="form-hint">When you add a new GC, what's their default rating?</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="saveSettings()" style="width: 100%; padding: 14px; font-size: 15px;">💾 Save All Settings</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header"><h3 class="modal-title" id="reportModalTitle">Bid Report</h3><button class="modal-close" onclick="closeModal('reportModal')">×</button></div>
+            <div class="modal-body" id="reportModalBody"></div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="outcomeModal">
+        <div class="modal">
+            <div class="modal-header"><h3 class="modal-title">Record Outcome</h3><button class="modal-close" onclick="closeModal('outcomeModal')">×</button></div>
+            <div class="modal-body">
+                <input type="hidden" id="outcomeProjectId">
+                <div class="form-group">
+                    <label class="form-label">What happened with this bid?</label>
+                    <select class="form-select" id="outcomeType" onchange="updateOutcomeFields()">
+                        <option value="">Select outcome...</option>
+                        <option value="won">🎉 Won - We got the job!</option>
+                        <option value="lost">❌ Lost - Someone else got it</option>
+                        <option value="ghost">👻 Ghosted - No response from GC</option>
+                        <option value="declined">🚫 Didn't Bid - We passed on this one</option>
+                    </select>
+                </div>
+                <div id="outcomeFields"></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('outcomeModal')">Cancel</button><button class="btn btn-primary" onclick="saveOutcome()">Save Outcome</button></div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="addGCModal">
+        <div class="modal" style="max-width: 480px;">
+            <div class="modal-header"><h3 class="modal-title">Add General Contractor</h3><button class="modal-close" onclick="closeModal('addGCModal')">×</button></div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">GC Company Name</label>
+                    <input type="text" class="form-input" id="newGCName" placeholder="Turner Construction">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Office Location (optional)</label>
+                    <input type="text" class="form-input" id="newGCLocation" placeholder="Kansas City">
+                    <div class="form-hint">Add location if the GC has multiple offices you work with</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Your Rating</label>
+                    <div id="newGCRating" class="gc-item-rating" style="font-size: 28px;"></div>
+                    <div class="form-hint">Based on your experience working with them (can change later)</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Risk Tags (optional)</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+                        <label class="risk-tag-option" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 10px;background:var(--bg-secondary);border-radius:var(--radius);font-size:12px;border:1px solid var(--border-color);">
+                            <input type="checkbox" value="slow_pay" class="gcRiskTag"> 💰 Slow pay
+                        </label>
+                        <label class="risk-tag-option" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 10px;background:var(--bg-secondary);border-radius:var(--radius);font-size:12px;border:1px solid var(--border-color);">
+                            <input type="checkbox" value="pay_if_paid" class="gcRiskTag"> 📋 Pay-if-paid
+                        </label>
+                        <label class="risk-tag-option" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 10px;background:var(--bg-secondary);border-radius:var(--radius);font-size:12px;border:1px solid var(--border-color);">
+                            <input type="checkbox" value="change_order_hostile" class="gcRiskTag"> ⚠️ CO hostile
+                        </label>
+                        <label class="risk-tag-option" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 10px;background:var(--bg-secondary);border-radius:var(--radius);font-size:12px;border:1px solid var(--border-color);">
+                            <input type="checkbox" value="bid_shopping" class="gcRiskTag"> 🛒 Bid shopping
+                        </label>
+                        <label class="risk-tag-option" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 10px;background:var(--bg-secondary);border-radius:var(--radius);font-size:12px;border:1px solid var(--border-color);">
+                            <input type="checkbox" value="low_feedback" class="gcRiskTag"> 🔇 Low feedback
+                        </label>
+                        <label class="risk-tag-option" style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 10px;background:var(--bg-secondary);border-radius:var(--radius);font-size:12px;border:1px solid var(--border-color);">
+                            <input type="checkbox" value="scope_creep" class="gcRiskTag"> 📈 Scope creep
+                        </label>
+                    </div>
+                    <div class="form-hint">These will show as warnings when this GC is selected for analysis</div>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('addGCModal')">Cancel</button><button class="btn btn-primary" onclick="saveNewGC()">Add GC</button></div>
+        </div>
+    </div>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+        // ============================================
+        // SUPABASE CONFIGURATION
+        // ============================================
+        const SUPABASE_URL = 'https://szifhqmrddmdkgschkkw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6aWZocW1yZGRtZGtnc2Noa2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwOTkyMDUsImV4cCI6MjA4NDY3NTIwNX0.XSStBZABbfJRMkGqwG-uh2X6nco7GqtiIxUg_0HHlZE';
+        const CLAUDE_API_KEY = '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';
+        
+        let supabaseClient = null;
+        let currentUser = null;
+        
+        // Initialize Supabase if available
+        if (typeof supabase !== 'undefined') {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+        
+        // Auth tab switching
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.form + 'Form').classList.add('active');
+                document.getElementById('authError').style.display = 'none';
+                document.getElementById('authSuccess').style.display = 'none';
+            });
+        });
+        
+        function showAuthError(msg) {
+            document.getElementById('authError').textContent = msg;
+            document.getElementById('authError').style.display = 'block';
+            document.getElementById('authSuccess').style.display = 'none';
+        }
+        
+        function showAuthSuccess(msg) {
+            document.getElementById('authSuccess').textContent = msg;
+            document.getElementById('authSuccess').style.display = 'block';
+            document.getElementById('authError').style.display = 'none';
+        }
+        
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = 'Hide';
+            } else {
+                input.type = 'password';
+                btn.textContent = 'Show';
+            }
+        }
+        
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            // Clear previous errors
+            document.getElementById('authError').style.display = 'none';
+            
+            // Validate
+            if (!email || !password) {
+                showAuthError('Please enter both email and password');
+                return;
+            }
+            
+            if (!supabaseClient) { 
+                showAuthError('Database not connected. Please refresh the page.'); 
+                return; 
+            }
+            
+            // Show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;margin-right:8px;"></span> Signing in...';
+            
+            try {
+                console.log('Attempting login for:', email);
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                console.log('Login response:', { data, error });
+                
+                if (error) throw error;
+                
+                currentUser = data.user;
+                showApp();
+            } catch (err) {
+                console.error('Login error:', err);
+                let errorMsg = err.message || 'Login failed';
+                
+                // More helpful error messages
+                if (errorMsg.includes('Invalid login credentials')) {
+                    errorMsg = 'Invalid email or password. If you haven\'t signed up yet, click "Sign Up" to create an account.';
+                } else if (errorMsg.includes('Email not confirmed')) {
+                    errorMsg = 'Please check your email and click the confirmation link before signing in.';
+                }
+                
+                showAuthError(errorMsg);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        }
+        
+        async function handleSignup(e) {
+            e.preventDefault();
+            const btn = document.getElementById('signupBtn');
+            const company = document.getElementById('signupCompany').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            
+            // Clear previous errors
+            document.getElementById('authError').style.display = 'none';
+            
+            // Validate
+            if (!company || !email || !password) {
+                showAuthError('Please fill in all fields');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showAuthError('Password must be at least 6 characters');
+                return;
+            }
+            
+            if (!supabaseClient) { 
+                showAuthError('Database not connected. Please refresh the page.'); 
+                return; 
+            }
+            
+            // Show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;margin-right:8px;"></span> Creating account...';
+            
+            try {
+                console.log('Attempting signup for:', email);
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: { data: { company_name: company } }
+                });
+                
+                console.log('Signup response:', { data, error });
+                
+                if (error) throw error;
+                
+                if (data.user && !data.session) {
+                    showAuthSuccess('Account created! Check your email to confirm, then sign in.');
+                } else {
+                    currentUser = data.user;
+                    showApp();
+                }
+            } catch (err) {
+                console.error('Signup error:', err);
+                let errorMsg = err.message || 'Signup failed';
+                
+                // More helpful error messages
+                if (errorMsg.includes('User already registered')) {
+                    errorMsg = 'An account with this email already exists. Try signing in instead.';
+                }
+                
+                showAuthError(errorMsg);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        }
+        
+        async function handleLogout() {
+            if (supabaseClient) await supabaseClient.auth.signOut();
+            currentUser = null;
+            clearDataCache();
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+        }
+        
+        function showApp() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'flex';
+            if (currentUser) document.getElementById('userEmail').textContent = currentUser.email;
+            loadAll();
+        }
+        
+        // Check for existing session on load
+        if (supabaseClient) {
+            supabaseClient.auth.getSession().then(({ data: { session } }) => {
+                if (session) {
+                    currentUser = session.user;
+                    showApp();
+                }
+            });
+        }
+        
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // State
+        let uploadedFiles = [];
+        let selectedGCs = [];
+        let currentAnalysis = null;
+        let newGCRatingValue = 3;
+
+        // CSI Divisions - SORTED NUMERICALLY
+        const CSI_DIVISIONS = [
+            ['01', 'General Requirements'],
+            ['02', 'Existing Conditions'],
+            ['03', 'Concrete'],
+            ['04', 'Masonry'],
+            ['05', 'Metals'],
+            ['06', 'Wood & Plastics'],
+            ['07', 'Thermal & Moisture'],
+            ['08', 'Openings'],
+            ['09', 'Finishes'],
+            ['10', 'Specialties'],
+            ['11', 'Equipment'],
+            ['12', 'Furnishings'],
+            ['13', 'Special Construction'],
+            ['14', 'Conveying Equipment'],
+            ['21', 'Fire Suppression'],
+            ['22', 'Plumbing'],
+            ['23', 'HVAC'],
+            ['25', 'Integrated Automation'],
+            ['26', 'Electrical'],
+            ['27', 'Communications'],
+            ['28', 'Electronic Safety'],
+            ['31', 'Earthwork'],
+            ['32', 'Exterior Improvements'],
+            ['33', 'Utilities']
+        ];
+
+        const DEFAULT_GOOD = [];
+        const DEFAULT_BAD = [];
+
+        // Data cache for performance
+        let dataCache = { settings: null, keywords: null, gcs: null, projects: null };
+        
+        const DEFAULT_SETTINGS = { city: '', state: '', radius: 50, locationMatters: true, trades: ['23', '26'], riskTolerance: 'medium', capacity: 'steady', weights: { location: 25, keywords: 30, gc: 25, trade: 20 }, decisionTime: 45, defaultStars: 3 };
+
+        // ============================================
+        // SUPABASE DATA FUNCTIONS
+        // ============================================
+        
+        async function getSettings() {
+            if (dataCache.settings) return dataCache.settings;
+            if (!supabaseClient || !currentUser) return { ...DEFAULT_SETTINGS };
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('user_settings')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .single();
+                
+                if (error || !data) {
+                    // Create default settings for new user
+                    await supabaseClient.from('user_settings').insert({
+                        user_id: currentUser.id,
+                        ...DEFAULT_SETTINGS,
+                        weights_location: DEFAULT_SETTINGS.weights.location,
+                        weights_keywords: DEFAULT_SETTINGS.weights.keywords,
+                        weights_gc: DEFAULT_SETTINGS.weights.gc,
+                        weights_trade: DEFAULT_SETTINGS.weights.trade
+                    });
+                    dataCache.settings = { ...DEFAULT_SETTINGS };
+                    return dataCache.settings;
+                }
+                
+                dataCache.settings = {
+                    city: data.city || '',
+                    state: data.state || '',
+                    radius: data.radius || 50,
+                    locationMatters: data.location_matters !== false,
+                    trades: data.trades || ['23', '26'],
+                    riskTolerance: data.risk_tolerance || 'medium',
+                    capacity: data.capacity || 'steady',
+                    weights: {
+                        location: data.weights_location || 25,
+                        keywords: data.weights_keywords || 30,
+                        gc: data.weights_gc || 25,
+                        trade: data.weights_trade || 20
+                    },
+                    decisionTime: data.decision_time || 45,
+                    defaultStars: data.default_stars || 3
+                };
+                return dataCache.settings;
+            } catch (e) {
+                console.error('getSettings error:', e);
+                return { ...DEFAULT_SETTINGS };
+            }
+        }
+
+        async function saveSettingsStorage(s) {
+            dataCache.settings = s;
+            if (!supabaseClient || !currentUser) return;
+            
+            try {
+                await supabaseClient.from('user_settings').upsert({
+                    user_id: currentUser.id,
+                    city: s.city,
+                    state: s.state,
+                    radius: s.radius,
+                    location_matters: s.locationMatters,
+                    trades: s.trades,
+                    risk_tolerance: s.riskTolerance,
+                    capacity: s.capacity,
+                    weights_location: s.weights.location,
+                    weights_keywords: s.weights.keywords,
+                    weights_gc: s.weights.gc,
+                    weights_trade: s.weights.trade,
+                    decision_time: s.decisionTime,
+                    default_stars: s.defaultStars,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'user_id' });
+            } catch (e) {
+                console.error('saveSettings error:', e);
+            }
+        }
+
+        async function getKeywords() {
+            if (dataCache.keywords) return dataCache.keywords;
+            if (!supabaseClient || !currentUser) return { good: [], bad: [] };
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('user_keywords')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .single();
+                
+                if (error || !data) {
+                    // Create default keywords for new user
+                    await supabaseClient.from('user_keywords').insert({
+                        user_id: currentUser.id,
+                        good_keywords: [],
+                        bad_keywords: []
+                    });
+                    dataCache.keywords = { good: [], bad: [] };
+                    return dataCache.keywords;
+                }
+                
+                dataCache.keywords = {
+                    good: data.good_keywords || [],
+                    bad: data.bad_keywords || []
+                };
+                return dataCache.keywords;
+            } catch (e) {
+                console.error('getKeywords error:', e);
+                return { good: [], bad: [] };
+            }
+        }
+
+        async function saveKeywordsStorage(k) {
+            dataCache.keywords = k;
+            if (!supabaseClient || !currentUser) return;
+            
+            try {
+                await supabaseClient.from('user_keywords').upsert({
+                    user_id: currentUser.id,
+                    good_keywords: k.good,
+                    bad_keywords: k.bad,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'user_id' });
+            } catch (e) {
+                console.error('saveKeywords error:', e);
+            }
+        }
+
+        async function getGCs() {
+            if (dataCache.gcs) return dataCache.gcs;
+            if (!supabaseClient || !currentUser) return [];
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('general_contractors')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('name');
+                
+                dataCache.gcs = (data || []).map(gc => ({
+                    id: gc.id,
+                    name: gc.name,
+                    rating: gc.rating,
+                    bids: gc.bids || 0,
+                    wins: gc.wins || 0,
+                    riskTags: gc.risk_tags || []
+                }));
+                return dataCache.gcs;
+            } catch (e) {
+                console.error('getGCs error:', e);
+                return [];
+            }
+        }
+
+        async function saveGCs(gcsArray) {
+            // This function handles saving the full GC array (for compatibility)
+            dataCache.gcs = gcsArray;
+            // Individual GC saves handled by saveGC function below
+        }
+        
+        async function saveGC(gc) {
+            if (!supabaseClient || !currentUser) return gc;
+            dataCache.gcs = null; // Invalidate cache
+            
+            try {
+                const { data, error } = await supabaseClient.from('general_contractors').upsert({
+                    id: gc.id || undefined,
+                    user_id: currentUser.id,
+                    name: gc.name,
+                    rating: gc.rating,
+                    bids: gc.bids || 0,
+                    wins: gc.wins || 0,
+                    risk_tags: gc.riskTags || [],
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'id' }).select().single();
+                
+                if (error) throw error;
+                return data || gc;
+            } catch (e) {
+                console.error('saveGC error:', e);
+                return gc;
+            }
+        }
+        
+        async function deleteGC(id) {
+            if (!supabaseClient || !currentUser) return;
+            dataCache.gcs = null;
+            
+            try {
+                await supabaseClient.from('general_contractors').delete().eq('id', id);
+            } catch (e) {
+                console.error('deleteGC error:', e);
+            }
+        }
+
+        async function getProjects() {
+            if (dataCache.projects) return dataCache.projects;
+            if (!supabaseClient || !currentUser) return [];
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('projects')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+                
+                dataCache.projects = (data || []).map(p => ({
+                    id: p.id,
+                    extracted: p.extracted_data || {},
+                    scores: p.scores || {},
+                    gcs: p.gcs || [],
+                    files: p.files || [],
+                    outcome: p.outcome || 'pending',
+                    outcomeData: p.outcome_data || {},
+                    goodFound: p.good_found || [],
+                    badFound: p.bad_found || [],
+                    tradesFound: p.trades_found || [],
+                    createdAt: p.created_at
+                }));
+                return dataCache.projects;
+            } catch (e) {
+                console.error('getProjects error:', e);
+                return [];
+            }
+        }
+
+        async function saveProjects(projectsArray) {
+            // For compatibility - individual saves handled by saveProject
+            dataCache.projects = projectsArray;
+        }
+        
+        async function saveProject(project) {
+            if (!supabaseClient || !currentUser) return project;
+            dataCache.projects = null; // Invalidate cache
+            
+            try {
+                const { data, error } = await supabaseClient.from('projects').insert({
+                    user_id: currentUser.id,
+                    extracted_data: project.extracted,
+                    scores: project.scores,
+                    gcs: project.gcs,
+                    files: project.files,
+                    outcome: project.outcome || 'pending',
+                    outcome_data: project.outcomeData || {},
+                    good_found: project.goodFound || [],
+                    bad_found: project.badFound || [],
+                    trades_found: project.tradesFound || []
+                }).select().single();
+                
+                if (error) throw error;
+                return { ...project, id: data.id };
+            } catch (e) {
+                console.error('saveProject error:', e);
+                return project;
+            }
+        }
+        
+        async function updateProjectOutcome(id, outcome, outcomeData) {
+            if (!supabaseClient || !currentUser) return;
+            dataCache.projects = null;
+            
+            try {
+                await supabaseClient.from('projects').update({
+                    outcome,
+                    outcome_data: outcomeData,
+                    updated_at: new Date().toISOString()
+                }).eq('id', id);
+            } catch (e) {
+                console.error('updateProjectOutcome error:', e);
+            }
+        }
+        
+        async function deleteProject(id) {
+            if (!supabaseClient || !currentUser) return;
+            dataCache.projects = null;
+            
+            try {
+                await supabaseClient.from('projects').delete().eq('id', id);
+            } catch (e) {
+                console.error('deleteProject error:', e);
+            }
+        }
+        
+        // Clear cache on logout
+        function clearDataCache() {
+            dataCache = { settings: null, keywords: null, gcs: null, projects: null };
+        }
+
+        // Navigation
+        function switchTab(id) {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.nav-item[data-tab="${id}"]`)?.classList.add('active');
+            document.getElementById(`tab-${id}`)?.classList.add('active');
+        }
+        document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', () => switchTab(i.dataset.tab)));
+
+        // Modals
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('active'); }));
+
+        // File upload
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.style.borderColor = 'var(--accent)'; uploadZone.style.background = 'var(--accent-dim)'; });
+        uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; uploadZone.style.background = ''; });
+        uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.style.borderColor = ''; uploadZone.style.background = ''; handleFiles(e.dataTransfer.files); });
+        fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+        function handleFiles(files) {
+            for (const f of files) {
+                if (f.type === 'application/pdf' && !uploadedFiles.find(x => x.name === f.name)) {
+                    uploadedFiles.push(f);
+                }
+            }
+            renderFileList();
+            updateAnalyzeBtn();
+        }
+
+        function renderFileList() {
+            document.getElementById('fileList').innerHTML = uploadedFiles.map((f, i) =>
+                `<div class="file-item">📄 <strong>${f.name}</strong> <span style="color:var(--text-muted);margin-left:8px;">(${(f.size / 1024 / 1024).toFixed(1)} MB)</span><span class="remove" onclick="removeFile(${i})">✕</span></div>`
+            ).join('');
+        }
+
+        function removeFile(i) {
+            uploadedFiles.splice(i, 1);
+            renderFileList();
+            updateAnalyzeBtn();
+        }
+
+        function updateAnalyzeBtn() {
+            document.getElementById('analyzeBtn').disabled = uploadedFiles.length === 0 || selectedGCs.length === 0;
+        }
+
+        // GC Selector
+        async function renderGCSelector() {
+            const gcs = await getGCs();
+            const search = document.getElementById('gcSearchInput').value.toLowerCase();
+            const filtered = gcs.filter(g => g.name.toLowerCase().includes(search));
+
+            if (filtered.length === 0 && gcs.length === 0) {
+                document.getElementById('gcSelectorList').innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">No GCs in database yet.<br>Type a name above and click "Add New"</div>';
+            } else if (filtered.length === 0) {
+                document.getElementById('gcSelectorList').innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">No matches found.<br>Click "Add New" to add this GC</div>';
+            } else {
+                document.getElementById('gcSelectorList').innerHTML = filtered.map(gc => {
+                    const isSelected = selectedGCs.find(s => s.name === gc.name);
+                    const winRate = gc.bids > 0 ? Math.round(gc.wins / gc.bids * 100) + '% win' : '';
+                    return `<div class="gc-selector-item ${isSelected ? 'selected' : ''}" onclick="toggleGC('${gc.name.replace(/'/g, "\\'")}')">
+                        <span>${gc.name} ${winRate ? '<span style="color:var(--text-muted);font-size:11px;">(' + winRate + ')</span>' : ''}</span>
+                        <span style="color:var(--accent);">${'★'.repeat(gc.rating)}${'☆'.repeat(5 - gc.rating)}</span>
+                    </div>`;
+                }).join('');
+            }
+            renderSelectedGCs();
+        }
+
+        async function toggleGC(name) {
+            const gcs = await getGCs();
+            const gc = gcs.find(g => g.name === name);
+            if (!gc) return;
+            const idx = selectedGCs.findIndex(s => s.name === name);
+            if (idx >= 0) selectedGCs.splice(idx, 1);
+            else selectedGCs.push({ ...gc });
+            await renderGCSelector();
+            updateCompetition();
+            updateAnalyzeBtn();
+        }
+
+        function renderSelectedGCs() {
+            document.getElementById('selectedGCsList').innerHTML = selectedGCs.map(gc =>
+                `<div class="gc-selected-tag">${gc.name} <span style="color:var(--accent);font-size:10px;">${'★'.repeat(gc.rating)}</span><span class="remove" onclick="toggleGC('${gc.name.replace(/'/g, "\\'")}')">✕</span></div>`
+            ).join('');
+        }
+
+        function updateCompetition() {
+            const n = selectedGCs.length;
+            if (n === 0) { document.getElementById('competitionIndicator').innerHTML = ''; return; }
+            let level, cls, penalty;
+            if (n <= 2) { level = 'Low Competition'; cls = 'low'; penalty = 0; }
+            else if (n <= 5) { level = 'Moderate Competition'; cls = 'moderate'; penalty = 5; }
+            else if (n <= 10) { level = 'High Competition'; cls = 'high'; penalty = 10; }
+            else { level = 'Very High Competition'; cls = 'very-high'; penalty = 15; }
+            document.getElementById('competitionIndicator').innerHTML = `<div class="competition-indicator ${cls}">${n} GC${n > 1 ? 's' : ''} selected • ${level}${penalty ? ' (-' + penalty + ' score penalty)' : ''}</div>`;
+        }
+
+        async function addNewGCFromSearch() {
+            const input = document.getElementById('gcSearchInput');
+            const name = input.value.trim();
+            if (!name) { alert('Enter a GC name first'); return; }
+            const gcs = await getGCs();
+            if (gcs.find(g => g.name.toLowerCase() === name.toLowerCase())) { alert('This GC already exists'); return; }
+            const settings = await getSettings();
+            const newGC = { name, rating: settings.defaultStars, bids: 0, wins: 0 };
+            const savedGC = await saveGC(newGC);
+            selectedGCs.push({ ...savedGC });
+            input.value = '';
+            await renderGCSelector();
+            updateCompetition();
+            updateAnalyzeBtn();
+            await loadGCDatabase();
+        }
+
+        document.getElementById('gcSearchInput').addEventListener('input', () => renderGCSelector());
+        document.getElementById('gcSearchInput').addEventListener('keypress', e => { if (e.key === 'Enter') addNewGCFromSearch(); });
+
+        // PDF extraction
+        async function extractPDF(file) {
+            const ab = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+            const pages = [];
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                pages.push({ num: i, text: content.items.map(x => x.str).join(' ') });
+            }
+            return pages;
+        }
+
+        // Geocoding - using OpenStreetMap Nominatim (free)
+        async function geocode(addr) {
+            try {
+                // Add USA to help with accuracy
+                const searchAddr = addr.includes('USA') ? addr : addr + ', USA';
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddr)}&limit=1&countrycodes=us`;
+                const r = await fetch(url, { 
+                    headers: { 'User-Agent': 'BidIntell/1.0 (bid analysis tool)' }
+                });
+                if (!r.ok) {
+                    console.error('Geocode HTTP error:', r.status);
+                    return null;
+                }
+                const d = await r.json();
+                if (d.length > 0) {
+                    console.log('Geocoded:', addr, '→', d[0].display_name);
+                    return { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon) };
+                }
+                console.log('Geocode: no results for', addr);
+            } catch (e) { 
+                console.error('Geocode error:', e); 
+            }
+            return null;
+        }
+
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 3959, dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        // Keyword search
+        function searchKeywords(pages, keywords) {
+            const results = [];
+            for (const kw of keywords) {
+                const found = [];
+                const rx = new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+                for (const p of pages) if (rx.test(p.text)) found.push(p.num);
+                if (found.length > 0) results.push({ keyword: kw, pages: found });
+            }
+            return results;
+        }
+
+        // Claude API extraction
+        async function extractWithClaude(text) {
+            // Truncate text if too long (Claude has token limits)
+            const maxChars = 50000;
+            const truncatedText = text.length > maxChars ? text.substring(0, maxChars) + '\n\n[Document truncated...]' : text;
+            
+            const prompt = `You are analyzing a construction bid document. Extract the following information and return ONLY a valid JSON object with no other text:
+
+{
+  "project_name": "the full project name or title",
+  "project_address": "full street address if found",
+  "project_city": "city name",
+  "project_state": "two-letter state code like KS, MO, TX",
+  "bid_deadline": "bid due date/time if found",
+  "project_size_sf": "square footage if mentioned, as a number",
+  "estimated_value": "estimated project value if mentioned",
+  "gc_name": "general contractor name if mentioned",
+  "scope_summary": "brief 1-2 sentence summary of the work scope",
+  "has_contract_language": true or false if contract terms are present
+}
+
+If a field is not found, use null. For project_name, look for titles, headers, "Project:", "Re:", subject lines, or prominent text that names the project.
+
+Here is the bid document text:
+
+${truncatedText}`;
+
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': CLAUDE_API_KEY,
+                        'anthropic-version': '2023-06-01',
+                        'anthropic-dangerous-direct-browser-access': 'true'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 1024,
+                        messages: [{ role: 'user', content: prompt }]
+                    })
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    console.error('Claude API error:', response.status, errText);
+                    throw new Error('Claude API error: ' + response.status);
+                }
+
+                const data = await response.json();
+                const content = data.content[0]?.text || '{}';
+                
+                // Parse JSON from response (handle markdown code blocks)
+                let jsonStr = content;
+                if (content.includes('```')) {
+                    const match = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+                    if (match) jsonStr = match[1];
+                }
+                
+                const extracted = JSON.parse(jsonStr.trim());
+                console.log('Claude extracted:', extracted);
+                
+                return {
+                    project_name: extracted.project_name || 'Untitled Project',
+                    project_city: extracted.project_city || null,
+                    project_state: extracted.project_state || null,
+                    project_address: extracted.project_address || null,
+                    bid_deadline: extracted.bid_deadline || null,
+                    project_size_sf: extracted.project_size_sf || null,
+                    estimated_value: extracted.estimated_value || null,
+                    gc_name: extracted.gc_name || null,
+                    scope_summary: extracted.scope_summary || null,
+                    has_contract_language: extracted.has_contract_language || false
+                };
+            } catch (e) {
+                console.error('Claude extraction failed:', e);
+                // Fallback to basic extraction
+                return {
+                    project_name: extractProjectName(text) || 'Untitled Project',
+                    project_city: extractField(text, /(?:city|location)[:\s]+([^,\n]+)/i),
+                    project_state: extractField(text, /\b([A-Z]{2})\b(?:\s+\d{5})?/),
+                    project_address: extractAddress(text),
+                    bid_deadline: extractField(text, /(?:due|deadline|bid date)[:\s]+([^\n]+)/i),
+                    has_contract_language: /contract|agreement|terms and conditions/i.test(text)
+                };
+            }
+        }
+
+        // Analysis
+        async function analyzeBid() {
+            const btn = document.getElementById('analyzeBtn');
+            const result = document.getElementById('analysisResult');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner" style="width:18px;height:18px;border-width:2px;margin-right:8px;"></span>Analyzing...';
+            
+            // Show progress bar
+            result.innerHTML = `
+                <div class="card" style="padding:24px;">
+                    <div style="text-align:center;margin-bottom:16px;">
+                        <span class="spinner" style="width:32px;height:32px;"></span>
+                    </div>
+                    <div id="progressStatus" style="text-align:center;font-size:14px;color:var(--text-secondary);margin-bottom:12px;">Extracting text from PDFs...</div>
+                    <div style="background:var(--bg-input);border-radius:4px;height:8px;overflow:hidden;">
+                        <div id="progressBar" style="height:100%;background:var(--accent);width:0%;transition:width 0.3s;"></div>
+                    </div>
+                </div>`;
+
+            const updateProgress = (percent, status) => {
+                const bar = document.getElementById('progressBar');
+                const text = document.getElementById('progressStatus');
+                if (bar) bar.style.width = percent + '%';
+                if (text) text.textContent = status;
+            };
+
+            try {
+                // Extract text from PDFs
+                updateProgress(10, 'Extracting text from PDFs...');
+                let allPages = [];
+                for (let i = 0; i < uploadedFiles.length; i++) {
+                    const f = uploadedFiles[i];
+                    updateProgress(10 + (i / uploadedFiles.length) * 30, `Reading ${f.name}...`);
+                    try {
+                        const pages = await extractPDF(f);
+                        allPages = allPages.concat(pages);
+                    } catch (pdfErr) {
+                        console.error('PDF extraction error:', pdfErr);
+                    }
+                }
+                
+                if (allPages.length === 0) {
+                    throw new Error('Could not extract text from the uploaded PDFs. Please ensure they are valid PDF files.');
+                }
+                
+                const fullText = allPages.map(p => p.text).join('\n\n');
+                
+                updateProgress(50, 'AI analyzing project details...');
+
+                // Use Claude API for smart extraction
+                const extracted = await extractWithClaude(fullText);
+
+                updateProgress(60, 'Searching for keywords...');
+                
+                const settings = await getSettings();
+                const keywords = await getKeywords();
+                const goodFound = searchKeywords(allPages, keywords.good);
+                const badFound = searchKeywords(allPages, keywords.bad);
+
+                updateProgress(70, 'Checking trade divisions...');
+                
+                // Search trades
+                const tradesFound = [];
+                for (const [code, name] of CSI_DIVISIONS) {
+                    if (settings.trades.includes(code)) {
+                        for (const p of allPages) {
+                            if (new RegExp(`Division\\s*${code}|Section\\s*${code}|\\b${code}\\s*\\d{2}`, 'gi').test(p.text)) {
+                                if (!tradesFound.includes(code)) tradesFound.push(code);
+                            }
+                        }
+                    }
+                }
+
+                updateProgress(80, 'Calculating location distance...');
+                
+                const scores = await calculateScores(extracted, settings, goodFound, badFound, tradesFound);
+
+                updateProgress(95, 'Generating report...');
+
+                currentAnalysis = {
+                    id: Date.now().toString(),
+                    extracted, scores,
+                    gcs: [...selectedGCs],
+                    files: uploadedFiles.map(f => f.name),
+                    goodFound, badFound, tradesFound,
+                    createdAt: new Date().toISOString()
+                };
+
+                updateProgress(100, 'Done!');
+                await new Promise(r => setTimeout(r, 300)); // Brief pause to show 100%
+                
+                // Check for similar past bids
+                const similarBid = await findSimilarPastBid(currentAnalysis);
+                
+                // Check bid volume guardrail
+                const volumeWarning = await checkBidVolumeGuardrail();
+                
+                renderResult(currentAnalysis, similarBid, volumeWarning);
+
+            } catch (error) {
+                console.error(error);
+                result.innerHTML = `<div class="card" style="border-color:var(--danger)"><div class="card-body" style="text-align:center"><h3 style="color:var(--danger);margin-bottom:8px;">Analysis Error</h3><p style="color:var(--text-muted);margin-bottom:16px;">${error.message}</p><button class="btn btn-secondary" onclick="resetAnalysis()">Try Again</button></div></div>`;
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>Analyze Bid';
+        }
+
+        // Find similar past bid (same GC or same city+trade)
+        async function findSimilarPastBid(currentBid) {
+            const projects = await getProjects();
+            if (projects.length === 0) return null;
+            
+            const currentGCs = currentBid.gcs.map(g => g.name.toLowerCase());
+            const currentCity = currentBid.extracted.project_city?.toLowerCase();
+            
+            for (const p of projects) {
+                // Skip if same project (by ID) or pending
+                if (p.id === currentBid.id) continue;
+                
+                // Check for same GC
+                const pastGCs = (p.gcs || []).map(g => g.name.toLowerCase());
+                const sharedGC = currentGCs.find(gc => pastGCs.includes(gc));
+                
+                if (sharedGC && (p.outcome === 'lost' || p.outcome === 'ghost' || p.outcome === 'declined')) {
+                    const gc = p.gcs.find(g => g.name.toLowerCase() === sharedGC);
+                    const reasons = [];
+                    
+                    if (p.outcome === 'lost') {
+                        if (p.outcomeData?.howHigh) reasons.push(p.outcomeData.howHigh);
+                        if (p.outcomeData?.winner) reasons.push(`Lost to ${p.outcomeData.winner}`);
+                    } else if (p.outcome === 'ghost') {
+                        reasons.push('They ghosted you');
+                    } else if (p.outcome === 'declined') {
+                        if (p.outcomeData?.reason) reasons.push(p.outcomeData.reason);
+                    }
+                    
+                    // Calculate how long ago
+                    const daysAgo = Math.round((Date.now() - new Date(p.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+                    const timeAgo = daysAgo < 30 ? `${daysAgo} days ago` : daysAgo < 90 ? `${Math.round(daysAgo/30)} months ago` : `${Math.round(daysAgo/365)} year(s) ago`;
+                    
+                    return {
+                        type: 'gc',
+                        gcName: gc?.name || sharedGC,
+                        projectName: p.extracted?.project_name || 'a similar project',
+                        outcome: p.outcome,
+                        reasons,
+                        timeAgo,
+                        score: p.scores?.final
+                    };
+                }
+                
+                // Check for same city (if no GC match found yet)
+                const pastCity = p.extracted?.project_city?.toLowerCase();
+                if (currentCity && pastCity === currentCity && (p.outcome === 'lost' || p.outcome === 'ghost')) {
+                    const daysAgo = Math.round((Date.now() - new Date(p.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+                    const timeAgo = daysAgo < 30 ? `${daysAgo} days ago` : `${Math.round(daysAgo/30)} months ago`;
+                    
+                    return {
+                        type: 'location',
+                        city: p.extracted.project_city,
+                        projectName: p.extracted?.project_name || 'a project',
+                        outcome: p.outcome,
+                        timeAgo,
+                        score: p.scores?.final
+                    };
+                }
+            }
+            
+            return null;
+        }
+
+        // Check bid volume guardrail
+        async function checkBidVolumeGuardrail() {
+            const projects = await getProjects();
+            if (projects.length < 5) return null; // Not enough data
+            
+            // Get bids from last 7 days
+            const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+            const recentBids = projects.filter(p => new Date(p.createdAt).getTime() > oneWeekAgo);
+            
+            if (recentBids.length < 3) return null; // Not enough recent activity
+            
+            // Calculate average score
+            const avgScore = Math.round(recentBids.reduce((sum, p) => sum + (p.scores?.final || 0), 0) / recentBids.length);
+            
+            // Calculate historical win rate for low-score bids
+            const lowScoreBids = projects.filter(p => p.scores?.final < 60 && (p.outcome === 'won' || p.outcome === 'lost'));
+            const lowScoreWins = lowScoreBids.filter(p => p.outcome === 'won').length;
+            const lowScoreWinRate = lowScoreBids.length > 0 ? Math.round((lowScoreWins / lowScoreBids.length) * 100) : null;
+            
+            // Trigger warning if lots of low-score bids
+            if (avgScore < 55 && recentBids.length >= 5) {
+                return {
+                    count: recentBids.length,
+                    avgScore,
+                    lowScoreWinRate,
+                    period: '7 days'
+                };
+            }
+            
+            return null;
+        }
+
+        function extractProjectName(text) {
+            // Try to find a project name pattern
+            const patterns = [
+                /project[:\s]+["']?([^"'\n]+)["']?/i,
+                /(?:re|subject)[:\s]+([^\n]+)/i,
+                /bid\s+(?:for|on)[:\s]+([^\n]+)/i
+            ];
+            for (const p of patterns) {
+                const match = text.match(p);
+                if (match && match[1].length > 3 && match[1].length < 100) {
+                    return match[1].trim();
+                }
+            }
+            return null;
+        }
+
+        function extractAddress(text) {
+            // Try to find an address pattern
+            const match = text.match(/(\d+\s+[A-Za-z0-9\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct)[^,\n]*,?\s*[A-Za-z\s]+,?\s*[A-Z]{2}\s*\d{5})/i);
+            return match ? match[1].trim() : null;
+        }
+
+        function extractField(text, pattern) {
+            const match = text.match(pattern);
+            return match ? match[1].trim() : null;
+        }
+
+        async function calculateScores(extracted, settings, goodFound, badFound, tradesFound) {
+            const components = {};
+            let weights = { ...settings.weights };
+
+            if (!settings.locationMatters) {
+                const lw = weights.location;
+                const other = weights.keywords + weights.gc + weights.trade;
+                if (other > 0) {
+                    weights.keywords = Math.round(weights.keywords + lw * weights.keywords / other);
+                    weights.gc = Math.round(weights.gc + lw * weights.gc / other);
+                    weights.trade = Math.round(weights.trade + lw * weights.trade / other);
+                }
+                weights.location = 0;
+            }
+
+            // Location
+            components.location = { score: 50, weight: weights.location, reason: '', needsAddress: false };
+            if (settings.locationMatters && settings.city && settings.state) {
+                const userCoords = await geocode(`${settings.city}, ${settings.state}`);
+                const projAddr = extracted.project_address || (extracted.project_city && extracted.project_state ? `${extracted.project_city}, ${extracted.project_state}` : null);
+                if (userCoords && projAddr) {
+                    const projCoords = await geocode(projAddr);
+                    if (projCoords) {
+                        const dist = Math.round(haversine(userCoords.lat, userCoords.lon, projCoords.lat, projCoords.lon));
+                        let score = dist <= 25 ? 100 : dist <= 50 ? 85 : dist <= 100 ? 70 : dist <= 150 ? 50 : 30;
+                        if (dist > settings.radius) score = Math.max(10, score - 20);
+                        components.location = { score, weight: weights.location, reason: `${dist} miles from your office${dist > settings.radius ? ' (outside your service area)' : ''}`, details: { dist } };
+                    } else { components.location.reason = 'Could not locate project address'; components.location.needsAddress = true; }
+                } else if (!projAddr) { components.location.reason = 'Project address not found in documents'; components.location.needsAddress = true; }
+                else { components.location.reason = 'Could not locate your office'; }
+            } else if (!settings.locationMatters) { components.location.reason = 'Location scoring disabled'; components.location.score = 0; }
+            else { components.location.reason = 'Set your office location in Settings'; }
+
+            // Keywords
+            let kwScore = 50;
+            const kwDetails = [];
+            for (const item of goodFound) { kwScore += 8; kwDetails.push({ keyword: item.keyword, type: 'good', effect: '+8', pages: item.pages }); }
+            const penalty = settings.riskTolerance === 'low' ? 15 : settings.riskTolerance === 'medium' ? 10 : 5;
+            if (extracted.has_contract_language) {
+                for (const item of badFound) { kwScore -= penalty; kwDetails.push({ keyword: item.keyword, type: 'bad', effect: `-${penalty}`, pages: item.pages }); }
+            }
+            kwScore = Math.max(0, Math.min(100, kwScore));
+            components.keywords = { score: kwScore, weight: weights.keywords, reason: `Found ${goodFound.length} good terms, ${badFound.length} risk terms${!extracted.has_contract_language ? ' (no contract language detected)' : ''}`, details: kwDetails, hasContract: extracted.has_contract_language };
+
+            // GC
+            let gcScore = 50;
+            const gcCount = selectedGCs.length;
+            const compPenalty = gcCount <= 2 ? 0 : gcCount <= 5 ? 5 : gcCount <= 10 ? 10 : 15;
+            let totalW = 0, weightedSum = 0, bestGC = null, bestRate = 0;
+            for (const gc of selectedGCs) {
+                if (gc.bids > 0) { const rate = (gc.wins / gc.bids) * 100; weightedSum += rate * gc.bids; totalW += gc.bids; if (rate > bestRate || !bestGC) { bestRate = rate; bestGC = gc; } }
+                else { const ss = gc.rating * 20; weightedSum += ss; totalW += 1; if (ss > bestRate || !bestGC) { bestRate = ss; bestGC = gc; } }
+            }
+            if (totalW > 0) gcScore = Math.round(weightedSum / totalW);
+            gcScore = Math.max(0, gcScore - compPenalty);
+            components.gc = { score: gcScore, weight: weights.gc, reason: `${gcCount} GC${gcCount > 1 ? 's' : ''} bidding${compPenalty ? ' (-' + compPenalty + ' competition penalty)' : ''}`, details: { gcCount, compPenalty, bestGC: bestGC ? { name: bestGC.name, rate: bestGC.bids > 0 ? Math.round(bestGC.wins / bestGC.bids * 100) : null, rating: bestGC.rating } : null } };
+
+            // Trade
+            const tradeScore = settings.trades.length > 0 ? Math.round((tradesFound.length / settings.trades.length) * 100) : 0;
+            components.trade = { score: tradeScore, weight: weights.trade, reason: `Found ${tradesFound.length} of your ${settings.trades.length} trade divisions in specs`, details: { found: tradesFound } };
+
+            // Final
+            let final = 0;
+            for (const k of ['location', 'keywords', 'gc', 'trade']) if (components[k].weight > 0) final += components[k].score * (components[k].weight / 100);
+            final = Math.round(final);
+            const rec = final >= 80 ? 'GO' : final >= 60 ? 'REVIEW' : 'PASS';
+            return { final, recommendation: rec, components, weights };
+        }
+
+        async function renderResult(analysis, similarBid = null, volumeWarning = null) {
+            const settings = await getSettings();
+            const recClass = analysis.scores.recommendation.toLowerCase();
+            const recText = { GO: 'Strong fit for your business', REVIEW: 'Mixed signals - review carefully', PASS: 'Poor fit based on your criteria' }[analysis.scores.recommendation];
+            let capMsg = '';
+            if (settings.capacity === 'hungry' && analysis.scores.recommendation === 'REVIEW') capMsg = '<p style="margin-top:12px;padding:12px;background:var(--warning-bg);border-radius:var(--radius);font-size:13px;"><strong>🔴 You\'re hungry for work.</strong> Even though this has mixed signals, it might be worth pursuing.</p>';
+            else if (settings.capacity === 'maxed' && analysis.scores.recommendation !== 'GO') capMsg = '<p style="margin-top:12px;padding:12px;background:var(--info-bg);border-radius:var(--radius);font-size:13px;"><strong>🟡 You\'re at capacity.</strong> This isn\'t a strong fit - you can probably pass.</p>';
+
+            // Similar bid warning
+            let similarBidHtml = '';
+            if (similarBid) {
+                if (similarBid.type === 'gc') {
+                    const reasonsList = similarBid.reasons.length > 0 ? '<ul style="margin:8px 0 0 20px;padding:0;">' + similarBid.reasons.map(r => `<li>${r}</li>`).join('') + '</ul>' : '';
+                    similarBidHtml = `
+                        <div style="margin-top:12px;padding:12px;background:rgba(251,191,36,0.15);border-radius:var(--radius);border-left:4px solid var(--warning);font-size:13px;">
+                            <strong>⚠️ You've worked with ${similarBid.gcName} before</strong><br>
+                            <span style="color:var(--text-secondary);">You ${similarBid.outcome === 'lost' ? 'lost' : similarBid.outcome === 'ghost' ? 'were ghosted on' : 'declined'} "${similarBid.projectName}" ${similarBid.timeAgo}${similarBid.score ? ' (score: ' + similarBid.score + ')' : ''}</span>
+                            ${reasonsList}
+                        </div>`;
+                } else if (similarBid.type === 'location') {
+                    similarBidHtml = `
+                        <div style="margin-top:12px;padding:12px;background:rgba(251,191,36,0.1);border-radius:var(--radius);border-left:4px solid var(--warning);font-size:13px;">
+                            <strong>📍 You've bid in ${similarBid.city} before</strong><br>
+                            <span style="color:var(--text-secondary);">You ${similarBid.outcome === 'lost' ? 'lost' : 'were ghosted on'} "${similarBid.projectName}" ${similarBid.timeAgo}</span>
+                        </div>`;
+                }
+            }
+            
+            // Volume guardrail warning
+            let volumeHtml = '';
+            if (volumeWarning) {
+                volumeHtml = `
+                    <div style="margin-top:12px;padding:12px;background:rgba(239,68,68,0.1);border-radius:var(--radius);border-left:4px solid var(--danger);font-size:13px;">
+                        <strong>⚠️ Bid Volume Check</strong><br>
+                        <span style="color:var(--text-secondary);">You've analyzed ${volumeWarning.count} bids in the last ${volumeWarning.period} with an average score of ${volumeWarning.avgScore}.
+                        ${volumeWarning.lowScoreWinRate !== null ? `<br>Historically, you win only ${volumeWarning.lowScoreWinRate}% of bids under 60.` : ''}
+                        <br><em>Consider being more selective to save estimating time.</em></span>
+                    </div>`;
+            }
+
+            // Get project name - clean it up
+            let projectName = analysis.extracted.project_name || 'Untitled Project';
+            if (projectName.length > 60) projectName = projectName.substring(0, 60) + '...';
+            
+            // Get location string
+            let locationStr = '';
+            if (analysis.extracted.project_city || analysis.extracted.project_state) {
+                locationStr = [analysis.extracted.project_city, analysis.extracted.project_state].filter(Boolean).join(', ');
+            }
+
+            // Generate GC risk warnings
+            let gcRiskHtml = '';
+            const gcRisks = [];
+            for (const gc of analysis.gcs) {
+                if (gc.riskTags && gc.riskTags.length > 0) {
+                    const tagLabels = {
+                        slow_pay: '💰 Slow pay',
+                        pay_if_paid: '📋 Pay-if-paid',
+                        change_order_hostile: '⚠️ CO hostile',
+                        bid_shopping: '🛒 Bid shopping',
+                        low_feedback: '🔇 Low feedback',
+                        scope_creep: '📈 Scope creep'
+                    };
+                    gcRisks.push({ name: gc.name, tags: gc.riskTags.map(t => tagLabels[t] || t) });
+                }
+            }
+            if (gcRisks.length > 0) {
+                gcRiskHtml = `
+                    <div style="margin-top:12px;padding:12px;background:rgba(239,68,68,0.1);border-radius:var(--radius);border-left:4px solid var(--danger);font-size:13px;">
+                        <strong>⚠️ GC Risk Tags</strong><br>
+                        ${gcRisks.map(r => `<span style="color:var(--text-secondary);">${r.name}: ${r.tags.join(', ')}</span>`).join('<br>')}
+                    </div>`;
+            }
+
+            document.getElementById('analysisResult').innerHTML = `
+                <div class="score-report">
+                    <div class="score-report-header">
+                        <div class="score-report-value ${recClass}">${analysis.scores.final}</div>
+                        <div class="score-report-rec">${analysis.scores.recommendation} — ${recText}</div>
+                        <p style="color:var(--text-primary);margin-top:12px;font-size:16px;font-weight:600;">${projectName}</p>
+                        ${locationStr ? `<p style="color:var(--text-muted);font-size:13px;">${locationStr}</p>` : ''}
+                        ${capMsg}
+                        ${similarBidHtml}
+                        ${volumeHtml}
+                        ${gcRiskHtml}
+                    </div>
+                    ${renderComponent('📍', 'Location Fit', analysis.scores.components.location)}
+                    ${renderComponent('🔑', 'Keywords & Contract', analysis.scores.components.keywords)}
+                    ${renderComponent('🏢', 'GC Relationship', analysis.scores.components.gc)}
+                    ${renderComponent('🔧', 'Trade Match', analysis.scores.components.trade)}
+                    
+                    ${renderImprovementTips(analysis.scores)}
+                    
+                    <div class="manual-override" style="margin-top:20px;padding:16px;background:var(--bg-tertiary);border-radius:var(--radius);border:1px solid var(--border-color);">
+                        <div style="font-weight:600;margin-bottom:12px;color:var(--text-primary);">📋 Do you agree with this recommendation?</div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);border:2px solid transparent;" class="override-option">
+                                <input type="radio" name="userAgreement" value="agree" checked style="accent-color:var(--success);"> 
+                                <span>✓ Yes, agree</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);border:2px solid transparent;" class="override-option">
+                                <input type="radio" name="userAgreement" value="too_high"> 
+                                <span>↑ Score too high</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);border:2px solid transparent;" class="override-option">
+                                <input type="radio" name="userAgreement" value="too_low"> 
+                                <span>↓ Score too low</span>
+                            </label>
+                        </div>
+                        <input type="text" class="form-input" id="overrideNote" placeholder="Optional: Why do you disagree? (helps improve scoring)" style="font-size:13px;">
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;margin-top:20px;">
+                    <button class="btn btn-primary" style="flex:1;padding:12px;" onclick="saveProjectToDb()">✓ Save to Projects</button>
+                    <button class="btn btn-secondary" onclick="printReport()">🖨 Print Report</button>
+                    <button class="btn btn-secondary" onclick="resetAnalysis()">Start Over</button>
+                </div>`;
+
+            if (analysis.scores.components.location.needsAddress) {
+                const loc = document.querySelector('.score-component');
+                if (loc) loc.innerHTML += `<div class="address-prompt"><div class="address-prompt-title">📍 Enter project address for accurate distance</div><div class="address-prompt-row"><input type="text" class="form-input" id="manualAddress" placeholder="123 Main St, City, State"><button class="btn btn-primary btn-sm" onclick="recalcAddress()">Calculate</button></div></div>`;
+            }
+        }
+
+        function renderComponent(icon, title, comp) {
+            const fillClass = comp.score >= 70 ? 'high' : comp.score >= 50 ? 'medium' : 'low';
+            let details = '';
+            
+            // Location details
+            if (title === 'Location Fit' && comp.details?.dist !== undefined) {
+                const dist = comp.details.dist;
+                let explanation = '';
+                if (dist <= 25) explanation = 'Excellent - very close to your office';
+                else if (dist <= 50) explanation = 'Good - within easy driving distance';
+                else if (dist <= 100) explanation = 'Moderate - may require extra travel planning';
+                else if (dist <= 150) explanation = 'Far - significant travel required';
+                else explanation = 'Very far - consider travel costs carefully';
+                details = `<div class="score-component-details"><strong>This job is ${dist} miles from your office.</strong><br><span style="color:var(--text-muted)">${explanation}</span></div>`;
+            } else if (title === 'Location Fit' && comp.needsAddress) {
+                details = `<div class="score-component-details" style="color:var(--warning);">Could not determine project location from documents. Enter address below for accurate scoring.</div>`;
+            } else if (title === 'Location Fit' && !comp.details?.dist) {
+                details = `<div class="score-component-details" style="color:var(--text-muted);">${comp.reason}</div>`;
+            }
+            
+            // Keywords details
+            if (title === 'Keywords & Contract' && comp.details?.length > 0) {
+                const good = comp.details.filter(d => d.type === 'good');
+                const bad = comp.details.filter(d => d.type === 'bad');
+                details = '<div class="score-component-details">';
+                if (good.length) details += '<div style="margin-bottom:6px;"><strong style="color:var(--success)">✓ Good terms found:</strong></div>' + good.map(d => `<span class="keyword-tag good">${d.keyword} (${d.effect}) p.${d.pages.slice(0, 2).join(',')}</span>`).join('');
+                if (bad.length) details += '<div style="margin:8px 0 6px;"><strong style="color:var(--danger)">⚠ Risk terms found:</strong></div>' + bad.map(d => `<span class="keyword-tag bad">${d.keyword} (${d.effect}) p.${d.pages.slice(0, 2).join(',')}</span>`).join('');
+                if (!comp.hasContract) details += '<p style="margin-top:10px;font-size:11px;color:var(--text-muted);">ℹ️ No contract language detected - risk terms not penalized</p>';
+                details += '</div>';
+            } else if (title === 'Keywords & Contract' && (!comp.details || comp.details.length === 0)) {
+                details = `<div class="score-component-details" style="color:var(--text-muted);">No keywords found. Add keywords in the Keywords tab to track terms that matter to you.</div>`;
+            }
+            
+            // GC details
+            if (title === 'GC Relationship' && comp.details?.bestGC) {
+                const b = comp.details.bestGC;
+                details = `<div class="score-component-details"><strong>Best relationship:</strong> ${b.name} ${b.rate !== null ? `(${b.rate}% win rate)` : `(${b.rating}★ rating)`}${comp.details.compPenalty ? `<br><span style="color:var(--warning)">Competition penalty: -${comp.details.compPenalty} points (${comp.details.gcCount} GCs bidding)</span>` : ''}</div>`;
+            }
+            
+            // Trade details
+            if (title === 'Trade Match' && comp.details?.found) {
+                const foundNames = comp.details.found.map(code => { const div = CSI_DIVISIONS.find(d => d[0] === code); return div ? `Div ${code} (${div[1]})` : `Div ${code}`; });
+                details = `<div class="score-component-details"><strong>Found:</strong> ${foundNames.length > 0 ? foundNames.join(', ') : 'None of your divisions found in specs - verify this project includes your trade'}</div>`;
+            }
+            
+            return `<div class="score-component"><div class="score-component-header"><div class="score-component-title">${icon} ${title} <span style="color:var(--text-muted);font-size:11px;font-weight:normal;">(${comp.weight}% weight)</span></div><div class="score-component-value">${comp.score}/100</div></div><div class="score-component-bar"><div class="score-component-fill ${fillClass}" style="width:${comp.score}%"></div></div><div class="score-component-reason">${comp.reason}</div>${details}</div>`;
+        }
+
+        // Generate improvement tips based on scores
+        function renderImprovementTips(scores) {
+            const tips = [];
+            const c = scores.components;
+            
+            // Location tips
+            if (c.location.score < 70 && c.location.weight > 0) {
+                if (c.location.details?.dist > 100) {
+                    tips.push('📍 <strong>Location:</strong> This project is far from your office. Consider if travel costs are worth it, or focus on closer opportunities.');
+                } else if (c.location.needsAddress) {
+                    tips.push('📍 <strong>Location:</strong> Enter the project address above to get an accurate distance score.');
+                }
+            }
+            
+            // Keywords tips
+            if (c.keywords.score < 60) {
+                if (c.keywords.details?.badCount > 0) {
+                    tips.push('🔑 <strong>Contract Risk:</strong> Review the flagged contract terms carefully. Consider negotiating these clauses before signing.');
+                }
+                if (c.keywords.details?.goodCount === 0) {
+                    tips.push('🔑 <strong>Keywords:</strong> None of your preferred terms were found. Add more "good keywords" in Settings to better identify ideal projects.');
+                }
+            }
+            
+            // GC tips
+            if (c.gc.score < 60) {
+                if (c.gc.details?.gcCount > 5) {
+                    tips.push('🏢 <strong>Competition:</strong> ' + c.gc.details.gcCount + ' GCs bidding creates price pressure. Focus on negotiated or invited bids for better margins.');
+                }
+                if (c.gc.details?.bestGC && c.gc.details.bestGC.rate !== null && c.gc.details.bestGC.rate < 20) {
+                    tips.push('🏢 <strong>GC History:</strong> Your win rate with ' + c.gc.details.bestGC.name + ' is low. Consider building the relationship before bidding more work.');
+                }
+                if (!c.gc.details?.bestGC || c.gc.details.bestGC.rating <= 2) {
+                    tips.push('🏢 <strong>GC Relationship:</strong> You have no strong relationship with these GCs. Research their reputation before investing time.');
+                }
+            }
+            
+            // Trade tips
+            if (c.trade.score < 70) {
+                tips.push('🔧 <strong>Trade Match:</strong> Not all your divisions were found in specs. Verify your scope is actually included before bidding.');
+            }
+            
+            if (tips.length === 0) {
+                if (scores.final >= 80) {
+                    return '<div class="improvement-tips" style="margin-top:16px;padding:16px;background:rgba(34,197,94,0.1);border-radius:var(--radius);border-left:4px solid var(--success);"><div style="font-weight:600;color:var(--success);margin-bottom:8px;">✓ Strong Opportunity</div><p style="color:var(--text-secondary);font-size:13px;margin:0;">This bid aligns well with your business. Prioritize it and submit a competitive price.</p></div>';
+                }
+                return '';
+            }
+            
+            return `<div class="improvement-tips" style="margin-top:16px;padding:16px;background:var(--bg-tertiary);border-radius:var(--radius);border-left:4px solid var(--accent);">
+                <div style="font-weight:600;color:var(--text-primary);margin-bottom:12px;">💡 How to Improve Your Chances</div>
+                <ul style="margin:0;padding-left:20px;color:var(--text-secondary);font-size:13px;line-height:1.8;">
+                    ${tips.map(t => '<li>' + t + '</li>').join('')}
+                </ul>
+            </div>`;
+        }
+
+        // Print report
+        function printReport() {
+            if (!currentAnalysis) return;
+            const a = currentAnalysis;
+            const printContent = `
+                <html>
+                <head>
+                    <title>BidIntell Report - ${a.extracted.project_name || 'Bid Analysis'}</title>
+                    <style>
+                        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+                        h1 { font-size: 24px; margin-bottom: 8px; }
+                        .score { font-size: 48px; font-weight: bold; color: ${a.scores.recommendation === 'GO' ? '#22c55e' : a.scores.recommendation === 'REVIEW' ? '#f59e0b' : '#ef4444'}; }
+                        .rec { font-size: 18px; color: #666; margin-bottom: 24px; }
+                        .section { margin: 20px 0; padding: 16px; background: #f5f5f5; border-radius: 8px; }
+                        .section-title { font-weight: 600; margin-bottom: 8px; }
+                        .component { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ddd; }
+                        .component:last-child { border-bottom: none; }
+                        .meta { color: #666; font-size: 12px; margin-top: 24px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>${a.extracted.project_name || 'Untitled Project'}</h1>
+                    <p style="color:#666;">${[a.extracted.project_city, a.extracted.project_state].filter(Boolean).join(', ') || 'Location unknown'}</p>
+                    <div class="score">${a.scores.final}</div>
+                    <div class="rec">${a.scores.recommendation} — ${{ GO: 'Strong fit', REVIEW: 'Mixed signals', PASS: 'Poor fit' }[a.scores.recommendation]}</div>
+                    
+                    <div class="section">
+                        <div class="section-title">Score Breakdown</div>
+                        <div class="component"><span>📍 Location Fit (${a.scores.components.location.weight}%)</span><span>${a.scores.components.location.score}/100</span></div>
+                        <div class="component"><span>🔑 Keywords & Contract (${a.scores.components.keywords.weight}%)</span><span>${a.scores.components.keywords.score}/100</span></div>
+                        <div class="component"><span>🏢 GC Relationship (${a.scores.components.gc.weight}%)</span><span>${a.scores.components.gc.score}/100</span></div>
+                        <div class="component"><span>🔧 Trade Match (${a.scores.components.trade.weight}%)</span><span>${a.scores.components.trade.score}/100</span></div>
+                    </div>
+                    
+                    <div class="section">
+                        <div class="section-title">GCs Bidding</div>
+                        <p>${a.gcs.map(g => g.name + ' (' + '★'.repeat(g.rating) + ')').join(', ')}</p>
+                    </div>
+                    
+                    ${a.extracted.bid_deadline ? '<div class="section"><div class="section-title">Bid Deadline</div><p>' + a.extracted.bid_deadline + '</p></div>' : ''}
+                    
+                    <div class="meta">Generated by BidIntell • ${new Date().toLocaleDateString()}</div>
+                </body>
+                </html>
+            `;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        async function recalcAddress() {
+            const addr = document.getElementById('manualAddress')?.value.trim();
+            if (!addr) return;
+            const settings = await getSettings();
+            const userCoords = await geocode(`${settings.city}, ${settings.state}`);
+            const projCoords = await geocode(addr);
+            if (userCoords && projCoords) {
+                const dist = Math.round(haversine(userCoords.lat, userCoords.lon, projCoords.lat, projCoords.lon));
+                let score = dist <= 25 ? 100 : dist <= 50 ? 85 : dist <= 100 ? 70 : dist <= 150 ? 50 : 30;
+                if (dist > settings.radius) score = Math.max(10, score - 20);
+                currentAnalysis.scores.components.location = { score, weight: currentAnalysis.scores.components.location.weight, reason: `${dist} miles from your office${dist > settings.radius ? ' (outside service area)' : ''}`, details: { dist } };
+                let final = 0;
+                for (const k of ['location', 'keywords', 'gc', 'trade']) { const c = currentAnalysis.scores.components[k]; if (c.weight > 0) final += c.score * (c.weight / 100); }
+                currentAnalysis.scores.final = Math.round(final);
+                currentAnalysis.scores.recommendation = final >= 80 ? 'GO' : final >= 60 ? 'REVIEW' : 'PASS';
+                currentAnalysis.extracted.project_address = addr;
+                renderResult(currentAnalysis);
+            } else alert('Could not geocode that address. Try a different format.');
+        }
+
+        async function saveProjectToDb() {
+            if (!currentAnalysis) return;
+            
+            // Capture user feedback
+            const agreement = document.querySelector('input[name="userAgreement"]:checked')?.value || 'agree';
+            const overrideNote = document.getElementById('overrideNote')?.value?.trim() || null;
+            
+            currentAnalysis.userFeedback = {
+                agreement,
+                note: overrideNote,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Save project to database
+            const savedProject = await saveProject({ ...currentAnalysis, outcome: 'pending' });
+            
+            // Update GC bid counts
+            const gcs = await getGCs();
+            for (const sg of currentAnalysis.gcs) {
+                const gc = gcs.find(g => g.name === sg.name);
+                if (gc) {
+                    gc.bids = (gc.bids || 0) + 1;
+                    await saveGC(gc);
+                }
+            }
+            
+            resetAnalysis();
+            switchTab('projects');
+            await loadAll();
+        }
+
+        async function resetAnalysis() {
+            uploadedFiles = []; selectedGCs = []; currentAnalysis = null;
+            document.getElementById('fileList').innerHTML = '';
+            document.getElementById('selectedGCsList').innerHTML = '';
+            document.getElementById('competitionIndicator').innerHTML = '';
+            document.getElementById('analysisResult').innerHTML = '';
+            document.getElementById('gcSearchInput').value = '';
+            fileInput.value = '';
+            updateAnalyzeBtn();
+            await renderGCSelector();
+        }
+
+        // Dashboard
+        async function loadDashboard() {
+            const projects = await getProjects();
+            const settings = await getSettings();
+            document.getElementById('statBids').textContent = projects.length;
+            const won = projects.filter(p => p.outcome === 'won').length;
+            const lost = projects.filter(p => p.outcome === 'lost').length;
+            document.getElementById('statWinRate').textContent = (won + lost) > 0 ? Math.round(won / (won + lost) * 100) + '%' : '--';
+            document.getElementById('statPending').textContent = projects.filter(p => p.outcome === 'pending').length;
+            document.getElementById('statHours').textContent = Math.round(projects.length * settings.decisionTime / 60);
+
+            const recent = projects.slice(0, 5);
+            if (recent.length === 0) {
+                document.getElementById('recentActivity').innerHTML = '<div class="empty-state"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg><h3>No bids analyzed yet</h3><p>Upload your first bid documents to get started</p><button class="btn btn-primary" onclick="switchTab(\'analyze\')">Analyze Your First Bid</button></div>';
+            } else {
+                document.getElementById('recentActivity').innerHTML = `<table class="projects-table"><thead><tr><th>Project</th><th>Score</th><th>Outcome</th><th></th></tr></thead><tbody>${recent.map(p => `<tr><td><div class="project-name">${p.extracted.project_name || 'Untitled'}</div><div class="project-location">${p.extracted.project_city || ''}${p.extracted.project_city && p.extracted.project_state ? ', ' : ''}${p.extracted.project_state || ''}</div></td><td><span class="score-badge ${p.scores.recommendation.toLowerCase()}">${p.scores.final} ${p.scores.recommendation}</span></td><td><span class="outcome-badge ${p.outcome}">${p.outcome}</span></td><td><button class="btn btn-sm btn-secondary" onclick="viewReport('${p.id}')">View</button></td></tr>`).join('')}</tbody></table>`;
+            }
+            await updateCapacity();
+        }
+
+        async function updateCapacity() {
+            const settings = await getSettings();
+            document.getElementById('capacityIndicator').className = 'capacity-box capacity-' + settings.capacity;
+            document.getElementById('capacityText').textContent = settings.capacity.charAt(0).toUpperCase() + settings.capacity.slice(1);
+        }
+
+        // Projects
+        async function loadProjects() {
+            const projects = await getProjects();
+            if (projects.length === 0) {
+                document.getElementById('projectsList').innerHTML = '<div class="empty-state" style="padding:40px;"><h3>No projects yet</h3><p>Analyze your first bid to see it here</p></div>';
+                return;
+            }
+            document.getElementById('projectsList').innerHTML = `<table class="projects-table"><thead><tr><th>Project</th><th>GCs</th><th>Score</th><th>Outcome</th><th>Actions</th></tr></thead><tbody>${projects.map(p => `<tr><td><div class="project-name">${p.extracted.project_name || 'Untitled'}</div><div class="project-location">${p.extracted.project_city || ''}${p.extracted.project_city && p.extracted.project_state ? ', ' : ''}${p.extracted.project_state || ''}</div></td><td style="font-size:12px;color:var(--text-muted);">${p.gcs.slice(0, 2).map(g => g.name.split(' ')[0]).join(', ')}${p.gcs.length > 2 ? '...' : ''}</td><td><span class="score-badge ${p.scores.recommendation.toLowerCase()}">${p.scores.final}</span></td><td><span class="outcome-badge ${p.outcome}">${p.outcome}</span></td><td style="white-space:nowrap;"><button class="btn btn-sm btn-secondary" onclick="viewReport('${p.id}')" style="margin-right:4px;">View</button><button class="btn btn-sm btn-secondary" onclick="showOutcome('${p.id}')" style="margin-right:4px;">Outcome</button><button class="btn btn-sm btn-secondary" onclick="deleteProjectUI('${p.id}')" style="color:var(--danger);">×</button></td></tr>`).join('')}</tbody></table>`;
+        }
+
+        async function viewReport(id) {
+            const projects = await getProjects();
+            const p = projects.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('reportModalTitle').textContent = p.extracted.project_name || 'Bid Report';
+            document.getElementById('reportModalBody').innerHTML = `<div class="score-report"><div class="score-report-header"><div class="score-report-value ${p.scores.recommendation.toLowerCase()}">${p.scores.final}</div><div class="score-report-rec">${p.scores.recommendation}</div></div>${renderComponent('📍', 'Location Fit', p.scores.components.location)}${renderComponent('🔑', 'Keywords & Contract', p.scores.components.keywords)}${renderComponent('🏢', 'GC Relationship', p.scores.components.gc)}${renderComponent('🔧', 'Trade Match', p.scores.components.trade)}</div>`;
+            openModal('reportModal');
+        }
+
+        function showOutcome(id) {
+            document.getElementById('outcomeProjectId').value = id;
+            document.getElementById('outcomeType').value = '';
+            document.getElementById('outcomeFields').innerHTML = '';
+            openModal('outcomeModal');
+        }
+
+        function updateOutcomeFields() {
+            const type = document.getElementById('outcomeType').value;
+            let html = '';
+            
+            if (type === 'won') {
+                html = `
+                    <div class="form-group">
+                        <label class="form-label">Contract Amount ($)</label>
+                        <input type="number" class="form-input" id="outcomeAmount" placeholder="500000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Final Margin (%)</label>
+                        <input type="number" class="form-input" id="outcomeMargin" step="0.1" placeholder="12.5">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">GC Responsiveness</label>
+                        <div style="display:flex;gap:16px;margin-top:8px;">
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+                                <input type="checkbox" id="gcAcknowledged"> Acknowledged receipt
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+                                <input type="checkbox" id="gcAnsweredQuestions"> Answered pre-bid questions
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Decision Confidence</label>
+                        <div class="confidence-slider" style="display:flex;gap:4px;margin-top:8px;">
+                            ${[1,2,3,4,5].map(n => `<button type="button" class="conf-btn" data-val="${n}" onclick="setConfidence(${n})" style="width:40px;height:40px;border-radius:8px;border:2px solid var(--border-color);background:var(--bg-secondary);cursor:pointer;font-weight:600;">${n}</button>`).join('')}
+                        </div>
+                        <div class="form-hint">1 = Lucky win, 5 = Expected to win</div>
+                        <input type="hidden" id="outcomeConfidence" value="3">
+                    </div>`;
+            } else if (type === 'lost') {
+                html = `
+                    <div class="form-group">
+                        <label class="form-label">How high were you?</label>
+                        <select class="form-select" id="outcomeHowHigh">
+                            <option value="">Unknown</option>
+                            <option>Within 5%</option>
+                            <option>5-10% high</option>
+                            <option>10-20% high</option>
+                            <option>Over 20% high</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Who won?</label>
+                        <input type="text" class="form-input" id="outcomeWinner" placeholder="Competitor name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Other competitors you usually lose to? (optional)</label>
+                        <input type="text" class="form-input" id="outcomeOtherCompetitors" placeholder="e.g., ABC Electric, XYZ Mechanical">
+                        <div class="form-hint">Separate names with commas</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">GC Responsiveness</label>
+                        <div style="display:flex;gap:16px;margin-top:8px;">
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+                                <input type="checkbox" id="gcAcknowledged"> Acknowledged receipt
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+                                <input type="checkbox" id="gcAnsweredQuestions"> Answered pre-bid questions
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Decision Confidence</label>
+                        <div class="confidence-slider" style="display:flex;gap:4px;margin-top:8px;">
+                            ${[1,2,3,4,5].map(n => `<button type="button" class="conf-btn" data-val="${n}" onclick="setConfidence(${n})" style="width:40px;height:40px;border-radius:8px;border:2px solid var(--border-color);background:var(--bg-secondary);cursor:pointer;font-weight:600;">${n}</button>`).join('')}
+                        </div>
+                        <div class="form-hint">1 = Surprised we lost, 5 = Expected to lose</div>
+                        <input type="hidden" id="outcomeConfidence" value="3">
+                    </div>`;
+            } else if (type === 'ghost') {
+                html = `
+                    <div class="form-group">
+                        <label class="form-label">GC Responsiveness Before Going Silent</label>
+                        <div style="display:flex;gap:16px;margin-top:8px;">
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+                                <input type="checkbox" id="gcAcknowledged"> Acknowledged receipt
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+                                <input type="checkbox" id="gcAnsweredQuestions"> Answered pre-bid questions
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Days since bid submission</label>
+                        <input type="number" class="form-input" id="outcomeDaysSince" placeholder="60" value="60">
+                    </div>`;
+            } else if (type === 'declined') {
+                html = `
+                    <div class="form-group">
+                        <label class="form-label">Why didn't you bid? (select all that apply)</label>
+                        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="too_many_gcs"> Too many GCs bidding
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="gc_relationship"> Weak GC relationship
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="bad_contract"> Bad contract terms
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="out_of_territory"> Out of territory
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="capacity"> At capacity / too busy
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="pricing"> Unlikely to win on price
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="scope_unclear"> Scope unclear
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="other"> Other
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Additional notes (optional)</label>
+                        <input type="text" class="form-input" id="outcomeDeclineNotes" placeholder="Any other context...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Decision Confidence</label>
+                        <div class="confidence-slider" style="display:flex;gap:4px;margin-top:8px;">
+                            ${[1,2,3,4,5].map(n => `<button type="button" class="conf-btn" data-val="${n}" onclick="setConfidence(${n})" style="width:40px;height:40px;border-radius:8px;border:2px solid var(--border-color);background:var(--bg-secondary);cursor:pointer;font-weight:600;">${n}</button>`).join('')}
+                        </div>
+                        <div class="form-hint">1 = Maybe should have bid, 5 = Definitely right to pass</div>
+                        <input type="hidden" id="outcomeConfidence" value="3">
+                    </div>`;
+            }
+            document.getElementById('outcomeFields').innerHTML = html;
+            // Initialize confidence to 3
+            setTimeout(() => setConfidence(3), 10);
+        }
+        
+        function setConfidence(val) {
+            document.getElementById('outcomeConfidence').value = val;
+            document.querySelectorAll('.conf-btn').forEach(btn => {
+                btn.style.background = parseInt(btn.dataset.val) <= val ? 'var(--accent)' : 'var(--bg-secondary)';
+                btn.style.color = parseInt(btn.dataset.val) <= val ? 'white' : 'var(--text-primary)';
+                btn.style.borderColor = parseInt(btn.dataset.val) <= val ? 'var(--accent)' : 'var(--border-color)';
+            });
+        }
+
+        async function saveOutcome() {
+            const id = document.getElementById('outcomeProjectId').value;
+            const type = document.getElementById('outcomeType').value;
+            if (!type) { alert('Please select an outcome'); return; }
+            
+            let outcomeData = {
+                gcAcknowledged: document.getElementById('gcAcknowledged')?.checked || false,
+                gcAnsweredQuestions: document.getElementById('gcAnsweredQuestions')?.checked || false,
+                confidence: parseInt(document.getElementById('outcomeConfidence')?.value) || 3
+            };
+            
+            if (type === 'won') {
+                outcomeData.amount = document.getElementById('outcomeAmount')?.value;
+                outcomeData.margin = document.getElementById('outcomeMargin')?.value;
+                // Update GC wins
+                const projects = await getProjects();
+                const p = projects.find(x => x.id === id);
+                if (p) {
+                    const gcs = await getGCs();
+                    for (const sg of p.gcs) { 
+                        const gc = gcs.find(g => g.name === sg.name); 
+                        if (gc) {
+                            gc.wins = (gc.wins || 0) + 1;
+                            await saveGC(gc);
+                        }
+                    }
+                }
+            } else if (type === 'lost') {
+                outcomeData.howHigh = document.getElementById('outcomeHowHigh')?.value;
+                outcomeData.winner = document.getElementById('outcomeWinner')?.value;
+                outcomeData.otherCompetitors = document.getElementById('outcomeOtherCompetitors')?.value?.split(',').map(s => s.trim()).filter(Boolean) || [];
+            } else if (type === 'ghost') {
+                outcomeData.daysSince = parseInt(document.getElementById('outcomeDaysSince')?.value) || 60;
+            } else if (type === 'declined') {
+                outcomeData.reasons = Array.from(document.querySelectorAll('.reason-checkbox input:checked')).map(cb => cb.value);
+                outcomeData.notes = document.getElementById('outcomeDeclineNotes')?.value;
+                if (outcomeData.reasons.length === 0) {
+                    alert('Please select at least one reason for passing');
+                    return;
+                }
+            }
+            
+            await updateProjectOutcome(id, type, outcomeData);
+            closeModal('outcomeModal');
+            await loadAll();
+        }
+
+        async function deleteProjectUI(id) {
+            if (!confirm('Delete this project?')) return;
+            await deleteProject(id);
+            await loadAll();
+        }
+
+        async function exportCSV() {
+            const projects = await getProjects();
+            if (!projects.length) { alert('No projects to export'); return; }
+            const rows = [['Project', 'City', 'State', 'Score', 'Recommendation', 'GCs', 'Outcome', 'Date']];
+            for (const p of projects) rows.push([p.extracted.project_name || '', p.extracted.project_city || '', p.extracted.project_state || '', p.scores.final, p.scores.recommendation, p.gcs.map(g => g.name).join('; '), p.outcome, p.createdAt?.split('T')[0] || '']);
+            const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+            const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv); a.download = 'bidiq_export.csv'; a.click();
+        }
+
+        // GC Database
+        const RISK_TAG_LABELS = {
+            slow_pay: '💰 Slow pay',
+            pay_if_paid: '📋 Pay-if-paid',
+            change_order_hostile: '⚠️ CO hostile',
+            bid_shopping: '🛒 Bid shopping',
+            low_feedback: '🔇 Low feedback',
+            scope_creep: '📈 Scope creep'
+        };
+        
+        async function loadGCDatabase() {
+            const gcs = await getGCs();
+            if (!gcs.length) {
+                document.getElementById('gcDatabaseList').innerHTML = '<div class="empty-state"><h3>No GCs yet</h3><p>Add your first general contractor</p><button class="btn btn-primary" onclick="showAddGCModal()">+ Add GC</button></div>';
+                return;
+            }
+            document.getElementById('gcDatabaseList').innerHTML = gcs.map(gc => {
+                const rate = gc.bids > 0 ? Math.round(gc.wins / gc.bids * 100) : null;
+                const tagsHtml = (gc.riskTags || []).length > 0 
+                    ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">${gc.riskTags.map(t => `<span style="font-size:10px;padding:2px 6px;background:rgba(239,68,68,0.15);color:var(--danger);border-radius:4px;">${RISK_TAG_LABELS[t] || t}</span>`).join('')}</div>`
+                    : '';
+                return `<div class="gc-item">
+                    <div class="gc-item-info">
+                        <div class="gc-item-name">${gc.name}</div>
+                        <div class="gc-item-stats">${gc.bids || 0} bids${rate !== null ? ' • ' + rate + '% win rate' : ''}</div>
+                        ${tagsHtml}
+                    </div>
+                    <div class="gc-item-rating">${[1, 2, 3, 4, 5].map(i => `<span class="star ${i <= gc.rating ? 'filled' : ''}" onclick="rateGC('${gc.name.replace(/'/g, "\\'")}', ${i})">★</span>`).join('')}</div>
+                    <button class="btn btn-sm btn-secondary" onclick="editGCTags('${gc.name.replace(/'/g, "\\'")}')" style="margin-left:8px;">Tags</button>
+                    <button class="btn btn-sm btn-secondary" onclick="deleteGCUI('${gc.name.replace(/'/g, "\\'")}')" style="color:var(--danger);margin-left:4px;">×</button>
+                </div>`;
+            }).join('');
+        }
+        
+        async function editGCTags(name) {
+            const gcs = await getGCs();
+            const gc = gcs.find(g => g.name === name);
+            if (!gc) return;
+            
+            const currentTags = gc.riskTags || [];
+            const tagOptions = Object.entries(RISK_TAG_LABELS).map(([val, label]) => 
+                `<label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 10px;background:var(--bg-secondary);border-radius:var(--radius);font-size:12px;border:1px solid var(--border-color);">
+                    <input type="checkbox" value="${val}" class="editGCTag" ${currentTags.includes(val) ? 'checked' : ''}> ${label}
+                </label>`
+            ).join('');
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.id = 'editTagsModal';
+            modal.innerHTML = `
+                <div class="modal" style="max-width:400px;">
+                    <div class="modal-header"><h3 class="modal-title">Edit Risk Tags: ${name}</h3><button class="modal-close" onclick="closeModal('editTagsModal');document.getElementById('editTagsModal').remove();">×</button></div>
+                    <div class="modal-body">
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;">${tagOptions}</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="closeModal('editTagsModal');document.getElementById('editTagsModal').remove();">Cancel</button>
+                        <button class="btn btn-primary" onclick="saveGCTags('${name.replace(/'/g, "\\'")}')">Save Tags</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+        }
+        
+        async function saveGCTags(name) {
+            const gcs = await getGCs();
+            const gc = gcs.find(g => g.name === name);
+            if (!gc) return;
+            
+            gc.riskTags = Array.from(document.querySelectorAll('.editGCTag:checked')).map(cb => cb.value);
+            await saveGC(gc);
+            
+            document.getElementById('editTagsModal')?.remove();
+            await loadGCDatabase();
+        }
+
+        async function showAddGCModal() {
+            document.getElementById('newGCName').value = '';
+            document.getElementById('newGCLocation').value = '';
+            // Clear risk tags
+            document.querySelectorAll('.gcRiskTag').forEach(cb => cb.checked = false);
+            const settings = await getSettings();
+            newGCRatingValue = settings.defaultStars;
+            renderNewGCRating();
+            openModal('addGCModal');
+        }
+
+        function renderNewGCRating() {
+            document.getElementById('newGCRating').innerHTML = [1, 2, 3, 4, 5].map(i => `<span class="star ${i <= newGCRatingValue ? 'filled' : ''}" onclick="setNewGCRating(${i})">★</span>`).join('');
+        }
+
+        function setNewGCRating(r) { newGCRatingValue = r; renderNewGCRating(); }
+
+        async function saveNewGC() {
+            const name = document.getElementById('newGCName').value.trim();
+            const loc = document.getElementById('newGCLocation').value.trim();
+            if (!name) { alert('Please enter the GC name'); return; }
+            const fullName = loc ? `${name} - ${loc}` : name;
+            const gcs = await getGCs();
+            if (gcs.find(g => g.name.toLowerCase() === fullName.toLowerCase())) { alert('This GC already exists'); return; }
+            
+            // Capture risk tags
+            const riskTags = Array.from(document.querySelectorAll('.gcRiskTag:checked')).map(cb => cb.value);
+            
+            await saveGC({ name: fullName, rating: newGCRatingValue, bids: 0, wins: 0, riskTags });
+            closeModal('addGCModal');
+            await loadGCDatabase();
+            await renderGCSelector();
+        }
+
+        async function rateGC(name, rating) {
+            const gcs = await getGCs();
+            const gc = gcs.find(g => g.name === name);
+            if (gc) { 
+                gc.rating = rating; 
+                await saveGC(gc);
+                await loadGCDatabase(); 
+            }
+        }
+
+        async function deleteGCUI(name) {
+            if (!confirm('Delete ' + name + '?')) return;
+            const gcs = await getGCs();
+            const gc = gcs.find(g => g.name === name);
+            if (gc && gc.id) {
+                await deleteGC(gc.id);
+            }
+            await loadGCDatabase();
+            await renderGCSelector();
+        }
+
+        // Keywords - FIXED
+        async function loadKeywords() {
+            const kw = await getKeywords();
+            document.getElementById('goodKeywordsList').innerHTML = kw.good.map(k => `<span class="keyword-tag good">${k}<span class="remove" onclick="removeKeyword('good','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No good keywords yet</span>';
+            document.getElementById('badKeywordsList').innerHTML = kw.bad.map(k => `<span class="keyword-tag bad">${k}<span class="remove" onclick="removeKeyword('bad','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No risk keywords yet</span>';
+        }
+
+        // Add good keyword(s) - supports comma-separated input
+        async function addGoodKeyword() {
+            const input = document.getElementById('goodKeywordInput');
+            const rawVal = input.value.trim();
+            if (!rawVal) { alert('Please enter a keyword'); return; }
+            
+            // Split by comma for multiple keywords
+            const keywords = rawVal.split(',').map(k => k.trim().toLowerCase()).filter(k => k.length > 0);
+            if (keywords.length === 0) { alert('Please enter a keyword'); return; }
+            
+            const kw = await getKeywords();
+            let added = 0;
+            for (const val of keywords) {
+                if (!kw.good.includes(val)) {
+                    kw.good.push(val);
+                    added++;
+                }
+            }
+            
+            if (added > 0) {
+                await saveKeywordsStorage(kw);
+                await loadKeywords();
+            }
+            input.value = '';
+            input.focus();
+        }
+
+        // Add bad keyword(s) - supports comma-separated input
+        async function addBadKeyword() {
+            const input = document.getElementById('badKeywordInput');
+            const rawVal = input.value.trim();
+            if (!rawVal) { alert('Please enter a keyword'); return; }
+            
+            // Split by comma for multiple keywords
+            const keywords = rawVal.split(',').map(k => k.trim().toLowerCase()).filter(k => k.length > 0);
+            if (keywords.length === 0) { alert('Please enter a keyword'); return; }
+            
+            const kw = await getKeywords();
+            let added = 0;
+            for (const val of keywords) {
+                if (!kw.bad.includes(val)) {
+                    kw.bad.push(val);
+                    added++;
+                }
+            }
+            
+            if (added > 0) {
+                await saveKeywordsStorage(kw);
+                await loadKeywords();
+            }
+            input.value = '';
+            input.focus();
+        }
+
+        async function removeKeyword(type, val) {
+            const kw = await getKeywords();
+            kw[type] = kw[type].filter(k => k !== val);
+            await saveKeywordsStorage(kw);
+            await loadKeywords();
+        }
+
+        // Settings
+        async function loadSettings() {
+            const s = await getSettings();
+            document.getElementById('settingCity').value = s.city;
+            document.getElementById('settingState').value = s.state;
+            document.getElementById('settingRadius').value = s.radius;
+            document.getElementById('settingLocationMatters').checked = s.locationMatters;
+            document.getElementById('settingRiskTolerance').value = s.riskTolerance;
+            document.getElementById('settingCapacity').value = s.capacity;
+            document.getElementById('settingDecisionTime').value = s.decisionTime;
+            document.getElementById('settingDefaultStars').value = s.defaultStars;
+
+            document.querySelector('#weightLocation input').value = s.weights.location;
+            document.querySelector('#weightLocation .weight-slider-value').textContent = s.weights.location + '%';
+            document.querySelector('#weightKeywords input').value = s.weights.keywords;
+            document.querySelector('#weightKeywords .weight-slider-value').textContent = s.weights.keywords + '%';
+            document.querySelector('#weightGC input').value = s.weights.gc;
+            document.querySelector('#weightGC .weight-slider-value').textContent = s.weights.gc + '%';
+            document.querySelector('#weightTrade input').value = s.weights.trade;
+            document.querySelector('#weightTrade .weight-slider-value').textContent = s.weights.trade + '%';
+            updateWeightTotal();
+
+            // CSI Divisions - SORTED
+            document.getElementById('tradesCheckboxes').innerHTML = CSI_DIVISIONS.map(([code, name]) =>
+                `<label class="checkbox-item ${s.trades.includes(code) ? 'selected' : ''}"><input type="checkbox" value="${code}" ${s.trades.includes(code) ? 'checked' : ''}><span class="check"></span>${code}: ${name}</label>`
+            ).join('');
+
+            document.querySelectorAll('#tradesCheckboxes .checkbox-item').forEach(el => {
+                const cb = el.querySelector('input');
+                // Handle clicks on the label (not the checkbox itself)
+                el.addEventListener('click', e => {
+                    if (e.target.tagName === 'INPUT') {
+                        // Checkbox was clicked directly - just update the class
+                        el.classList.toggle('selected', cb.checked);
+                        return;
+                    }
+                    // Label was clicked - toggle checkbox and class
+                    cb.checked = !cb.checked;
+                    el.classList.toggle('selected', cb.checked);
+                });
+                // Also handle direct checkbox changes
+                cb.addEventListener('change', () => {
+                    el.classList.toggle('selected', cb.checked);
+                });
+            });
+        }
+
+        function updateWeightTotal() {
+            const l = parseInt(document.querySelector('#weightLocation input').value) || 0;
+            const k = parseInt(document.querySelector('#weightKeywords input').value) || 0;
+            const g = parseInt(document.querySelector('#weightGC input').value) || 0;
+            const t = parseInt(document.querySelector('#weightTrade input').value) || 0;
+            const total = l + k + g + t;
+            const el = document.getElementById('weightTotal');
+            const warning = document.getElementById('weightWarning');
+            el.textContent = total + '%';
+            el.className = 'weight-total-value ' + (total === 100 ? 'valid' : 'invalid');
+            warning.style.display = total === 100 ? 'none' : 'inline';
+        }
+
+        document.querySelectorAll('.weight-slider input').forEach(input => {
+            input.addEventListener('input', () => {
+                input.closest('.weight-slider').querySelector('.weight-slider-value').textContent = input.value + '%';
+                updateWeightTotal();
+            });
+        });
+
+        async function saveSettings() {
+            const weights = {
+                location: parseInt(document.querySelector('#weightLocation input').value) || 0,
+                keywords: parseInt(document.querySelector('#weightKeywords input').value) || 0,
+                gc: parseInt(document.querySelector('#weightGC input').value) || 0,
+                trade: parseInt(document.querySelector('#weightTrade input').value) || 0
+            };
+            const total = weights.location + weights.keywords + weights.gc + weights.trade;
+            if (total !== 100) { alert('Score weights must total exactly 100%. Currently: ' + total + '%'); return; }
+
+            const s = {
+                city: document.getElementById('settingCity').value.trim(),
+                state: document.getElementById('settingState').value.trim().toUpperCase(),
+                radius: parseInt(document.getElementById('settingRadius').value),
+                locationMatters: document.getElementById('settingLocationMatters').checked,
+                riskTolerance: document.getElementById('settingRiskTolerance').value,
+                capacity: document.getElementById('settingCapacity').value,
+                decisionTime: parseInt(document.getElementById('settingDecisionTime').value) || 45,
+                defaultStars: parseInt(document.getElementById('settingDefaultStars').value),
+                weights,
+                trades: Array.from(document.querySelectorAll('#tradesCheckboxes input:checked')).map(cb => cb.value)
+            };
+
+            await saveSettingsStorage(s);
+            await updateCapacity();
+            alert('✓ Settings saved to cloud!');
+        }
+
+        // Load all
+        async function loadAll() {
+            await loadSettings();
+          

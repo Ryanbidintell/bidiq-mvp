@@ -1,0 +1,13 @@
+# BidIntell robots.txt
+# Allow all crawlers
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://bidintell.ai/sitemap.xml
+
+# Disallow admin and internal pages
+Disallow: /app.html
+Disallow: /.claude/
+Disallow: /supabase/

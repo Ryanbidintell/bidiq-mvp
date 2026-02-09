@@ -1,72 +1,42 @@
-# 🎯 BidIQ MVP Deployment Package
+# BidIntell MVP
 
-**Date:** January 29, 2026  
-**Status:** Ready for Beta Launch
+Decision Intelligence for Construction Bidding
 
----
+## Quick Start
 
-## Quick File Reference
+### 1. Install Dependencies
+```bash
+npm install
+```
 
-### 🌐 Deploy These Files
+### 2. Set Environment Variables
+Create `.env` file:
+```
+CLAUDE_API_KEY=your_key_here
+OPENAI_API_KEY=your_key_here
+```
 
-| File | Rename To | Purpose |
-|------|-----------|---------|
-| `BidIQ_Landing_Page.html` | `index.html` | Landing page + Beta signup (bidintell.ai) |
-| `BidIQ_MVP_App.html` | `app.html` | Main app after login (bidintell.ai/app) |
-| `BidIQ_Founder_Dashboard.html` | `admin.html` | Your admin panel (keep private) |
-| `roi-calculator.html` | `roi.html` | Marketing tool (optional) |
+### 3. Deploy to Netlify
+```bash
+npm run deploy
+```
 
-### 🗄️ Run in Supabase
+## Features
+- AI-powered PDF analysis
+- Smart scoring algorithm
+- GC relationship tracking
+- Contract risk detection
+- Real-time intelligence engine
 
-| File | Purpose |
-|------|---------|
-| `supabase_schema_complete.sql` | Creates all database tables |
+## Tech Stack
+- Frontend: Vanilla JS, HTML, CSS
+- Backend: Netlify Functions
+- Database: Supabase PostgreSQL
+- AI: Claude Sonnet 4.5, GPT-4o
 
-### 📚 Reference Documents
+## Documentation
+- [Deployment Guide](./DEPLOY_NETLIFY.md)
+- [Product Bible](./BidIntell_Product_Bible_v1_8.md)
 
-| File | Purpose |
-|------|---------|
-| `DEPLOYMENT_GUIDE.md` | Step-by-step deployment instructions |
-| `BidIQ_Product_Bible_v1_4.md` | Product specifications |
-| `BidIQ_Brand_Guide.md` | Brand & messaging guidelines |
-| `bidiq_email_templates.md` | Email templates for beta management |
-
----
-
-## ⚡ Quick Start
-
-1. **Run** `supabase_schema_complete.sql` in Supabase SQL Editor
-2. **Update** API keys in HTML files (search for `SUPABASE_URL`)
-3. **Rename** files as shown above
-4. **Deploy** to Netlify or Vercel
-5. **Test** full user flow
-6. **Launch** to beta users!
-
-See `DEPLOYMENT_GUIDE.md` for detailed instructions.
-
----
-
-## 🔑 Keys You Need
-
-Before deploying, get these credentials:
-
-1. **Supabase Project URL** - From Supabase Dashboard → Settings → API
-2. **Supabase Anon Key** - Same location
-3. **Claude API Key** - From console.anthropic.com
-4. **Your Admin Email** - For founder dashboard access
-
----
-
-## ✅ Pre-Launch Checklist
-
-- [ ] Database schema deployed
-- [ ] API keys updated in all HTML files
-- [ ] Files renamed correctly
-- [ ] Deployed to hosting
-- [ ] Domain configured
-- [ ] Full flow tested
-- [ ] Beta users identified
-
----
-
-**Good luck with the launch! 🚀**
+## Support
+Email: ryan@bidintell.ai

@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BidIQ - Bid Intelligence Platform</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 1400px; margin: auto; background: #f5f5f5; }
+        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h1 { color: #333; margin-top: 0; }
+        h2 { color: #555; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; }
+        h3 { color: #666; margin-top: 0; }
+        
+        /* Tabs */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab { padding: 12px 24px; background: #e0e0e0; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 16px; }
+        .tab.active { background: #4CAF50; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Forms */
+        label { display: block; margin: 10px 0 5px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="number"], select, textarea {
+            width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;
+        }
+        textarea { min-height: 80px; font-family: monospace; }
+        .hint { font-size: 12px; color: #888; margin-top: 3px; }
+        
+        /* Weight sliders */
+        .weight-row { display: flex; align-items: center; gap: 15px; margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+        .weight-label { width: 200px; font-weight: bold; }
+        .weight-slider { flex: 1; }
+        .weight-value { width: 60px; text-align: center; font-weight: bold; font-size: 18px; color: #4CAF50; }
+        input[type="range"] { width: 100%; }
+        
+        /* Buttons */
+        button {
+            background: #4CAF50; color: white; padding: 12px 24px; border: none;
+            border-radius: 4px; cursor: pointer; font-size: 14px; margin: 5px;
+        }
+        button:hover { background: #45a049; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-small { padding: 6px 12px; font-size: 12px; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        
+        /* Results */
+        #result { margin-top: 20px; }
+        .score-box { 
+            font-size: 48px; font-weight: bold; text-align: center;
+            padding: 30px; border-radius: 8px; margin: 20px 0;
+        }
+        .score-go { background: #28a745; color: white; }
+        .score-review { background: #ffc107; color: black; }
+        .score-pass { background: #dc3545; color: white; }
+        
+        /* Score breakdown */
+        .score-breakdown { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .score-component { 
+            display: flex; align-items: center; padding: 12px 0; 
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .score-component:last-child { border-bottom: none; }
+        .component-icon { font-size: 24px; width: 40px; }
+        .component-name { width: 180px; font-weight: bold; }
+        .component-bar { flex: 1; height: 24px; background: #e0e0e0; border-radius: 12px; overflow: hidden; margin: 0 15px; }
+        .component-fill { height: 100%; border-radius: 12px; transition: width 0.5s; }
+        .fill-high { background: linear-gradient(90deg, #28a745, #20c997); }
+        .fill-medium { background: linear-gradient(90deg, #ffc107, #fd7e14); }
+        .fill-low { background: linear-gradient(90deg, #dc3545, #e83e8c); }
+        .component-score { width: 60px; text-align: right; font-weight: bold; font-size: 18px; }
+        .component-weight { width: 50px; text-align: right; color: #888; font-size: 12px; }
+        .component-detail { font-size: 12px; color: #666; margin-left: 40px; padding: 5px 0; }
+        
+        /* Details panel */
+        .details { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .detail-row { display: flex; border-bottom: 1px solid #ddd; padding: 10px 0; }
+        .detail-label { font-weight: bold; width: 180px; color: #555; }
+        .detail-value { flex: 1; }
+        
+        /* Keywords display */
+        .keyword-tag { 
+            display: inline-block; padding: 4px 10px; margin: 2px; 
+            border-radius: 15px; font-size: 12px;
+        }
+        .keyword-good { background: #d4edda; color: #155724; }
+        .keyword-bad { background: #f8d7da; color: #721c24; }
+        .keyword-missing { background: #fff3cd; color: #856404; }
+        
+        /* Grid layout */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+        
+        /* Status messages */
+        .status { padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .status-info { background: #d1ecf1; color: #0c5460; }
+        .status-success { background: #d4edda; color: #155724; }
+        .status-error { background: #f8d7da; color: #721c24; }
+        
+        /* Progress bar */
+        .progress-container { background: #e0e0e0; border-radius: 10px; height: 20px; margin: 10px 0; overflow: hidden; }
+        .progress-bar { background: linear-gradient(90deg, #4CAF50, #8BC34A); height: 100%; transition: width 0.3s; }
+        .progress-text { text-align: center; font-size: 14px; margin-top: 5px; }
+        
+        /* Extraction stats */
+        .extraction-stats { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+            gap: 15px; margin: 20px 0; 
+        }
+        .stat-box { 
+            background: #f0f0f0; padding: 15px; border-radius: 8px; text-align: center;
+        }
+        .stat-number { font-size: 28px; font-weight: bold; color: #4CAF50; }
+        .stat-label { font-size: 12px; color: #666; }
+        
+        /* Dashboard Stats */
+        .dashboard-stats {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px; margin-bottom: 30px;
+        }
+        .dashboard-stat {
+            background: white; padding: 25px; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;
+        }
+        .dashboard-stat-number { font-size: 42px; font-weight: bold; color: #4CAF50; }
+        .dashboard-stat-label { font-size: 14px; color: #666; margin-top: 5px; }
+        .dashboard-stat.hours-saved .dashboard-stat-number { color: #2196F3; }
+        
+        /* Projects Table */
+        .projects-table {
+            width: 100%; border-collapse: collapse; margin-top: 20px;
+        }
+        .projects-table th, .projects-table td {
+            padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0;
+        }
+        .projects-table th {
+            background: #f8f9fa; font-weight: bold; color: #555;
+        }
+        .projects-table tr:hover { background: #f5f5f5; }
+        .projects-table .score-badge {
+            display: inline-block; padding: 4px 12px; border-radius: 15px;
+            font-weight: bold; font-size: 14px;
+        }
+        .score-badge.go { background: #d4edda; color: #155724; }
+        .score-badge.review { background: #fff3cd; color: #856404; }
+        .score-badge.pass { background: #f8d7da; color: #721c24; }
+        
+        /* Outcome badges */
+        .outcome-badge {
+            display: inline-block; padding: 4px 10px; border-radius: 4px;
+            font-size: 12px; font-weight: bold;
+        }
+        .outcome-badge.won { background: #28a745; color: white; }
+        .outcome-badge.lost { background: #dc3545; color: white; }
+        .outcome-badge.ghost { background: #6c757d; color: white; }
+        .outcome-badge.didnt-bid { background: #17a2b8; color: white; }
+        .outcome-badge.pending { background: #e0e0e0; color: #555; }
+        
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 1000;
+            justify-content: center; align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white; padding: 30px; border-radius: 8px;
+            max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;
+        }
+        .modal h2 { margin-top: 0; }
+        
+        /* Saved indicator */
+        .saved-indicator { 
+            display: inline-block; padding: 5px 10px; background: #28a745; 
+            color: white; border-radius: 4px; font-size: 12px; margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 BidIQ - Bid Intelligence Platform</h1>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+            <button class="tab" onclick="showTab('analyze')">📄 Analyze Bid</button>
+            <button class="tab" onclick="showTab('projects')">📁 My Projects</button>
+            <button class="tab" onclick="showTab('preferences')">⚙️ Preferences</button>
+            <button class="tab" onclick="showTab('keywords')">🔑 Keywords</button>
+            <button class="tab" onclick="showTab('gcs')">🏢 GC Ratings</button>
+        </div>
+        
+        <!-- DASHBOARD TAB -->
+        <div id="tab-dashboard" class="tab-content active">
+            <h2>📊 My Bidding Dashboard</h2>
+            
+            <div class="dashboard-stats">
+                <div class="dashboard-stat">
+                    <div class="dashboard-stat-number" id="stat-total-bids">0</div>
+                    <div class="dashboard-stat-label">Total Bids Analyzed</div>
+                </div>
+                <div class="dashboard-stat">
+                    <div class="dashboard-stat-number" id="stat-win-rate">--%</div>
+                    <div class="dashboard-stat-label">Win Rate</div>
+                </div>
+                <div class="dashboard-stat">
+                    <div class="dashboard-stat-number" id="stat-pending">0</div>
+                    <div class="dashboard-stat-label">Pending Outcome</div>
+                </div>
+                <div class="dashboard-stat hours-saved">
+                    <div class="dashboard-stat-number" id="stat-hours-saved">0</div>
+                    <div class="dashboard-stat-label">Hours Saved</div>
+                </div>
+            </div>
+            
+            <div class="grid-2">
+                <div class="details">
+                    <h3>📈 Recent Activity</h3>
+                    <div id="recent-activity">
+                        <p style="color: #888;">No bids analyzed yet. Upload your first bid!</p>
+                    </div>
+                </div>
+                <div class="details">
+                    <h3>🏆 Top GCs by Win Rate</h3>
+                    <div id="top-gcs">
+                        <p style="color: #888;">Track outcomes to see your best GC relationships.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button onclick="showTab('analyze')" style="font-size: 18px; padding: 15px 40px;">
+                    📄 Analyze New Bid
+                </button>
+            </div>
+        </div>
+        
+        <!-- ANALYZE TAB -->
+        <div id="tab-analyze" class="tab-content">
+            <h2>Upload Bid Documents</h2>
+            <p>Upload your complete bid package (invite, specs, contract, drawings). BidIQ reads <strong>ALL pages</strong> to find your keywords.</p>
+            
+            <input type="file" id="pdfFile" accept=".pdf" multiple>
+            <p class="hint">Select one or more PDF files. All pages will be searched for your keywords.</p>
+            
+            <button id="analyzeBtn" onclick="analyzeBid()">🤖 Analyze with AI</button>
+            
+            <div id="progress" style="display: none;">
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="progress-text">Starting...</div>
+            </div>
+            
+            <div id="result"></div>
+        </div>
+        
+        <!-- PROJECTS TAB -->
+        <div id="tab-projects" class="tab-content">
+            <h2>📁 My Projects</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <select id="project-filter" onchange="filterProjects()">
+                    <option value="all">All Projects</option>
+                    <option value="pending">Pending Outcome</option>
+                    <option value="won">Won</option>
+                    <option value="lost">Lost</option>
+                    <option value="ghost">Ghosted</option>
+                    <option value="didnt-bid">Didn't Bid</option>
+                </select>
+                <button class="btn-secondary btn-small" onclick="exportProjects()">📥 Export CSV</button>
+            </div>
+            
+            <table class="projects-table">
+                <thead>
+                    <tr>
+                        <th>Project</th>
+                        <th>GC</th>
+                        <th>Score</th>
+                        <th>Deadline</th>
+                        <th>Outcome</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="projects-tbody">
+                    <tr><td colspan="6" style="text-align: center; color: #888;">No projects yet. Analyze your first bid!</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- PREFERENCES TAB -->
+        <div id="tab-preferences" class="tab-content">
+            <h2>My Business Preferences</h2>
+            <p>Configure your business parameters. These affect how bids are scored FOR YOU.</p>
+            
+            <div class="grid-2">
+                <div>
+                    <label>Office Location (City, State)</label>
+                    <input type="text" id="pref-location" placeholder="Kansas City, MO">
+                    <p class="hint">Used to calculate distance to projects</p>
+                </div>
+                <div>
+                    <label>Service Radius (miles)</label>
+                    <select id="pref-radius">
+                        <option value="25">25 miles - Local only</option>
+                        <option value="50" selected>50 miles - Regional</option>
+                        <option value="100">100 miles - Wide regional</option>
+                        <option value="150">150+ miles - Will travel</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="grid-2">
+                <div>
+                    <label>Average Decision Time (per bid)</label>
+                    <select id="pref-decision-time">
+                        <option value="0.5">Less than 30 minutes</option>
+                        <option value="0.75">30 minutes - 1 hour</option>
+                        <option value="1.5" selected>1-2 hours</option>
+                        <option value="3">2-4 hours</option>
+                        <option value="5">4+ hours</option>
+                    </select>
+                    <p class="hint">Used to calculate your time savings</p>
+                </div>
+                <div>
+                    <label>Risk Tolerance</label>
+                    <select id="pref-risk">
+                        <option value="low">Conservative - Flag all risky clauses</option>
+                        <option value="medium" selected>Moderate - Standard terms acceptable</option>
+                        <option value="high">Aggressive - Comfortable with risk</option>
+                    </select>
+                </div>
+            </div>
+            
+            <label>My Trades (CSI Divisions)</label>
+            <div id="csi-checkboxes" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 5px; margin: 10px 0;"></div>
+            
+            <label>Unknown GC Treatment</label>
+            <select id="pref-unknown-gc">
+                <option value="2">Treat as negative (2 stars)</option>
+                <option value="3" selected>Treat as neutral (3 stars)</option>
+                <option value="4">Treat as positive (4 stars)</option>
+            </select>
+            
+            <h3 style="margin-top: 30px;">📊 Score Component Weights</h3>
+            <p>Adjust how much each factor matters to YOUR business. Weights must total 100%.</p>
+            
+            <div id="weights-container">
+                <div class="weight-row">
+                    <span class="weight-label">📍 Location Fit</span>
+                    <input type="range" class="weight-slider" id="weight-location" min="0" max="60" value="25" oninput="updateWeights()">
+                    <span class="weight-value" id="weight-location-val">25%</span>
+                </div>
+                <div class="weight-row">
+                    <span class="weight-label">🔧 Trade Match</span>
+                    <input type="range" class="weight-slider" id="weight-trade" min="0" max="60" value="25" oninput="updateWeights()">
+                    <span class="weight-value" id="weight-trade-val">25%</span>
+                </div>
+                <div class="weight-row">
+                    <span class="weight-label">🔑 Keywords Found</span>
+                    <input type="range" class="weight-slider" id="weight-keywords" min="0" max="60" value="25" oninput="updateWeights()">
+                    <span class="weight-value" id="weight-keywords-val">25%</span>
+                </div>
+                <div class="weight-row">
+                    <span class="weight-label">🏢 GC Relationship</span>
+                    <input type="range" class="weight-slider" id="weight-gc" min="0" max="60" value="25" oninput="updateWeights()">
+                    <span class="weight-value" id="weight-gc-val">25%</span>
+                </div>
+                <div class="weight-row" style="background: #e8f5e9;">
+                    <span class="weight-label"><strong>Total</strong></span>
+                    <span style="flex:1"></span>
+                    <span class="weight-value" id="weight-total" style="font-size: 24px;">100%</span>
+                </div>
+            </div>
+            
+            <button onclick="savePreferences()">💾 Save Preferences</button>
+            <button class="btn-secondary" onclick="resetWeights()">↺ Reset to Default</button>
+            <span id="save-indicator" style="display:none" class="saved-indicator">✓ Saved</span>
+        </div>
+        
+        <!-- KEYWORDS TAB -->
+        <div id="tab-keywords" class="tab-content">
+            <h2>Contract & Spec Keywords</h2>
+            <p>Tell BidIQ which words or phrases in contracts and specs you like to see and which ones are red flags.</p>
+            
+            <div style="background: #f0fff4; border: 1px solid #28a745; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #28a745;">✅ Good / Preferred Terms</h3>
+                <textarea id="kw-products-good" style="min-height: 100px;" placeholder="repeat client&#10;negotiated contract&#10;design-assist&#10;BIM coordination by GC&#10;no retainage"></textarea>
+                <p class="hint">One keyword or short phrase per line. Found = positive points.</p>
+            </div>
+            
+            <div style="background: #fff5f5; border: 1px solid #dc3545; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #dc3545;">🚩 Bad / Red-Flag Terms</h3>
+                <textarea id="kw-products-bad" style="min-height: 100px;" placeholder="pay if paid&#10;liquidated damages&#10;no damages for delay&#10;broad form indemnity"></textarea>
+                <p class="hint">One keyword or short phrase per line. Found = negative points.</p>
+            </div>
+            
+            <div style="background: #fff8e6; border: 1px solid #ffc107; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #856404;">⚠️ Must-Have Terms</h3>
+                <textarea id="kw-products-musthave" style="min-height: 60px;" placeholder="Lenel&#10;owner-furnished materials"></textarea>
+                <p class="hint">One item per line. If NOT found = strong negative hit.</p>
+            </div>
+            
+            <button onclick="saveKeywords()">💾 Save Keywords</button>
+            <button class="btn-secondary" onclick="loadDefaultKeywords()">↺ Load Defaults</button>
+        </div>
+        
+        <!-- GC RATINGS TAB -->
+        <div id="tab-gcs" class="tab-content">
+            <h2>My GC Relationships</h2>
+            <p>Rate the GCs you work with. This feeds the Relationship score.</p>
+            
+            <div id="gc-list"></div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                <input type="text" id="new-gc-name" placeholder="GC Company Name" style="flex: 1; min-width: 200px;">
+                <select id="new-gc-rating" style="width: 180px;">
+                    <option value="1">⭐ Avoid</option>
+                    <option value="2">⭐⭐ Below average</option>
+                    <option value="3" selected>⭐⭐⭐ Neutral</option>
+                    <option value="4">⭐⭐⭐⭐ Good</option>
+                    <option value="5">⭐⭐⭐⭐⭐ Preferred</option>
+                </select>
+                <button onclick="addGC()">+ Add GC</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- OUTCOME MODAL -->
+    <div class="modal-overlay" id="outcome-modal">
+        <div class="modal">
+            <h2>📝 Record Outcome</h2>
+            <input type="hidden" id="outcome-project-id">
+            
+            <label>Project: <span id="outcome-project-name" style="font-weight: normal;"></span></label>
+            
+            <label>Outcome</label>
+            <select id="outcome-type" onchange="toggleOutcomeFields()">
+                <option value="">-- Select --</option>
+                <option value="won">🏆 Won</option>
+                <option value="lost">❌ Lost</option>
+                <option value="ghost">👻 Ghosted (No Response)</option>
+                <option value="didnt-bid">🚫 Didn't Bid</option>
+            </select>
+            
+            <!-- Won fields -->
+            <div id="outcome-won-fields" style="display: none;">
+                <label>Final Margin Achieved (%)</label>
+                <input type="number" id="outcome-margin" placeholder="e.g., 12" step="0.1">
+            </div>
+            
+            <!-- Lost fields -->
+            <div id="outcome-lost-fields" style="display: none;">
+                <label>How high were you?</label>
+                <select id="outcome-how-high">
+                    <option value="">-- Select --</option>
+                    <option value="within-5">Within 5%</option>
+                    <option value="5-10">5-10% high</option>
+                    <option value="10-15">10-15% high</option>
+                    <option value="15-20">15-20% high</option>
+                    <option value="20-plus">More than 20% high</option>
+                    <option value="unknown">GC didn't say / Unknown</option>
+                </select>
+                
+                <label>Winner Name (if known)</label>
+                <input type="text" id="outcome-winner" placeholder="Competitor company name">
+                
+                <label>GC Feedback</label>
+                <textarea id="outcome-feedback" placeholder="Any feedback from GC..."></textarea>
+            </div>
+            
+            <!-- Didn't Bid fields -->
+            <div id="outcome-didnt-bid-fields" style="display: none;">
+                <label>Why didn't you bid? (select all that apply)</label>
+                <div style="display: grid; gap: 8px; margin: 10px 0;">
+                    <label style="font-weight: normal;"><input type="checkbox" value="busy"> Too busy / no capacity</label>
+                    <label style="font-weight: normal;"><input type="checkbox" value="size"> Wrong size</label>
+                    <label style="font-weight: normal;"><input type="checkbox" value="location"> Wrong location</label>
+                    <label style="font-weight: normal;"><input type="checkbox" value="gc"> Bad GC</label>
+                    <label style="font-weight: normal;"><input type="checkbox" value="schedule"> Schedule unrealistic</label>
+                    <label style="font-weight: normal;"><input type="checkbox" value="terms"> Contract terms unacceptable</label>
+                    <label style="font-weight: normal;"><input type="checkbox" value="scope"> Not our scope</label>
+                    <label style="font-weight: normal;"><input type="checkbox" value="other"> Other</label>
+                </div>
+                <textarea id="outcome-didnt-bid-notes" placeholder="Additional notes..."></textarea>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="saveOutcome()">💾 Save Outcome</button>
+                <button class="btn-secondary" onclick="closeOutcomeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- BID SUBMISSION MODAL -->
+    <div class="modal-overlay" id="submission-modal">
+        <div class="modal">
+            <h2>📤 Record Bid Submission</h2>
+            <input type="hidden" id="submission-project-id">
+            
+            <label>Project: <span id="submission-project-name" style="font-weight: normal;"></span></label>
+            
+            <label>My Bid Amount ($)</label>
+            <input type="number" id="submission-amount" placeholder="e.g., 250000" step="100">
+            
+            <label>Hours Spent on Bid</label>
+            <input type="number" id="submission-hours" placeholder="e.g., 8" step="0.5">
+            
+            <label>Internal Estimator</label>
+            <input type="text" id="submission-estimator" placeholder="Who priced this bid?">
+            
+            <label>Notes</label>
+            <textarea id="submission-notes" placeholder="Any notes about this submission..."></textarea>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="saveSubmission()">💾 Mark as Submitted</button>
+                <button class="btn-secondary" onclick="closeSubmissionModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        // API Key (move to backend in production!)
+        const CLAUDE_API_KEY = "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";
+        
+        // CSI Divisions
+        const CSI_DIVISIONS = [
+            {num: 1, name: "General Requirements"},
+            {num: 2, name: "Existing Conditions"},
+            {num: 3, name: "Concrete"},
+            {num: 4, name: "Masonry"},
+            {num: 5, name: "Metals"},
+            {num: 6, name: "Wood, Plastics, Composites"},
+            {num: 7, name: "Thermal & Moisture Protection"},
+            {num: 8, name: "Openings (Doors/Windows)"},
+            {num: 9, name: "Finishes"},
+            {num: 10, name: "Specialties"},
+            {num: 11, name: "Equipment"},
+            {num: 12, name: "Furnishings"},
+            {num: 13, name: "Special Construction"},
+            {num: 14, name: "Conveying Equipment"},
+            {num: 21, name: "Fire Suppression"},
+            {num: 22, name: "Plumbing"},
+            {num: 23, name: "HVAC"},
+            {num: 25, name: "Integrated Automation"},
+            {num: 26, name: "Electrical"},
+            {num: 27, name: "Communications"},
+            {num: 28, name: "Electronic Safety & Security"},
+            {num: 31, name: "Earthwork"},
+            {num: 32, name: "Exterior Improvements"},
+            {num: 33, name: "Utilities"}
+        ];
+        
+        const DEFAULT_KEYWORDS = {
+            productsGood: ["negotiated contract", "repeat client", "design-assist", "BIM coordination", "progress payments", "no retainage"],
+            productsBad: ["pay if paid", "pay-if-paid", "pay when paid", "liquidated damages", "no damages for delay", "broad form indemnity", "time is of the essence"],
+            productsMustHave: []
+        };
+        
+        // ==================== TAB NAVIGATION ====================
+        
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'dashboard') updateDashboard();
+            if (tabName === 'projects') renderProjects();
+        }
+        
+        // ==================== PROJECT STORAGE ====================
+        
+        function getProjects() {
+            return JSON.parse(localStorage.getItem('bidiq_projects') || '[]');
+        }
+        
+        function saveProject(project) {
+            const projects = getProjects();
+            project.id = Date.now().toString();
+            project.createdAt = new Date().toISOString();
+            project.status = 'analyzed';
+            projects.unshift(project);
+            localStorage.setItem('bidiq_projects', JSON.stringify(projects));
+            return project;
+        }
+        
+        function updateProject(id, updates) {
+            const projects = getProjects();
+            const index = projects.findIndex(p => p.id === id);
+            if (index !== -1) {
+                projects[index] = { ...projects[index], ...updates };
+                localStorage.setItem('bidiq_projects', JSON.stringify(projects));
+            }
+        }
+        
+        // ==================== DASHBOARD ====================
+        
+        function updateDashboard() {
+            const projects = getProjects();
+            const prefs = JSON.parse(localStorage.getItem('bidiq_preferences') || '{}');
+            const avgDecisionTime = parseFloat(prefs.decisionTime) || 1.5;
+            
+            // Calculate stats
+            const totalBids = projects.length;
+            const outcomes = projects.filter(p => p.outcome);
+            const won = outcomes.filter(p => p.outcome === 'won').length;
+            const decided = outcomes.filter(p => ['won', 'lost'].includes(p.outcome)).length;
+            const winRate = decided > 0 ? Math.round((won / decided) * 100) : '--';
+            const pending = projects.filter(p => !p.outcome).length;
+            const hoursSaved = Math.round(totalBids * avgDecisionTime);
+            
+            document.getElementById('stat-total-bids').textContent = totalBids;
+            document.getElementById('stat-win-rate').textContent = winRate + '%';
+            document.getElementById('stat-pending').textContent = pending;
+            document.getElementById('stat-hours-saved').textContent = hoursSaved;
+            
+            // Recent activity
+            const recent = projects.slice(0, 5);
+            const activityHtml = recent.length > 0 ? recent.map(p => `
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                    <span>${p.projectName || 'Unknown Project'}</span>
+                    <span class="score-badge ${p.recommendation?.toLowerCase() || 'review'}">${p.score || '--'}</span>
+                </div>
+            `).join('') : '<p style="color: #888;">No bids analyzed yet.</p>';
+            document.getElementById('recent-activity').innerHTML = activityHtml;
+            
+            // Top GCs
+            const gcStats = {};
+            outcomes.forEach(p => {
+                if (p.gcName) {
+                    if (!gcStats[p.gcName]) gcStats[p.gcName] = { wins: 0, total: 0 };
+                    gcStats[p.gcName].total++;
+                    if (p.outcome === 'won') gcStats[p.gcName].wins++;
+                }
+            });
+            const topGCs = Object.entries(gcStats)
+                .map(([name, stats]) => ({ name, winRate: stats.total > 0 ? Math.round((stats.wins / stats.total) * 100) : 0, total: stats.total }))
+                .sort((a, b) => b.winRate - a.winRate)
+                .slice(0, 5);
+            
+            const gcHtml = topGCs.length > 0 ? topGCs.map(gc => `
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee;">
+                    <span>${gc.name}</span>
+                    <span>${gc.winRate}% (${gc.total} bids)</span>
+                </div>
+            `).join('') : '<p style="color: #888;">Track outcomes to see your best GCs.</p>';
+            document.getElementById('top-gcs').innerHTML = gcHtml;
+        }
+        
+        // ==================== PROJECTS LIST ====================
+        
+        function renderProjects() {
+            const projects = getProjects();
+            const filter = document.getElementById('project-filter').value;
+            
+            const filtered = filter === 'all' ? projects : projects.filter(p => {
+                if (filter === 'pending') return !p.outcome;
+                return p.outcome === filter.replace('-', '_');
+            });
+            
+            if (filtered.length === 0) {
+                document.getElementById('projects-tbody').innerHTML = 
+                    '<tr><td colspan="6" style="text-align: center; color: #888;">No projects match this filter.</td></tr>';
+                return;
+            }
+            
+            const html = filtered.map(p => {
+                const scoreClass = p.recommendation === 'GO' ? 'go' : p.recommendation === 'PASS' ? 'pass' : 'review';
+                const outcomeClass = p.outcome ? p.outcome.replace('_', '-') : 'pending';
+                const outcomeText = p.outcome ? p.outcome.replace('_', ' ').toUpperCase() : 'Pending';
+                
+                return `
+                    <tr>
+                        <td>
+                            <strong>${p.projectName || 'Unknown'}</strong><br>
+                            <small style="color: #888;">${p.projectCity || '?'}, ${p.projectState || '?'}</small>
+                        </td>
+                        <td>${p.gcName || 'Unknown GC'}</td>
+                        <td><span class="score-badge ${scoreClass}">${p.score || '--'}</span></td>
+                        <td>${p.bidDeadline || 'TBD'}</td>
+                        <td><span class="outcome-badge ${outcomeClass}">${outcomeText}</span></td>
+                        <td>
+                            ${!p.submission ? `<button class="btn-small" onclick="openSubmissionModal('${p.id}')">📤 Submit</button>` : ''}
+                            ${!p.outcome ? `<button class="btn-small btn-secondary" onclick="openOutcomeModal('${p.id}')">📝 Outcome</button>` : ''}
+                            <button class="btn-small btn-danger" onclick="deleteProject('${p.id}')">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            document.getElementById('projects-tbody').innerHTML = html;
+        }
+        
+        function filterProjects() {
+            renderProjects();
+        }
+        
+        function deleteProject(id) {
+            if (!confirm('Delete this project?')) return;
+            const projects = getProjects().filter(p => p.id !== id);
+            localStorage.setItem('bidiq_projects', JSON.stringify(projects));
+            renderProjects();
+            updateDashboard();
+        }
+        
+        function exportProjects() {
+            const projects = getProjects();
+            const headers = ['Project Name', 'GC', 'Location', 'Score', 'Recommendation', 'Deadline', 'Outcome', 'Bid Amount', 'Hours Spent'];
+            const rows = projects.map(p => [
+                p.projectName || '', p.gcName || '', `${p.projectCity || ''}, ${p.projectState || ''}`,
+                p.score || '', p.recommendation || '', p.bidDeadline || '', p.outcome || '',
+                p.submission?.amount || '', p.submission?.hours || ''
+            ]);
+            
+            const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bidiq_projects.csv';
+            a.click();
+        }
+        
+        // ==================== OUTCOME MODAL ====================
+        
+        function openOutcomeModal(projectId) {
+            const project = getProjects().find(p => p.id === projectId);
+            if (!project) return;
+            
+            document.getElementById('outcome-project-id').value = projectId;
+            document.getElementById('outcome-project-name').textContent = project.projectName || 'Unknown Project';
+            document.getElementById('outcome-type').value = '';
+            document.getElementById('outcome-modal').classList.add('active');
+            toggleOutcomeFields();
+        }
+        
+        function closeOutcomeModal() {
+            document.getElementById('outcome-modal').classList.remove('active');
+        }
+        
+        function toggleOutcomeFields() {
+            const type = document.getElementById('outcome-type').value;
+            document.getElementById('outcome-won-fields').style.display = type === 'won' ? 'block' : 'none';
+            document.getElementById('outcome-lost-fields').style.display = type === 'lost' ? 'block' : 'none';
+            document.getElementById('outcome-didnt-bid-fields').style.display = type === 'didnt-bid' ? 'block' : 'none';
+        }
+        
+        function saveOutcome() {
+            const projectId = document.getElementById('outcome-project-id').value;
+            const outcomeType = document.getElementById('outcome-type').value;
+            
+            if (!outcomeType) {
+                alert('Please select an outcome.');
+                return;
+            }
+            
+            const updates = {
+                outcome: outcomeType.replace('-', '_'),
+                outcomeDate: new Date().toISOString()
+            };
+            
+            if (outcomeType === 'won') {
+                updates.marginAchieved = parseFloat(document.getElementById('outcome-margin').value) || null;
+            } else if (outcomeType === 'lost') {
+                updates.howHigh = document.getElementById('outcome-how-high').value || null;
+                updates.winnerName = document.getElementById('outcome-winner').value || null;
+                updates.gcFeedback = document.getElementById('outcome-feedback').value || null;
+            } else if (outcomeType === 'didnt-bid') {
+                const reasons = [];
+                document.querySelectorAll('#outcome-didnt-bid-fields input[type="checkbox"]:checked').forEach(cb => reasons.push(cb.value));
+                updates.didntBidReasons = reasons;
+                updates.didntBidNotes = document.getElementById('outcome-didnt-bid-notes').value || null;
+            }
+            
+            updateProject(projectId, updates);
+            closeOutcomeModal();
+            renderProjects();
+            updateDashboard();
+        }
+        
+        // ==================== SUBMISSION MODAL ====================
+        
+        function openSubmissionModal(projectId) {
+            const project = getProjects().find(p => p.id === projectId);
+            if (!project) return;
+            
+            document.getElementById('submission-project-id').value = projectId;
+            document.getElementById('submission-project-name').textContent = project.projectName || 'Unknown Project';
+            document.getElementById('submission-modal').classList.add('active');
+        }
+        
+        function closeSubmissionModal() {
+            document.getElementById('submission-modal').classList.remove('active');
+        }
+        
+        function saveSubmission() {
+            const projectId = document.getElementById('submission-project-id').value;
+            const amount = parseFloat(document.getElementById('submission-amount').value);
+            const hours = parseFloat(document.getElementById('submission-hours').value);
+            
+            if (!amount) {
+                alert('Please enter bid amount.');
+                return;
+            }
+            
+            const submission = {
+                amount: amount,
+                hours: hours || null,
+                estimator: document.getElementById('submission-estimator').value || null,
+                notes: document.getElementById('submission-notes').value || null,
+                submittedAt: new Date().toISOString()
+            };
+            
+            updateProject(projectId, { submission: submission, status: 'submitted' });
+            closeSubmissionModal();
+            renderProjects();
+        }
+        
+        // ==================== GEOCODING ====================
+        
+        function haversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 3959;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return Math.round(R * c);
+        }
+        
+        async function geocodeLocation(locationString) {
+            try {
+                const encoded = encodeURIComponent(locationString);
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1&countrycodes=us`,
+                    { headers: { 'User-Agent': 'BidIQ-MVP/1.0' } }
+                );
+                if (!response.ok) return null;
+                const data = await response.json();
+                if (data.length === 0) return null;
+                return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+            } catch (err) {
+                return null;
+            }
+        }
+        
+        function calculateLocationScore(distanceMiles, serviceRadiusMiles) {
+            if (distanceMiles <= serviceRadiusMiles) {
+                const ratio = distanceMiles / serviceRadiusMiles;
+                return Math.round(100 - (ratio * 25));
+            } else {
+                const overage = distanceMiles - serviceRadiusMiles;
+                const penalty = Math.min(overage / serviceRadiusMiles, 1) * 50;
+                return Math.max(20, Math.round(75 - penalty));
+            }
+        }
+        
+        // ==================== PREFERENCES ====================
+        
+        function loadPreferences() {
+            const prefs = JSON.parse(localStorage.getItem('bidiq_preferences') || '{}');
+            document.getElementById('pref-location').value = prefs.location || '';
+            document.getElementById('pref-radius').value = prefs.radius || '50';
+            document.getElementById('pref-risk').value = prefs.riskTolerance || 'medium';
+            document.getElementById('pref-unknown-gc').value = prefs.unknownGC || '3';
+            document.getElementById('pref-decision-time').value = prefs.decisionTime || '1.5';
+            
+            document.getElementById('weight-location').value = prefs.weights?.location || 25;
+            document.getElementById('weight-trade').value = prefs.weights?.trade || 25;
+            document.getElementById('weight-keywords').value = prefs.weights?.keywords || 25;
+            document.getElementById('weight-gc').value = prefs.weights?.gc || 25;
+            updateWeights();
+            
+            const selectedDivisions = prefs.divisions || [];
+            CSI_DIVISIONS.forEach(div => {
+                const cb = document.getElementById('csi-' + div.num);
+                if (cb) cb.checked = selectedDivisions.includes(div.num);
+            });
+        }
+        
+        function savePreferences() {
+            const prefs = {
+                location: document.getElementById('pref-location').value,
+                radius: document.getElementById('pref-radius').value,
+                riskTolerance: document.getElementById('pref-risk').value,
+                unknownGC: document.getElementById('pref-unknown-gc').value,
+                decisionTime: document.getElementById('pref-decision-time').value,
+                weights: {
+                    location: parseInt(document.getElementById('weight-location').value),
+                    trade: parseInt(document.getElementById('weight-trade').value),
+                    keywords: parseInt(document.getElementById('weight-keywords').value),
+                    gc: parseInt(document.getElementById('weight-gc').value)
+                },
+                divisions: CSI_DIVISIONS.filter(div => document.getElementById('csi-' + div.num)?.checked).map(div => div.num)
+            };
+            localStorage.setItem('bidiq_preferences', JSON.stringify(prefs));
+            const indicator = document.getElementById('save-indicator');
+            indicator.style.display = 'inline-block';
+            setTimeout(() => indicator.style.display = 'none', 2000);
+        }
+        
+        function updateWeights() {
+            const loc = parseInt(document.getElementById('weight-location').value);
+            const trade = parseInt(document.getElementById('weight-trade').value);
+            const kw = parseInt(document.getElementById('weight-keywords').value);
+            const gc = parseInt(document.getElementById('weight-gc').value);
+            const total = loc + trade + kw + gc;
+            
+            document.getElementById('weight-location-val').textContent = loc + '%';
+            document.getElementById('weight-trade-val').textContent = trade + '%';
+            document.getElementById('weight-keywords-val').textContent = kw + '%';
+            document.getElementById('weight-gc-val').textContent = gc + '%';
+            document.getElementById('weight-total').textContent = total + '%';
+            document.getElementById('weight-total').style.color = total === 100 ? '#28a745' : '#dc3545';
+        }
+        
+        function resetWeights() {
+            document.getElementById('weight-location').value = 25;
+            document.getElementById('weight-trade').value = 25;
+            document.getElementById('weight-keywords').value = 25;
+            document.getElementById('weight-gc').value = 25;
+            updateWeights();
+        }
+        
+        function initCSICheckboxes() {
+            const container = document.getElementById('csi-checkboxes');
+            container.innerHTML = CSI_DIVISIONS.map(div => `
+                <label style="font-weight: normal; cursor: pointer;">
+                    <input type="checkbox" id="csi-${div.num}" value="${div.num}">
+                    Div ${div.num} - ${div.name}
+                </label>
+            `).join('');
+        }
+        
+        // ==================== KEYWORDS ====================
+        
+        function loadKeywords() {
+            const kw = JSON.parse(localStorage.getItem('bidiq_keywords') || '{}');
+            document.getElementById('kw-products-good').value = (kw.productsGood || DEFAULT_KEYWORDS.productsGood).join('\n');
+            document.getElementById('kw-products-bad').value = (kw.productsBad || DEFAULT_KEYWORDS.productsBad).join('\n');
+            document.getElementById('kw-products-musthave').value = (kw.productsMustHave || DEFAULT_KEYWORDS.productsMustHave).join('\n');
+        }
+        
+        function saveKeywords() {
+            const parse = (id) => document.getElementById(id).value.split('\n').map(s => s.trim()).filter(s => s);
+            const kw = {
+                productsGood: parse('kw-products-good'),
+                productsBad: parse('kw-products-bad'),
+                productsMustHave: parse('kw-products-musthave')
+            };
+            localStorage.setItem('bidiq_keywords', JSON.stringify(kw));
+            alert('Keywords saved!');
+        }
+        
+        function loadDefaultKeywords() {
+            document.getElementById('kw-products-good').value = DEFAULT_KEYWORDS.productsGood.join('\n');
+            document.getElementById('kw-products-bad').value = DEFAULT_KEYWORDS.productsBad.join('\n');
+            document.getElementById('kw-products-musthave').value = DEFAULT_KEYWORDS.productsMustHave.join('\n');
+        }
+        
+        // ==================== GC RATINGS ====================
+        
+        function loadGCRatings() {
+            const gcs = JSON.parse(localStorage.getItem('bidiq_gcs') || '[]');
+            const container = document.getElementById('gc-list');
+            if (gcs.length === 0) {
+                container.innerHTML = '<p style="color: #888;">No GCs added yet. Add your first GC below.</p>';
+                return;
+            }
+            container.innerHTML = gcs.map((gc, i) => `
+                <div style="display: flex; align-items: center; gap: 15px; padding: 12px; background: #f8f9fa; border-radius: 8px; margin-bottom: 10px;">
+                    <span style="flex: 1; font-weight: bold;">${gc.name}</span>
+                    <span>${'⭐'.repeat(gc.rating)}</span>
+                    <button class="btn-small btn-danger" onclick="removeGC(${i})">Remove</button>
+                </div>
+            `).join('');
+        }
+        
+        function addGC() {
+            const name = document.getElementById('new-gc-name').value.trim();
+            const rating = parseInt(document.getElementById('new-gc-rating').value);
+            if (!name) return alert('Please enter GC name.');
+            
+            const gcs = JSON.parse(localStorage.getItem('bidiq_gcs') || '[]');
+            gcs.push({ name, rating });
+            localStorage.setItem('bidiq_gcs', JSON.stringify(gcs));
+            document.getElementById('new-gc-name').value = '';
+            loadGCRatings();
+        }
+        
+        function removeGC(index) {
+            const gcs = JSON.parse(localStorage.getItem('bidiq_gcs') || '[]');
+            gcs.splice(index, 1);
+            localStorage.setItem('bidiq_gcs', JSON.stringify(gcs));
+            loadGCRatings();
+        }
+        
+        // ==================== PDF EXTRACTION ====================
+        
+        async function extractTextFromPDF(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let fullText = '';
+            const pageTexts = [];
+            
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                const pageText = content.items.map(item => item.str).join(' ');
+                pageTexts.push(pageText);
+                fullText += pageText + '\n';
+            }
+            
+            return { fullText, pageCount: pdf.numPages, charCount: fullText.length };
+        }
+        
+        // ==================== ANALYZE BID ====================
+        
+        async function analyzeBid() {
+            const files = document.getElementById('pdfFile').files;
+            if (files.length === 0) return alert('Please select PDF files.');
+            
+            const progress = document.getElementById('progress');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            
+            progress.style.display = 'block';
+            analyzeBtn.disabled = true;
+            
+            try {
+                // Step 1: Extract text from all PDFs
+                progressText.textContent = 'Extracting text from documents...';
+                progressBar.style.width = '20%';
+                
+                let allText = '';
+                const fileStats = [];
+                
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    progressText.textContent = `Reading ${file.name}...`;
+                    const result = await extractTextFromPDF(file);
+                    allText += result.fullText + '\n\n';
+                    fileStats.push({ name: file.name, pages: result.pageCount, chars: result.charCount });
+                }
+                
+                // Step 2: Get preferences
+                const prefs = JSON.parse(localStorage.getItem('bidiq_preferences') || '{}');
+                const keywords = JSON.parse(localStorage.getItem('bidiq_keywords') || '{}');
+                const gcs = JSON.parse(localStorage.getItem('bidiq_gcs') || '[]');
+                
+                // Step 3: AI extraction (minimal - just project info)
+                progressText.textContent = 'AI analyzing project details...';
+                progressBar.style.width = '50%';
+                
+                const aiExtraction = await callClaudeForExtraction(allText.substring(0, 50000));
+                
+                // Step 4: Local keyword search
+                progressText.textContent = 'Searching for keywords...';
+                progressBar.style.width = '70%';
+                
+                const keywordResults = searchKeywords(allText, keywords);
+                
+                // Step 5: Calculate scores
+                progressText.textContent = 'Calculating personalized score...';
+                progressBar.style.width = '85%';
+                
+                // Geocode and calculate distance
+                let distanceMiles = null;
+                if (prefs.location && aiExtraction.project_city && aiExtraction.project_state) {
+                    const userCoords = await geocodeLocation(prefs.location);
+                    const projectCoords = await geocodeLocation(`${aiExtraction.project_city}, ${aiExtraction.project_state}`);
+                    if (userCoords && projectCoords) {
+                        distanceMiles = haversineDistance(userCoords.lat, userCoords.lon, projectCoords.lat, projectCoords.lon);
+                    }
+                }
+                
+                const scoreResult = calculateScore(aiExtraction, keywordResults, distanceMiles, prefs, keywords, gcs);
+                
+                // Step 6: Save project
+                const project = {
+                    projectName: aiExtraction.project_name,
+                    projectCity: aiExtraction.project_city,
+                    projectState: aiExtraction.project_state,
+                    gcName: aiExtraction.gc_name,
+                    bidDeadline: aiExtraction.bid_deadline,
+                    projectSF: aiExtraction.project_sf,
+                    score: scoreResult.finalScore,
+                    recommendation: scoreResult.recommendation,
+                    components: scoreResult.components,
+                    keywordResults: keywordResults,
+                    distanceMiles: distanceMiles,
+                    fileStats: fileStats,
+                    totalPages: fileStats.reduce((sum, f) => sum + f.pages, 0)
+                };
+                
+                saveProject(project);
+                
+                // Step 7: Display results
+                progressBar.style.width = '100%';
+                progressText.textContent = 'Done!';
+                
+                displayResults(project, scoreResult);
+                
+            } catch (err) {
+                console.error(err);
+                document.getElementById('result').innerHTML = `<div class="status status-error">Error: ${err.message}</div>`;
+            } finally {
+                analyzeBtn.disabled = false;
+            }
+        }
+        
+        async function callClaudeForExtraction(text) {
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': CLAUDE_API_KEY,
+                    'anthropic-version': '2023-06-01',
+                    'anthropic-dangerous-direct-browser-access': 'true'
+                },
+                body: JSON.stringify({
+                    model: 'claude-sonnet-4-20250514',
+                    max_tokens: 1000,
+                    messages: [{
+                        role: 'user',
+                        content: `Extract project info from this bid document text. Return ONLY valid JSON:
+
+{
+  "project_name": "string or null",
+  "gc_name": "string or null",
+  "project_city": "string or null",
+  "project_state": "2-letter state code or null",
+  "bid_deadline": "date string or null",
+  "project_sf": number or null,
+  "spec_divisions": [list of division numbers found]
+}
+
+Document text:
+${text}`
+                    }]
+                })
+            });
+            
+            if (!response.ok) throw new Error('AI API failed');
+            const data = await response.json();
+            const jsonMatch = data.content[0].text.match(/\{[\s\S]*\}/);
+            return jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+        }
+        
+        function searchKeywords(text, keywords) {
+            const textLower = text.toLowerCase();
+            const results = { good: [], bad: [], mustHave: [], mustHaveMissing: [] };
+            
+            (keywords.productsGood || []).forEach(kw => {
+                if (textLower.includes(kw.toLowerCase())) results.good.push(kw);
+            });
+            (keywords.productsBad || []).forEach(kw => {
+                if (textLower.includes(kw.toLowerCase())) results.bad.push(kw);
+            });
+            (keywords.productsMustHave || []).forEach(kw => {
+                if (textLower.includes(kw.toLowerCase())) {
+                    results.mustHave.push(kw);
+                } else {
+                    results.mustHaveMissing.push(kw);
+                }
+            });
+            
+            return results;
+        }
+        
+        function calculateScore(extraction, keywordResults, distanceMiles, prefs, keywords, gcs) {
+            const weights = prefs.weights || { location: 25, trade: 25, keywords: 25, gc: 25 };
+            const riskTolerance = prefs.riskTolerance || 'medium';
+            const unknownGC = parseInt(prefs.unknownGC) || 3;
+            const serviceRadius = parseInt(prefs.radius) || 50;
+            const userDivisions = prefs.divisions || [];
+            
+            // Location score
+            let locationScore = 50;
+            let locationDetail = 'Location not determined';
+            if (distanceMiles !== null) {
+                locationScore = calculateLocationScore(distanceMiles, serviceRadius);
+                locationDetail = `${distanceMiles} miles from your office`;
+            }
+            
+            // Trade score
+            let tradeScore = 50;
+            let tradeDetail = 'No divisions specified';
+            const foundDivisions = extraction.spec_divisions || [];
+            if (userDivisions.length > 0 && foundDivisions.length > 0) {
+                const matches = userDivisions.filter(d => foundDivisions.includes(d));
+                const coverage = matches.length / userDivisions.length;
+                tradeScore = Math.round(coverage * 100);
+                tradeDetail = `Found ${matches.length} of ${userDivisions.length} of your divisions`;
+            }
+            
+            // Keyword score
+            let keywordScore = 50;
+            keywordScore += keywordResults.good.length * 8;
+            const badPenalty = riskTolerance === 'low' ? 15 : riskTolerance === 'high' ? 5 : 10;
+            keywordScore -= keywordResults.bad.length * badPenalty;
+            keywordScore += keywordResults.mustHave.length * 12;
+            keywordScore -= keywordResults.mustHaveMissing.length * 25;
+            keywordScore = Math.max(0, Math.min(100, keywordScore));
+            
+            const keywordDetails = [];
+            keywordResults.good.forEach(k => keywordDetails.push({ text: k, type: 'good', effect: '+8' }));
+            keywordResults.bad.forEach(k => keywordDetails.push({ text: k, type: 'bad', effect: `-${badPenalty}` }));
+            keywordResults.mustHaveMissing.forEach(k => keywordDetails.push({ text: k, type: 'missing', effect: '-25' }));
+            
+            // GC score
+            let gcScore = unknownGC * 20;
+            let gcDetail = `Unknown GC (default ${unknownGC} stars)`;
+            const gcName = extraction.gc_name?.toLowerCase();
+            if (gcName) {
+                const match = gcs.find(g => gcName.includes(g.name.toLowerCase()) || g.name.toLowerCase().includes(gcName));
+                if (match) {
+                    gcScore = match.rating * 20;
+                    gcDetail = `${match.name} - Your rating: ${'⭐'.repeat(match.rating)}`;
+                }
+            }
+            
+            // Final score
+            const finalScore = Math.round(
+                (locationScore * weights.location / 100) +
+                (tradeScore * weights.trade / 100) +
+                (keywordScore * weights.keywords / 100) +
+                (gcScore * weights.gc / 100)
+            );
+            
+            const recommendation = finalScore >= 80 ? 'GO' : finalScore >= 60 ? 'REVIEW' : 'PASS';
+            
+            return {
+                finalScore,
+                recommendation,
+                components: {
+                    location: { score: locationScore, weight: weights.location, detail: locationDetail },
+                    trade: { score: tradeScore, weight: weights.trade, detail: tradeDetail },
+                    keywords: { score: keywordScore, weight: weights.keywords, details: keywordDetails },
+                    gc: { score: gcScore, weight: weights.gc, detail: gcDetail }
+                }
+            };
+        }
+        
+        function displayResults(project, scoreResult) {
+            const { finalScore, recommendation, components } = scoreResult;
+            
+            let scoreClass = 'score-pass';
+            if (recommendation === 'GO') scoreClass = 'score-go';
+            else if (recommendation === 'REVIEW') scoreClass = 'score-review';
+            
+            const getFillClass = (score) => score >= 70 ? 'fill-high' : score >= 40 ? 'fill-medium' : 'fill-low';
+            
+            const html = `
+                <div class="score-box ${scoreClass}">
+                    ${finalScore}/100 - ${recommendation}
+                </div>
+                
+                <div class="extraction-stats">
+                    <div class="stat-box">
+                        <div class="stat-number">${project.distanceMiles !== null ? project.distanceMiles : '?'}</div>
+                        <div class="stat-label">Miles Away</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">${project.totalPages}</div>
+                        <div class="stat-label">Pages Analyzed</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">${project.fileStats?.length || 0}</div>
+                        <div class="stat-label">Files Processed</div>
+                    </div>
+                </div>
+                
+                <div class="score-breakdown">
+                    <h3>📊 Score Breakdown</h3>
+                    
+                    <div class="score-component">
+                        <span class="component-icon">📍</span>
+                        <span class="component-name">Location Fit</span>
+                        <div class="component-bar"><div class="component-fill ${getFillClass(components.location.score)}" style="width: ${components.location.score}%"></div></div>
+                        <span class="component-score">${components.location.score}</span>
+                        <span class="component-weight">${components.location.weight}%</span>
+                    </div>
+                    <div class="component-detail">${components.location.detail}</div>
+                    
+                    <div class="score-component">
+                        <span class="component-icon">🔧</span>
+                        <span class="component-name">Trade Match</span>
+                        <div class="component-bar"><div class="component-fill ${getFillClass(components.trade.score)}" style="width: ${components.trade.score}%"></div></div>
+                        <span class="component-score">${components.trade.score}</span>
+                        <span class="component-weight">${components.trade.weight}%</span>
+                    </div>
+                    <div class="component-detail">${components.trade.detail}</div>
+                    
+                    <div class="score-component">
+                        <span class="component-icon">🔑</span>
+                        <span class="component-name">Keywords Found</span>
+                        <div class="component-bar"><div class="component-fill ${getFillClass(components.keywords.score)}" style="width: ${components.keywords.score}%"></div></div>
+                        <span class="component-score">${components.keywords.score}</span>
+                        <span class="component-weight">${components.keywords.weight}%</span>
+                    </div>
+                    <div class="component-detail">
+                        ${components.keywords.details.length > 0 
+                            ? components.keywords.details.map(d => 
+                                `<span class="keyword-tag ${d.type === 'good' ? 'keyword-good' : d.type === 'missing' ? 'keyword-missing' : 'keyword-bad'}">${d.text} (${d.effect})</span>`
+                            ).join(' ')
+                            : '<span style="color:#888">No keywords found</span>'
+                        }
+                    </div>
+                    
+                    <div class="score-component">
+                        <span class="component-icon">🏢</span>
+                        <span class="component-name">GC Relationship</span>
+                        <div class="component-bar"><div class="component-fill ${getFillClass(components.gc.score)}" style="width: ${components.gc.score}%"></div></div>
+                        <span class="component-score">${components.gc.score}</span>
+                        <span class="component-weight">${components.gc.weight}%</span>
+                    </div>
+                    <div class="component-detail">${components.gc.detail}</div>
+                </div>
+                
+                <div class="details">
+                    <h3>📋 Extracted Project Details</h3>
+                    <div class="detail-row">
+                        <span class="detail-label">Project Name:</span>
+                        <span class="detail-value">${project.projectName || 'Not found'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">General Contractor:</span>
+                        <span class="detail-value">${project.gcName || 'Not found'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Location:</span>
+                        <span class="detail-value">${project.projectCity || '?'}, ${project.projectState || '?'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Bid Deadline:</span>
+                        <span class="detail-value">${project.bidDeadline || 'Not specified'}</span>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button onclick="showTab('projects')">📁 View in My Projects</button>
+                </div>
+            `;
+            
+            document.getElementById('result').innerHTML = html;
+        }
+        
+        // ==================== INITIALIZE ====================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initCSICheckboxes();
+            loadPreferences();
+            loadKeywords();
+            loadGCRatings();
+            updateDashboard();
+        });
+    </script>
+</body>
+</html>

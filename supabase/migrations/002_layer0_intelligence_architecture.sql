@@ -30,6 +30,7 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS building_type VARCHAR(50);
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS contract_risks JSONB;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS outcome_confidence INTEGER CHECK (outcome_confidence >= 1 AND outcome_confidence <= 5);
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS decline_reasons TEXT[];
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS trades_found TEXT[];
 
 -- Add TIER 3 performance signals
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS margin_band VARCHAR(20) CHECK (margin_band IN ('<10%', '10-20%', '20-30%', '30%+'));

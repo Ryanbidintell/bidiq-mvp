@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BidIQ - Decision Intelligence for Construction Bidding | Stop Wasting Time on Bad Bids</title>
+    <meta name="description" content="BidIQ is an underwriting engine for construction bids — helping subcontractors decide where to deploy their limited estimating capital. No bank lends on gut feel. Why should you bid that way?">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        :root {
+            --bg-dark: #0a0a0b;
+            --bg-card: #111113;
+            --bg-elevated: #18181b;
+            --border: #27272a;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.4);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gradient-1: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --gradient-2: linear-gradient(135deg, #0a0a0b 0%, #1a1a2e 100%);
+        }
+        
+        html { scroll-behavior: smooth; }
+        
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        /* Typography */
+        h1, h2, h3, h4 { font-weight: 700; line-height: 1.2; }
+        h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); letter-spacing: -0.03em; }
+        h2 { font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -0.02em; }
+        h3 { font-size: clamp(1.25rem, 2vw, 1.5rem); }
+        
+        .mono { font-family: 'Space Mono', monospace; }
+        
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        
+        .section {
+            padding: 120px 0;
+        }
+        
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(10, 10, 11, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .nav-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .nav-logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-logo span {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+        
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-primary);
+        }
+        
+        .nav-cta {
+            padding: 10px 20px;
+            background: var(--accent);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .nav-cta:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+        
+        .nav-mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .nav-mobile-toggle { display: block; }
+            .nav-links.open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: var(--bg-dark);
+                padding: 24px;
+                border-bottom: 1px solid var(--border);
+            }
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding-top: 80px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150%;
+            height: 100%;
+            background: radial-gradient(ellipse at center top, rgba(59, 130, 246, 0.15) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        
+        .hero-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: linear-gradient(to bottom, black, transparent);
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+        
+        .hero-badge-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .hero h1 {
+            margin-bottom: 24px;
+        }
+        
+        .hero h1 .highlight {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero-subtitle {
+            font-size: clamp(1.125rem, 2vw, 1.375rem);
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+        }
+        
+        .hero-ctas {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 0 40px var(--accent-glow);
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 0 60px var(--accent-glow);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-card);
+            border-color: var(--text-muted);
+        }
+        
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            margin-top: 80px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .hero-stat {
+            text-align: center;
+        }
+        
+        .hero-stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero-stat-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        
+        @media (max-width: 640px) {
+            .hero-stats {
+                flex-direction: column;
+                gap: 24px;
+            }
+        }
+        
+        /* Problem Section */
+        .problem {
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .problem-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+        
+        @media (max-width: 900px) {
+            .problem-grid { grid-template-columns: 1fr; gap: 48px; }
+        }
+        
+        .problem-content h2 {
+            margin-bottom: 24px;
+        }
+        
+        .problem-content p {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+            margin-bottom: 32px;
+        }
+        
+        .problem-list {
+            list-style: none;
+        }
+        
+        .problem-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        
+        .problem-list li:last-child { border-bottom: none; }
+        
+        .problem-icon {
+            width: 24px;
+            height: 24px;
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .problem-visual {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            position: relative;
+        }
+        
+        .time-waste-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .time-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .time-bar-label {
+            width: 140px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .time-bar-track {
+            flex: 1;
+            height: 32px;
+            background: var(--bg-dark);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .time-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .time-bar-fill.wasted {
+            background: linear-gradient(90deg, var(--danger), #f87171);
+        }
+        
+        .time-bar-fill.productive {
+            background: linear-gradient(90deg, var(--success), #4ade80);
+        }
+        
+        /* Solution Section */
+        .solution h2 {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        
+        .solution-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            max-width: 600px;
+            margin: 0 auto 64px;
+        }
+        
+        .solution-steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+        
+        @media (max-width: 900px) {
+            .solution-steps { grid-template-columns: 1fr; }
+        }
+        
+        .solution-step {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            position: relative;
+            transition: all 0.3s;
+        }
+        
+        .solution-step:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+        }
+        
+        .solution-step-number {
+            position: absolute;
+            top: -16px;
+            left: 32px;
+            width: 32px;
+            height: 32px;
+            background: var(--gradient-1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        
+        .solution-step-icon {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+        
+        .solution-step h3 {
+            margin-bottom: 12px;
+        }
+        
+        .solution-step p {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+        
+        /* Social Proof */
+        .social-proof {
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .testimonials {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        
+        @media (max-width: 900px) {
+            .testimonials { grid-template-columns: 1fr; }
+        }
+        
+        .testimonial {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+        }
+        
+        .testimonial-quote {
+            font-size: 1.125rem;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            line-height: 1.7;
+        }
+        
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .testimonial-avatar {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        
+        .testimonial-info h4 {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        
+        .testimonial-info p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            position: relative;
+        }
+        
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150%;
+            height: 100%;
+            background: radial-gradient(ellipse at center bottom, rgba(59, 130, 246, 0.1) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        
+        .cta-section h2 {
+            margin-bottom: 16px;
+        }
+        
+        .cta-section p {
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            max-width: 500px;
+            margin: 0 auto 40px;
+        }
+        
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 64px 0 32px;
+        }
+        
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 48px;
+        }
+        
+        @media (max-width: 768px) {
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+        }
+        
+        .footer-brand p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 16px;
+            max-width: 280px;
+        }
+        
+        .footer-col h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+        
+        .footer-col a {
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 0;
+            transition: color 0.2s;
+        }
+        
+        .footer-col a:hover {
+            color: var(--text-primary);
+        }
+        
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 32px;
+            border-top: 1px solid var(--border);
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        
+        @media (max-width: 640px) {
+            .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
+        }
+        
+        /* Page Transitions */
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        /* Features Page */
+        .features-hero {
+            padding: 160px 0 80px;
+            text-align: center;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        
+        @media (max-width: 768px) {
+            .features-grid { grid-template-columns: 1fr; }
+        }
+        
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s;
+        }
+        
+        .feature-card:hover {
+            border-color: var(--accent);
+        }
+        
+        .feature-card.large {
+            grid-column: span 2;
+        }
+        
+        @media (max-width: 768px) {
+            .feature-card.large { grid-column: span 1; }
+        }
+        
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .feature-card h3 {
+            margin-bottom: 12px;
+        }
+        
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+        
+        .feature-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent);
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+        
+        /* Press Page */
+        .press-hero {
+            padding: 160px 0 80px;
+            text-align: center;
+        }
+        
+        .press-kit {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 48px;
+            margin-bottom: 64px;
+        }
+        
+        .press-kit h3 {
+            margin-bottom: 24px;
+        }
+        
+        .press-assets {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        
+        @media (max-width: 768px) {
+            .press-assets { grid-template-columns: repeat(2, 1fr); }
+        }
+        
+        .press-asset {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+        
+        .press-asset:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        
+        .press-asset-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+        
+        .press-asset span {
+            font-size: 13px;
+            display: block;
+        }
+        
+        .press-contact {
+            text-align: center;
+            padding: 48px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+        }
+        
+        .press-contact h3 {
+            margin-bottom: 16px;
+        }
+        
+        .press-contact p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+        
+        .press-email {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-decoration: none;
+        }
+        
+        .company-facts {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 64px;
+        }
+        
+        @media (max-width: 768px) {
+            .company-facts { grid-template-columns: repeat(2, 1fr); }
+        }
+        
+        .fact {
+            text-align: center;
+        }
+        
+        .fact-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        
+        .fact-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        
+        /* Apply Page */
+        .apply-hero {
+            padding: 160px 0 80px;
+            text-align: center;
+        }
+        
+        .apply-benefits {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 64px;
+        }
+        
+        @media (max-width: 768px) {
+            .apply-benefits { grid-template-columns: 1fr; }
+        }
+        
+        .benefit-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+        }
+        
+        .benefit-icon {
+            font-size: 40px;
+            margin-bottom: 16px;
+        }
+        
+        .benefit-card h3 {
+            margin-bottom: 8px;
+        }
+        
+        .benefit-card p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .apply-form-container {
+            max-width: 640px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 48px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .form-hint {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        @media (max-width: 640px) {
+            .form-row { grid-template-columns: 1fr; }
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-in {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+        
+        .animate-delay-1 { animation-delay: 0.1s; opacity: 0; }
+        .animate-delay-2 { animation-delay: 0.2s; opacity: 0; }
+        .animate-delay-3 { animation-delay: 0.3s; opacity: 0; }
+        .animate-delay-4 { animation-delay: 0.4s; opacity: 0; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="#" class="nav-logo" onclick="showPage('home')">🎯 <span>BidIQ</span></a>
+            <div class="nav-links" id="navLinks">
+                <a href="#" class="nav-link active" onclick="showPage('home')" data-page="home">Home</a>
+                <a href="#" class="nav-link" onclick="showPage('features')" data-page="features">Features</a>
+                <a href="#" class="nav-link" onclick="showPage('press')" data-page="press">Press</a>
+                <a href="#" class="nav-link" onclick="showPage('apply')" data-page="apply">Beta Access</a>
+                <a href="#" class="nav-cta" onclick="showPage('apply')">Get Early Access →</a>
+            </div>
+            <button class="nav-mobile-toggle" onclick="toggleMobileNav()">☰</button>
+        </div>
+    </nav>
+
+    <!-- HOME PAGE -->
+    <div class="page active" id="page-home">
+        <!-- Hero -->
+        <section class="hero">
+            <div class="hero-grid"></div>
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-badge animate-in">
+                        <span class="hero-badge-dot"></span>
+                        Decision Intelligence for Construction Bidding
+                    </div>
+                    <h1 class="animate-in animate-delay-1">
+                        Other Industries Have<br><span class="highlight">Decision Engines.</span><br>Construction Never Did.
+                    </h1>
+                    <p class="hero-subtitle animate-in animate-delay-2">
+                        No bank lends on gut feel. No sales team calls every lead. BidIQ brings that same underwriting logic to construction bidding — so you stop wasting time on bids you'll never win.
+                    </p>
+                    <div class="hero-ctas animate-in animate-delay-3">
+                        <a href="#" class="btn btn-primary" onclick="showPage('apply')">
+                            Apply for Beta Access
+                            <span>→</span>
+                        </a>
+                        <a href="#" class="btn btn-secondary" onclick="showPage('features')">
+                            See How It Works
+                        </a>
+                    </div>
+                    
+                    <!-- Brand Pillars -->
+                    <div style="display: flex; justify-content: center; gap: 32px; margin-top: 48px; flex-wrap: wrap;" class="animate-in animate-delay-4">
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 14px;">
+                            <span style="color: var(--success);">✓</span> Clarity Over Speed
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 14px;">
+                            <span style="color: var(--success);">✓</span> Trust Over Black-Box AI
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 14px;">
+                            <span style="color: var(--success);">✓</span> Learning Over One-Off Analysis
+                        </div>
+                    </div>
+                    
+                    <div class="hero-stats animate-in animate-delay-4">
+                        <div class="hero-stat">
+                            <div class="hero-stat-value">18+</div>
+                            <div class="hero-stat-label">Hours saved per week</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-value">70%</div>
+                            <div class="hero-stat-label">Bad bids avoided</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-value">$47K</div>
+                            <div class="hero-stat-label">Avg. annual savings</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Problem Section -->
+        <section class="problem section">
+            <div class="container">
+                <div class="problem-grid">
+                    <div class="problem-content">
+                        <h2>The Bid Treadmill is <span style="color: var(--danger);">Killing</span> Your Profits</h2>
+                        <p>Every subcontractor knows the feeling. Another stack of bid invites. Another late night crunching numbers. Another project you never hear back about.</p>
+                        <ul class="problem-list">
+                            <li>
+                                <span class="problem-icon">✕</span>
+                                <span><strong>15-20 hours/week</strong> reviewing bid documents for projects you'll never win</span>
+                            </li>
+                            <li>
+                                <span class="problem-icon">✕</span>
+                                <span><strong>No feedback from GCs</strong> — you never know why you lost or if you were even close</span>
+                            </li>
+                            <li>
+                                <span class="problem-icon">✕</span>
+                                <span><strong>The same bad GCs</strong> keep wasting your time with bids they never award you</span>
+                            </li>
+                            <li>
+                                <span class="problem-icon">✕</span>
+                                <span><strong>Your gut says pass</strong> but you bid anyway "just in case" — and regret it</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="problem-visual">
+                        <h3 style="margin-bottom: 24px; font-size: 16px; color: var(--text-muted);">Where Your Estimating Time Goes</h3>
+                        <div class="time-waste-chart">
+                            <div class="time-bar">
+                                <span class="time-bar-label">Bad fit bids</span>
+                                <div class="time-bar-track">
+                                    <div class="time-bar-fill wasted" style="width: 65%;">65%</div>
+                                </div>
+                            </div>
+                            <div class="time-bar">
+                                <span class="time-bar-label">GCs who ghost</span>
+                                <div class="time-bar-track">
+                                    <div class="time-bar-fill wasted" style="width: 20%;">20%</div>
+                                </div>
+                            </div>
+                            <div class="time-bar">
+                                <span class="time-bar-label">Actual opportunities</span>
+                                <div class="time-bar-track">
+                                    <div class="time-bar-fill productive" style="width: 15%;">15%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p style="margin-top: 24px; font-size: 14px; color: var(--text-muted); text-align: center;">
+                            <strong style="color: var(--danger);">85% of your estimating time</strong> is wasted on bids that go nowhere.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Category Definition Section -->
+        <section class="section" style="border-bottom: 1px solid var(--border);">
+            <div class="container">
+                <div style="text-align: center; max-width: 800px; margin: 0 auto;">
+                    <p class="mono" style="color: var(--accent); font-size: 14px; margin-bottom: 16px;">THE INSIGHT</p>
+                    <h2 style="margin-bottom: 24px;">Everyone Else Optimizes Tasks.<br><span style="color: var(--accent);">BidIQ Captures Decisions.</span></h2>
+                    <p style="color: var(--text-secondary); font-size: 1.25rem; line-height: 1.8; margin-bottom: 48px;">
+                        Most construction AI tools help teams work faster — takeoffs, document review, estimating. BidIQ helps teams work <strong style="color: var(--text-primary);">smarter</strong> by deciding which bids are worth pursuing, and learning from every decision over time.
+                    </p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+                    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; text-align: center;">
+                        <div style="font-size: 40px; margin-bottom: 16px;">🏦</div>
+                        <h3 style="margin-bottom: 12px; font-size: 18px;">Credit Scoring for Bids</h3>
+                        <p style="color: var(--text-muted); font-size: 14px;">Banks don't approve every loan. BidIQ helps you decide which bids are worth the risk.</p>
+                    </div>
+                    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; text-align: center;">
+                        <div style="font-size: 40px; margin-bottom: 16px;">📊</div>
+                        <h3 style="margin-bottom: 12px; font-size: 18px;">Lead Scoring for Projects</h3>
+                        <p style="color: var(--text-muted); font-size: 14px;">Sales teams score and prioritize leads. BidIQ brings that logic to bidding.</p>
+                    </div>
+                    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; text-align: center;">
+                        <div style="font-size: 40px; margin-bottom: 16px;">⚡</div>
+                        <h3 style="margin-bottom: 12px; font-size: 18px;">RevOps for Construction</h3>
+                        <p style="color: var(--text-muted); font-size: 14px;">Estimating tools help you price work. BidIQ helps you decide which work to price.</p>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 48px; padding: 32px; background: var(--bg-elevated); border-radius: 12px; border: 1px solid var(--border);">
+                    <p style="font-size: 1.5rem; font-weight: 600; margin: 0;">
+                        "BidIQ is an <span style="color: var(--accent);">underwriting engine</span> for construction bids — helping subcontractors decide where to deploy their limited estimating capital."
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Solution Section -->
+        <section class="solution section">
+            <div class="container">
+                <h2>What If You Knew <span style="color: var(--accent);">Before</span> You Bid?</h2>
+                <p class="solution-subtitle">BidIQ analyzes every bid invite and gives you a personalized GO/NO-GO recommendation in minutes, not hours.</p>
+                
+                <div class="solution-steps">
+                    <div class="solution-step">
+                        <div class="solution-step-number">1</div>
+                        <div class="solution-step-icon">📄</div>
+                        <h3>Upload Your Bid Docs</h3>
+                        <p>Forward bid invites or upload PDFs. Our AI reads everything — specs, drawings, invitations — in seconds.</p>
+                    </div>
+                    <div class="solution-step">
+                        <div class="solution-step-number">2</div>
+                        <div class="solution-step-icon">🎯</div>
+                        <h3>Get Your Score</h3>
+                        <p>BidIQ scores every bid 0-100 based on YOUR business: your location, your trades, your GC relationships, your risk tolerance.</p>
+                    </div>
+                    <div class="solution-step">
+                        <div class="solution-step-number">3</div>
+                        <div class="solution-step-icon">🧠</div>
+                        <h3>BidIQ Gets Smarter</h3>
+                        <p>Track outcomes. Over time, BidIQ learns which bids you win and tailors recommendations to your patterns.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Social Proof -->
+        <section class="social-proof section">
+            <div class="container">
+                <h2 style="text-align: center; margin-bottom: 48px;">Built By a Subcontractor, <span style="color: var(--accent);">For Subcontractors</span></h2>
+                <div class="testimonials">
+                    <div class="testimonial">
+                        <p class="testimonial-quote">"I've been in this industry for 10 years. I built BidIQ because I was sick of wasting 20 hours a week on bids I never had a chance at."</p>
+                        <div class="testimonial-author">
+                            <div class="testimonial-avatar">R</div>
+                            <div class="testimonial-info">
+                                <h4>Ryan</h4>
+                                <p>Founder, BidIQ • 10yr HVAC Contractor</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial">
+                        <p class="testimonial-quote">"The personalized scoring is what sold me. Same bid, different score for my business vs my competitor. That's how it should work."</p>
+                        <div class="testimonial-author">
+                            <div class="testimonial-avatar">M</div>
+                            <div class="testimonial-info">
+                                <h4>Mike T.</h4>
+                                <p>Electrical Contractor • Beta User</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial">
+                        <p class="testimonial-quote">"Finally, someone who understands that every sub is different. My sweet spot is $2-5M mechanical. BidIQ gets that."</p>
+                        <div class="testimonial-author">
+                            <div class="testimonial-avatar">S</div>
+                            <div class="testimonial-info">
+                                <h4>Sarah K.</h4>
+                                <p>Mechanical Contractor • Beta User</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Flywheel Section -->
+        <section class="section" style="background: var(--bg-card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+            <div class="container">
+                <div style="text-align: center; max-width: 800px; margin: 0 auto 64px;">
+                    <p class="mono" style="color: var(--accent); font-size: 14px; margin-bottom: 16px;">THE INTELLIGENCE FLYWHEEL</p>
+                    <h2 style="margin-bottom: 24px;">BidIQ Gets Smarter<br><span style="color: var(--accent);">With Every Decision</span></h2>
+                    <p style="color: var(--text-secondary); font-size: 1.125rem;">
+                        Unlike other tools, BidIQ captures the reasoning behind every bid decision — creating an intelligence layer that compounds over time.
+                    </p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 48px;">
+                    <div style="background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 24px; text-align: center; position: relative;">
+                        <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; width: 24px; height: 24px; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;">1</div>
+                        <div style="font-size: 28px; margin-bottom: 12px;">📄</div>
+                        <h4 style="font-size: 14px; margin-bottom: 4px;">Analyze</h4>
+                        <p style="font-size: 12px; color: var(--text-muted);">AI scores your bids</p>
+                    </div>
+                    <div style="background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 24px; text-align: center; position: relative;">
+                        <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; width: 24px; height: 24px; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;">2</div>
+                        <div style="font-size: 28px; margin-bottom: 12px;">🎯</div>
+                        <h4 style="font-size: 14px; margin-bottom: 4px;">Decide</h4>
+                        <p style="font-size: 12px; color: var(--text-muted);">You bid or pass</p>
+                    </div>
+                    <div style="background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 24px; text-align: center; position: relative;">
+                        <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; width: 24px; height: 24px; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;">3</div>
+                        <div style="font-size: 28px; margin-bottom: 12px;">📊</div>
+                        <h4 style="font-size: 14px; margin-bottom: 4px;">Track</h4>
+                        <p style="font-size: 12px; color: var(--text-muted);">Record outcomes</p>
+                    </div>
+                    <div style="background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 24px; text-align: center; position: relative;">
+                        <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; width: 24px; height: 24px; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;">4</div>
+                        <div style="font-size: 28px; margin-bottom: 12px;">🧠</div>
+                        <h4 style="font-size: 14px; margin-bottom: 4px;">Learn</h4>
+                        <p style="font-size: 12px; color: var(--text-muted);">AI improves for you</p>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px;">
+                    <div style="background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 32px;">
+                        <h3 style="margin-bottom: 20px; font-size: 18px;">🔒 What BidIQ Uniquely Captures</h3>
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <span style="color: var(--success);">✓</span>
+                                <div>
+                                    <strong style="font-size: 14px;">Decision Intent</strong>
+                                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Why you bid or passed on every project</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <span style="color: var(--success);">✓</span>
+                                <div>
+                                    <strong style="font-size: 14px;">GC Responsiveness</strong>
+                                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Which GCs ghost, which ones give feedback</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <span style="color: var(--success);">✓</span>
+                                <div>
+                                    <strong style="font-size: 14px;">Competitive Dynamics</strong>
+                                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Who you lose to and why</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <span style="color: var(--success);">✓</span>
+                                <div>
+                                    <strong style="font-size: 14px;">Risk Signals</strong>
+                                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">User-tagged GC issues (slow pay, bid shopping)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px; padding: 32px;">
+                        <h3 style="margin-bottom: 20px; font-size: 18px;">📈 How It Benefits You</h3>
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <span style="color: var(--accent);">→</span>
+                                <div>
+                                    <strong style="font-size: 14px;">Personal Intelligence</strong>
+                                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Scores tuned to YOUR win patterns</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <span style="color: var(--accent);">→</span>
+                                <div>
+                                    <strong style="font-size: 14px;">Network Intelligence</strong>
+                                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Crowdsourced GC reputation data</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <span style="color: var(--accent);">→</span>
+                                <div>
+                                    <strong style="font-size: 14px;">Predictive Insights</strong>
+                                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">"You win 78% of Turner bids under $3M"</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <span style="color: var(--accent);">→</span>
+                                <div>
+                                    <strong style="font-size: 14px;">Competitive Edge</strong>
+                                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">"You lose to XYZ Electric 80% on hospitals"</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section section">
+            <div class="container">
+                <h2>Ready to <span style="color: var(--accent);">Bid Smarter</span>?</h2>
+                <p>Join the beta and start saving 18+ hours a week. Limited spots available.</p>
+                <a href="#" class="btn btn-primary" onclick="showPage('apply')" style="font-size: 18px; padding: 18px 40px;">
+                    Apply for Beta Access →
+                </a>
+            </div>
+        </section>
+    </div>
+
+    <!-- FEATURES PAGE -->
+    <div class="page" id="page-features">
+        <section class="features-hero">
+            <div class="container">
+                <p class="mono" style="color: var(--accent); font-size: 14px; margin-bottom: 16px;">BID DECISION INTELLIGENCE</p>
+                <h1>Competitors Optimize Tasks.<br><span class="highlight">BidIQ Optimizes Outcomes.</span></h1>
+                <p style="color: var(--text-secondary); font-size: 1.25rem; max-width: 700px; margin: 24px auto 0;">
+                    Every feature is designed to help you make better decisions — and learn from every decision you make. This is what decision intelligence looks like for construction.
+                </p>
+            </div>
+        </section>
+
+        <section class="section" style="padding-top: 0;">
+            <div class="container">
+                <div class="features-grid">
+                    <div class="feature-card large">
+                        <span class="feature-tag">Core Feature</span>
+                        <div class="feature-icon">🎯</div>
+                        <h3>Personalized Scoring Algorithm</h3>
+                        <p>Same bid, different score — because YOUR business is unique. BidIQ weighs location, trade match, GC relationships, and contract terms based on YOUR preferences. A $5M hospital project might score 90 for one contractor and 40 for another. That's how it should be.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📍</div>
+                        <h3>Location Intelligence</h3>
+                        <p>Automatic distance calculation from your office. Projects outside your service area get flagged. Optional — because some subs win MORE work farther away.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔑</div>
+                        <h3>Smart Keyword Detection</h3>
+                        <p>Define what you WANT (design-assist, negotiated) and what you DON'T (pay-if-paid, liquidated damages). BidIQ finds them with page numbers.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🏢</div>
+                        <h3>GC Relationship Tracking</h3>
+                        <p>Track your history with every GC. Win rates, ghost rates, risk tags. Know before you bid if this GC is worth your time.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">⚔️</div>
+                        <h3>Competition Penalty</h3>
+                        <p>10 GCs bidding? That's a commodity bid. 2 GCs? Relationship matters. BidIQ automatically adjusts scores based on competitive pressure.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔧</div>
+                        <h3>Trade Match Verification</h3>
+                        <p>Select your CSI divisions. BidIQ verifies they actually appear in the specs before you waste time on a bid that doesn't include your scope.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Outcome Tracking</h3>
+                        <p>Won, lost, ghosted, declined — track every bid outcome. BidIQ learns from your history to improve recommendations over time.</p>
+                    </div>
+                    
+                    <div class="feature-card large">
+                        <span class="feature-tag">Coming in Phase 2</span>
+                        <div class="feature-icon">🤖</div>
+                        <h3>Automated Follow-Ups</h3>
+                        <p>Stop writing the same "checking in on the bid" emails. BidIQ sends smart follow-up sequences and captures GC responses automatically. You'll finally know why you lost — and what you could have done differently.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <span class="feature-tag">Coming in Phase 3</span>
+                        <div class="feature-icon">🌐</div>
+                        <h3>Crowdsourced GC Intel</h3>
+                        <p>See which GCs ghost everyone, not just you. Aggregated reputation data from the entire BidIQ network.</p>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <span class="feature-tag">Coming in Phase 3</span>
+                        <div class="feature-icon">🔗</div>
+                        <h3>Plan Room Integration</h3>
+                        <p>Connect BuildingConnected, Dodge, iSqFt. New bids automatically analyzed. Zero friction.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section section">
+            <div class="container">
+                <h2>See It In Action</h2>
+                <p>Join the beta and experience personalized bid intelligence.</p>
+                <a href="#" class="btn btn-primary" onclick="showPage('apply')">Apply for Beta Access →</a>
+            </div>
+        </section>
+    </div>
+
+    <!-- PRESS PAGE -->
+    <div class="page" id="page-press">
+        <section class="press-hero">
+            <div class="container">
+                <p class="mono" style="color: var(--accent); font-size: 14px; margin-bottom: 16px;">PRESS & MEDIA</p>
+                <h1>Creating a New Category:<br><span class="highlight">Bid Decision Intelligence</span></h1>
+                <p style="color: var(--text-secondary); font-size: 1.25rem; max-width: 700px; margin: 24px auto 0;">
+                    Commercial construction is one of the last major industries without a decision intelligence platform. BidIQ is changing that.
+                </p>
+            </div>
+        </section>
+
+        <section class="section" style="padding-top: 0;">
+            <div class="container">
+                <div class="company-facts">
+                    <div class="fact">
+                        <div class="fact-value">2026</div>
+                        <div class="fact-label">Founded</div>
+                    </div>
+                    <div class="fact">
+                        <div class="fact-value">$47K</div>
+                        <div class="fact-label">Avg. annual savings per user</div>
+                    </div>
+                    <div class="fact">
+                        <div class="fact-value">18+</div>
+                        <div class="fact-label">Hours saved per week</div>
+                    </div>
+                    <div class="fact">
+                        <div class="fact-value">500K+</div>
+                        <div class="fact-label">Target market (US subs)</div>
+                    </div>
+                </div>
+                
+                <!-- Key Messages for Press -->
+                <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 48px; margin-bottom: 64px;">
+                    <h3 style="margin-bottom: 32px;">Key Messages</h3>
+                    <div style="display: grid; gap: 24px;">
+                        <div style="padding: 24px; background: var(--bg-elevated); border-radius: 12px; border-left: 4px solid var(--accent);">
+                            <p style="font-size: 1.125rem; font-weight: 600; margin-bottom: 8px;">The Category</p>
+                            <p style="color: var(--text-secondary);">"BidIQ is doing for subcontractor bidding what decision platforms already do in finance, insurance, and sales — but construction has never had this layer."</p>
+                        </div>
+                        <div style="padding: 24px; background: var(--bg-elevated); border-radius: 12px; border-left: 4px solid var(--accent);">
+                            <p style="font-size: 1.125rem; font-weight: 600; margin-bottom: 8px;">The Analogy</p>
+                            <p style="color: var(--text-secondary);">"No bank lends on gut feel. Construction still bids that way. BidIQ brings underwriting logic to bidding."</p>
+                        </div>
+                        <div style="padding: 24px; background: var(--bg-elevated); border-radius: 12px; border-left: 4px solid var(--accent);">
+                            <p style="font-size: 1.125rem; font-weight: 600; margin-bottom: 8px;">The Differentiation</p>
+                            <p style="color: var(--text-secondary);">"Estimating tools help you price work. BidIQ helps you decide which work to price."</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="press-kit">
+                    <h3>Press Kit</h3>
+                    <div class="press-assets">
+                        <a href="#" class="press-asset">
+                            <div class="press-asset-icon">🎯</div>
+                            <span>Logo (SVG)</span>
+                        </a>
+                        <a href="#" class="press-asset">
+                            <div class="press-asset-icon">📄</div>
+                            <span>One-Pager (PDF)</span>
+                        </a>
+                        <a href="#" class="press-asset">
+                            <div class="press-asset-icon">📸</div>
+                            <span>Screenshots</span>
+                        </a>
+                        <a href="#" class="press-asset">
+                            <div class="press-asset-icon">👤</div>
+                            <span>Founder Bio</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Why Now -->
+                <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 48px; margin-bottom: 64px;">
+                    <h3 style="margin-bottom: 24px;">Why Now?</h3>
+                    <p style="color: var(--text-secondary); font-size: 1.125rem; line-height: 1.8; margin-bottom: 24px;">
+                        Construction has never had a decision intelligence platform because the data wasn't accessible. Documents were locked in PDFs. Outcomes weren't tracked. AI couldn't reliably extract information from plans and specs.
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 32px;">
+                        <div style="text-align: center; padding: 24px; background: var(--bg-elevated); border-radius: 12px;">
+                            <div style="font-size: 32px; margin-bottom: 12px;">🤖</div>
+                            <h4 style="font-size: 14px; margin-bottom: 8px;">AI Can Finally Read</h4>
+                            <p style="font-size: 13px; color: var(--text-muted);">LLMs can extract signal from unstructured construction documents</p>
+                        </div>
+                        <div style="text-align: center; padding: 24px; background: var(--bg-elevated); border-radius: 12px;">
+                            <div style="font-size: 32px; margin-bottom: 12px;">☁️</div>
+                            <h4 style="font-size: 14px; margin-bottom: 8px;">Cloud Adoption</h4>
+                            <p style="font-size: 13px; color: var(--text-muted);">Subcontractors are finally using cloud tools</p>
+                        </div>
+                        <div style="text-align: center; padding: 24px; background: var(--bg-elevated); border-radius: 12px;">
+                            <div style="font-size: 32px; margin-bottom: 12px;">📉</div>
+                            <h4 style="font-size: 14px; margin-bottom: 8px;">Margin Pressure</h4>
+                            <p style="font-size: 13px; color: var(--text-muted);">Shrinking margins force smarter decisions</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 48px; margin-bottom: 64px;">
+                    <h3 style="margin-bottom: 24px;">The BidIQ Story</h3>
+                    <p style="color: var(--text-secondary); font-size: 1.125rem; line-height: 1.8; margin-bottom: 24px;">
+                        BidIQ was born from frustration. After 10 years running a commercial HVAC contracting business, founder Ryan had wasted thousands of hours bidding on projects he never had a chance at. GCs who ghosted. Bids with 15 competitors. Contracts with impossible terms.
+                    </p>
+                    <p style="color: var(--text-secondary); font-size: 1.125rem; line-height: 1.8; margin-bottom: 24px;">
+                        The tools that existed — plan rooms, takeoff software, estimating platforms — all focused on DOING the bid faster. None of them answered the fundamental question: <strong style="color: var(--text-primary);">Should I even bid this in the first place?</strong>
+                    </p>
+                    <p style="color: var(--text-secondary); font-size: 1.125rem; line-height: 1.8;">
+                        BidIQ is the answer. An AI-powered intelligence layer that analyzes bid documents and delivers personalized GO/NO-GO recommendations based on each contractor's unique business model. Not generic advice. Not one-size-fits-all scores. Recommendations tailored to YOUR location, YOUR trades, YOUR GC relationships, YOUR risk tolerance.
+                    </p>
+                </div>
+
+                <div class="press-contact">
+                    <h3>Media Inquiries</h3>
+                    <p>For press inquiries, interviews, or partnership discussions:</p>
+                    <a href="mailto:press@bidiq.ai" class="press-email">press@bidiq.ai</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- APPLY PAGE -->
+    <div class="page" id="page-apply">
+        <section class="apply-hero">
+            <div class="container">
+                <h1>Join the <span class="highlight">Beta</span></h1>
+                <p style="color: var(--text-secondary); font-size: 1.25rem; max-width: 600px; margin: 24px auto 0;">
+                    We're looking for subcontractors who are tired of wasting time on bad bids. Limited spots available.
+                </p>
+            </div>
+        </section>
+
+        <section class="section" style="padding-top: 0;">
+            <div class="container">
+                <div class="apply-benefits">
+                    <div class="benefit-card">
+                        <div class="benefit-icon">🎁</div>
+                        <h3>Free During Beta</h3>
+                        <p>Full access to all features at no cost while we refine the product together.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">🎯</div>
+                        <h3>Shape the Product</h3>
+                        <p>Your feedback directly influences what we build. Weekly check-ins with the founder.</p>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">🔒</div>
+                        <h3>Locked-In Pricing</h3>
+                        <p>Beta users get 50% off for life when we launch paid plans.</p>
+                    </div>
+                </div>
+
+                <div class="apply-form-container">
+                    <h2 style="margin-bottom: 8px;">Apply for Beta Access</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 32px;">Takes 2 minutes. We'll review and respond within 48 hours.</p>
+                    
+                    <form id="applyForm" onsubmit="submitApplication(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Your Name *</label>
+                                <input type="text" class="form-input" id="applyName" required placeholder="John Smith">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email *</label>
+                                <input type="email" class="form-input" id="applyEmail" required placeholder="john@company.com">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Company Name *</label>
+                            <input type="text" class="form-input" id="applyCompany" required placeholder="Smith Electrical LLC">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Primary Trade *</label>
+                                <select class="form-select" id="applyTrade" required>
+                                    <option value="">Select your trade...</option>
+                                    <option value="electrical">Electrical</option>
+                                    <option value="mechanical">Mechanical / HVAC</option>
+                                    <option value="plumbing">Plumbing</option>
+                                    <option value="fire">Fire Protection</option>
+                                    <option value="concrete">Concrete</option>
+                                    <option value="steel">Structural Steel</option>
+                                    <option value="drywall">Drywall / Framing</option>
+                                    <option value="roofing">Roofing</option>
+                                    <option value="flooring">Flooring</option>
+                                    <option value="painting">Painting</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Location *</label>
+                                <input type="text" class="form-input" id="applyLocation" required placeholder="Kansas City, MO">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">How many bids do you review per month? *</label>
+                            <select class="form-select" id="applyBidVolume" required>
+                                <option value="">Select...</option>
+                                <option value="1-10">1-10 bids</option>
+                                <option value="11-25">11-25 bids</option>
+                                <option value="26-50">26-50 bids</option>
+                                <option value="50+">50+ bids</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">What's your biggest pain point with bidding?</label>
+                            <textarea class="form-textarea" id="applyPain" placeholder="Tell us about your biggest frustration with the bidding process..."></textarea>
+                            <div class="form-hint">This helps us prioritize features that matter to you.</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">How did you hear about BidIQ?</label>
+                            <select class="form-select" id="applySource">
+                                <option value="">Select...</option>
+                                <option value="linkedin">LinkedIn</option>
+                                <option value="referral">Referral from another contractor</option>
+                                <option value="search">Google search</option>
+                                <option value="social">Social media</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 16px; font-size: 16px;">
+                            Submit Application →
+                        </button>
+                    </form>
+                    
+                    <div id="applySuccess" style="display: none; text-align: center; padding: 48px 0;">
+                        <div style="font-size: 64px; margin-bottom: 24px;">🎉</div>
+                        <h3 style="margin-bottom: 16px;">Application Received!</h3>
+                        <p style="color: var(--text-secondary);">We'll review your application and get back to you within 48 hours.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="nav-logo" onclick="showPage('home')">🎯 <span>BidIQ</span></a>
+                    <p style="margin-top: 8px; font-size: 13px; color: var(--accent);">Decision Intelligence for Construction Bidding</p>
+                    <p>Helping subcontractors make smarter bid decisions — and getting better with every decision they make.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Product</h4>
+                    <a href="#" onclick="showPage('features')">Features</a>
+                    <a href="#" onclick="showPage('apply')">Beta Access</a>
+                    <a href="#">Pricing</a>
+                    <a href="#">Roadmap</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Company</h4>
+                    <a href="#" onclick="showPage('press')">Press</a>
+                    <a href="#">About</a>
+                    <a href="#">Blog</a>
+                    <a href="#">Careers</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Legal</h4>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Security</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 BidIQ. All rights reserved.</span>
+                <span>Built with 🧡 by a subcontractor, for subcontractors.</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            // Show selected page
+            document.getElementById('page-' + pageId).classList.add('active');
+            // Update nav
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.page === pageId) link.classList.add('active');
+            });
+            // Scroll to top
+            window.scrollTo(0, 0);
+            // Close mobile nav
+            document.getElementById('navLinks').classList.remove('open');
+        }
+        
+        function toggleMobileNav() {
+            document.getElementById('navLinks').classList.toggle('open');
+        }
+        
+        function submitApplication(e) {
+            e.preventDefault();
+            // In production, this would submit to your backend
+            document.getElementById('applyForm').style.display = 'none';
+            document.getElementById('applySuccess').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

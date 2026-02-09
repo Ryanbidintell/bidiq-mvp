@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BidIQ Test</title>
+</head>
+<body>
+    <h1>BidIQ Diagnostic Test</h1>
+    <div id="status">Testing...</div>
+
+    <script>
+        // Test if basic JavaScript works
+        console.log('✅ Test file loaded');
+        document.getElementById('status').innerHTML = '✅ JavaScript is working';
+
+        // Test if main app.html loads
+        fetch('app.html')
+            .then(response => response.text())
+            .then(html => {
+                console.log('✅ app.html file exists, size:', html.length);
+
+                // Check for common syntax errors
+                const issues = [];
+
+                if (html.includes('undefined')) {
+                    console.log('⚠️ Contains undefined references');
+                }
+
+                if (!html.includes('extractBuildingType')) {
+                    issues.push('❌ extractBuildingType function missing');
+                } else {
+                    console.log('✅ extractBuildingType function exists');
+                }
+
+                if (!html.includes('autoAddExtractedGCs')) {
+                    issues.push('❌ autoAddExtractedGCs function missing');
+                } else {
+                    console.log('✅ autoAddExtractedGCs function exists');
+                }
+
+                if (!html.includes('callAI')) {
+                    issues.push('❌ callAI function missing');
+                } else {
+                    console.log('✅ callAI function exists');
+                }
+
+                document.getElementById('status').innerHTML = `
+                    <h2>Diagnostic Results:</h2>
+                    <p>✅ File size: ${html.length} bytes</p>
+                    <p>✅ Functions found: extractBuildingType, autoAddExtractedGCs, callAI</p>
+                    ${issues.length > 0 ? '<p style="color:red;">Issues: ' + issues.join('<br>') + '</p>' : '<p style="color:green;">✅ No issues found</p>'}
+                    <hr>
+                    <p><a href="app.html" target="_blank">Click here to open app.html</a></p>
+                `;
+            })
+            .catch(error => {
+                console.error('❌ Error loading app.html:', error);
+                document.getElementById('status').innerHTML = '❌ Error: ' + error.message;
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BidIntell - Live Bid Activity</title>
+    <style>
+        .ticker-container {
+            background: #111113;
+            border-top: 1px solid #27272a;
+            border-bottom: 1px solid #27272a;
+            padding: 16px 0;
+            overflow: hidden;
+            position: relative;
+        }
+        .ticker-label {
+            text-align: center;
+            color: #71717a;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        .ticker-scroll {
+            display: flex;
+            gap: 40px;
+            animation: scroll 30s linear infinite;
+            will-change: transform;
+        }
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            white-space: nowrap;
+            padding: 0 20px;
+        }
+        .ticker-icon {
+            font-size: 20px;
+        }
+        .ticker-text {
+            font-size: 14px;
+            color: #a1a1aa;
+        }
+        .ticker-text strong {
+            color: #fafafa;
+            font-weight: 600;
+        }
+        .ticker-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+        .badge-go {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+        .badge-review {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+        .badge-pass {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .ticker-scroll:hover {
+            animation-play-state: paused;
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; background: #0a0a0b;">
+    <div class="ticker-container">
+        <div class="ticker-label">🔴 LIVE: Recent Bid Analysis Activity</div>
+        <div class="ticker-scroll" id="ticker"></div>
+    </div>
+
+    <script>
+        // Sample bid activity data
+        const sampleActivities = [
+            { icon: '🏢', project: 'Office Renovation', location: 'Kansas City, MO', recommendation: 'GO', time: '2 min ago' },
+            { icon: '🏫', project: 'School Addition', location: 'Overland Park, KS', recommendation: 'REVIEW', time: '5 min ago' },
+            { icon: '🏥', project: 'Hospital Wing', location: 'Springfield, MO', recommendation: 'PASS', time: '8 min ago' },
+            { icon: '🏪', project: 'Retail Build-Out', location: 'Columbia, MO', recommendation: 'GO', time: '12 min ago' },
+            { icon: '🏗️', project: 'Warehouse Expansion', location: 'Topeka, KS', recommendation: 'REVIEW', time: '15 min ago' },
+            { icon: '🏢', project: 'Mixed-Use Development', location: 'Lawrence, KS', recommendation: 'GO', time: '18 min ago' },
+            { icon: '🏨', project: 'Hotel Renovation', location: 'Jefferson City, MO', recommendation: 'PASS', time: '22 min ago' },
+            { icon: '🏛️', project: 'Government Building', location: 'Kansas City, KS', recommendation: 'GO', time: '25 min ago' }
+        ];
+
+        function generateTickerItem(activity) {
+            const badgeClass = activity.recommendation === 'GO' ? 'badge-go' :
+                              activity.recommendation === 'REVIEW' ? 'badge-review' : 'badge-pass';
+
+            return `
+                <div class="ticker-item">
+                    <span class="ticker-icon">${activity.icon}</span>
+                    <span class="ticker-text">
+                        <strong>${activity.project}</strong> in ${activity.location}
+                        <span class="ticker-badge ${badgeClass}">${activity.recommendation}</span>
+                        <span style="color: #71717a; margin-left: 8px;">${activity.time}</span>
+                    </span>
+                </div>
+            `;
+        }
+
+        function initTicker() {
+            const ticker = document.getElementById('ticker');
+
+            // Duplicate items for seamless loop
+            const items = [...sampleActivities, ...sampleActivities];
+            ticker.innerHTML = items.map(generateTickerItem).join('');
+        }
+
+        // Initialize on load
+        initTicker();
+
+        // Optional: Update times every minute to simulate real-time
+        setInterval(() => {
+            // Increment all times by 1 minute
+            sampleActivities.forEach(activity => {
+                const minutes = parseInt(activity.time) + 1;
+                activity.time = `${minutes} min ago`;
+            });
+            initTicker();
+        }, 60000);
+    </script>
+</body>
+</html>
