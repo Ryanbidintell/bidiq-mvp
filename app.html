@@ -8191,25 +8191,34 @@ ${truncatedText}`;
                     </div>
                 `;
 
-                // Add interactive Q&A with Sam
+                // Add interactive Q&A with Help Center
                 const advisorName = (await getSettings()).ai_advisor_name || 'Sam';
                 recsHTML += `
-                    <div style="margin-top: 24px; padding: 20px; background: var(--bg-secondary); border-radius: var(--radius); border: 2px solid var(--border-color);">
-                        <div style="font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                            <span style="font-size: 20px;">💬</span>
-                            <span>Ask ${advisorName} a Question</span>
-                            <span style="font-size: 11px; padding: 2px 8px; background: var(--accent); color: white; border-radius: 4px; margin-left: auto;">UNLIMITED</span>
+                    <div style="margin-top: 24px; padding: 20px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%); border-radius: var(--radius); border: 2px solid var(--border-color);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                            <div style="font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 20px;">💬</span>
+                                <span>Help Center - Ask ${advisorName}</span>
+                            </div>
+                            <button onclick="toggleAIChat()" style="padding: 6px 12px; background: var(--accent); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='var(--accent-hover)'" onmouseout="this.style.background='var(--accent)'">
+                                💬 Open Chat History
+                            </button>
                         </div>
-                        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-                            Get personalized answers about this bid, your chances, risks, or anything else.
+                        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span>Get instant answers about this bid, your chances, risks, or strategy advice.</span>
+                            <span style="font-size: 11px; padding: 2px 8px; background: var(--accent); color: white; border-radius: 12px; white-space: nowrap;">UNLIMITED</span>
                         </div>
                         <div style="display: flex; gap: 8px; margin-bottom: 12px;">
                             <input type="text" id="samQuestionInput" class="form-input" placeholder="e.g., Why is my GC score low? Should I bid this?" style="flex: 1; font-size: 14px;">
-                            <button class="btn btn-primary" onclick="askSamQuestion()" id="askSamBtn" style="min-width: 100px;">
-                                Ask ${advisorName}
+                            <button class="btn btn-primary" onclick="askSamQuestion()" id="askSamBtn" style="min-width: 120px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <span>Ask ${advisorName}</span>
                             </button>
                         </div>
                         <div id="samQuestionResponse" style="display: none; margin-top: 16px; padding: 16px; background: var(--bg-primary); border-radius: var(--radius); border-left: 4px solid var(--accent);"></div>
+                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                            <span>💡</span>
+                            <span>Your conversation history is saved. Click "Open Chat History" to see past messages or continue a conversation.</span>
+                        </div>
                     </div>
                 `;
 
@@ -8690,9 +8699,16 @@ Respond now:`;
                             <div style="line-height: 1.6; color: var(--text-primary);">
                                 <p style="margin-bottom: 12px;">${answerHTML}</p>
                             </div>
+                            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); font-size: 12px; color: var(--text-muted);">
+                                💬 This conversation is saved in your <a href="#" onclick="toggleAIChat(); return false;" style="color: var(--accent); text-decoration: underline;">chat history</a>
+                            </div>
                         </div>
                     </div>
                 `;
+
+                // Add to chat history so it's preserved
+                aiChatHistory.push({ role: 'user', content: question });
+                aiChatHistory.push({ role: 'assistant', content: answer });
 
                 // Clear input
                 input.value = '';
