@@ -6,10 +6,15 @@
 ALTER TABLE general_contractors
 ADD COLUMN IF NOT EXISTS client_type TEXT DEFAULT 'general_contractor';
 
--- Step 2: Set all existing records to 'general_contractor'
+-- Step 2: Update any existing 'gc' values to 'general_contractor'
 UPDATE general_contractors
 SET client_type = 'general_contractor'
-WHERE client_type IS NULL OR client_type = '';
+WHERE client_type = 'gc' OR client_type IS NULL OR client_type = '';
+
+-- Step 2b: Set any remaining NULL or empty values
+UPDATE general_contractors
+SET client_type = 'general_contractor'
+WHERE client_type IS NULL OR client_type = '' OR client_type NOT IN ('general_contractor', 'end_user', 'building_owner');
 
 -- Step 3: Rename the table
 ALTER TABLE general_contractors
