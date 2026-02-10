@@ -2371,9 +2371,11 @@
 
         // State
         let uploadedFiles = [];
-        let selectedGCs = [];
+        let selectedClients = []; // New: supports GCs, End Users, Building Owners
+        let selectedGCs = []; // Legacy: kept for backward compatibility
         let currentAnalysis = null;
-        let newGCRatingValue = 3;
+        let newClientRatingValue = 3;
+        let newGCRatingValue = 3; // Legacy
 
         // Onboarding State
         let onboardingStep = 1;
@@ -2691,7 +2693,7 @@
         const DEFAULT_BAD = [];
 
         // Data cache for performance
-        let dataCache = { settings: null, keywords: null, gcs: null, projects: null };
+        let dataCache = { settings: null, keywords: null, clients: null, gcs: null, projects: null }; // gcs kept for backward compat
         
         const DEFAULT_SETTINGS = { city: '', state: '', radius: 50, locationMatters: true, trades: ['23', '26'], riskTolerance: 'medium', capacity: 'steady', weights: { location: 25, keywords: 30, gc: 25, trade: 20 }, decisionTime: 45, defaultStars: 3, onboarding_completed: false };
 
@@ -3165,72 +3167,109 @@ ${fullText.substring(0, 40000)}`;
             }
         }
 
-        async function getGCs() {
-            if (dataCache.gcs) return dataCache.gcs;
+        async function getClients(clientType = null) {
+            // If requesting specific type and cached, filter cache
+            if (dataCache.clients && clientType) {
+                return dataCache.clients.filter(c => c.clientType === clientType);
+            }
+            if (dataCache.clients && !clientType) return dataCache.clients;
+
             if (!supabaseClient || !currentUser) return [];
-            
+
             try {
-                const { data, error } = await supabaseClient
-                    .from('general_contractors')
+                let query = supabaseClient
+                    .from('clients')
                     .select('*')
                     .eq('user_id', currentUser.id)
                     .order('name');
-                
-                dataCache.gcs = (data || []).map(gc => ({
-                    id: gc.id,
-                    name: gc.name,
-                    rating: gc.rating,
-                    bids: gc.bids || 0,
-                    wins: gc.wins || 0,
-                    riskTags: gc.risk_tags || []
+
+                if (clientType) {
+                    query = query.eq('client_type', clientType);
+                }
+
+                const { data, error } = await query;
+
+                const clients = (data || []).map(c => ({
+                    id: c.id,
+                    name: c.name,
+                    clientType: c.client_type || 'general_contractor',
+                    rating: c.rating,
+                    bids: c.bids || 0,
+                    wins: c.wins || 0,
+                    riskTags: c.risk_tags || []
                 }));
-                return dataCache.gcs;
+
+                if (!clientType) {
+                    dataCache.clients = clients;
+                }
+
+                return clients;
             } catch (e) {
-                console.error('getGCs error:', e);
+                console.error('getClients error:', e);
                 return [];
             }
         }
 
-        async function saveGCs(gcsArray) {
-            // This function handles saving the full GC array (for compatibility)
-            dataCache.gcs = gcsArray;
-            // Individual GC saves handled by saveGC function below
+        // Legacy function - redirects to getClients
+        async function getGCs() {
+            return await getClients('general_contractor');
         }
-        
-        async function saveGC(gc) {
-            if (!supabaseClient || !currentUser) return gc;
-            dataCache.gcs = null; // Invalidate cache
+
+        async function saveClients(clientsArray) {
+            // This function handles saving the full client array (for compatibility)
+            dataCache.clients = clientsArray;
+            // Individual client saves handled by saveClient function below
+        }
+
+        // Legacy function
+        async function saveGCs(gcsArray) {
+            return await saveClients(gcsArray);
+        }
+
+        async function saveClient(client) {
+            if (!supabaseClient || !currentUser) return client;
+            dataCache.clients = null; // Invalidate cache
 
             try {
-                const { data, error } = await supabaseClient.from('general_contractors').upsert({
-                    id: gc.id || undefined,
+                const { data, error } = await supabaseClient.from('clients').upsert({
+                    id: client.id || undefined,
                     user_id: currentUser.id,
-                    name: gc.name,
-                    client_type: gc.client_type || 'gc',
-                    rating: gc.rating,
-                    bids: gc.bids || 0,
-                    wins: gc.wins || 0,
-                    risk_tags: gc.riskTags || [],
+                    name: client.name,
+                    client_type: client.clientType || 'general_contractor',
+                    rating: client.rating,
+                    bids: client.bids || 0,
+                    wins: client.wins || 0,
+                    risk_tags: client.riskTags || [],
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'id' }).select().single();
 
                 if (error) throw error;
-                return data || gc;
+                return data || client;
             } catch (e) {
-                console.error('saveGC error:', e);
-                return gc;
+                console.error('saveClient error:', e);
+                return client;
             }
         }
-        
-        async function deleteGC(id) {
+
+        // Legacy function
+        async function saveGC(gc) {
+            return await saveClient(gc);
+        }
+
+        async function deleteClient(id) {
             if (!supabaseClient || !currentUser) return;
-            dataCache.gcs = null;
-            
+            dataCache.clients = null;
+
             try {
-                await supabaseClient.from('general_contractors').delete().eq('id', id);
+                await supabaseClient.from('clients').delete().eq('id', id);
             } catch (e) {
-                console.error('deleteGC error:', e);
+                console.error('deleteClient error:', e);
             }
+        }
+
+        // Legacy function
+        async function deleteGC(id) {
+            return await deleteClient(id);
         }
 
         async function getProjects() {
