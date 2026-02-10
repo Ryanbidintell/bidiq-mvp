@@ -2,6 +2,10 @@
 -- Date: February 9, 2026
 -- Purpose: Support multiple client types (GCs, End Users, Building Owners)
 
+-- Step 0: Drop existing constraint if it exists
+ALTER TABLE general_contractors
+DROP CONSTRAINT IF EXISTS valid_client_type;
+
 -- Step 1: Add client_type column to existing table (if not exists)
 ALTER TABLE general_contractors
 ADD COLUMN IF NOT EXISTS client_type TEXT DEFAULT 'general_contractor';
