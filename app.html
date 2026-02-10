@@ -1270,10 +1270,10 @@
                 <header class="page-header"><h2 class="page-title">GC Database</h2><p class="page-subtitle">Track your relationships and win rates with each general contractor</p></header>
                 <div class="page-content">
                     <div class="help-text">
-                        <strong>Your GC relationships are a key factor in bid scoring.</strong> Rate each GC based on your experience working with them (1-5 stars). As you record bid outcomes, win rates are calculated automatically.
+                        <strong>Your client relationships are a key factor in bid scoring.</strong> Rate each client based on your experience working with them (1-5 stars). Track General Contractors, End Users, and Building Owners. As you record bid outcomes, win rates are calculated automatically.
                     </div>
                     <div class="card">
-                        <div class="card-header"><h3 class="card-title">Your General Contractors</h3><button class="btn btn-primary btn-sm" onclick="showAddGCModal()">+ Add GC</button></div>
+                        <div class="card-header"><h3 class="card-title">Your Clients</h3><button class="btn btn-primary btn-sm" onclick="showAddClientModal()">+ Add Client</button></div>
                         <div class="card-body"><div id="gcDatabaseList" class="gc-list"></div></div>
                     </div>
                 </div>
@@ -1716,23 +1716,32 @@
     
     <div class="modal-overlay" id="addGCModal">
         <div class="modal" style="max-width: 520px;">
-            <div class="modal-header"><h3 class="modal-title">Add General Contractor</h3><button class="modal-close" onclick="closeModal('addGCModal')">×</button></div>
+            <div class="modal-header"><h3 class="modal-title">Add Client</h3><button class="modal-close" onclick="closeModal('addGCModal')">×</button></div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label">GC Company Name</label>
-                    <input type="text" class="form-input" id="newGCName" placeholder="Enter GC name...">
+                    <label class="form-label">Client Type</label>
+                    <select class="form-select" id="newClientType">
+                        <option value="general_contractor">🏗️ General Contractor</option>
+                        <option value="end_user">👤 End User</option>
+                        <option value="building_owner">🏢 Building Owner</option>
+                    </select>
+                    <div class="form-hint">Select the type of client relationship</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Company Name</label>
+                    <input type="text" class="form-input" id="newGCName" placeholder="Enter company name...">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Office Location (optional)</label>
                     <input type="text" class="form-input" id="newGCLocation" placeholder="e.g., Kansas City">
-                    <div class="form-hint">Add location if the GC has multiple offices you work with</div>
+                    <div class="form-hint">Add location if they have multiple offices</div>
                 </div>
 
                 <!-- Prominent Rating Section -->
                 <div class="form-group" style="background: var(--bg-secondary); padding: 20px; border-radius: var(--radius); border: 2px solid var(--accent); margin: 20px 0;">
                     <label class="form-label" style="font-size: 16px; font-weight: 700; margin-bottom: 8px; display: block;">⭐ Rate Your Experience</label>
                     <div class="form-hint" style="margin-bottom: 16px; font-size: 13px;">
-                        Rating this GC now helps BidIntell give you better recommendations. You can always change it later!
+                        Rating this client now helps BidIntell give you better recommendations. You can always change it later!
                     </div>
                     <div style="text-align: center; padding: 12px 0;">
                         <div id="newGCRating" class="gc-item-rating" style="font-size: 40px; letter-spacing: 8px;"></div>
@@ -1774,7 +1783,7 @@
                             <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 10px;background:var(--bg-secondary);border-radius:var(--radius);font-size:12px;border:1px solid var(--border-color);"><input type="checkbox" value="scope_creep" class="gcRiskTag"> 📈 Scope creep</label>
                         </div>
                     </div>
-                    <div class="form-hint">Tags help track GC performance and show in analysis warnings</div>
+                    <div class="form-hint">Tags help track client performance and show in analysis warnings</div>
                 </div>
             </div>
             <div class="modal-footer" style="display: flex; gap: 8px; justify-content: space-between;">
@@ -1784,7 +1793,7 @@
                         <span style="opacity: 0.7;">Rate Later</span>
                     </button>
                     <button class="btn btn-primary" onclick="saveNewGC(false)">
-                        <span>Add GC</span>
+                        <span>Add Client</span>
                     </button>
                 </div>
             </div>
@@ -9701,8 +9710,10 @@ Respond now:`;
         async function saveNewGC(rateLater = false) {
             const name = document.getElementById('newGCName').value.trim();
             const loc = document.getElementById('newGCLocation').value.trim();
+            const clientType = document.getElementById('newClientType')?.value || 'general_contractor';
+
             if (!name) {
-                alert('Please enter the GC name');
+                alert('Please enter the client name');
                 return;
             }
 
@@ -9711,28 +9722,38 @@ Respond now:`;
             if (rateLater) {
                 const settings = await getSettings();
                 rating = settings.defaultStars || 3;
-                showNotification(`GC added with default ${rating}-star rating. You can update it anytime from the GC Database tab.`, 'info');
+                showNotification(`Client added with default ${rating}-star rating. You can update it anytime from the Clients tab.`, 'info');
             }
             const fullName = loc ? `${name} - ${loc}` : name;
-            const gcs = await getGCs();
-            if (gcs.find(g => g.name.toLowerCase() === fullName.toLowerCase())) {
-                alert('This GC already exists');
+            const clients = await getClients();
+            if (clients.find(c => c.name.toLowerCase() === fullName.toLowerCase())) {
+                alert('This client already exists');
                 return;
             }
 
             // Capture risk tags
             const riskTags = Array.from(document.querySelectorAll('.gcRiskTag:checked')).map(cb => cb.value);
 
-            await saveGC({ name: fullName, rating: rating, bids: 0, wins: 0, riskTags });
+            await saveClient({ name: fullName, clientType: clientType, rating: rating, bids: 0, wins: 0, riskTags });
             closeModal('addGCModal');
 
             // Show success notification
             if (!rateLater) {
-                showNotification(`${name} added with ${rating}-star rating!`, 'success');
+                const clientTypeLabel = {
+                    'general_contractor': 'General Contractor',
+                    'end_user': 'End User',
+                    'building_owner': 'Building Owner'
+                }[clientType] || 'Client';
+                showNotification(`${name} added as ${clientTypeLabel} with ${rating}-star rating!`, 'success');
             }
 
             await loadGCDatabase();
             await renderGCSelector();
+        }
+
+        // Wrapper function for new UI
+        async function showAddClientModal() {
+            return await showAddGCModal();
         }
 
         async function rateGC(name, rating) {
