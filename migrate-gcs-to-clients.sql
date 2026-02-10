@@ -18,7 +18,7 @@ WHERE client_type = 'gc' OR client_type IS NULL OR client_type = '';
 -- Step 2b: Set any remaining NULL or empty values
 UPDATE general_contractors
 SET client_type = 'general_contractor'
-WHERE client_type IS NULL OR client_type = '' OR client_type NOT IN ('general_contractor', 'end_user', 'building_owner');
+WHERE client_type IS NULL OR client_type = '' OR client_type NOT IN ('general_contractor', 'subcontractor', 'end_user', 'building_owner', 'municipality', 'distributor', 'manufacturer_rep');
 
 -- Step 3: Rename the table
 ALTER TABLE general_contractors
@@ -30,7 +30,7 @@ DROP CONSTRAINT IF EXISTS clients_client_type_check;
 
 ALTER TABLE clients
 ADD CONSTRAINT clients_client_type_check
-CHECK (client_type IN ('general_contractor', 'end_user', 'building_owner'));
+CHECK (client_type IN ('general_contractor', 'subcontractor', 'end_user', 'building_owner', 'municipality', 'distributor', 'manufacturer_rep'));
 
 -- Step 5: Update RLS policies (rename from general_contractors to clients)
 -- Drop old policies
