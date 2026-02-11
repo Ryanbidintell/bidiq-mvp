@@ -449,11 +449,11 @@ netlify dev
 
 ### Environment Variables (.env)
 ```
-CLAUDE_API_KEY=sk-ant-...
-OPENAI_API_KEY=sk-proj-...
-POSTMARK_API_KEY=...
-SUPABASE_URL=https://...
-SUPABASE_ANON_KEY=...
+CLAUDE_API_KEY=sk-ant-YOUR_KEY_HERE
+OPENAI_API_KEY=sk-proj-YOUR_KEY_HERE
+POSTMARK_API_KEY=YOUR_KEY_HERE
+SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+SUPABASE_ANON_KEY=YOUR_KEY_HERE
 ```
 
 ---
