@@ -8226,26 +8226,24 @@ ${truncatedText}`;
                             const outcomeClass = p.outcome === 'won' ? 'success' : p.outcome === 'lost' ? 'danger' : p.outcome === 'ghost' ? 'muted' : '';
 
                             // Fix date handling - show bid deadline if available, otherwise created date
-                            let date = 'No date';
-                            if (extracted.bid_deadline) {
-                                try {
-                                    date = new Date(extracted.bid_deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                                } catch(e) {
-                                    // If bid_deadline is invalid, try created_at
-                                    if (p.created_at) {
-                                        try {
-                                            date = new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                                        } catch(e2) {
-                                            date = 'Invalid date';
-                                        }
-                                    }
-                                }
-                            } else if (p.created_at) {
-                                try {
-                                    date = new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                                } catch(e) {
-                                    date = 'Invalid date';
-                                }
+                            let date = '—'; // Default to em dash for no date
+
+                            // Helper to validate and format date
+                            const formatDate = (dateValue) => {
+                                if (!dateValue) return null;
+                                const d = new Date(dateValue);
+                                if (isNaN(d.getTime())) return null; // Invalid date
+                                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                            };
+
+                            // Try bid deadline first, then created date
+                            const formattedDeadline = formatDate(extracted.bid_deadline);
+                            const formattedCreated = formatDate(p.created_at);
+
+                            if (formattedDeadline) {
+                                date = formattedDeadline;
+                            } else if (formattedCreated) {
+                                date = formattedCreated;
                             }
 
                             // Handle both old (project_city) and new (city) field names
