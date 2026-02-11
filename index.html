@@ -125,19 +125,15 @@
         }
 
         .logo {
-            font-size: 24px;
-            font-weight: 800;
-            letter-spacing: -0.02em;
             display: flex;
             align-items: center;
             gap: 8px;
             color: var(--text-primary);
         }
 
-        .logo span {
-            background: var(--brand-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .logo img {
+            height: 32px;
+            width: auto;
         }
 
         .header-nav {
@@ -254,9 +250,51 @@
             padding: 16px 32px;
         }
 
+        .hero-cta .btn-primary {
+            font-size: 18px;
+            padding: 20px 40px;
+            box-shadow: var(--shadow-score);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: var(--shadow-score); }
+            50% { box-shadow: 0 12px 32px rgba(79, 70, 229, 0.25); }
+        }
+
         .hero-proof {
             font-size: 14px;
             color: var(--text-muted);
+        }
+
+        .trust-badges {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-top: 48px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border);
+        }
+
+        .trust-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .trust-badge-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--brand-gradient-subtle);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
         }
 
         /* Pain Points Section */
@@ -301,6 +339,8 @@
             border-radius: var(--radius-md);
             padding: var(--space-xl);
             transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
         }
 
         .pain-card:hover {
@@ -309,11 +349,40 @@
             border-color: var(--brand-primary);
         }
 
+        .pain-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--score-pass);
+            opacity: 0.6;
+        }
+
         .pain-card h3 {
             font-size: 20px;
             font-weight: 700;
             margin-bottom: 12px;
             color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pain-card h3:before {
+            content: '!';
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: var(--score-pass-bg);
+            color: var(--score-pass);
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: 800;
+            flex-shrink: 0;
         }
 
         .pain-card p {
@@ -388,10 +457,20 @@
             max-width: 800px;
             margin: 0 auto;
             text-align: center;
-            padding: 40px;
+            padding: 48px;
             background: var(--bg-card);
             border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-md);
+            box-shadow: var(--shadow-lg);
+            border-top: 4px solid var(--score-go);
+        }
+
+        .testimonial-stars {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin-bottom: 20px;
+            font-size: 20px;
+            color: var(--score-review);
         }
 
         .testimonial-quote {
@@ -400,12 +479,54 @@
             color: var(--text-primary);
             margin-bottom: 24px;
             font-style: italic;
+            position: relative;
+        }
+
+        .testimonial-quote:before {
+            content: '"';
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            font-size: 80px;
+            color: var(--brand-primary);
+            opacity: 0.1;
+            font-style: normal;
+        }
+
+        .testimonial-metrics {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 24px 0;
+            padding: 20px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .testimonial-metric {
+            text-align: center;
+        }
+
+        .testimonial-metric-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--score-go);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .testimonial-metric-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .testimonial-author {
             font-weight: 600;
             color: var(--text-primary);
             margin-bottom: 4px;
+            margin-top: 24px;
         }
 
         .testimonial-role {
@@ -671,7 +792,7 @@
     <!-- Header -->
     <div class="header">
         <div class="logo">
-            BidIntell<span></span>
+            <img src="/bidintell-logo-light.svg" alt="BidIntell - Construction Intelligence" />
         </div>
         <div class="header-nav">
             <a href="#how-it-works">How It Works</a>
@@ -698,6 +819,24 @@
         </div>
         <div class="hero-proof">
             Setup in 5 minutes • No credit card required • Cancel anytime
+        </div>
+        <div class="trust-badges">
+            <div class="trust-badge">
+                <div class="trust-badge-icon">🔒</div>
+                <div>Bank-Level<br>Security</div>
+            </div>
+            <div class="trust-badge">
+                <div class="trust-badge-icon">☁️</div>
+                <div>99.9%<br>Uptime</div>
+            </div>
+            <div class="trust-badge">
+                <div class="trust-badge-icon">🛡️</div>
+                <div>GDPR<br>Compliant</div>
+            </div>
+            <div class="trust-badge">
+                <div class="trust-badge-icon">👥</div>
+                <div>50+ Beta<br>Users</div>
+            </div>
         </div>
     </div>
 
@@ -772,8 +911,23 @@
     <div class="social-proof-section">
         <div class="section-container">
             <div class="testimonial">
+                <div class="testimonial-stars">★★★★★</div>
                 <div class="testimonial-quote">
                     "We were bidding 30 projects a month and winning 3. BidIntell helped us cut that to 15 bids—and we're winning 5. Same effort, 60% better close rate."
+                </div>
+                <div class="testimonial-metrics">
+                    <div class="testimonial-metric">
+                        <div class="testimonial-metric-value">60%</div>
+                        <div class="testimonial-metric-label">Better Close Rate</div>
+                    </div>
+                    <div class="testimonial-metric">
+                        <div class="testimonial-metric-value">50%</div>
+                        <div class="testimonial-metric-label">Fewer Bids</div>
+                    </div>
+                    <div class="testimonial-metric">
+                        <div class="testimonial-metric-value">20+</div>
+                        <div class="testimonial-metric-label">Hours Saved/Week</div>
+                    </div>
                 </div>
                 <div class="testimonial-author">Mike R.</div>
                 <div class="testimonial-role">President, Commercial HVAC Subcontractor • Kansas City, MO</div>
