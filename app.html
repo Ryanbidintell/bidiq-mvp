@@ -9494,8 +9494,14 @@ Respond now:`;
                         <div class="form-hint">When was this bid analyzed? You can backdate if needed.</div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Contract Amount ($)</label>
+                        <label class="form-label">Final Bid Amount ($)</label>
                         <input type="number" class="form-input" id="outcomeAmount" placeholder="500000">
+                        <div class="form-hint">Your bid amount, not the final contract amount</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Alternates ($)</label>
+                        <input type="number" class="form-input" id="outcomeAlternates" placeholder="50000">
+                        <div class="form-hint">Total value of alternates bid (if any)</div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Final Margin (%)</label>
@@ -9586,6 +9592,11 @@ Respond now:`;
                         <label class="form-label">Days since bid submission</label>
                         <input type="number" class="form-input" id="outcomeDaysSince" placeholder="60" value="60">
                     </div>
+                    <div class="form-group" id="ghostedGCsContainer" style="display:none;">
+                        <label class="form-label">Which GC(s) ghosted?</label>
+                        <textarea class="form-input" id="outcomeGhostedGCs" rows="2" placeholder="e.g., Turner Construction, JE Dunn"></textarea>
+                        <div class="form-hint">List which GCs stopped responding</div>
+                    </div>
                     <div class="form-group">
                         <label class="form-label">Decision Confidence</label>
                         <div class="confidence-slider" style="display:flex;gap:4px;margin-top:8px;">
@@ -9646,6 +9657,19 @@ Respond now:`;
             document.getElementById('outcomeFields').innerHTML = html;
             // Initialize confidence to 3
             setTimeout(() => setConfidence(3), 10);
+
+            // For GHOST outcomes with multiple GCs, show the "which GCs ghosted" field
+            if (type === 'ghost' && project?.gcs && project.gcs.length > 1) {
+                setTimeout(() => {
+                    const container = document.getElementById('ghostedGCsContainer');
+                    if (container) {
+                        container.style.display = 'block';
+                        // Pre-populate with GC names as a hint
+                        const gcNames = project.gcs.map(gc => gc.name).join(', ');
+                        document.getElementById('outcomeGhostedGCs').placeholder = `e.g., ${gcNames}`;
+                    }
+                }, 20);
+            }
         }
         
         function setConfidence(val) {
@@ -9670,6 +9694,7 @@ Respond now:`;
             
             if (type === 'won') {
                 outcomeData.amount = document.getElementById('outcomeAmount')?.value;
+                outcomeData.alternates = document.getElementById('outcomeAlternates')?.value;
                 outcomeData.margin = document.getElementById('outcomeMargin')?.value;
                 outcomeData.howCompetitive = document.getElementById('outcomeHowCompetitive')?.value;
                 outcomeData.pricingFeedback = document.getElementById('outcomePricingFeedback')?.value;
@@ -9693,6 +9718,7 @@ Respond now:`;
                 outcomeData.pricingFeedback = document.getElementById('outcomePricingFeedback')?.value;
             } else if (type === 'ghost') {
                 outcomeData.daysSince = parseInt(document.getElementById('outcomeDaysSince')?.value) || 60;
+                outcomeData.ghostedGCs = document.getElementById('outcomeGhostedGCs')?.value;
             } else if (type === 'declined') {
                 outcomeData.reasons = Array.from(document.querySelectorAll('.reason-checkbox input:checked')).map(cb => cb.value);
                 outcomeData.notes = document.getElementById('outcomeDeclineNotes')?.value;
