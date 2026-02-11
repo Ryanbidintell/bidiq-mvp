@@ -3256,9 +3256,9 @@ ${fullText.substring(0, 40000)}`;
                     onboarding_completed: s.onboarding_completed
                 });
 
-                // Validate capacity value
-                const validCapacities = ['low', 'moderate', 'high'];
-                const capacity = validCapacities.includes(s.capacity) ? s.capacity : 'moderate';
+                // Validate capacity value - must match DB constraint
+                const validCapacities = ['slow', 'steady', 'aggressive'];
+                const capacity = validCapacities.includes(s.capacity) ? s.capacity : 'steady';
 
                 const { data, error } = await supabaseClient.from('user_settings').upsert({
                     user_id: currentUser.id,
@@ -5163,7 +5163,13 @@ ${fullText.substring(0, 40000)}`;
 
                     // Set required defaults for skipped onboarding
                     settings.onboarding_completed = true;
-                    settings.capacity = settings.capacity || 'steady'; // Default to steady if not set
+
+                    // Ensure all CHECK constraint fields have valid values
+                    settings.capacity = settings.capacity || 'steady';
+                    settings.risk_tolerance = settings.risk_tolerance || 'medium';
+                    settings.default_stars = settings.default_stars || 3;
+
+                    // Other required fields
                     settings.company_type = settings.company_type || 'subcontractor';
                     settings.typical_clients = settings.typical_clients || ['gcs'];
 
