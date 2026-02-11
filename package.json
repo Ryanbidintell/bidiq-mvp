@@ -11,8 +11,11 @@
   "keywords": ["construction", "bidding", "ai", "intelligence"],
   "author": "BidIntell",
   "license": "MIT",
-  "devDependencies": {
+  "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
+    "stripe": "^17.6.0"
+  },
+  "devDependencies": {
     "netlify-cli": "^17.0.0",
     "pg": "^8.18.0",
     "supabase": "^2.76.3"
