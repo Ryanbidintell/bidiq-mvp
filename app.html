@@ -1222,9 +1222,11 @@
                             </div>
 
                             <div class="gc-selector">
-                                <div class="gc-selector-search">
-                                    <input type="text" id="gcSearchInput" placeholder="Search clients or type new name...">
-                                    <button class="btn btn-primary btn-sm" onclick="addNewGCFromSearch()" style="border-radius: 0;">+ Add New</button>
+                                <div style="margin-bottom: 12px;">
+                                    <input type="text" id="gcSearchInput" placeholder="Search clients or type new name..." style="width: 100%; margin-bottom: 8px;">
+                                    <button class="btn btn-secondary btn-sm" onclick="addNewGCFromSearch()" style="width: 100%; padding: 10px;">
+                                        + Add New Client
+                                    </button>
                                 </div>
                                 <div class="gc-selector-list" id="gcSelectorList"></div>
                             </div>
@@ -9598,13 +9600,17 @@ Respond now:`;
                         <div class="form-hint">Your bid amount, not the final contract amount</div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Alternates ($)</label>
-                        <input type="number" class="form-input" id="outcomeAlternates" placeholder="50000">
-                        <div class="form-hint">Total value of alternates bid (if any)</div>
+                        <label class="form-label">Alternates (optional)</label>
+                        <div id="alternatesList"></div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addAlternateRow()" style="margin-top: 8px;">
+                            + Add Alternate
+                        </button>
+                        <div class="form-hint">Track each alternate with its bid amount and margin</div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Final Margin (%)</label>
+                        <label class="form-label">Base Bid Margin (%)</label>
                         <input type="number" class="form-input" id="outcomeMargin" step="0.1" placeholder="12.5">
+                        <div class="form-hint">Margin on the base bid (not including alternates)</div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">How competitive was your pricing?</label>
@@ -9769,6 +9775,14 @@ Respond now:`;
                     }
                 }, 20);
             }
+
+            // For WON outcomes, initialize alternates list
+            if (type === 'won') {
+                setTimeout(() => {
+                    outcomeAlternates = [];
+                    renderAlternates();
+                }, 20);
+            }
         }
         
         function setConfidence(val) {
@@ -9778,6 +9792,50 @@ Respond now:`;
                 btn.style.color = parseInt(btn.dataset.val) <= val ? 'white' : 'var(--text-primary)';
                 btn.style.borderColor = parseInt(btn.dataset.val) <= val ? 'var(--accent)' : 'var(--border-color)';
             });
+        }
+
+        // Track alternates as an array
+        let outcomeAlternates = [];
+
+        function addAlternateRow() {
+            const index = outcomeAlternates.length;
+            outcomeAlternates.push({ description: '', amount: '', margin: '' });
+            renderAlternates();
+        }
+
+        function removeAlternateRow(index) {
+            outcomeAlternates.splice(index, 1);
+            renderAlternates();
+        }
+
+        function renderAlternates() {
+            const container = document.getElementById('alternatesList');
+            if (!container) return;
+
+            if (outcomeAlternates.length === 0) {
+                container.innerHTML = '<div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius); color: var(--text-muted); font-size: 13px; text-align: center;">No alternates added yet. Click "+ Add Alternate" below to track alternate pricing.</div>';
+                return;
+            }
+
+            container.innerHTML = outcomeAlternates.map((alt, index) => `
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 8px; margin-bottom: 8px; align-items: end;">
+                    <div>
+                        ${index === 0 ? '<label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Description</label>' : ''}
+                        <input type="text" class="form-input" placeholder="e.g., Alt #1 - Add elevator" value="${alt.description}" onchange="outcomeAlternates[${index}].description = this.value" style="font-size: 13px;">
+                    </div>
+                    <div>
+                        ${index === 0 ? '<label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Amount ($)</label>' : ''}
+                        <input type="number" class="form-input" placeholder="50000" value="${alt.amount}" onchange="outcomeAlternates[${index}].amount = this.value" style="font-size: 13px;">
+                    </div>
+                    <div>
+                        ${index === 0 ? '<label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Margin (%)</label>' : ''}
+                        <input type="number" class="form-input" placeholder="10.5" step="0.1" value="${alt.margin}" onchange="outcomeAlternates[${index}].margin = this.value" style="font-size: 13px;">
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-sm" onclick="removeAlternateRow(${index})" style="background: var(--danger); color: white; padding: 8px 10px;" title="Remove alternate">✕</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
         async function saveOutcome() {
@@ -9793,7 +9851,7 @@ Respond now:`;
             
             if (type === 'won') {
                 outcomeData.amount = document.getElementById('outcomeAmount')?.value;
-                outcomeData.alternates = document.getElementById('outcomeAlternates')?.value;
+                outcomeData.alternates = outcomeAlternates.filter(alt => alt.description || alt.amount); // Only save non-empty alternates
                 outcomeData.margin = document.getElementById('outcomeMargin')?.value;
                 outcomeData.howCompetitive = document.getElementById('outcomeHowCompetitive')?.value;
                 outcomeData.pricingFeedback = document.getElementById('outcomePricingFeedback')?.value;
