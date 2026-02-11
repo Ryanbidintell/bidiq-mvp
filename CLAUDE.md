@@ -1,6 +1,6 @@
 # 🤖 Claude Code Instructions for BidIQ Project
 
-**Last Updated:** February 7, 2026
+**Last Updated:** February 11, 2026
 
 This file contains mandatory rules Claude Code must follow when working on this project.
 
@@ -128,6 +128,12 @@ git commit -m "Before [change description]"
 ### Backend:
 - `netlify/functions/analyze.js` - AI API calls (Claude/OpenAI)
 - `netlify/functions/notify.js` - Email notifications
+- `netlify/functions/stripe-webhook.js` - Stripe subscription webhooks (auto-syncs revenue)
+
+### Documentation:
+- `STRIPE_WEBHOOK_SETUP.md` - Complete Stripe webhook setup guide
+- `FRONTEND_DESIGN.md` - Design system tokens and brand guidelines
+- `index.html` - Landing page (separate from app.html)
 
 ---
 
@@ -248,6 +254,102 @@ git commit -m "Before [change description]"
 - ❌ Add dependencies without asking
 - ❌ Create abstractions prematurely
 - ❌ Break existing features
+
+---
+
+## 🎓 RECENT PATTERNS & LESSONS LEARNED
+
+### Tab Navigation Pattern (Feb 11, 2026)
+
+**Problem:** Back button was always returning to dashboard instead of previous tab
+**Root Cause:** Checking `style.display !== 'none'` when tabs use `classList.contains('active')`
+**Solution:** Always check for CSS classes, not inline styles, when detecting active elements
+**Code Location:** app.html:8379-8387 (viewReport function)
+
+```javascript
+// ❌ WRONG - checks inline styles
+if (tabElement && tabElement.style.display !== 'none') {
+
+// ✅ CORRECT - checks CSS classes
+if (tabElement && tabElement.classList.contains('active')) {
+```
+
+**Lesson:** When debugging UI state, verify what mechanism controls visibility (classes vs inline styles)
+
+### Date Validation Pattern (Feb 9, 2026)
+
+**Problem:** `new Date(invalidString)` doesn't throw errors, returns Invalid Date object
+**Solution:** Use `isNaN(date.getTime())` to validate dates after construction
+**Code Location:** app.html:8232-8237 (renderProjectsTable function)
+
+```javascript
+// ❌ WRONG - try/catch doesn't work for invalid dates
+try {
+    const d = new Date(dateValue);
+    return d.toLocaleDateString();
+} catch (e) {
+    return null; // Never executes!
+}
+
+// ✅ CORRECT - check for Invalid Date
+const d = new Date(dateValue);
+if (isNaN(d.getTime())) return null;
+return d.toLocaleDateString();
+```
+
+**Lesson:** JavaScript Date constructor is permissive - always validate with isNaN(date.getTime())
+
+### Multi-Client Type Architecture (Feb 11, 2026)
+
+**Change:** Expanded from GC-only to 7 client types:
+- 🏗️ General Contractors
+- 🔧 Subcontractors
+- 👤 End Users
+- 🏢 Building Owners
+- 🏛️ Municipalities
+- 📦 Distributors
+- 🏭 Manufacturer Reps
+
+**Database:** `clients` table with `client_type` column (migrated from `general_contractors`)
+**UI:** Step 2 now includes client type selector with visual filtering
+**Code Locations:**
+- app.html:1178-1197 (Step 2 UI with client type checkboxes)
+- app.html:3394-3420 (getClients function - accepts clientType param)
+- app.html:5285-5328 (renderGCSelector - filters by selected types)
+- app.html:5330-5348 (filterClientsByType - updates UI on selection)
+
+**Legacy Functions:** `getGCs()` still exists, wraps `getClients('general_contractor')` for backwards compatibility
+
+**Lesson:** When expanding scope, maintain backwards compatibility with wrapper functions
+
+### Outcome Form Data Capture (Feb 11, 2026)
+
+**Decision:** Prioritize qualitative feedback over structured dropdowns for AI learning
+**Examples:**
+- Added "Alternates ($)" field to capture alternate pricing
+- Added free-text "Pricing Feedback" instead of dropdown selections
+- Added "Which GC(s) ghosted?" for multi-GC ghost outcomes
+
+**Reasoning:** Real feedback like "GC said we won because of better healthcare experience" is more valuable for AI training than checkbox data
+
+**Code Location:** app.html:9489-9596 (outcome form modals), app.html:9680-9715 (saveOutcome function)
+
+**Lesson:** For AI/ML features, qualitative text data often beats quantitative structured data
+
+### Stripe Webhook Integration (Feb 9, 2026)
+
+**Architecture:** Serverless webhook function at `netlify/functions/stripe-webhook.js`
+**Security:** Signature verification using Stripe webhook secret
+**Data Flow:** Stripe → Webhook → Supabase user_revenue table
+**Documentation:** Complete setup guide in STRIPE_WEBHOOK_SETUP.md
+
+**Events Handled:**
+- customer.subscription.created → Create revenue record
+- customer.subscription.updated → Update MRR and status
+- customer.subscription.deleted → Mark as cancelled
+- invoice.payment_succeeded → Update timestamp
+
+**Lesson:** Webhooks require careful signature verification and idempotent handling
 
 ---
 
