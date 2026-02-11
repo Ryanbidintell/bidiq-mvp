@@ -4731,9 +4731,9 @@ ${fullText.substring(0, 40000)}`;
                         <div style="max-width: 500px; margin: 0 auto;">
                             <div style="display: flex; flex-direction: column; gap: 12px;">
                                 ${[
-                                    { value: 'hungry', icon: '🔴', label: 'Hungry for Work', desc: 'We need projects ASAP - be less selective' },
+                                    { value: 'aggressive', icon: '🔴', label: 'Hungry for Work', desc: 'We need projects ASAP - be less selective' },
                                     { value: 'steady', icon: '🟢', label: 'Steady & Balanced', desc: 'Normal capacity - use standard criteria' },
-                                    { value: 'maxed', icon: '🟡', label: 'At Capacity', desc: 'We\'re full - only show best fits' }
+                                    { value: 'slow', icon: '🟡', label: 'At Capacity', desc: 'We\'re full - only show best fits' }
                                 ].map(opt => `
                                     <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.capacity === opt.value ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
                                         <input type="radio" name="onboarding_capacity" value="${opt.value}" ${onboardingData.capacity === opt.value ? 'checked' : ''} onchange="onboardingData.capacity = this.value; renderOnboardingStep(6); setTimeout(() => onboardingNext(), 300);" style="margin-top: 4px; accent-color: var(--accent);">
@@ -6781,8 +6781,8 @@ ${truncatedText}`;
             const recClass = analysis.scores.recommendation.toLowerCase();
             const recText = { GO: 'Strong fit for your business', REVIEW: 'Mixed signals - review carefully', PASS: 'Poor fit based on your criteria' }[analysis.scores.recommendation];
             let capMsg = '';
-            if (settings.capacity === 'hungry' && analysis.scores.recommendation === 'REVIEW') capMsg = '<p style="margin-top:12px;padding:12px;background:var(--warning-bg);border-radius:var(--radius);font-size:13px;"><strong>🔴 You\'re hungry for work.</strong> Even though this has mixed signals, it might be worth pursuing.</p>';
-            else if (settings.capacity === 'maxed' && analysis.scores.recommendation !== 'GO') capMsg = '<p style="margin-top:12px;padding:12px;background:var(--info-bg);border-radius:var(--radius);font-size:13px;"><strong>🟡 You\'re at capacity.</strong> This isn\'t a strong fit - you can probably pass.</p>';
+            if (settings.capacity === 'aggressive' && analysis.scores.recommendation === 'REVIEW') capMsg = '<p style="margin-top:12px;padding:12px;background:var(--warning-bg);border-radius:var(--radius);font-size:13px;"><strong>🔴 You\'re hungry for work.</strong> Even though this has mixed signals, it might be worth pursuing.</p>';
+            else if (settings.capacity === 'slow' && analysis.scores.recommendation !== 'GO') capMsg = '<p style="margin-top:12px;padding:12px;background:var(--info-bg);border-radius:var(--radius);font-size:13px;"><strong>🟡 You\'re at capacity.</strong> This isn\'t a strong fit - you can probably pass.</p>';
 
             // Similar bid warning
             let similarBidHtml = '';
