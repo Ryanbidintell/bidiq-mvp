@@ -9502,15 +9502,15 @@ Respond now:`;
                         <input type="number" class="form-input" id="outcomeMargin" step="0.1" placeholder="12.5">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">GC Responsiveness</label>
-                        <div style="display:flex;gap:16px;margin-top:8px;">
-                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
-                                <input type="checkbox" id="gcAcknowledged"> Acknowledged receipt
-                            </label>
-                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
-                                <input type="checkbox" id="gcAnsweredQuestions"> Answered pre-bid questions
-                            </label>
-                        </div>
+                        <label class="form-label">How competitive was your pricing?</label>
+                        <select class="form-select" id="outcomeHowCompetitive">
+                            <option value="">Select...</option>
+                            <option value="lowest">We were the lowest bidder</option>
+                            <option value="competitive">Competitively priced (within 5%)</option>
+                            <option value="premium">Client paid premium to use us</option>
+                            <option value="unknown">Unknown</option>
+                        </select>
+                        <div class="form-hint">Helps understand if you're leaving money on the table</div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Decision Confidence</label>
@@ -9521,15 +9521,9 @@ Respond now:`;
                         <input type="hidden" id="outcomeConfidence" value="3">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Pricing Feedback (helps improve future bids)</label>
-                        <select class="form-select" id="outcomePricingFeedback">
-                            <option value="">Select...</option>
-                            <option value="on-target">Pricing was on target</option>
-                            <option value="too-high">We were too high</option>
-                            <option value="left-money">We left money on the table (could have been higher)</option>
-                            <option value="competitive-field">Very competitive field</option>
-                        </select>
-                        <div class="form-hint">This helps calibrate future pricing strategies</div>
+                        <label class="form-label">Pricing & Win Feedback (helps AI learn for future bids)</label>
+                        <textarea class="form-input" id="outcomePricingFeedback" rows="3" placeholder="e.g., 'GC said we won because of better healthcare experience' or 'Client valued our past work on similar projects'"></textarea>
+                        <div class="form-hint">Share why you won - AI will learn from this for future recommendations</div>
                     </div>`;
             } else if (type === 'lost') {
                 html = `
@@ -9558,17 +9552,6 @@ Respond now:`;
                         <div class="form-hint">Separate names with commas</div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">GC Responsiveness</label>
-                        <div style="display:flex;gap:16px;margin-top:8px;">
-                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
-                                <input type="checkbox" id="gcAcknowledged"> Acknowledged receipt
-                            </label>
-                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
-                                <input type="checkbox" id="gcAnsweredQuestions"> Answered pre-bid questions
-                            </label>
-                        </div>
-                    </div>
-                    <div class="form-group">
                         <label class="form-label">Decision Confidence</label>
                         <div class="confidence-slider" style="display:flex;gap:4px;margin-top:8px;">
                             ${[1,2,3,4,5].map(n => `<button type="button" class="conf-btn" data-val="${n}" onclick="setConfidence(${n})" style="width:40px;height:40px;border-radius:8px;border:2px solid var(--border-color);background:var(--bg-secondary);cursor:pointer;font-weight:600;">${n}</button>`).join('')}
@@ -9577,15 +9560,9 @@ Respond now:`;
                         <input type="hidden" id="outcomeConfidence" value="3">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Pricing Feedback (helps improve future bids)</label>
-                        <select class="form-select" id="outcomePricingFeedback">
-                            <option value="">Select...</option>
-                            <option value="on-target">Pricing was on target</option>
-                            <option value="too-high">We were too high</option>
-                            <option value="left-money">We left money on the table (could have been higher)</option>
-                            <option value="competitive-field">Very competitive field</option>
-                        </select>
-                        <div class="form-hint">This helps calibrate future pricing strategies</div>
+                        <label class="form-label">Why did you lose? (helps AI learn for future bids)</label>
+                        <textarea class="form-input" id="outcomePricingFeedback" rows="3" placeholder="e.g., 'Winner had better healthcare experience' or 'GC said pricing was too high and winner offered value engineering'"></textarea>
+                        <div class="form-hint">AI learns from this feedback - be specific about what the GC/client said</div>
                     </div>`;
             } else if (type === 'ghost') {
                 html = `
@@ -9694,13 +9671,15 @@ Respond now:`;
             if (type === 'won') {
                 outcomeData.amount = document.getElementById('outcomeAmount')?.value;
                 outcomeData.margin = document.getElementById('outcomeMargin')?.value;
+                outcomeData.howCompetitive = document.getElementById('outcomeHowCompetitive')?.value;
+                outcomeData.pricingFeedback = document.getElementById('outcomePricingFeedback')?.value;
                 // Update GC wins
                 const projects = await getProjects();
                 const p = projects.find(x => x.id === id);
                 if (p) {
                     const gcs = await getGCs();
-                    for (const sg of p.gcs) { 
-                        const gc = gcs.find(g => g.name === sg.name); 
+                    for (const sg of p.gcs) {
+                        const gc = gcs.find(g => g.name === sg.name);
                         if (gc) {
                             gc.wins = (gc.wins || 0) + 1;
                             await saveGC(gc);
@@ -9711,6 +9690,7 @@ Respond now:`;
                 outcomeData.howHigh = document.getElementById('outcomeHowHigh')?.value;
                 outcomeData.winner = document.getElementById('outcomeWinner')?.value;
                 outcomeData.otherCompetitors = document.getElementById('outcomeOtherCompetitors')?.value?.split(',').map(s => s.trim()).filter(Boolean) || [];
+                outcomeData.pricingFeedback = document.getElementById('outcomePricingFeedback')?.value;
             } else if (type === 'ghost') {
                 outcomeData.daysSince = parseInt(document.getElementById('outcomeDaysSince')?.value) || 60;
             } else if (type === 'declined') {
