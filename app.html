@@ -2222,9 +2222,15 @@
         }
 
         // Error notification banner (founder only)
+        // Check if current user is admin
+        function isAdmin() {
+            const adminEmails = ['ryan@fsikc.com', 'ryan@bidintell.ai'];
+            return currentUser && adminEmails.includes(currentUser.email);
+        }
+
         function showErrorBanner(message) {
             // Only show to founder
-            if (!currentUser || currentUser.email !== 'ryan@bidintell.ai') {
+            if (!isAdmin()) {
                 console.warn('⚠️ API Error (hidden from user):', message);
                 return;
             }
@@ -11147,9 +11153,11 @@ Respond now:`;
 
                 console.log('✅ loadAll() completed successfully');
 
-                // Show admin tab for founder
-                if (currentUser && currentUser.email === 'ryan@bidintell.ai') {
+                // Show admin tab for founders only
+                if (isAdmin()) {
                     document.getElementById('adminNavItem').style.display = 'flex';
+                } else {
+                    document.getElementById('adminNavItem').style.display = 'none';
                 }
             } catch (error) {
                 console.error('❌ loadAll() error:', error);
