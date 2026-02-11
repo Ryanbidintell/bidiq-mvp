@@ -17,11 +17,11 @@ Add these to the top of your CSS. Reference them everywhere — never hardcode c
 
 ```css
 :root {
-  /* Brand Colors */
-  --brand-primary: #4F46E5;           /* Indigo — trust, intelligence */
-  --brand-secondary: #7C3AED;         /* Purple — premium, AI */
-  --brand-gradient: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-  --brand-gradient-subtle: linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 100%);
+  /* Brand Colors - Matching Logo */
+  --brand-primary: #F7931E;           /* Orange — energy, construction, action */
+  --brand-secondary: #2F80ED;         /* Blue — trust, intelligence, clarity */
+  --brand-gradient: linear-gradient(135deg, #F7931E 0%, #2F80ED 100%);
+  --brand-gradient-subtle: linear-gradient(135deg, #FFF4E6 0%, #E3F2FD 100%);
 
   /* Score Colors */
   --score-go: #059669;                /* Green — GO recommendation */
