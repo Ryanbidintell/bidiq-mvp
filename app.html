@@ -5151,12 +5151,32 @@ ${fullText.substring(0, 40000)}`;
 
         async function skipOnboarding() {
             if (confirm('Are you sure you want to skip setup? You can configure settings later, but BidIntell won\'t be fully optimized for your business yet.')) {
-                const settings = await getSettings();
-                settings.onboarding_completed = true;
-                await saveSettingsStorage(settings); // Use saveSettingsStorage directly
-                dataCache.settings = null; // Clear cache
-                closeModal('onboardingModal');
-                await loadAll();
+                try {
+                    console.log('🚀 Skipping onboarding...');
+                    const settings = await getSettings();
+                    console.log('📦 Current settings:', settings);
+
+                    settings.onboarding_completed = true;
+
+                    console.log('💾 Saving settings with onboarding_completed = true');
+                    await saveSettingsStorage(settings);
+
+                    console.log('🔄 Clearing cache...');
+                    dataCache.settings = null;
+
+                    console.log('✅ Closing modal...');
+                    closeModal('onboardingModal');
+
+                    console.log('📦 Loading all data...');
+                    await loadAll();
+
+                    console.log('🎉 Onboarding skipped successfully!');
+                } catch (error) {
+                    console.error('❌ Error skipping onboarding:', error);
+                    alert('Failed to skip onboarding: ' + error.message);
+                }
+            } else {
+                console.log('ℹ️ User cancelled skip');
             }
         }
 
