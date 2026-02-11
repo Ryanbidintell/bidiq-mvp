@@ -351,6 +351,92 @@ return d.toLocaleDateString();
 
 **Lesson:** Webhooks require careful signature verification and idempotent handling
 
+### Evening Session - User Experience Polish (Feb 11, 2026)
+
+**Focus:** Landing page consistency, outcome tracking improvements, ROI calculator redesign
+
+#### Multiple Alternates Tracking
+**Problem:** Single alternates field couldn't track multiple alternate bids with different margins
+**Solution:** Dynamic list with + Add Alternate button
+**Implementation:**
+- Each alternate tracks: description, bid amount ($), margin (%)
+- JavaScript array with add/remove functions
+- Grid layout: 2fr (description) 1fr (amount) 1fr (margin) auto (remove button)
+- Saves as JSON array to database
+
+**Code Locations:**
+- app.html:9600-9604 (form HTML with alternatesList container)
+- app.html:9786-9835 (renderAlternates, addAlternateRow, removeAlternateRow functions)
+- app.html:9850 (saveOutcome saves outcomeAlternates array)
+
+**Lesson:** When users need to track multiple items, provide dynamic add/remove UI instead of single field
+
+#### Landing Page Brand Consistency
+**Problem:** Landing page used #3b82f6 (light blue), dashboard used #4F46E5 (indigo), plus emoji in header
+**Solution:** Synchronized all brand colors and removed emoji for professional look
+**Changes:**
+- index.html:40 - Changed --brand-primary from #3b82f6 to #4F46E5
+- index.html:42 - Updated gradient to match
+- index.html:63 - Changed --border-focus
+- index.html:884 - Removed 🎯 emoji from logo (professional design)
+
+**Lesson:** Brand consistency across landing page and app builds trust - colors should match exactly
+
+#### ROI Calculator Redesign
+**Problem:** Conservative 3% win rate boost, unrealistic 40 hours per bid, no revenue impact shown
+**Solution:** Complete redesign with realistic inputs and revenue calculations
+**Changes:**
+- Replaced "bids per month" with "bids per year" (annual thinking)
+- Changed default "hours per bid" from 40 to 2 (realistic decision time)
+- Added visual slider for current win rate (5-50% range)
+- Added "Average project size" input for revenue calculations
+- Win rate improvement: 12.5% relative (middle of 10-15% range)
+- Calculate **Additional Revenue** from improved win rate: (new wins - old wins) × avg project size
+- Results show: Time Saved Annually, Additional Revenue, New Win Rate
+
+**Code Locations:**
+- index.html:1154-1198 (redesigned calculator HTML)
+- index.html:1318-1380 (updated calculateROI JavaScript)
+
+**Key Changes:**
+```javascript
+// Old: 25% improvement, capped at 20%
+const winRateImprovement = Math.min(winRate * 0.25, 20);
+
+// New: 12.5% relative improvement, show actual revenue impact
+const winRateImprovementPercent = 0.125; // 12.5%
+const newWinRate = Math.min(oldWinRate * (1 + winRateImprovementPercent), 0.50);
+const additionalWins = (newWinRate - oldWinRate) * bidsPerYear;
+const additionalRevenue = additionalWins * avgProjectSize;
+```
+
+**Lesson:** ROI calculators should show hard savings (time) AND revenue opportunity separately - more compelling than time alone
+
+#### User-Facing Language
+**Problem:** "Data Moat Health" is internal business terminology users don't understand or care about
+**Solution:** Changed to "AI Learning Progress" with emphasis on training the AI
+**Changes:**
+- app.html:1143 - Dashboard stat card label changed
+- app.html:1145 - Subtitle: "outcomes tracked • Trains AI" (benefit-focused)
+- app.html:8140 - Updated code comment to reflect user-facing purpose
+
+**Lesson:** Internal metrics shown to users should describe the benefit to THEM, not the business value to YOU
+
+#### Landing Page Copy Improvements
+**Problem:** "40+ Hours Per Bid" wildly high, "Bad GC Relationships" doesn't match multi-client architecture
+**Changes:**
+- "40+ Hours Per Bid" → "Days Wasted on Bad Bids" (more accurate, less specific)
+- "Bad GC Relationships" → "Bad Client Relationships" (matches 7 client types)
+
+**Lesson:** Copy should match actual user experience - exaggerated claims hurt credibility
+
+#### Google Analytics Integration
+**Implementation:** Added GA4 tracking code to both index.html and app.html
+**Code:** Standard gtag.js snippet in <head> with placeholder G-XXXXXXXXXX
+**Next Step:** User needs to replace placeholder with actual Measurement ID from their GA4 property
+
+**Lesson:** Analytics should be added early - track user behavior from day one of beta
+
 ---
 
 ## 🚫 ABSOLUTE PROHIBITIONS
