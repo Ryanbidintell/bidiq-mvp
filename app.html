@@ -5161,9 +5161,13 @@ ${fullText.substring(0, 40000)}`;
                     const settings = await getSettings();
                     console.log('📦 Current settings:', settings);
 
+                    // Set required defaults for skipped onboarding
                     settings.onboarding_completed = true;
+                    settings.capacity = settings.capacity || 'steady'; // Default to steady if not set
+                    settings.company_type = settings.company_type || 'subcontractor';
+                    settings.typical_clients = settings.typical_clients || ['gcs'];
 
-                    console.log('💾 Saving settings with onboarding_completed = true');
+                    console.log('💾 Saving settings with defaults:', settings);
                     await saveSettingsStorage(settings);
 
                     console.log('🔄 Clearing cache...');
