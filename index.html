@@ -1154,35 +1154,46 @@
         <div class="roi-calculator">
             <div class="roi-inputs">
                 <div class="roi-input-group">
-                    <label>Bids per month</label>
-                    <input type="number" id="bidsPerMonth" value="30" min="1" max="200">
+                    <label>Bids per year</label>
+                    <input type="number" id="bidsPerYear" value="150" min="12" max="1000">
                 </div>
                 <div class="roi-input-group">
-                    <label>Hours per bid</label>
-                    <input type="number" id="hoursPerBid" value="40" min="1" max="200">
+                    <label>Hours per bid analysis</label>
+                    <input type="number" id="hoursPerBid" value="2" min="0.5" max="40" step="0.5">
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Time spent deciding if you should bid</div>
                 </div>
                 <div class="roi-input-group">
-                    <label>Your hourly rate</label>
-                    <input type="number" id="hourlyRate" value="75" min="1" max="500">
+                    <label>Your hourly rate ($)</label>
+                    <input type="number" id="hourlyRate" value="75" min="25" max="500">
                 </div>
                 <div class="roi-input-group">
-                    <label>Current win rate (%)</label>
-                    <input type="number" id="winRate" value="10" min="1" max="100">
+                    <label>Average project size ($)</label>
+                    <input type="number" id="avgProjectSize" value="500000" min="10000" max="50000000" step="10000">
+                </div>
+                <div class="roi-input-group" style="grid-column: 1 / -1;">
+                    <label>Current win rate: <span id="winRateDisplay" style="font-weight: 700; color: var(--brand-primary);">15%</span></label>
+                    <input type="range" id="winRate" value="15" min="5" max="50" step="1"
+                           style="width: 100%; height: 8px; border-radius: 4px; background: linear-gradient(to right, var(--brand-primary) 0%, var(--brand-primary) 30%, #E7E5E4 30%, #E7E5E4 100%); cursor: pointer; -webkit-appearance: none; appearance: none;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                        <span>5%</span>
+                        <span>25%</span>
+                        <span>50%</span>
+                    </div>
                 </div>
             </div>
 
             <div class="roi-results">
                 <div class="roi-result">
-                    <div class="roi-result-label">Hours Saved</div>
-                    <div class="roi-result-value" id="hoursSaved">0</div>
+                    <div class="roi-result-label">Time Saved Annually</div>
+                    <div class="roi-result-value" id="hoursSaved">0 hrs</div>
                 </div>
                 <div class="roi-result">
-                    <div class="roi-result-label">Money Saved</div>
-                    <div class="roi-result-value" id="moneySaved">$0</div>
+                    <div class="roi-result-label">Additional Revenue</div>
+                    <div class="roi-result-value" id="additionalRevenue">$0</div>
                 </div>
                 <div class="roi-result">
-                    <div class="roi-result-label">Win Rate Boost</div>
-                    <div class="roi-result-value" id="winRateImprovement">0%</div>
+                    <div class="roi-result-label">New Win Rate</div>
+                    <div class="roi-result-value" id="newWinRate">0%</div>
                 </div>
             </div>
 
@@ -1319,37 +1330,52 @@
         let currentPlan = 'starter';
 
         function calculateROI() {
-            const bidsPerMonth = parseFloat(document.getElementById('bidsPerMonth').value) || 0;
+            const bidsPerYear = parseFloat(document.getElementById('bidsPerYear').value) || 0;
             const hoursPerBid = parseFloat(document.getElementById('hoursPerBid').value) || 0;
             const hourlyRate = parseFloat(document.getElementById('hourlyRate').value) || 0;
             const winRate = parseFloat(document.getElementById('winRate').value) || 0;
+            const avgProjectSize = parseFloat(document.getElementById('avgProjectSize').value) || 0;
+
+            // Update win rate slider display
+            document.getElementById('winRateDisplay').textContent = winRate + '%';
+            const slider = document.getElementById('winRate');
+            const percent = ((winRate - 5) / (50 - 5)) * 100;
+            slider.style.background = `linear-gradient(to right, var(--brand-primary) 0%, var(--brand-primary) ${percent}%, #E7E5E4 ${percent}%, #E7E5E4 100%)`;
 
             // Assumptions:
-            // - BidIntell helps identify 50% of bids as not worth pursuing
-            // - Save 90% of time on rejected bids (quick analysis vs full estimate)
-            // - Win rate improves by 25% when focusing on better-fit projects
-            const badBids = bidsPerMonth * 0.5;
-            const timeSavedPerBadBid = hoursPerBid * 0.9;
-            const totalHoursSaved = badBids * timeSavedPerBadBid;
-            const moneySaved = totalHoursSaved * hourlyRate;
-            const winRateImprovement = Math.min(winRate * 0.25, 20);
+            // - BidIntell helps identify 40% of bids as not worth pursuing (bad fit)
+            // - Save 100% of time on those rejected bids (2 hours vs 0)
+            // - Win rate improves by 12.5% (10-15% range) when focusing on better-fit projects
+            const badBids = bidsPerYear * 0.4;
+            const totalHoursSaved = badBids * hoursPerBid;
+
+            // Win rate improvement: 12.5% relative improvement
+            const winRateImprovementPercent = 0.125; // 12.5%
+            const oldWinRate = winRate / 100;
+            const newWinRate = Math.min(oldWinRate * (1 + winRateImprovementPercent), 0.50); // Cap at 50%
+            const additionalWins = (newWinRate - oldWinRate) * bidsPerYear;
+            const additionalRevenue = additionalWins * avgProjectSize;
 
             // Update display
-            document.getElementById('hoursSaved').textContent = Math.round(totalHoursSaved);
-            document.getElementById('moneySaved').textContent = '$' + Math.round(moneySaved).toLocaleString();
-            document.getElementById('winRateImprovement').textContent = '+' + Math.round(winRateImprovement) + '%';
+            document.getElementById('hoursSaved').textContent = Math.round(totalHoursSaved) + ' hrs';
+            document.getElementById('additionalRevenue').textContent = '$' + Math.round(additionalRevenue).toLocaleString();
+            document.getElementById('newWinRate').textContent = Math.round(newWinRate * 100) + '%';
 
             // Calculate payback period
             const monthlySubscription = currentPlan === 'starter' ? 49 : 99;
-            const hoursToPayback = monthlySubscription / hourlyRate;
-            const paybackDays = Math.ceil((hoursToPayback / totalHoursSaved) * 30);
+            const annualSubscription = monthlySubscription * 12;
+            const timeSavingsValue = totalHoursSaved * hourlyRate;
+            const totalValue = timeSavingsValue + additionalRevenue;
+            const paybackMonths = totalValue > 0 ? Math.max(0.1, annualSubscription / totalValue * 12) : 12;
 
-            if (paybackDays < 1) {
-                document.getElementById('paybackPeriod').textContent = 'Less than 1 day';
-            } else if (paybackDays === 1) {
-                document.getElementById('paybackPeriod').textContent = '1 day';
+            if (paybackMonths < 0.5) {
+                document.getElementById('paybackPeriod').textContent = 'Less than 1 week';
+            } else if (paybackMonths < 1) {
+                document.getElementById('paybackPeriod').textContent = Math.ceil(paybackMonths * 4) + ' weeks';
+            } else if (paybackMonths < 2) {
+                document.getElementById('paybackPeriod').textContent = '1 month';
             } else {
-                document.getElementById('paybackPeriod').textContent = paybackDays + ' days';
+                document.getElementById('paybackPeriod').textContent = Math.round(paybackMonths) + ' months';
             }
 
             document.getElementById('subscriptionCost').textContent = '$' + monthlySubscription;
@@ -1363,7 +1389,7 @@
         // Add event listeners
         document.addEventListener('DOMContentLoaded', function() {
             calculateROI();
-            ['bidsPerMonth', 'hoursPerBid', 'hourlyRate', 'winRate'].forEach(id => {
+            ['bidsPerYear', 'hoursPerBid', 'hourlyRate', 'winRate', 'avgProjectSize'].forEach(id => {
                 document.getElementById(id).addEventListener('input', calculateROI);
             });
         });
