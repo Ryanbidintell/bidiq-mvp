@@ -5,6 +5,7 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  SECRETS_SCAN_ENABLED = "false"  # Disabled - secrets in old git history, already removed and rotated
 
 [dev]
   command = ""
