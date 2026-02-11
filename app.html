@@ -8225,8 +8225,8 @@ ${truncatedText}`;
                             const recClass = recommendation === 'GO' ? 'success' : recommendation === 'REVIEW' ? 'warning' : '';
                             const outcomeClass = p.outcome === 'won' ? 'success' : p.outcome === 'lost' ? 'danger' : p.outcome === 'ghost' ? 'muted' : '';
 
-                            // Fix date handling - show bid deadline if available, otherwise created date
-                            let date = '—'; // Default to em dash for no date
+                            // Fix date handling - show analysis date and bid date
+                            let dateDisplay = '—'; // Default to em dash for no date
 
                             // Helper to validate and format date
                             const formatDate = (dateValue) => {
@@ -8236,14 +8236,17 @@ ${truncatedText}`;
                                 return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                             };
 
-                            // Try bid deadline first, then created date
-                            const formattedDeadline = formatDate(extracted.bid_deadline);
-                            const formattedCreated = formatDate(p.created_at);
+                            // Get both dates
+                            const analysisDate = formatDate(p.created_at);
+                            const bidDate = formatDate(extracted.bid_deadline);
 
-                            if (formattedDeadline) {
-                                date = formattedDeadline;
-                            } else if (formattedCreated) {
-                                date = formattedCreated;
+                            // Build date display: Analysis date (primary), bid date (secondary)
+                            if (analysisDate && bidDate) {
+                                dateDisplay = `<div style="font-size:13px;"><strong>Analyzed:</strong> ${analysisDate}</div><div style="font-size:11px; color:var(--text-muted);">Bid Due: ${bidDate}</div>`;
+                            } else if (analysisDate) {
+                                dateDisplay = `<div style="font-size:13px;">${analysisDate}</div>`;
+                            } else if (bidDate) {
+                                dateDisplay = `<div style="font-size:13px; color:var(--text-muted);">Bid: ${bidDate}</div>`;
                             }
 
                             // Handle both old (project_city) and new (city) field names
@@ -8274,7 +8277,7 @@ ${truncatedText}`;
                                     <td>${city}${city && state ? ', ' : ''}${state}</td>
                                     <td><span class="score-badge ${recClass}">${scoreDisplay}</span></td>
                                     <td><span class="outcome-badge ${outcomeClass}">${(p.outcome || 'pending').toUpperCase()}</span></td>
-                                    <td style="font-size:13px; color:var(--text-muted);">${date}</td>
+                                    <td style="color:var(--text-muted);">${dateDisplay}</td>
                                     <td style="white-space: nowrap;">
                                         <div style="display: flex; gap: 6px; justify-content: flex-end;">
                                             <button class="btn btn-sm btn-secondary" onclick="viewReport('${p.id}')" style="padding:6px 12px;" title="View full report">👁️ View</button>
@@ -8380,7 +8383,7 @@ ${truncatedText}`;
                 const tabs = ['dashboard', 'projects', 'gcs', 'keywords', 'settings', 'analytics', 'admin'];
                 for (const tabName of tabs) {
                     const tabElement = document.getElementById(`tab-${tabName}`);
-                    if (tabElement && tabElement.style.display !== 'none') {
+                    if (tabElement && tabElement.classList.contains('active')) {
                         window.previousTab = tabName;
                         break;
                     }
