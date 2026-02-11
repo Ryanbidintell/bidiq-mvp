@@ -7,22 +7,22 @@
     <!-- Primary Meta Tags -->
     <title>Stop Wasting 40 Hours on Bad Bids | BidIntell - AI Bid Intelligence for Subcontractors</title>
     <meta name="title" content="Stop Wasting 40 Hours on Bad Bids | BidIntell - AI Bid Intelligence">
-    <meta name="description" content="Know in 60 seconds if a bid is worth your time. BidIntell's AI analyzes location, GC relationships, and contract risks to give you a clear GO/REVIEW/PASS recommendation. FREE beta for first 100 users.">
+    <meta name="description" content="Know in 60 seconds if a bid is worth your time. BidIntell's AI analyzes location, GC relationships, and contract risks to give you a clear GO/REVIEW/PASS recommendation.">
     <meta name="keywords" content="construction bid software, subcontractor bidding, AI construction software, bid analysis tool, construction estimating, GC tracking, contract risk detection">
     <link rel="canonical" href="https://bidintell.ai/">
 
-    <!-- Open Graph / Facebook -->
+    <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://bidintell.ai/">
     <meta property="og:title" content="Stop Wasting 40 Hours on Bad Bids | BidIntell">
-    <meta property="og:description" content="Know in 60 seconds if a bid is worth your time. FREE beta for first 100 users.">
+    <meta property="og:description" content="Know in 60 seconds if a bid is worth your time.">
     <meta property="og:image" content="https://bidintell.ai/og-image.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://bidintell.ai/">
     <meta property="twitter:title" content="Stop Wasting 40 Hours on Bad Bids | BidIntell">
-    <meta property="twitter:description" content="Know in 60 seconds if a bid is worth your time. FREE beta for first 100 users.">
+    <meta property="twitter:description" content="Know in 60 seconds if a bid is worth your time.">
     <meta property="twitter:image" content="https://bidintell.ai/og-image.png">
 
     <!-- Favicon -->
@@ -43,7 +43,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* Design System from FRONTEND_DESIGN.md */
+        /* FRONTEND_DESIGN.md Design Tokens */
         :root {
             /* Brand Colors */
             --brand-primary: #4F46E5;
@@ -59,7 +59,7 @@
             --score-pass: #DC2626;
             --score-pass-bg: #FEF2F2;
 
-            /* Neutrals */
+            /* Neutrals - Light Theme */
             --text-primary: #111827;
             --text-secondary: #6B7280;
             --text-muted: #9CA3AF;
@@ -132,7 +132,6 @@
             align-items: center;
             gap: 8px;
             color: var(--text-primary);
-            cursor: pointer;
         }
 
         .logo span {
@@ -216,7 +215,6 @@
             letter-spacing: 0.05em;
             text-transform: uppercase;
             margin-bottom: 24px;
-            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
         .hero-headline {
@@ -225,7 +223,6 @@
             line-height: 1.1;
             letter-spacing: -0.02em;
             margin-bottom: 20px;
-            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
         }
 
         .hero-headline .highlight {
@@ -242,7 +239,6 @@
             max-width: 750px;
             margin-left: auto;
             margin-right: auto;
-            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
         }
 
         .hero-cta {
@@ -251,7 +247,6 @@
             justify-content: center;
             align-items: center;
             margin-bottom: 32px;
-            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
         }
 
         .hero-cta .btn {
@@ -262,12 +257,6 @@
         .hero-proof {
             font-size: 14px;
             color: var(--text-muted);
-            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
-        }
-
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Pain Points Section */
@@ -320,15 +309,11 @@
             border-color: var(--brand-primary);
         }
 
-        .pain-card-icon {
-            font-size: 40px;
-            margin-bottom: 16px;
-        }
-
         .pain-card h3 {
             font-size: 20px;
             font-weight: 700;
             margin-bottom: 12px;
+            color: var(--text-primary);
         }
 
         .pain-card p {
@@ -563,11 +548,6 @@
             text-align: center;
         }
 
-        .guarantee-icon {
-            font-size: 64px;
-            margin-bottom: 24px;
-        }
-
         .guarantee-content h2 {
             font-size: 32px;
             font-weight: 700;
@@ -690,8 +670,8 @@
 <body>
     <!-- Header -->
     <div class="header">
-        <div class="logo" onclick="window.location.href='/'">
-            🎯 <span>BidIntell</span>
+        <div class="logo">
+            BidIntell<span></span>
         </div>
         <div class="header-nav">
             <a href="#how-it-works">How It Works</a>
@@ -704,7 +684,7 @@
     <!-- Hero -->
     <div class="hero">
         <div class="hero-badge">
-            🚀 FREE Beta • First 100 Users Lock in Lifetime 30% Off
+            FREE BETA • First 100 Users Lock in Lifetime 30% Off
         </div>
         <h1 class="hero-headline">
             Stop Wasting 40 Hours<br>on <span class="highlight">Bad Bids</span>
@@ -713,11 +693,11 @@
             Know in 60 seconds if a project is worth your time. BidIntell's AI analyzes location, GC relationships, and contract risks to give you a clear GO / REVIEW / PASS recommendation—before you waste weeks estimating.
         </p>
         <div class="hero-cta">
-            <a href="app.html"><button class="btn btn-primary">Get My First 3 Bids Analyzed Free →</button></a>
+            <a href="app.html"><button class="btn btn-primary">Get My First 3 Bids Analyzed Free</button></a>
             <a href="#how-it-works"><button class="btn btn-secondary">See How It Works</button></a>
         </div>
         <div class="hero-proof">
-            ✓ Setup in 5 minutes  •  ✓ No credit card required  •  ✓ Cancel anytime
+            Setup in 5 minutes • No credit card required • Cancel anytime
         </div>
     </div>
 
@@ -730,32 +710,26 @@
             </div>
             <div class="pain-grid">
                 <div class="pain-card">
-                    <div class="pain-card-icon">⏱️</div>
                     <h3>40+ Hours Per Bid</h3>
                     <p>You spend weeks estimating projects that were never a good fit—while profitable opportunities slip away to competitors who move faster.</p>
                 </div>
                 <div class="pain-card">
-                    <div class="pain-card-icon">📍</div>
                     <h3>Wrong Location</h3>
                     <p>Projects 100 miles outside your service area cost more to mobilize, kill your margins, and make you less competitive. You knew it from the start.</p>
                 </div>
                 <div class="pain-card">
-                    <div class="pain-card-icon">🤝</div>
                     <h3>Bad GC Relationships</h3>
                     <p>You've worked with them before. They nickel-and-dimed you, paid late, or ghosted after award. Why are you bidding for them again?</p>
                 </div>
                 <div class="pain-card">
-                    <div class="pain-card-icon">⚠️</div>
                     <h3>Hidden Contract Traps</h3>
                     <p>Pay-if-paid clauses, liquidated damages, warranty requirements buried on page 47—you don't find them until it's too late.</p>
                 </div>
                 <div class="pain-card">
-                    <div class="pain-card-icon">🎯</div>
                     <h3>Wrong Trade Scope</h3>
                     <p>The project looks good at first, but it's 80% work outside your core competency. You bid it anyway because the pipeline is thin.</p>
                 </div>
                 <div class="pain-card">
-                    <div class="pain-card-icon">💸</div>
                     <h3>Low Win Rates, Lower Margins</h3>
                     <p>You're bidding everything hoping something sticks—burning cash, exhausting your team, and winning the wrong projects.</p>
                 </div>
@@ -780,15 +754,15 @@
                 <div class="step">
                     <div class="step-number">2</div>
                     <div class="step-arrow">→</div>
-                    <h3>Get Your BidIndex™ Score</h3>
+                    <h3>Get Your BidIndex Score</h3>
                     <p>BidIntell analyzes YOUR location, YOUR GC relationships, YOUR win history, and contract risks—then gives you a personalized score (0-100).</p>
                 </div>
                 <div class="step">
                     <div class="step-number">3</div>
                     <h3>Make a Confident Decision</h3>
-                    <p><strong style="color: var(--score-go);">80+ = GO</strong> → Great fit, pursue this<br>
-                    <strong style="color: var(--score-review);">60-79 = REVIEW</strong> → Worth investigating<br>
-                    <strong style="color: var(--score-pass);">0-59 = PASS</strong> → Not worth your time</p>
+                    <p><strong style="color: var(--score-go);">80+ = GO</strong> – Great fit, pursue this<br>
+                    <strong style="color: var(--score-review);">60-79 = REVIEW</strong> – Worth investigating<br>
+                    <strong style="color: var(--score-pass);">0-59 = PASS</strong> – Not worth your time</p>
                 </div>
             </div>
         </div>
@@ -824,7 +798,7 @@
                     <div class="pricing-description">Perfect for solo operators and small teams</div>
                     <ul class="pricing-features">
                         <li><strong>20 bid analyses/month</strong></li>
-                        <li>BidIndex™ scoring with GO/REVIEW/PASS</li>
+                        <li>BidIndex scoring with GO/REVIEW/PASS</li>
                         <li>Contract risk detection</li>
                         <li>GC relationship tracking</li>
                         <li>Unlimited AI advisor chat</li>
@@ -850,7 +824,7 @@
                 </div>
             </div>
             <div class="pricing-note">
-                <strong>🎉 Beta Special:</strong> First 100 users get FREE access during beta, then lock in <strong>lifetime 30% off</strong> any paid plan forever. After beta closes: regular pricing applies ($49-$99/mo). No credit card required to join beta.
+                <strong>Beta Special:</strong> First 100 users get FREE access during beta, then lock in <strong>lifetime 30% off</strong> any paid plan forever. After beta closes: regular pricing applies ($49-$99/mo). No credit card required to join beta.
             </div>
         </div>
     </div>
@@ -858,7 +832,6 @@
     <!-- Guarantee -->
     <div class="guarantee-section">
         <div class="guarantee-content">
-            <div class="guarantee-icon">🛡️</div>
             <h2>100% Risk-Free Guarantee</h2>
             <p>
                 Try BidIntell FREE during beta. If you don't see better bid decisions in your first 30 days, we'll refund you 100%—no questions asked. You have nothing to lose and hours to gain.
@@ -873,9 +846,9 @@
             <p>
                 Join 50+ subcontractors who are already making smarter bid decisions with BidIntell. Setup takes 5 minutes. Your first 3 bids are free.
             </p>
-            <a href="app.html"><button class="btn btn-primary">Get My First 3 Bids Analyzed Free →</button></a>
+            <a href="app.html"><button class="btn btn-primary">Get My First 3 Bids Analyzed Free</button></a>
             <div style="margin-top: 24px; font-size: 14px; color: var(--text-muted);">
-                ✓ No credit card required  •  ✓ Cancel anytime  •  ✓ Free during beta
+                No credit card required • Cancel anytime • Free during beta
             </div>
         </div>
     </div>
@@ -886,10 +859,8 @@
             <a href="app.html">Sign In</a>
             <a href="#pricing">Pricing</a>
             <a href="mailto:hello@bidintell.ai">Contact</a>
-            <a href="#">Privacy</a>
-            <a href="#">Terms</a>
         </div>
-        <p>© 2026 BidIntell, LLC  •  Decision Intelligence for Construction Professionals</p>
+        <p>© 2026 BidIntell, LLC • Decision Intelligence for Construction Professionals</p>
     </div>
 
     <!-- Schema Markup -->
