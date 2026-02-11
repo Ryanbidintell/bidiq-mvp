@@ -2496,8 +2496,8 @@
             if (supabaseClient) await supabaseClient.auth.signOut();
             currentUser = null;
             clearDataCache();
-            document.getElementById('authScreen').style.display = 'flex';
-            document.getElementById('mainApp').style.display = 'none';
+            // Redirect to landing page instead of showing auth screen
+            window.location.href = '/';
         }
         
         async function showApp() {
