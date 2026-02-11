@@ -4808,8 +4808,10 @@ ${fullText.substring(0, 40000)}`;
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                                 ${[
                                     { value: 'gcs', icon: '🏢', label: 'General Contractors', desc: 'Traditional GCs managing projects' },
-                                    { value: 'subcontractors', icon: '🔧', label: 'Other Subcontractors', desc: 'Work as a lower-tier sub' },
+                                    { value: 'building_owners', icon: '🏢', label: 'Building Owners', desc: 'Property owners hiring direct' },
+                                    { value: 'end_users', icon: '👤', label: 'End Users', desc: 'Facility managers, tenants' },
                                     { value: 'developers', icon: '🏗️', label: 'Developers', desc: 'Private real estate developers' },
+                                    { value: 'subcontractors', icon: '🔧', label: 'Other Subcontractors', desc: 'Work as a lower-tier sub' },
                                     { value: 'municipalities', icon: '🏛️', label: 'Municipalities', desc: 'Cities, counties, public works' }
                                 ].map(opt => `
                                     <label style="display: flex; flex-direction: column; gap: 8px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.clientTypes.includes(opt.value) ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
@@ -4844,9 +4846,12 @@ ${fullText.substring(0, 40000)}`;
                             <div class="form-group">
                                 <label class="form-label">Client Type</label>
                                 <select class="form-select" id="onboarding_clientType">
-                                    <option value="gc">General Contractor</option>
-                                    <option value="subcontractor">Subcontractor</option>
+                                    <option value="general_contractor">General Contractor</option>
+                                    <option value="building_owner">Building Owner</option>
+                                    <option value="end_user">End User</option>
                                     <option value="developer">Developer</option>
+                                    <option value="subcontractor">Subcontractor</option>
+                                    <option value="municipality">Municipality</option>
                                     <option value="municipality">Municipality</option>
                                 </select>
                             </div>
