@@ -13,6 +13,13 @@
   publish = "."
   autoLaunch = false
 
+# Redirect www to non-www
+[[redirects]]
+  from = "https://www.bidintell.ai/*"
+  to = "https://bidintell.ai/:splat"
+  status = 301
+  force = true
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
