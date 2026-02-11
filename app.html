@@ -1176,17 +1176,54 @@
                     </div>
                     
                     <div class="card">
-                        <div class="card-header"><h3 class="card-title">Step 2: Select GCs Bidding This Project</h3></div>
+                        <div class="card-header"><h3 class="card-title">Step 2: Select Who You're Bidding To</h3></div>
                         <div class="card-body">
                             <div class="help-text">
-                                <strong>Which general contractors are bidding on this project?</strong><br>
-                                • Click GCs from the list below to select them (they'll appear in the "Selected GCs" box)<br>
-                                • Or type a new GC name and click "+ Add New" to create and select in one step<br>
-                                • More GCs = more competition = score adjusts accordingly
+                                <strong>Who are you bidding to on this project?</strong><br>
+                                • First, select the type(s) of clients bidding this project<br>
+                                • Then click clients from the list below to select them<br>
+                                • Or type a new name and click "+ Add New" to create and select in one step<br>
+                                • More clients = more competition = score adjusts accordingly
                             </div>
+
+                            <!-- Client Type Selector -->
+                            <div class="form-group" style="margin-bottom: 16px;">
+                                <label class="form-label">Who's bidding this project? (Select all that apply)</label>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-top: 8px;">
+                                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--bg-secondary); border-radius: var(--radius); cursor: pointer; border: 2px solid transparent;" class="client-type-option" data-type="general_contractor">
+                                        <input type="checkbox" value="general_contractor" class="client-type-checkbox" onchange="filterClientsByType()">
+                                        <span>🏗️ General Contractors</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--bg-secondary); border-radius: var(--radius); cursor: pointer; border: 2px solid transparent;" class="client-type-option" data-type="subcontractor">
+                                        <input type="checkbox" value="subcontractor" class="client-type-checkbox" onchange="filterClientsByType()">
+                                        <span>🔧 Subcontractors</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--bg-secondary); border-radius: var(--radius); cursor: pointer; border: 2px solid transparent;" class="client-type-option" data-type="end_user">
+                                        <input type="checkbox" value="end_user" class="client-type-checkbox" onchange="filterClientsByType()">
+                                        <span>👤 End Users</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--bg-secondary); border-radius: var(--radius); cursor: pointer; border: 2px solid transparent;" class="client-type-option" data-type="building_owner">
+                                        <input type="checkbox" value="building_owner" class="client-type-checkbox" onchange="filterClientsByType()">
+                                        <span>🏢 Building Owners</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--bg-secondary); border-radius: var(--radius); cursor: pointer; border: 2px solid transparent;" class="client-type-option" data-type="municipality">
+                                        <input type="checkbox" value="municipality" class="client-type-checkbox" onchange="filterClientsByType()">
+                                        <span>🏛️ Municipalities</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--bg-secondary); border-radius: var(--radius); cursor: pointer; border: 2px solid transparent;" class="client-type-option" data-type="distributor">
+                                        <input type="checkbox" value="distributor" class="client-type-checkbox" onchange="filterClientsByType()">
+                                        <span>📦 Distributors</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--bg-secondary); border-radius: var(--radius); cursor: pointer; border: 2px solid transparent;" class="client-type-option" data-type="manufacturer_rep">
+                                        <input type="checkbox" value="manufacturer_rep" class="client-type-checkbox" onchange="filterClientsByType()">
+                                        <span>🏭 Manufacturer Reps</span>
+                                    </label>
+                                </div>
+                            </div>
+
                             <div class="gc-selector">
                                 <div class="gc-selector-search">
-                                    <input type="text" id="gcSearchInput" placeholder="Search GCs or type new name...">
+                                    <input type="text" id="gcSearchInput" placeholder="Search clients or type new name...">
                                     <button class="btn btn-primary btn-sm" onclick="addNewGCFromSearch()" style="border-radius: 0;">+ Add New</button>
                                 </div>
                                 <div class="gc-selector-list" id="gcSelectorList"></div>
@@ -5246,9 +5283,24 @@ ${fullText.substring(0, 40000)}`;
 
         // GC Selector
         async function renderGCSelector() {
-            const gcs = await getGCs();
+            // Get selected client types
+            const selectedTypes = Array.from(document.querySelectorAll('.client-type-checkbox:checked')).map(cb => cb.value);
+
+            // Get clients - either all types if none selected, or specific types
+            let allClients = [];
+            if (selectedTypes.length === 0) {
+                // No types selected - show all clients
+                allClients = await getClients();
+            } else {
+                // Get clients for each selected type
+                for (const type of selectedTypes) {
+                    const clients = await getClients(type);
+                    allClients = [...allClients, ...clients];
+                }
+            }
+
             const search = document.getElementById('gcSearchInput').value.toLowerCase();
-            const filtered = gcs.filter(g => g.name.toLowerCase().includes(search));
+            const filtered = allClients.filter(g => g.name.toLowerCase().includes(search));
             const listEl = document.getElementById('gcSelectorList');
 
             // Show/hide list based on input
@@ -5258,10 +5310,10 @@ ${fullText.substring(0, 40000)}`;
                 listEl.classList.remove('show');
             }
 
-            if (filtered.length === 0 && gcs.length === 0) {
-                listEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">No GCs in database yet.<br>Type a name above and click "Add New"</div>';
+            if (filtered.length === 0 && allClients.length === 0) {
+                listEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">No clients in database yet.<br>Type a name above and click "Add New"</div>';
             } else if (filtered.length === 0) {
-                listEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">No matches found.<br>Click "Add New" to add this GC</div>';
+                listEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">No matches found.<br>Click "Add New" to add this client</div>';
             } else {
                 listEl.innerHTML = filtered.map(gc => {
                     const isSelected = selectedGCs.find(s => s.name === gc.name);
@@ -5275,9 +5327,27 @@ ${fullText.substring(0, 40000)}`;
             renderSelectedGCs();
         }
 
+        async function filterClientsByType() {
+            // Update visual feedback for selected client types
+            document.querySelectorAll('.client-type-option').forEach(option => {
+                const checkbox = option.querySelector('input[type="checkbox"]');
+                if (checkbox.checked) {
+                    option.style.borderColor = 'var(--accent)';
+                    option.style.background = 'rgba(79, 70, 229, 0.1)';
+                } else {
+                    option.style.borderColor = 'transparent';
+                    option.style.background = 'var(--bg-secondary)';
+                }
+            });
+
+            // Re-render the client list with filters applied
+            await renderGCSelector();
+        }
+
         async function toggleGC(name) {
-            const gcs = await getGCs();
-            const gc = gcs.find(g => g.name === name);
+            // Get all clients regardless of type
+            const allClients = await getClients();
+            const gc = allClients.find(g => g.name === name);
             if (!gc) return;
             const idx = selectedGCs.findIndex(s => s.name === name);
             if (idx >= 0) {
@@ -5300,10 +5370,10 @@ ${fullText.substring(0, 40000)}`;
                 container.innerHTML = `
                     <div style="padding: 20px; text-align: center; background: var(--bg-secondary); border-radius: var(--radius); border: 2px dashed var(--border-color); margin: 16px 0;">
                         <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 8px;">
-                            👆 No GCs selected yet
+                            👆 No clients selected yet
                         </div>
                         <div style="font-size: 12px; color: var(--text-muted);">
-                            Click GCs from the list above or add a new one
+                            Click clients from the list above or add a new one
                         </div>
                     </div>
                 `;
@@ -5311,7 +5381,7 @@ ${fullText.substring(0, 40000)}`;
                 container.innerHTML = `
                     <div style="padding: 16px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(34, 197, 94, 0.08)); border-radius: var(--radius); border: 2px solid var(--accent); margin: 16px 0;">
                         <div style="font-weight: 600; margin-bottom: 12px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-                            <span>✅ Selected GCs (${selectedGCs.length})</span>
+                            <span>✅ Selected Clients (${selectedGCs.length})</span>
                         </div>
                         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                             ${selectedGCs.map(gc => `
@@ -5335,22 +5405,23 @@ ${fullText.substring(0, 40000)}`;
             else if (n <= 5) { level = 'Moderate Competition'; cls = 'moderate'; penalty = 5; }
             else if (n <= 10) { level = 'High Competition'; cls = 'high'; penalty = 10; }
             else { level = 'Very High Competition'; cls = 'very-high'; penalty = 15; }
-            document.getElementById('competitionIndicator').innerHTML = `<div class="competition-indicator ${cls}">${n} GC${n > 1 ? 's' : ''} selected • ${level}${penalty ? ' (-' + penalty + ' score penalty)' : ''}</div>`;
+            document.getElementById('competitionIndicator').innerHTML = `<div class="competition-indicator ${cls}">${n} client${n > 1 ? 's' : ''} selected • ${level}${penalty ? ' (-' + penalty + ' score penalty)' : ''}</div>`;
         }
 
         async function addNewGCFromSearch() {
             const input = document.getElementById('gcSearchInput');
             const name = input.value.trim();
             if (!name) {
-                alert('Enter a GC name first');
+                alert('Enter a client name first');
                 return;
             }
 
-            const gcs = await getGCs();
-            const existing = gcs.find(g => g.name.toLowerCase() === name.toLowerCase());
+            // Get all clients to check for duplicates
+            const allClients = await getClients();
+            const existing = allClients.find(g => g.name.toLowerCase() === name.toLowerCase());
 
             if (existing) {
-                // GC already exists - just select it
+                // Client already exists - just select it
                 if (!selectedGCs.find(s => s.name === existing.name)) {
                     selectedGCs.push({ ...existing });
                     showBanner(`✅ Added "${existing.name}" to selection`, 'success');
@@ -5364,12 +5435,30 @@ ${fullText.substring(0, 40000)}`;
                 return;
             }
 
-            // New GC - prompt for rating
+            // Get selected client types to pre-populate
+            const selectedTypes = Array.from(document.querySelectorAll('.client-type-checkbox:checked')).map(cb => cb.value);
+            const defaultType = selectedTypes.length === 1 ? selectedTypes[0] : 'general_contractor';
+
+            // New client - prompt for client type and rating
             const ratingHTML = `
                 <div style="text-align: center; padding: 20px;">
-                    <h3 style="margin-bottom: 16px;">Rate Your Experience with "${name}"</h3>
-                    <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 14px;">
-                        How would you rate working with this GC? This helps BidIntell give better recommendations.
+                    <h3 style="margin-bottom: 16px;">Add New Client: "${name}"</h3>
+
+                    <div style="text-align: left; margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Client Type</label>
+                        <select id="newClientTypeSelect" class="form-select" style="width: 100%;">
+                            <option value="general_contractor" ${defaultType === 'general_contractor' ? 'selected' : ''}>🏗️ General Contractor</option>
+                            <option value="subcontractor" ${defaultType === 'subcontractor' ? 'selected' : ''}>🔧 Subcontractor</option>
+                            <option value="end_user" ${defaultType === 'end_user' ? 'selected' : ''}>👤 End User</option>
+                            <option value="building_owner" ${defaultType === 'building_owner' ? 'selected' : ''}>🏢 Building Owner</option>
+                            <option value="municipality" ${defaultType === 'municipality' ? 'selected' : ''}>🏛️ Municipality</option>
+                            <option value="distributor" ${defaultType === 'distributor' ? 'selected' : ''}>📦 Distributor</option>
+                            <option value="manufacturer_rep" ${defaultType === 'manufacturer_rep' ? 'selected' : ''}>🏭 Manufacturer Rep</option>
+                        </select>
+                    </div>
+
+                    <p style="color: var(--text-muted); margin-bottom: 16px; font-size: 14px;">
+                        Rate your experience working with this client:
                     </p>
                     <div style="display: flex; justify-content: center; gap: 12px; font-size: 40px; margin: 20px 0;">
                         ${[1, 2, 3, 4, 5].map(i => `
@@ -5382,7 +5471,7 @@ ${fullText.substring(0, 40000)}`;
                     <div id="ratingDescription" style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; min-height: 24px;"></div>
                     <div style="display: flex; gap: 8px; justify-content: center;">
                         <button class="btn btn-secondary" onclick="closeRatingModal()">Cancel</button>
-                        <button class="btn btn-primary" id="confirmRatingBtn" onclick="confirmNewGCWithRating()" disabled>Add GC</button>
+                        <button class="btn btn-primary" id="confirmRatingBtn" onclick="confirmNewGCWithRating()" disabled>Add Client</button>
                     </div>
                 </div>
             `;
@@ -5454,6 +5543,7 @@ ${fullText.substring(0, 40000)}`;
         async function confirmNewGCWithRating() {
             const name = window.pendingGCName;
             const rating = window.pendingGCRating;
+            const clientType = document.getElementById('newClientTypeSelect')?.value || 'general_contractor';
 
             if (!name || !rating) {
                 alert('Please select a rating');
@@ -5461,9 +5551,15 @@ ${fullText.substring(0, 40000)}`;
             }
 
             try {
-                const newGC = { name, rating, bids: 0, wins: 0 };
-                const savedGC = await saveGC(newGC);
-                selectedGCs.push({ ...savedGC });
+                const newClient = {
+                    name,
+                    rating,
+                    bids: 0,
+                    wins: 0,
+                    clientType: clientType
+                };
+                const savedClient = await saveClient(newClient);
+                selectedGCs.push({ ...savedClient });
 
                 closeRatingModal();
 
