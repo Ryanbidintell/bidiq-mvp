@@ -2053,7 +2053,8 @@
          * @param {string} systemPrompt - System prompt for AI
          * @returns {Promise<string>} - AI response text
          */
-        async function callAI(operation, text, systemPrompt) {
+        async function callAI(operation, text, systemPrompt, projectId = null) {
+            const startTime = Date.now();
             try {
                 const response = await fetch(`${API_BASE_URL}/analyze`, {
                     method: 'POST',
@@ -2068,10 +2069,54 @@
 
                 if (!response.ok) {
                     const error = await response.json();
+                    const latencyMs = Date.now() - startTime;
+
+                    // Track failed API call
+                    await trackAPIUsage(
+                        operation,
+                        'unknown',
+                        'unknown',
+                        0,
+                        0,
+                        0,
+                        projectId,
+                        false,
+                        error.error || `API error: ${response.status}`,
+                        latencyMs
+                    );
+
                     throw new Error(error.error || `API error: ${response.status}`);
                 }
 
                 const data = await response.json();
+                const latencyMs = Date.now() - startTime;
+
+                // Track API usage if we have usage data
+                if (data.usage && data.provider && data.model) {
+                    const inputTokens = data.usage.input_tokens || 0;
+                    const outputTokens = data.usage.output_tokens || 0;
+
+                    // Map provider names (backend returns 'claude', pricing expects 'anthropic')
+                    const providerForPricing = data.provider === 'claude' ? 'anthropic' : data.provider;
+
+                    // Calculate cost
+                    const cost = calculateAPICost(providerForPricing, data.model, inputTokens, outputTokens);
+
+                    // Track usage
+                    await trackAPIUsage(
+                        operation,
+                        data.provider,
+                        data.model,
+                        inputTokens,
+                        outputTokens,
+                        cost,
+                        projectId,
+                        true,
+                        null,
+                        latencyMs
+                    );
+                }
+
                 return data.result;
             } catch (error) {
                 console.error('AI API error:', error);
@@ -3647,7 +3692,8 @@ ${fullText.substring(0, 40000)}`;
         function calculateAPICost(provider, model, inputTokens, outputTokens) {
             const pricing = {
                 anthropic: {
-                    'claude-sonnet-4.5': { input: 3.00, output: 15.00 }, // per 1M tokens
+                    'claude-sonnet-4-20250514': { input: 3.00, output: 15.00 }, // per 1M tokens (Sonnet 4.5)
+                    'claude-sonnet-4.5': { input: 3.00, output: 15.00 },
                     'claude-haiku-4': { input: 0.25, output: 1.25 },
                     'claude-opus-4.5': { input: 15.00, output: 75.00 }
                 },
