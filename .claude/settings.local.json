@@ -6,7 +6,10 @@
       "Bash(npx supabase:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git push:*)",
+      "Bash(npx netlify deploy:*)",
+      "Bash(curl:*)"
     ]
   }
 }
