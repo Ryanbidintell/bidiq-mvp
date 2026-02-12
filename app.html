@@ -3680,6 +3680,18 @@ ${fullText.substring(0, 40000)}`;
                     return;
                 }
 
+                // Capture user feedback on recommendation
+                const agreementRadio = document.querySelector('input[name="userAgreement"]:checked');
+                const agreementNote = document.getElementById('overrideNote');
+
+                if (agreementRadio || (agreementNote && agreementNote.value.trim())) {
+                    currentAnalysis.userFeedback = {
+                        agreement: agreementRadio?.value || 'agree',
+                        note: agreementNote?.value.trim() || null
+                    };
+                    console.log('📋 Captured user feedback:', currentAnalysis.userFeedback);
+                }
+
                 // Save project to database
                 const savedProject = await saveProject(currentAnalysis);
 
