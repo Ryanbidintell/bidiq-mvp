@@ -70,7 +70,10 @@ END $$;
 
 -- SKIP decision_time - it already exists as INTEGER (minutes)
 -- We use the existing integer column instead of adding a TEXT version
-RAISE NOTICE 'Skipping decision_time - already exists as INTEGER type (stores minutes)';
+DO $$
+BEGIN
+    RAISE NOTICE 'Skipping decision_time - already exists as INTEGER type (stores minutes)';
+END $$;
 
 -- company_type
 DO $$
