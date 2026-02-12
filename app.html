@@ -1225,7 +1225,7 @@
 
                             <div class="gc-selector">
                                 <div style="margin-bottom: 12px;">
-                                    <input type="text" id="gcSearchInput" placeholder="Search clients or type new name..." style="width: 100%; margin-bottom: 8px;">
+                                    <input type="text" class="form-input" id="gcSearchInput" placeholder="Search clients or type new name..." style="margin-bottom: 8px;">
                                     <button class="btn btn-secondary btn-sm" onclick="addNewGCFromSearch()" style="width: 100%; padding: 10px;">
                                         + Add New Client
                                     </button>
@@ -8619,8 +8619,59 @@ ${truncatedText}`;
                         ${renderComponent('🏢', 'GC Relationship', p.scores.components.gc)}
                         ${renderComponent(tradeIcon, tradeLabel, p.scores.components.trade)}
                     </div>
+
+                    <div class="manual-override" style="margin-top:20px;padding:16px;background:var(--bg-tertiary);border-radius:var(--radius);border:1px solid var(--border-color);">
+                        <div style="font-weight:600;margin-bottom:12px;color:var(--text-primary);">📋 Do you agree with this recommendation?</div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);border:2px solid transparent;" class="override-option">
+                                <input type="radio" name="reportUserAgreement" value="agree" ${!p.user_agreement || p.user_agreement === 'agree' ? 'checked' : ''} style="accent-color:var(--success);">
+                                <span>✓ Yes, agree</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);border:2px solid transparent;" class="override-option">
+                                <input type="radio" name="reportUserAgreement" value="too_high" ${p.user_agreement === 'too_high' ? 'checked' : ''}>
+                                <span>↑ Score too high</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);border:2px solid transparent;" class="override-option">
+                                <input type="radio" name="reportUserAgreement" value="too_low" ${p.user_agreement === 'too_low' ? 'checked' : ''}>
+                                <span>↓ Score too low</span>
+                            </label>
+                        </div>
+                        <input type="text" class="form-input" id="reportOverrideNote" placeholder="Optional: Why do you disagree? (helps improve scoring)" value="${p.user_agreement_note || ''}" style="font-size:13px;">
+                    </div>
                 `;
                 document.getElementById('reportScoreContent').innerHTML = scoreHTML;
+
+                // Add visual feedback for report agreement radio buttons and auto-save
+                setTimeout(() => {
+                    document.querySelectorAll('input[name="reportUserAgreement"]').forEach(radio => {
+                        radio.addEventListener('change', function() {
+                            document.querySelectorAll('.override-option').forEach(label => {
+                                label.style.borderColor = 'transparent';
+                                label.style.background = 'var(--bg-secondary)';
+                            });
+                            this.closest('.override-option').style.borderColor = 'var(--accent)';
+                            this.closest('.override-option').style.background = 'rgba(79, 70, 229, 0.1)';
+                            // Auto-save feedback when radio button changes
+                            autoSaveReportFeedback();
+                        });
+                    });
+                    // Trigger for initially checked button
+                    const checkedRadio = document.querySelector('input[name="reportUserAgreement"]:checked');
+                    if (checkedRadio) {
+                        checkedRadio.closest('.override-option').style.borderColor = 'var(--accent)';
+                        checkedRadio.closest('.override-option').style.background = 'rgba(79, 70, 229, 0.1)';
+                    }
+
+                    // Auto-save feedback when comment changes (debounced)
+                    const noteInput = document.getElementById('reportOverrideNote');
+                    if (noteInput) {
+                        let feedbackTimeout;
+                        noteInput.addEventListener('input', () => {
+                            clearTimeout(feedbackTimeout);
+                            feedbackTimeout = setTimeout(() => autoSaveReportFeedback(), 1000);
+                        });
+                    }
+                }, 100);
 
                 // Populate GCs content
                 let gcsHTML = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">';
@@ -9289,6 +9340,43 @@ ${truncatedText}`;
             } catch (error) {
                 console.error('❌ Auto-save GCs failed:', error);
                 showBanner('❌ Failed to auto-save: ' + error.message, 'error');
+            }
+        }
+
+        async function autoSaveReportFeedback() {
+            const projectId = document.getElementById('reportProjectId')?.value;
+            if (!projectId) return;
+
+            try {
+                const agreementRadio = document.querySelector('input[name="reportUserAgreement"]:checked');
+                const agreementNote = document.getElementById('reportOverrideNote');
+
+                const feedback = {
+                    user_agreement: agreementRadio?.value || 'agree',
+                    user_agreement_note: agreementNote?.value.trim() || null
+                };
+
+                console.log('💾 Auto-saving feedback:', feedback);
+
+                const { error } = await supabaseClient
+                    .from('projects')
+                    .update(feedback)
+                    .eq('id', projectId);
+
+                if (error) throw error;
+
+                // Update current project reference
+                if (window.currentReportProject) {
+                    window.currentReportProject.user_agreement = feedback.user_agreement;
+                    window.currentReportProject.user_agreement_note = feedback.user_agreement_note;
+                }
+
+                // Clear cache
+                dataCache.projects = null;
+
+                console.log('✅ Feedback auto-saved');
+            } catch (error) {
+                console.error('❌ Auto-save feedback failed:', error);
             }
         }
 
@@ -12181,11 +12269,14 @@ Respond now:`;
             const gcSearchInput = document.getElementById('gcSearchInput');
             if (gcSearchInput) {
                 initGCAutocomplete('gcSearchInput', async (gc) => {
+                    console.log('🔍 Autocomplete selected:', gc.name);
                     // Auto-select the GC
                     await toggleGC(gc.name);
+                    console.log('✅ toggleGC completed, selectedGCs:', selectedGCs.map(g => g.name));
                     // Clear search
                     gcSearchInput.value = '';
                     await renderGCSelector();
+                    console.log('✅ Client added from autocomplete');
                 });
             }
 
