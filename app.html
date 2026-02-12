@@ -6654,7 +6654,24 @@ ${truncatedText}`;
                         components.location.needsAddress = true;
                     } else {
                         // Try geocoding with progressive fallbacks
-                        const projAddrToGeocode = projAddr || `${projCity}, ${projState}`;
+                        // FIX: If we have a street address but it doesn't include city/state, append them
+                        let projAddrToGeocode;
+                        if (projAddr && projCity && projState) {
+                            // Check if address already contains city or state
+                            const hasCity = projAddr.toLowerCase().includes(projCity.toLowerCase());
+                            const hasState = projAddr.includes(projState);
+
+                            if (!hasCity && !hasState) {
+                                // Partial street address - append city/state for accurate geocoding
+                                projAddrToGeocode = `${projAddr}, ${projCity}, ${projState}`;
+                                console.log('🔧 Appending city/state to partial address');
+                            } else {
+                                projAddrToGeocode = projAddr;
+                            }
+                        } else {
+                            projAddrToGeocode = projAddr || `${projCity}, ${projState}`;
+                        }
+
                         console.log('🗺️ Geocoding project location:', projAddrToGeocode);
                         console.log('🗺️ Fallback city/state:', projCity, '/', projState);
                         const projCoords = await geocode(projAddrToGeocode, projCity, projState);
