@@ -3684,12 +3684,22 @@ ${fullText.substring(0, 40000)}`;
                 const agreementRadio = document.querySelector('input[name="userAgreement"]:checked');
                 const agreementNote = document.getElementById('overrideNote');
 
+                console.log('🔍 Feedback elements found:', {
+                    radioExists: !!agreementRadio,
+                    radioValue: agreementRadio?.value,
+                    noteExists: !!agreementNote,
+                    noteValue: agreementNote?.value,
+                    noteValueTrimmed: agreementNote?.value?.trim()
+                });
+
                 if (agreementRadio || (agreementNote && agreementNote.value.trim())) {
                     currentAnalysis.userFeedback = {
                         agreement: agreementRadio?.value || 'agree',
                         note: agreementNote?.value.trim() || null
                     };
                     console.log('📋 Captured user feedback:', currentAnalysis.userFeedback);
+                } else {
+                    console.warn('⚠️ No feedback elements found or values empty');
                 }
 
                 // Save project to database
