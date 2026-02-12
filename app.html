@@ -1220,14 +1220,6 @@
                                         <input type="checkbox" value="municipality" class="client-type-checkbox" onchange="filterClientsByType()">
                                         <span>🏛️ Municipalities</span>
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--bg-secondary); border-radius: var(--radius); cursor: pointer; border: 2px solid transparent;" class="client-type-option" data-type="distributor">
-                                        <input type="checkbox" value="distributor" class="client-type-checkbox" onchange="filterClientsByType()">
-                                        <span>📦 Distributors</span>
-                                    </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px; background: var(--bg-secondary); border-radius: var(--radius); cursor: pointer; border: 2px solid transparent;" class="client-type-option" data-type="manufacturer_rep">
-                                        <input type="checkbox" value="manufacturer_rep" class="client-type-checkbox" onchange="filterClientsByType()">
-                                        <span>🏭 Manufacturer Reps</span>
-                                    </label>
                                 </div>
                             </div>
 
@@ -1898,8 +1890,6 @@
                         <option value="end_user">👤 End User / Direct Customer</option>
                         <option value="building_owner">🏢 Building Owner / Developer</option>
                         <option value="municipality">🏛️ Municipality / Government</option>
-                        <option value="distributor">📦 Distributor / Supplier</option>
-                        <option value="manufacturer_rep">🏭 Manufacturer Rep</option>
                     </select>
                     <div class="form-hint">Select the type of client relationship</div>
                 </div>
@@ -5464,8 +5454,6 @@ ${fullText.substring(0, 40000)}`;
                             <option value="end_user" ${defaultType === 'end_user' ? 'selected' : ''}>👤 End User</option>
                             <option value="building_owner" ${defaultType === 'building_owner' ? 'selected' : ''}>🏢 Building Owner</option>
                             <option value="municipality" ${defaultType === 'municipality' ? 'selected' : ''}>🏛️ Municipality</option>
-                            <option value="distributor" ${defaultType === 'distributor' ? 'selected' : ''}>📦 Distributor</option>
-                            <option value="manufacturer_rep" ${defaultType === 'manufacturer_rep' ? 'selected' : ''}>🏭 Manufacturer Rep</option>
                         </select>
                     </div>
 
@@ -10146,9 +10134,7 @@ Respond now:`;
                     'subcontractor': 'Subcontractor',
                     'end_user': 'End User',
                     'building_owner': 'Building Owner',
-                    'municipality': 'Municipality',
-                    'distributor': 'Distributor',
-                    'manufacturer_rep': 'Manufacturer Rep'
+                    'municipality': 'Municipality'
                 }[clientType] || 'Client';
                 showNotification(`${name} added as ${clientTypeLabel} with ${rating}-star rating!`, 'success');
             }
