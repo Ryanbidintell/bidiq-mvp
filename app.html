@@ -5626,6 +5626,12 @@ ${fullText.substring(0, 40000)}`;
             return pages;
         }
 
+        // Helper function to extract text as a single string (used by reanalysis)
+        async function extractTextFromPDF(file) {
+            const pages = await extractPDF(file);
+            return pages.map(p => p.text).join('\n\n');
+        }
+
         // Geocoding - using OpenStreetMap Nominatim (free)
         async function geocode(addr, fallbackCity = null, fallbackState = null) {
             if (!addr || addr.trim() === '') {
