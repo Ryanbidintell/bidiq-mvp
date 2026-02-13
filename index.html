@@ -1,1407 +1,1785 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Primary Meta Tags -->
-    <title>Stop Guessing Which Bids to Pursue | BidIntell</title>
-    <meta name="title" content="Stop Guessing Which Bids to Pursue | BidIntell">
-    <meta name="description" content="Get a GO/REVIEW/PASS decision in about a minute. BidIntell's AI analyzes location, GC relationships, and contract risks based on YOUR business.">
-    <meta name="keywords" content="construction bid software, subcontractor bidding, AI construction software, bid analysis tool, construction estimating, GC tracking, contract risk detection">
-    <link rel="canonical" href="https://bidintell.ai/">
-
-    <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://bidintell.ai/">
-    <meta property="og:title" content="Stop Guessing Which Bids to Pursue | BidIntell">
-    <meta property="og:description" content="Get a GO/REVIEW/PASS decision in about a minute.">
-    <meta property="og:image" content="https://bidintell.ai/og-image.png">
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://bidintell.ai/">
-    <meta property="twitter:title" content="Stop Guessing Which Bids to Pursue | BidIntell">
-    <meta property="twitter:description" content="Get a GO/REVIEW/PASS decision in about a minute.">
-    <meta property="twitter:image" content="https://bidintell.ai/og-image.png">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/favicon.png">
-
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XGYJLV0E6G"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-XGYJLV0E6G');
-    </script>
-
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-
-    <style>
-        /* Design Tokens */
-        :root {
-            /* Brand Colors */
-            --brand-primary: #F7931E;
-            --brand-secondary: #2F80ED;
-            --brand-gradient: linear-gradient(135deg, #F7931E 0%, #2F80ED 100%);
-            --brand-gradient-subtle: linear-gradient(135deg, #EEF2FF 0%, #F3E8FF 100%);
-            --warning: #F59E0B;
-            --warning-bg: #FFFBEB;
-
-            /* Score Colors */
-            --score-go: #059669;
-            --score-go-bg: #ECFDF5;
-            --score-review: #D97706;
-            --score-review-bg: #FFFBEB;
-            --score-pass: #DC2626;
-            --score-pass-bg: #FEF2F2;
-
-            /* Neutrals */
-            --text-primary: #111827;
-            --text-secondary: #4B5563;
-            --text-muted: #6B7280;
-            --bg-page: #FAFAF9;
-            --bg-card: #FFFFFF;
-            --bg-hover: #F5F5F4;
-            --border: #E7E5E4;
-            --border-focus: #F7931E;
-
-            /* Typography */
-            --font-display: 'Plus Jakarta Sans', sans-serif;
-            --font-body: 'Plus Jakarta Sans', sans-serif;
-            --font-mono: 'Space Mono', monospace;
-
-            /* Spacing Scale */
-            --space-xs: 4px;
-            --space-sm: 8px;
-            --space-md: 16px;
-            --space-lg: 24px;
-            --space-xl: 32px;
-            --space-2xl: 48px;
-            --space-3xl: 64px;
-            --space-4xl: 80px;
-
-            /* Radius */
-            --radius-sm: 6px;
-            --radius-md: 10px;
-            --radius-lg: 16px;
-            --radius-full: 9999px;
-
-            /* Shadows */
-            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-            --shadow-score: 0 8px 24px rgba(59, 130, 246, 0.15);
-
-            /* Transitions */
-            --transition-fast: 150ms ease;
-            --transition-base: 250ms ease;
-            --transition-slow: 400ms cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        /* Reset & Base Styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: var(--font-body);
-            font-size: 16px;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background: var(--bg-page);
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        /* Navigation */
-        .nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
-            z-index: 1000;
-            padding: 16px 0;
-        }
-
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 var(--space-lg);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            color: var(--text-primary);
-        }
-
-        .logo-icon {
-            font-size: 32px;
-        }
-
-        .logo-text h1 {
-            font-size: 24px;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-        }
-
-        .logo-text p {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 600;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 32px;
-            align-items: center;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--text-secondary);
-            font-weight: 500;
-            font-size: 15px;
-            transition: color var(--transition-fast);
-        }
-
-        .nav-links a:hover {
-            color: var(--brand-primary);
-        }
-
-        .nav-right {
-            display: flex;
-            gap: 16px;
-            align-items: center;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 15px;
-            text-decoration: none;
-            transition: all var(--transition-base);
-            cursor: pointer;
-            border: none;
-            font-family: var(--font-body);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: var(--text-secondary);
-        }
-
-        .btn-secondary:hover {
-            color: var(--brand-primary);
-        }
-
-        .btn-primary {
-            background: var(--brand-gradient);
-            color: white;
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn-primary:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        /* Hero Section */
-        .hero {
-            margin-top: 80px;
-            padding: var(--space-4xl) var(--space-lg) var(--space-3xl);
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .hero-content {
-            text-align: center;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .hero-headline {
-            font-size: 64px;
-            font-weight: 800;
-            line-height: 1.1;
-            letter-spacing: -0.03em;
-            margin-bottom: var(--space-xl);
-        }
-
-        .hero-headline .highlight {
-            background: var(--brand-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero-subtext {
-            font-size: 22px;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            margin-bottom: var(--space-2xl);
-        }
-
-        .hero-cta {
-            display: flex;
-            gap: 16px;
-            justify-content: center;
-            margin-bottom: 24px;
-        }
-
-        .hero-cta .btn-primary {
-            font-size: 18px;
-            padding: 18px 36px;
-        }
-
-        .hero-cta .btn-secondary {
-            font-size: 16px;
-            padding: 16px 28px;
-            border: 1px solid var(--border);
-            background: white;
-        }
-
-        .trust-line {
-            font-size: 14px;
-            color: var(--text-muted);
-            margin-bottom: var(--space-2xl);
-        }
-
-        .hero-visual {
-            margin-top: var(--space-3xl);
-            padding: var(--space-2xl);
-            background: white;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .score-mockup {
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .hero-note {
-            margin-top: var(--space-lg);
-            font-size: 15px;
-            color: var(--brand-primary);
-            font-weight: 600;
-        }
-
-        /* Section Container */
-        .section {
-            padding: var(--space-4xl) var(--space-lg);
-            max-width: 1200px;
-            margin: 0 auto;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
-        }
-
-        .section.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: var(--space-3xl);
-        }
-
-        .section-header h2 {
-            font-size: 42px;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            margin-bottom: var(--space-md);
-        }
-
-        .section-header p {
-            font-size: 20px;
-            color: var(--text-secondary);
-            max-width: 700px;
-            margin: 0 auto;
-        }
-
-        /* Pain Points Section */
-        .pain-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: var(--space-lg);
-        }
-
-        .pain-card {
-            padding: var(--space-xl);
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            transition: all var(--transition-base);
-        }
-
-        .pain-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-            border-color: var(--brand-primary);
-        }
-
-        .pain-card h3 {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: var(--space-md);
-            color: var(--text-primary);
-        }
-
-        .pain-card p {
-            font-size: 15px;
-            line-height: 1.7;
-            color: var(--text-secondary);
-        }
-
-        /* Three Pillars Section */
-        .pillars-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: var(--space-xl);
-        }
-
-        .pillar-card {
-            padding: var(--space-2xl);
-            background: white;
-            border: 2px solid var(--border);
-            border-radius: var(--radius-lg);
-            text-align: center;
-        }
-
-        .pillar-card h3 {
-            font-size: 24px;
-            font-weight: 800;
-            margin-bottom: var(--space-md);
-            color: var(--text-primary);
-        }
-
-        .pillar-card blockquote {
-            font-size: 18px;
-            font-style: italic;
-            color: var(--brand-primary);
-            margin-bottom: var(--space-lg);
-            line-height: 1.5;
-        }
-
-        .pillar-card p {
-            font-size: 15px;
-            color: var(--text-secondary);
-            line-height: 1.7;
-        }
-
-        /* How It Works Section */
-        .how-steps {
-            display: flex;
-            gap: var(--space-xl);
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .step {
-            flex: 1;
-            min-width: 280px;
-            max-width: 350px;
-            padding: var(--space-xl);
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            position: relative;
-        }
-
-        .step-number {
-            width: 48px;
-            height: 48px;
-            background: var(--brand-gradient);
-            color: white;
-            border-radius: var(--radius-full);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: 800;
-            margin-bottom: var(--space-md);
-        }
-
-        .step-time {
-            font-size: 13px;
-            color: var(--text-muted);
-            font-family: var(--font-mono);
-            margin-bottom: var(--space-sm);
-        }
-
-        .step h3 {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: var(--space-md);
-        }
-
-        .step p {
-            font-size: 15px;
-            line-height: 1.7;
-            color: var(--text-secondary);
-        }
-
-        /* Feature Showcase Section */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: var(--space-xl);
-        }
-
-        .feature-card {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            transition: all var(--transition-base);
-        }
-
-        .feature-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .feature-screenshot {
-            background: var(--bg-page);
-            padding: var(--space-xl);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .feature-content {
-            padding: var(--space-xl);
-        }
-
-        .feature-content h3 {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: var(--space-md);
-        }
-
-        .feature-content p {
-            font-size: 15px;
-            line-height: 1.7;
-            color: var(--text-secondary);
-        }
-
-        /* ROI Calculator */
-        .roi-calculator {
-            background: white;
-            border: 2px solid var(--brand-primary);
-            border-radius: var(--radius-lg);
-            padding: var(--space-2xl);
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .roi-inputs {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: var(--space-lg);
-            margin-bottom: var(--space-xl);
-        }
-
-        .roi-input-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: var(--space-sm);
-            color: var(--text-primary);
-        }
-
-        .roi-input-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 16px;
-            font-family: var(--font-mono);
-        }
-
-        .roi-results {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: var(--space-lg);
-            margin-bottom: var(--space-lg);
-        }
-
-        .roi-result {
-            text-align: center;
-            padding: var(--space-lg);
-            background: var(--brand-gradient-subtle);
-            border-radius: var(--radius-md);
-        }
-
-        .roi-result-label {
-            font-size: 13px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: var(--space-sm);
-            font-weight: 600;
-        }
-
-        .roi-result-value {
-            font-size: 32px;
-            font-weight: 800;
-            color: var(--brand-primary);
-            font-family: var(--font-mono);
-        }
-
-        .roi-payback {
-            text-align: center;
-            padding: var(--space-lg);
-            background: var(--score-go-bg);
-            border-radius: var(--radius-md);
-            border: 2px solid var(--score-go);
-        }
-
-        .roi-payback-label {
-            font-size: 14px;
-            color: var(--text-muted);
-            margin-bottom: var(--space-sm);
-        }
-
-        .roi-payback-value {
-            font-size: 28px;
-            font-weight: 800;
-            color: var(--score-go);
-        }
-
-        .roi-plan-toggle {
-            text-align: center;
-            margin-top: var(--space-lg);
-            font-size: 14px;
-            color: var(--text-muted);
-        }
-
-        .roi-plan-toggle button {
-            background: transparent;
-            border: none;
-            color: var(--brand-primary);
-            text-decoration: underline;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        /* Pricing Section */
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: var(--space-xl);
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .pricing-card {
-            background: white;
-            border: 2px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: var(--space-2xl);
-            position: relative;
-        }
-
-        .pricing-card.featured {
-            border-color: var(--brand-primary);
-            box-shadow: var(--shadow-score);
-        }
-
-        .pricing-badge {
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--brand-gradient);
-            color: white;
-            padding: 4px 16px;
-            border-radius: var(--radius-full);
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .pricing-tier {
-            font-size: 16px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: var(--space-md);
-            font-weight: 600;
-        }
-
-        .pricing-price {
-            margin-bottom: var(--space-md);
-        }
-
-        .price-amount {
-            font-size: 56px;
-            font-weight: 800;
-            color: var(--text-primary);
-        }
-
-        .price-period {
-            font-size: 18px;
-            color: var(--text-muted);
-        }
-
-        .pricing-per-bid {
-            font-size: 14px;
-            color: var(--text-muted);
-            margin-bottom: var(--space-lg);
-            font-family: var(--font-mono);
-        }
-
-        .pricing-description {
-            font-size: 16px;
-            color: var(--text-secondary);
-            margin-bottom: var(--space-lg);
-        }
-
-        .pricing-features {
-            list-style: none;
-            margin-bottom: var(--space-xl);
-        }
-
-        .pricing-features li {
-            font-size: 15px;
-            line-height: 2;
-            color: var(--text-secondary);
-            padding-left: 24px;
-            position: relative;
-        }
-
-        .pricing-features li:before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: var(--score-go);
-            font-weight: 700;
-        }
-
-        .pricing-features li strong {
-            color: var(--text-primary);
-            font-weight: 700;
-        }
-
-        .pricing-cta {
-            width: 100%;
-            padding: 16px;
-            font-size: 16px;
-        }
-
-        .pricing-note {
-            max-width: 800px;
-            margin: var(--space-xl) auto 0;
-            padding: var(--space-lg);
-            background: var(--score-go-bg);
-            border-radius: var(--radius-md);
-            text-align: center;
-            font-size: 15px;
-            line-height: 1.7;
-            color: var(--text-secondary);
-        }
-
-        .pricing-note strong {
-            color: var(--score-go);
-            font-weight: 700;
-        }
-
-        .pricing-enterprise {
-            text-align: center;
-            margin-top: var(--space-lg);
-            font-size: 15px;
-            color: var(--text-muted);
-        }
-
-        /* Guarantee Section */
-        .guarantee {
-            background: var(--brand-gradient-subtle);
-            border-radius: var(--radius-lg);
-            padding: var(--space-2xl);
-            text-align: center;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .guarantee h2 {
-            font-size: 32px;
-            font-weight: 800;
-            margin-bottom: var(--space-md);
-        }
-
-        .guarantee p {
-            font-size: 16px;
-            line-height: 1.7;
-            color: var(--text-secondary);
-        }
-
-        /* Final CTA Section */
-        .final-cta {
-            text-align: center;
-            padding: var(--space-4xl) var(--space-lg);
-            background: var(--brand-gradient);
-            color: white;
-        }
-
-        .final-cta h2 {
-            font-size: 48px;
-            font-weight: 800;
-            margin-bottom: var(--space-md);
-        }
-
-        .final-cta p {
-            font-size: 20px;
-            margin-bottom: var(--space-xl);
-            opacity: 0.95;
-        }
-
-        .final-cta .btn {
-            background: white;
-            color: var(--brand-primary);
-            font-size: 18px;
-            padding: 18px 36px;
-        }
-
-        .final-cta .btn:hover {
-            background: var(--bg-page);
-        }
-
-        .final-cta-note {
-            margin-top: 24px;
-            font-size: 15px;
-            opacity: 0.9;
-        }
-
-        /* Footer */
-        .footer {
-            background: var(--text-primary);
-            color: white;
-            padding: var(--space-2xl) var(--space-lg);
-            text-align: center;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 24px;
-            justify-content: center;
-            margin-bottom: var(--space-lg);
-            flex-wrap: wrap;
-        }
-
-        .footer-links a {
-            color: white;
-            text-decoration: none;
-            font-size: 14px;
-            opacity: 0.8;
-            transition: opacity var(--transition-fast);
-        }
-
-        .footer-links a:hover {
-            opacity: 1;
-        }
-
-        .footer p {
-            font-size: 14px;
-            opacity: 0.7;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .hero-headline {
-                font-size: 42px;
-            }
-
-            .hero-subtext {
-                font-size: 18px;
-            }
-
-            .hero-cta {
-                flex-direction: column;
-            }
-
-            .section-header h2 {
-                font-size: 32px;
-            }
-
-            .section-header p {
-                font-size: 17px;
-            }
-
-            .how-steps {
-                flex-direction: column;
-            }
-
-            .nav-links {
-                display: none;
-            }
-
-            .pricing-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Animations */
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-in {
-            animation: fadeUp 0.6s ease both;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Primary Meta Tags -->
+<title>BidIntell — AI-Powered Bid Intelligence for Subcontractors</title>
+<meta name="title" content="BidIntell — AI-Powered Bid Intelligence for Subcontractors">
+<meta name="description" content="Stop wasting time on bids you won't win. BidIntell's personalized BidIndex Score tells you which projects are worth your time — in seconds, not hours.">
+<meta name="keywords" content="construction bid software, subcontractor bidding, AI construction software, bid analysis tool, construction estimating, GC tracking, contract risk detection">
+<link rel="canonical" href="https://bidintell.ai/">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://bidintell.ai/">
+<meta property="og:title" content="BidIntell — AI-Powered Bid Intelligence for Subcontractors">
+<meta property="og:description" content="Stop wasting time on bids you won't win. Get a clear GO/REVIEW/PASS decision in about a minute.">
+<meta property="og:image" content="https://bidintell.ai/og-image.png">
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="https://bidintell.ai/">
+<meta property="twitter:title" content="BidIntell — AI-Powered Bid Intelligence for Subcontractors">
+<meta property="twitter:description" content="Stop wasting time on bids you won't win. Get a clear GO/REVIEW/PASS decision in about a minute.">
+<meta property="twitter:image" content="https://bidintell.ai/og-image.png">
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="/favicon.png">
+
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XGYJLV0E6G"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XGYJLV0E6G');
+</script>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  /* Dark base + bold construction accent */
+  --ink: #0B0F14;
+  --ink-light: #141A23;
+  --ink-mid: #1C2533;
+  --slate: #384254;
+  --slate-light: #5A6A7E;
+  --fog: #94A3B8;
+  --cloud: #CBD5E1;
+  --white: #F8FAFC;
+  --accent: #F26522; /* Construction-site orange */
+  --accent-dark: #D4551A;
+  --accent-glow: rgba(242, 101, 34, 0.15);
+  --green: #22C55E;
+  --green-muted: rgba(34, 197, 94, 0.12);
+  --red: #EF4444;
+  --red-muted: rgba(239, 68, 68, 0.12);
+  --yellow: #EAB308;
+  --yellow-muted: rgba(234, 179, 8, 0.12);
+  --radius: 6px;
+  --radius-lg: 10px;
+  --font: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'Space Mono', monospace;
+}
+
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  font-family: var(--font);
+  background: var(--ink);
+  color: var(--cloud);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+.container {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ===== NAV ===== */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(11, 15, 20, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.3s;
+}
+
+.nav-inner {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--white);
+  letter-spacing: -0.02em;
+}
+
+.nav-logo .logo-mark {
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.04em;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fog);
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--white); }
+
+.nav-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: var(--accent);
+  color: white !important;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: background 0.2s, transform 0.15s;
+}
+.nav-cta:hover { background: var(--accent-dark); transform: translateY(-1px); }
+
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--fog);
+  cursor: pointer;
+  padding: 8px;
+}
+
+/* ===== HERO ===== */
+.hero {
+  padding: 140px 0 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 600px;
+  background: radial-gradient(ellipse, var(--accent-glow), transparent 70%);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+  position: relative;
+}
+
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: var(--accent-glow);
+  border: 1px solid rgba(242, 101, 34, 0.25);
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 24px;
+  letter-spacing: 0.02em;
+}
+.hero-tag .dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.hero h1 {
+  font-size: clamp(2.25rem, 4.5vw, 3.25rem);
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin-bottom: 20px;
+}
+
+.hero h1 span { color: var(--accent); }
+
+.hero-sub {
+  font-size: 1.125rem;
+  color: var(--fog);
+  line-height: 1.7;
+  margin-bottom: 36px;
+  max-width: 480px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: -0.01em;
+}
+.btn-primary:hover { background: var(--accent-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(242,101,34,0.3); }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: transparent;
+  color: var(--cloud);
+  border: 1px solid var(--slate);
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-secondary:hover { border-color: var(--fog); color: var(--white); }
+
+/* Hero Right - Score Card Mock */
+.hero-visual {
+  position: relative;
+}
+
+.score-card {
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+  position: relative;
+}
+
+.score-card::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(242,101,34,0.15), transparent 50%);
+  z-index: -1;
+}
+
+.sc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.sc-project-name {
+  font-weight: 600;
+  color: var(--white);
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.sc-project-meta {
+  font-size: 0.8rem;
+  color: var(--fog);
+}
+
+.sc-badge {
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--mono);
+  letter-spacing: 0.02em;
+}
+
+.sc-badge.go {
+  background: var(--green-muted);
+  color: var(--green);
+}
+
+.score-ring-area {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 24px;
+}
+
+.score-ring {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+}
+
+.score-ring svg {
+  transform: rotate(-90deg);
+  width: 100px;
+  height: 100px;
+}
+
+.score-ring .ring-bg {
+  fill: none;
+  stroke: var(--ink-mid);
+  stroke-width: 8;
+}
+
+.score-ring .ring-fill {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 264;
+  stroke-dashoffset: 45;
+  transition: stroke-dashoffset 1.5s ease-out;
+}
+
+.score-ring .score-number {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1;
+}
+
+.score-ring .score-label {
+  font-family: var(--font);
+  font-size: 0.6rem;
+  color: var(--fog);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.score-components {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+}
+
+.sc-component {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.sc-comp-label { color: var(--fog); }
+.sc-comp-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sc-bar-track {
+  width: 80px;
+  height: 4px;
+  background: var(--ink-mid);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sc-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s ease-out;
+}
+
+.sc-comp-val {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--cloud);
+  min-width: 24px;
+  text-align: right;
+}
+
+.sc-footer {
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  gap: 12px;
+}
+
+.sc-flag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--ink-mid);
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  color: var(--fog);
+}
+
+/* Floating elements */
+.float-badge {
+  position: absolute;
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  animation: float 6s ease-in-out infinite;
+}
+
+.float-badge.fb-1 {
+  top: -20px;
+  right: -10px;
+  color: var(--green);
+  background: var(--ink);
+}
+
+.float-badge.fb-2 {
+  bottom: -16px;
+  left: -20px;
+  color: var(--yellow);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* ===== SOCIAL PROOF BAR ===== */
+.proof-bar {
+  padding: 48px 0;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.proof-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 56px;
+  flex-wrap: wrap;
+}
+
+.proof-stat {
+  text-align: center;
+}
+
+.proof-stat .num {
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--white);
+  display: block;
+}
+
+.proof-stat .label {
+  font-size: 0.8rem;
+  color: var(--fog);
+  margin-top: 4px;
+}
+
+.proof-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--slate);
+}
+
+/* ===== PROBLEM / SOLUTION ===== */
+.problem-section {
+  padding: 100px 0;
+}
+
+.section-header {
+  max-width: 640px;
+  margin-bottom: 64px;
+}
+
+.section-tag {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.section-header h2 {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  margin-bottom: 16px;
+}
+
+.section-header p {
+  font-size: 1.05rem;
+  color: var(--fog);
+  line-height: 1.7;
+}
+
+.problem-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.problem-card {
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+  transition: border-color 0.3s, transform 0.2s;
+}
+
+.problem-card:hover {
+  border-color: rgba(242,101,34,0.2);
+  transform: translateY(-2px);
+}
+
+.pc-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--ink-mid);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  margin-bottom: 20px;
+}
+
+.problem-card h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+}
+
+.problem-card p {
+  font-size: 0.9rem;
+  color: var(--fog);
+  line-height: 1.6;
+}
+
+.problem-card .stat-callout {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ===== HOW IT WORKS ===== */
+.how-section {
+  padding: 100px 0;
+  background: var(--ink-light);
+  border-top: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.how-section .section-header { text-align: center; margin-left: auto; margin-right: auto; }
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  position: relative;
+}
+
+.steps::before {
+  content: '';
+  position: absolute;
+  top: 44px;
+  left: calc(33.33% / 2 + 24px);
+  right: calc(33.33% / 2 + 24px);
+  height: 2px;
+  background: var(--slate);
+  z-index: 0;
+}
+
+.step {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.step-num {
+  width: 48px;
+  height: 48px;
+  background: var(--ink);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 auto 20px;
+}
+
+.step-icon {
+  font-size: 2rem;
+  margin-bottom: 16px;
+}
+
+.step h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+
+.step p {
+  font-size: 0.9rem;
+  color: var(--fog);
+  line-height: 1.6;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+/* ===== FEATURE DEEP DIVE ===== */
+.features-section {
+  padding: 100px 0;
+}
+
+.feature-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+  margin-bottom: 80px;
+}
+
+.feature-row:last-child { margin-bottom: 0; }
+.feature-row.reverse { direction: rtl; }
+.feature-row.reverse > * { direction: ltr; }
+
+.feature-content .section-tag { margin-bottom: 12px; }
+
+.feature-content h3 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  margin-bottom: 14px;
+}
+
+.feature-content p {
+  font-size: 1rem;
+  color: var(--fog);
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+
+.feature-list {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.feature-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--cloud);
+}
+
+.feature-list li::before {
+  content: '✓';
+  color: var(--green);
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Feature visual blocks */
+.feature-visual {
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Personalized scoring visual */
+.scoring-demo {
+  display: grid;
+  gap: 16px;
+}
+
+.scoring-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--ink-mid);
+  border-radius: var(--radius);
+  border-left: 3px solid var(--accent);
+}
+
+.scoring-user .su-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.scoring-user:nth-child(1) .su-avatar { background: rgba(34,197,94,0.15); color: var(--green); }
+.scoring-user:nth-child(2) .su-avatar { background: rgba(234,179,8,0.15); color: var(--yellow); }
+.scoring-user:nth-child(3) .su-avatar { background: rgba(239,68,68,0.15); color: var(--red); }
+
+.scoring-user .su-info {
+  flex: 1;
+}
+
+.scoring-user .su-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--white);
+}
+
+.scoring-user .su-trade {
+  font-size: 0.7rem;
+  color: var(--fog);
+}
+
+.scoring-user .su-score {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.scoring-user:nth-child(1) .su-score { color: var(--green); }
+.scoring-user:nth-child(2) .su-score { color: var(--yellow); }
+.scoring-user:nth-child(3) .su-score { color: var(--red); }
+
+.scoring-caption {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--fog);
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  font-style: italic;
+}
+
+/* Outcome tracking visual */
+.kanban-demo {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.kanban-col {
+  background: var(--ink-mid);
+  border-radius: var(--radius);
+  padding: 12px 10px;
+}
+
+.kc-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kc-label .kc-count {
+  font-family: var(--mono);
+  background: rgba(255,255,255,0.06);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.6rem;
+}
+
+.kanban-col:nth-child(1) .kc-label { color: var(--accent); }
+.kanban-col:nth-child(2) .kc-label { color: var(--green); }
+.kanban-col:nth-child(3) .kc-label { color: var(--red); }
+.kanban-col:nth-child(4) .kc-label { color: var(--fog); }
+
+.kc-item {
+  background: var(--ink-light);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  font-size: 0.7rem;
+  color: var(--cloud);
+  border-left: 2px solid transparent;
+}
+
+.kanban-col:nth-child(1) .kc-item { border-color: var(--accent); }
+.kanban-col:nth-child(2) .kc-item { border-color: var(--green); }
+.kanban-col:nth-child(3) .kc-item { border-color: var(--red); }
+.kanban-col:nth-child(4) .kc-item { border-color: var(--slate); }
+
+/* ===== TESTIMONIAL ===== */
+.testimonial-section {
+  padding: 80px 0;
+  background: var(--ink-light);
+  border-top: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.testimonial-card {
+  max-width: 680px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.testimonial-card blockquote {
+  font-size: 1.35rem;
+  color: var(--white);
+  line-height: 1.6;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin-bottom: 28px;
+  position: relative;
+}
+
+.testimonial-card blockquote::before {
+  content: '"';
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 4rem;
+  color: var(--accent);
+  font-family: Georgia, serif;
+  line-height: 1;
+  opacity: 0.4;
+}
+
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.ta-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent-glow);
+  border: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 0.85rem;
+}
+
+.ta-info .ta-name {
+  font-weight: 600;
+  color: var(--white);
+  font-size: 0.9rem;
+}
+
+.ta-info .ta-role {
+  font-size: 0.8rem;
+  color: var(--fog);
+}
+
+/* ===== PRICING ===== */
+.pricing-section {
+  padding: 100px 0;
+}
+
+.pricing-section .section-header { text-align: center; margin-left: auto; margin-right: auto; }
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.pricing-card {
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px;
+  position: relative;
+  transition: border-color 0.3s;
+}
+
+.pricing-card.featured {
+  border-color: var(--accent);
+  box-shadow: 0 0 40px var(--accent-glow);
+}
+
+.pricing-card .popular-tag {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 16px;
+  background: var(--accent);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-radius: 100px;
+}
+
+.pricing-card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+
+.pricing-card .price {
+  margin: 16px 0 20px;
+}
+
+.pricing-card .price .amount {
+  font-family: var(--mono);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.pricing-card .price .period {
+  font-size: 0.9rem;
+  color: var(--fog);
+}
+
+.pricing-card .price .beta-note {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--accent);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.pricing-card .pricing-features {
+  list-style: none;
+  margin-bottom: 28px;
+}
+
+.pricing-card .pricing-features li {
+  font-size: 0.875rem;
+  color: var(--cloud);
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pricing-card .pricing-features li::before {
+  content: '✓';
+  color: var(--green);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.pricing-card .btn-full {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ===== CTA ===== */
+.cta-section {
+  padding: 100px 0;
+  background: var(--ink-light);
+  border-top: 1px solid rgba(255,255,255,0.04);
+  text-align: center;
+}
+
+.cta-section h2 {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.025em;
+  margin-bottom: 16px;
+}
+
+.cta-section p {
+  font-size: 1.05rem;
+  color: var(--fog);
+  margin-bottom: 36px;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.7;
+}
+
+.cta-form {
+  display: flex;
+  gap: 10px;
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.cta-form input {
+  flex: 1;
+  padding: 14px 18px;
+  background: var(--ink);
+  border: 1px solid var(--slate);
+  border-radius: var(--radius);
+  color: var(--white);
+  font-family: var(--font);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.cta-form input::placeholder { color: var(--slate-light); }
+.cta-form input:focus { border-color: var(--accent); }
+
+/* ===== FOOTER ===== */
+.footer {
+  padding: 48px 0 36px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-left .logo-mark {
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: white;
+}
+
+.footer-copy {
+  font-size: 0.8rem;
+  color: var(--slate-light);
+}
+
+.footer-links {
+  display: flex;
+  gap: 24px;
+  list-style: none;
+}
+
+.footer-links a {
+  font-size: 0.8rem;
+  color: var(--fog);
+  transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--white); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 960px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 48px; }
+  .hero-visual { max-width: 480px; }
+  .problem-grid { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: 1fr; gap: 40px; }
+  .steps::before { display: none; }
+  .feature-row, .feature-row.reverse { grid-template-columns: 1fr; direction: ltr; }
+  .feature-row.reverse > * { direction: ltr; }
+  .pricing-grid { grid-template-columns: 1fr; max-width: 420px; }
+}
+
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .mobile-menu-btn { display: block; }
+  .hero { padding: 120px 0 60px; }
+  .hero-actions { flex-direction: column; align-items: stretch; }
+  .proof-bar-inner { gap: 32px; }
+  .proof-divider { display: none; }
+  .cta-form { flex-direction: column; }
+  .kanban-demo { grid-template-columns: repeat(2, 1fr); }
+  .footer-inner { flex-direction: column; text-align: center; }
+}
+
+/* ===== ANIMATIONS ===== */
+@media (prefers-reduced-motion: no-preference) {
+  .fade-up {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+  .fade-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="nav">
-        <div class="nav-container">
-            <a href="/" class="logo">
-                <div class="logo-text">
-                    <h1>BidIntell</h1>
-                    <p>Decision Intelligence for Construction Bidding</p>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="logo-mark">BI</div>
+      BidIntell
+    </a>
+    <ul class="nav-links">
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#who">Who It's For</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="/app" style="color: var(--cloud);">Sign In</a></li>
+      <li><a href="#apply" class="nav-cta">Request Beta Access →</a></li>
+    </ul>
+    <button class="mobile-menu-btn" aria-label="Menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 12h18M3 6h18M3 18h18"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div class="hero-text">
+        <div class="hero-tag">
+          <span class="dot"></span>
+          Now accepting beta users
+        </div>
+        <h1>Your AI bidding advisor that gets <span>smarter with every bid.</span></h1>
+        <p class="hero-sub">BidIntell uses AI to analyze bid documents, track every outcome, and build a personalized intelligence engine around your business — so every bid decision is backed by data, not gut feel. Built for subcontractors, distributors, manufacturers' reps, and anyone submitting commercial construction bids.</p>
+        <div class="hero-actions">
+          <a href="#apply" class="btn-primary">Request Beta Access →</a>
+          <a href="#how" class="btn-secondary">See How It Works</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="score-card">
+          <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--slate-light); margin-bottom:12px; font-weight:500;">Sample Analysis</div>
+          <div class="sc-header">
+            <div>
+              <div class="sc-project-name">Medical Office Renovation</div>
+              <div class="sc-project-meta">ABC General Contractors · Your Area · $4.2M</div>
+            </div>
+            <div class="sc-badge go">GO</div>
+          </div>
+          <div class="score-ring-area">
+            <div class="score-ring">
+              <svg viewBox="0 0 100 100">
+                <circle class="ring-bg" cx="50" cy="50" r="42"/>
+                <circle class="ring-fill" cx="50" cy="50" r="42"/>
+              </svg>
+              <div class="score-number">
+                83
+                <span class="score-label">BidIndex</span>
+              </div>
+            </div>
+            <div class="score-components">
+              <div class="sc-component">
+                <span class="sc-comp-label">Location Fit</span>
+                <div class="sc-comp-bar">
+                  <div class="sc-bar-track"><div class="sc-bar-fill" style="width:92%; background:var(--green)"></div></div>
+                  <span class="sc-comp-val">92</span>
                 </div>
-            </a>
-            <div class="nav-links">
-                <a href="#explore">Explore</a>
-                <a href="#pricing">Pricing</a>
-                <a href="mailto:hello@bidintell.ai">Contact</a>
+              </div>
+              <div class="sc-component">
+                <span class="sc-comp-label">Trade Match</span>
+                <div class="sc-comp-bar">
+                  <div class="sc-bar-track"><div class="sc-bar-fill" style="width:88%; background:var(--green)"></div></div>
+                  <span class="sc-comp-val">88</span>
+                </div>
+              </div>
+              <div class="sc-component">
+                <span class="sc-comp-label">GC & Client History</span>
+                <div class="sc-comp-bar">
+                  <div class="sc-bar-track"><div class="sc-bar-fill" style="width:75%; background:var(--yellow)"></div></div>
+                  <span class="sc-comp-val">75</span>
+                </div>
+              </div>
+              <div class="sc-component">
+                <span class="sc-comp-label">Contract Risk</span>
+                <div class="sc-comp-bar">
+                  <div class="sc-bar-track"><div class="sc-bar-fill" style="width:78%; background:var(--green)"></div></div>
+                  <span class="sc-comp-val">78</span>
+                </div>
+              </div>
             </div>
-            <div class="nav-right">
-                <a href="app.html" class="btn btn-secondary">Sign In</a>
-                <a href="app.html" class="btn btn-primary">Start Free Beta</a>
-            </div>
+          </div>
+          <div class="sc-footer">
+            <div class="sc-flag">⚡ 12 mi from office</div>
+            <div class="sc-flag">✓ Prior client relationship</div>
+            <div class="sc-flag">⚠ Pay-if-paid clause</div>
+          </div>
         </div>
-    </nav>
+        <div class="float-badge fb-1">✓ AI-powered extraction</div>
+        <div class="float-badge fb-2">⏱ Go/no-go in minutes</div>
+      </div>
+    </div>
+  </div>
+</section>
 
-    <!-- Hero Section -->
-    <div class="hero">
-        <div class="hero-content">
-            <h1 class="hero-headline">
-                Stop guessing <span class="highlight">which bids to pursue</span>
-            </h1>
-            <p class="hero-subtext">
-                Get a clear GO / REVIEW / PASS decision in about a minute—based on YOUR location, YOUR GC relationships, and YOUR business.
-            </p>
-            <div class="hero-cta">
-                <a href="app.html" class="btn btn-primary">Get Started Free — Unlimited Bids During Beta</a>
-                <a href="#how-it-works" class="btn btn-secondary">See How It Works</a>
+<!-- SOCIAL PROOF BAR -->
+<section class="proof-bar">
+  <div class="container">
+    <div class="proof-bar-inner">
+      <div class="proof-stat">
+        <span class="num">0–100</span>
+        <span class="label">Personalized BidIndex Score</span>
+      </div>
+      <div class="proof-divider"></div>
+      <div class="proof-stat">
+        <span class="num">4</span>
+        <span class="label">AI scoring components per bid</span>
+      </div>
+      <div class="proof-divider"></div>
+      <div class="proof-stat">
+        <span class="num">Every</span>
+        <span class="label">Outcome captured & building intelligence</span>
+      </div>
+      <div class="proof-divider"></div>
+      <div class="proof-stat">
+        <span class="num">Only</span>
+        <span class="label">Platform capturing bid decisions</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section class="problem-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">The market gap</span>
+      <h2>Plenty of tools find you bids. None of them help you decide which ones to chase.</h2>
+      <p>There's no shortage of ways to find bid invites. But once the PDF lands in your inbox, you're on your own — with no data, no history, and no system learning from your decisions. That's the gap.</p>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card fade-up">
+        <div class="pc-icon">📋</div>
+        <h3>Gut-feel decisions</h3>
+        <p>Every bid invite gets the same treatment because there's no data telling you which ones match your business. Your best estimators waste hours on projects that were never a fit.</p>
+        <div class="stat-callout">The cost: wasted estimating hours, missed winnable work</div>
+      </div>
+      <div class="problem-card fade-up">
+        <div class="pc-icon">📊</div>
+        <h3>Lack of pricing feedback</h3>
+        <p>You submit a bid and never hear back. No feedback on your pricing, no insight into what would have won, no way to calibrate for next time.</p>
+        <div class="stat-callout">Every lost bid should teach you something</div>
+      </div>
+      <div class="problem-card fade-up">
+        <div class="pc-icon">🔁</div>
+        <h3>No learning loop</h3>
+        <p>Win or lose, the knowledge stays in someone's head. There's no system tracking which clients respond, which project types you win, or where to focus next quarter.</p>
+        <div class="stat-callout">Your bid history should be working for you</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="how">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">How it works</span>
+      <h2>Analyze. Decide. Track. Learn. Repeat.</h2>
+      <p>Every bid you analyze and every outcome you record feeds your intelligence engine. It's not a static tool — it's designed to get smarter about your business over time.</p>
+    </div>
+    <div class="steps">
+      <div class="step fade-up">
+        <div class="step-num">1</div>
+        <div class="step-icon">📄</div>
+        <h3>AI reads your bid documents</h3>
+        <p>Upload a PDF. Our AI extracts project details, scope, contract terms, and risk clauses — and scores it against your specific business profile in seconds.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-num">2</div>
+        <div class="step-icon">⚙️</div>
+        <h3>Get a personalized recommendation</h3>
+        <p>Your BidIndex Score (0–100) is tuned to your trade, service area, GC and client history, contract risk tolerance, and current capacity. No two contractors see the same score.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-num">3</div>
+        <div class="step-icon">🧠</div>
+        <h3>Every outcome builds your edge</h3>
+        <p>Record won, lost, no response, or pass. BidIntell captures why you made each decision — building a data foundation that powers smarter recommendations as your history grows.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section" id="features">
+  <div class="container">
+
+    <!-- Feature 1: Personalized Scoring -->
+    <div class="feature-row fade-up">
+      <div class="feature-content">
+        <span class="section-tag">Personalized scoring</span>
+        <h3>Same bid. Different score.<br>That's the point.</h3>
+        <p>An HVAC contractor with a 50-mile radius and an electrician across the state should never get the same recommendation on the same project. BidIntell scores every bid based on your specific trade, service area, GC and client relationships, and capacity.</p>
+        <ul class="feature-list">
+          <li>Location-weighted scoring based on your service radius</li>
+          <li>Trade matching against CSI divisions and scope language</li>
+          <li>GC and client relationship history factors into every score</li>
+          <li>Contract risk detection flags pay-if-paid, retainage, and more</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="scoring-demo">
+          <div class="scoring-user">
+            <div class="su-avatar">A</div>
+            <div class="su-info">
+              <div class="su-name">Contractor A</div>
+              <div class="su-trade">HVAC · 50mi radius · High capacity</div>
             </div>
-            <p class="trust-line">
-                No credit card required · Setup takes 5 minutes · Cancel anytime
-            </p>
-        </div>
-
-        <div class="hero-visual">
-            <div class="score-mockup">
-                <svg width="100%" height="300" viewBox="0 0 500 300">
-                    <!-- BidIndex Score Display -->
-                    <rect width="500" height="300" fill="#FAFAF9" rx="16"/>
-
-                    <!-- Header -->
-                    <text x="250" y="40" text-anchor="middle" fill="#111827" font-size="16" font-weight="600">Medical Office Building - Kansas City</text>
-
-                    <!-- Large Score -->
-                    <circle cx="250" cy="140" r="70" fill="#ECFDF5" stroke="#059669" stroke-width="4"/>
-                    <text x="250" y="155" text-anchor="middle" fill="#059669" font-size="64" font-weight="800">85</text>
-
-                    <!-- Recommendation Badge -->
-                    <rect x="200" y="230" width="100" height="32" rx="16" fill="#059669"/>
-                    <text x="250" y="252" text-anchor="middle" fill="white" font-size="16" font-weight="700">GO</text>
-
-                    <!-- Details -->
-                    <text x="50" y="280" fill="#6B7280" font-size="13">Location: 95% · GC: ★★★★★ · Risk: Low</text>
-                </svg>
+            <div class="su-score">83</div>
+          </div>
+          <div class="scoring-user">
+            <div class="su-avatar">B</div>
+            <div class="su-info">
+              <div class="su-name">Contractor B</div>
+              <div class="su-trade">Electrical · 30mi radius · Moderate capacity</div>
             </div>
-            <p class="hero-note">Free during beta · Unlimited bids</p>
+            <div class="su-score">52</div>
+          </div>
+          <div class="scoring-user">
+            <div class="su-avatar">C</div>
+            <div class="su-info">
+              <div class="su-name">Contractor C</div>
+              <div class="su-trade">Plumbing · 75mi radius · Low capacity</div>
+            </div>
+            <div class="su-score">34</div>
+          </div>
+          <div class="scoring-caption">Example: Same project — three different scores based on each contractor's profile</div>
         </div>
+      </div>
     </div>
 
-    <!-- Pain Points Section -->
-    <div class="section" id="explore">
-        <div class="section-header">
-            <h2>You're Leaving Money on the Table</h2>
-            <p>Every hour spent on a bad bid is an hour you're not winning good ones.</p>
+    <!-- Feature 2: Outcome Tracking -->
+    <div class="feature-row reverse fade-up">
+      <div class="feature-content">
+        <span class="section-tag">Outcome intelligence</span>
+        <h3>Every bid outcome builds<br>your intelligence edge.</h3>
+        <p>Won, lost, no response, or passed — BidIntell tracks every outcome and captures why. Over time, patterns emerge: which project types you win, which clients respond, and where your sweet spot really is. This data doesn't exist anywhere else.</p>
+        <ul class="feature-list">
+          <li>One-click outcome recording: Won, Lost, No Response, Didn't Bid</li>
+          <li>GC and client behavior patterns emerge over time</li>
+          <li>Win rate tracking by trade, location, and project type</li>
+          <li>Decline reasons captured — building intelligence no one else has</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="kanban-demo">
+          <div class="kanban-col">
+            <div class="kc-label">Pending <span class="kc-count">4</span></div>
+            <div class="kc-item">Medical Office<br><span style="color:var(--fog);font-size:0.6rem">Score: 83</span></div>
+            <div class="kc-item">Office Park<br><span style="color:var(--fog);font-size:0.6rem">Score: 71</span></div>
+          </div>
+          <div class="kanban-col">
+            <div class="kc-label">Won <span class="kc-count">3</span></div>
+            <div class="kc-item">K-8 School<br><span style="color:var(--fog);font-size:0.6rem">Score: 88</span></div>
+            <div class="kc-item">Urgent Care Clinic<br><span style="color:var(--fog);font-size:0.6rem">Score: 79</span></div>
+          </div>
+          <div class="kanban-col">
+            <div class="kc-label">Lost <span class="kc-count">2</span></div>
+            <div class="kc-item">County Admin<br><span style="color:var(--fog);font-size:0.6rem">Score: 44</span></div>
+          </div>
+          <div class="kanban-col">
+            <div class="kc-label">No Response <span class="kc-count">2</span></div>
+            <div class="kc-item">Apartment Complex<br><span style="color:var(--fog);font-size:0.6rem">Score: 38</span></div>
+          </div>
         </div>
-        <div class="pain-grid">
-            <div class="pain-card">
-                <h3>Days Wasted on Bad Bids</h3>
-                <p>You spend weeks estimating projects that were never a good fit—while profitable opportunities slip away to competitors who move faster.</p>
-            </div>
-            <div class="pain-card">
-                <h3>Wrong Location</h3>
-                <p>Projects 100 miles outside your service area cost more to mobilize, kill your margins, and make you less competitive. You knew it from the start.</p>
-            </div>
-            <div class="pain-card">
-                <h3>Bad Client Relationships</h3>
-                <p>You've worked with them before. They nickel-and-dimed you, paid late, or ghosted after award. Why are you bidding for them again?</p>
-            </div>
-            <div class="pain-card">
-                <h3>Hidden Contract Traps</h3>
-                <p>Pay-if-paid clauses, liquidated damages, warranty requirements buried on page 47—you don't find them until it's too late.</p>
-            </div>
-            <div class="pain-card">
-                <h3>Wrong Trade Scope</h3>
-                <p>The project looks good at first, but it's 80% work outside your core competency. You bid it anyway because the pipeline is thin.</p>
-            </div>
-            <div class="pain-card">
-                <h3>Low Win Rates, Lower Margins</h3>
-                <p>You're bidding everything hoping something sticks—burning cash, exhausting your team, and winning the wrong projects.</p>
-            </div>
-        </div>
+      </div>
     </div>
 
-    <!-- Three Brand Pillars Section -->
-    <div class="section">
-        <div class="section-header">
-            <h2>Why BidIntell Is Different</h2>
-            <p>Estimating tools help you price work. BidIntell helps you decide which work is worth pricing.</p>
+    <!-- Feature 3: Intelligence That Compounds -->
+    <div class="feature-row fade-up">
+      <div class="feature-content">
+        <span class="section-tag">Intelligence that compounds</span>
+        <h3>The more the industry uses it,<br>the smarter it gets for everyone.</h3>
+        <p>BidIntell doesn't just read documents — it captures decisions. Why you bid, why you passed, what you won, and who never responded. Nobody in the industry is tracking this decision data today. And as more contractors, distributors, and reps use the system, the collective intelligence improves for everyone — better insights, sharper recommendations, and a clearer picture of the market.</p>
+        <ul class="feature-list">
+          <li>Recommendations sharpen as your outcome history grows</li>
+          <li>Pattern recognition across project types, trades, and clients</li>
+          <li>Collective insights strengthen the entire community over time</li>
+          <li>Your data stays private — aggregated intelligence benefits all users</li>
+        </ul>
+      </div>
+      <div class="feature-visual">
+        <div class="scoring-demo">
+          <div style="padding:16px 16px 12px; background:var(--ink-mid); border-radius:var(--radius); margin-bottom:12px;">
+            <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--accent); font-weight:600; margin-bottom:12px;">How intelligence compounds</div>
+            <div style="display:grid; gap:10px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:28px; height:28px; border-radius:50%; background:var(--accent-glow); display:flex; align-items:center; justify-content:center; font-size:0.7rem; flex-shrink:0;">📄</div>
+                <div style="flex:1;">
+                  <div style="font-size:0.78rem; color:var(--white); font-weight:500;">You analyze bids</div>
+                  <div style="font-size:0.68rem; color:var(--fog);">AI extracts project data + contract risks</div>
+                </div>
+              </div>
+              <div style="width:1px; height:8px; background:var(--slate); margin-left:14px;"></div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:28px; height:28px; border-radius:50%; background:var(--green-muted); display:flex; align-items:center; justify-content:center; font-size:0.7rem; flex-shrink:0;">✅</div>
+                <div style="flex:1;">
+                  <div style="font-size:0.78rem; color:var(--white); font-weight:500;">You record outcomes</div>
+                  <div style="font-size:0.68rem; color:var(--fog);">Won, lost, no response — plus why you passed</div>
+                </div>
+              </div>
+              <div style="width:1px; height:8px; background:var(--slate); margin-left:14px;"></div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:28px; height:28px; border-radius:50%; background:var(--yellow-muted); display:flex; align-items:center; justify-content:center; font-size:0.7rem; flex-shrink:0;">🧠</div>
+                <div style="flex:1;">
+                  <div style="font-size:0.78rem; color:var(--white); font-weight:500;">AI learns your patterns</div>
+                  <div style="font-size:0.68rem; color:var(--fog);">Win rates, project fit, client behavior</div>
+                </div>
+              </div>
+              <div style="width:1px; height:8px; background:var(--slate); margin-left:14px;"></div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:28px; height:28px; border-radius:50%; background:var(--accent-glow); display:flex; align-items:center; justify-content:center; font-size:0.7rem; flex-shrink:0;">📈</div>
+                <div style="flex:1;">
+                  <div style="font-size:0.78rem; color:var(--white); font-weight:500;">Everyone bids smarter</div>
+                  <div style="font-size:0.68rem; color:var(--fog);">More users = better intelligence for the whole community</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="scoring-caption">Your data stays private. The collective intelligence benefits everyone.</div>
         </div>
-        <div class="pillars-grid">
-            <div class="pillar-card">
-                <h3>Clarity Over Speed</h3>
-                <blockquote>"We'd rather give you a thought that took 90 seconds and was right than a guess that took 10 seconds and was wrong."</blockquote>
-                <p>Every score links to the exact page, clause, or data point that influenced it. No black boxes, no mystery scores.</p>
-            </div>
-            <div class="pillar-card">
-                <h3>Trust Over Black-Box AI</h3>
-                <blockquote>"If we can't show you why we scored it that way, we won't show you the score."</blockquote>
-                <p>Every component—Location, Trade Match, GC History, Contract Risk—is visible and adjustable. You're in control.</p>
-            </div>
-            <div class="pillar-card">
-                <h3>Learning Over One-Off Analysis</h3>
-                <blockquote>"The more you use BidIntell, the smarter it gets about your business specifically."</blockquote>
-                <p>Your outcomes, overrides, and preferences refine your personal scoring model over time. Built for you, not the average sub.</p>
-            </div>
-        </div>
+      </div>
     </div>
 
-    <!-- How It Works Section -->
-    <div class="section" id="how-it-works">
-        <div class="section-header">
-            <h2>Get a GO / REVIEW / PASS Decision in About a Minute</h2>
-            <p>No more guesswork. Know exactly which bids deserve your attention.</p>
+  </div>
+</section>
+
+<!-- THE GAP -->
+<section class="testimonial-section">
+  <div class="container">
+    <div class="testimonial-card fade-up">
+      <span class="section-tag" style="text-align:center; display:block; margin-bottom:20px;">Why this exists</span>
+      <blockquote style="font-size:1.15rem;">The construction industry has tools for finding bids and tools for pricing them. But nobody is building intelligence around which bids are actually worth your time — and learning from what happens after you submit. The more people who use BidIntell, the smarter the system gets for everyone. That's the gap we're filling.</blockquote>
+      <div class="testimonial-author">
+        <div class="ta-avatar">BI</div>
+        <div class="ta-info">
+          <div class="ta-name">BidIntell</div>
+          <div class="ta-role">AI-powered bid intelligence · Built by contractors</div>
         </div>
-        <div class="how-steps">
-            <div class="step">
-                <div class="step-number">1</div>
-                <div class="step-time">~30 seconds</div>
-                <h3>Upload Your Bid</h3>
-                <p>Drop any PDF bid invite into BidIntell. Our AI instantly extracts project details, location, GC names, trade scope, and contract terms—even the fine print on page 47.</p>
-            </div>
-            <div class="step">
-                <div class="step-number">2</div>
-                <div class="step-time">~30 seconds</div>
-                <h3>Get Your BidIndex Score</h3>
-                <p>BidIntell analyzes YOUR location, YOUR GC relationships, YOUR win history, and contract risks—then gives you a personalized score (0-100) with clear reasoning.</p>
-            </div>
-            <div class="step">
-                <div class="step-number">3</div>
-                <div class="step-time">Instantly</div>
-                <h3>Make a Confident Decision</h3>
-                <p><strong style="color: #059669;">80+ = GO</strong> – Great fit, pursue this<br>
-                <strong style="color: #D97706;">60-79 = REVIEW</strong> – Worth investigating<br>
-                <strong style="color: #DC2626;">0-59 = PASS</strong> – Not worth your time</p>
-            </div>
-        </div>
+      </div>
     </div>
+  </div>
+</section>
 
-    <!-- Feature Showcase Section -->
-    <div class="section">
-        <div class="section-header">
-            <h2>See BidIntell in Action</h2>
-            <p>Smart bid analysis that helps you win more profitable work</p>
-        </div>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-screenshot">
-                    <svg width="100%" height="200" viewBox="0 0 320 200">
-                        <rect width="320" height="200" fill="#FAFAF9" rx="8"/>
-                        <!-- Score Breakdown -->
-                        <text x="20" y="30" fill="#111827" font-size="14" font-weight="600">Score Breakdown</text>
-                        <text x="20" y="55" fill="#6B7280" font-size="12">Location Match</text>
-                        <text x="280" y="55" text-anchor="end" fill="#059669" font-size="14" font-weight="700">92</text>
-                        <rect x="20" y="65" width="280" height="4" rx="2" fill="#E7E5E4"/>
-                        <rect x="20" y="65" width="257" height="4" rx="2" fill="#059669"/>
-
-                        <text x="20" y="90" fill="#6B7280" font-size="12">Trade Match</text>
-                        <text x="280" y="90" text-anchor="end" fill="#059669" font-size="14" font-weight="700">85</text>
-                        <rect x="20" y="100" width="280" height="4" rx="2" fill="#E7E5E4"/>
-                        <rect x="20" y="100" width="238" height="4" rx="2" fill="#059669"/>
-
-                        <text x="20" y="125" fill="#6B7280" font-size="12">GC Relationship</text>
-                        <text x="280" y="125" text-anchor="end" fill="#D97706" font-size="14" font-weight="700">78</text>
-                        <rect x="20" y="135" width="280" height="4" rx="2" fill="#E7E5E4"/>
-                        <rect x="20" y="135" width="218" height="4" rx="2" fill="#D97706"/>
-
-                        <text x="20" y="160" fill="#6B7280" font-size="12">Keywords Match</text>
-                        <text x="280" y="160" text-anchor="end" fill="#059669" font-size="14" font-weight="700">88</text>
-                        <rect x="20" y="170" width="280" height="4" rx="2" fill="#E7E5E4"/>
-                        <rect x="20" y="170" width="246" height="4" rx="2" fill="#059669"/>
-
-                        <!-- Final Score -->
-                        <rect x="20" y="185" width="280" height="1" fill="#E7E5E4"/>
-                        <text x="20" y="200" fill="#111827" font-size="14" font-weight="700">Final BidIndex</text>
-                        <text x="280" y="200" text-anchor="end" fill="#059669" font-size="18" font-weight="800">85 GO</text>
-                    </svg>
-                </div>
-                <div class="feature-content">
-                    <h3>Instant BidIndex Score</h3>
-                    <p>Get a GO / REVIEW / PASS recommendation based on YOUR location, GC relationships, and contract terms—with full transparency into every component.</p>
-                </div>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-screenshot">
-                    <svg width="100%" height="200" viewBox="0 0 320 200">
-                        <rect width="320" height="200" fill="#FAFAF9" rx="8"/>
-                        <text x="20" y="30" fill="#111827" font-size="14" font-weight="600">Contract Risks Detected</text>
-
-                        <!-- Risk 1 -->
-                        <rect x="20" y="45" width="280" height="45" rx="6" fill="#FEF2F2" stroke="#DC2626" stroke-width="1"/>
-                        <text x="30" y="62" fill="#DC2626" font-size="11" font-weight="700">⚠ PAY-IF-PAID CLAUSE</text>
-                        <text x="30" y="78" fill="#DC2626" font-size="10">Page 47, Section 12.3 · Confidence: 0.91</text>
-
-                        <!-- Risk 2 -->
-                        <rect x="20" y="100" width="280" height="45" rx="6" fill="#FEF2F2" stroke="#DC2626" stroke-width="1"/>
-                        <text x="30" y="117" fill="#DC2626" font-size="11" font-weight="700">⚠ LIQUIDATED DAMAGES</text>
-                        <text x="30" y="133" fill="#DC2626" font-size="10">Page 23, Section 8.7 · $500/day penalty</text>
-
-                        <!-- Risk 3 -->
-                        <rect x="20" y="155" width="280" height="35" rx="6" fill="#FFFBEB" stroke="#D97706" stroke-width="1"/>
-                        <text x="30" y="172" fill="#D97706" font-size="11" font-weight="700">⚠ 2-YEAR WARRANTY</text>
-                        <text x="30" y="183" fill="#D97706" font-size="10">Page 89, Section 15.2</text>
-                    </svg>
-                </div>
-                <div class="feature-content">
-                    <h3>Contract Risk Detection</h3>
-                    <p>AI scans for pay-if-paid clauses, liquidated damages, and hidden warranty requirements before you waste time estimating. See exact page numbers and confidence scores.</p>
-                </div>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-screenshot">
-                    <svg width="100%" height="200" viewBox="0 0 320 200">
-                        <rect width="320" height="200" fill="#FAFAF9" rx="8"/>
-                        <text x="20" y="30" fill="#111827" font-size="14" font-weight="600">GC Intelligence</text>
-
-                        <!-- GC Card -->
-                        <rect x="20" y="45" width="280" height="140" rx="8" fill="white" stroke="#E7E5E4" stroke-width="1"/>
-                        <circle cx="50" cy="75" r="20" fill="#F7931E" opacity="0.2"/>
-                        <text x="50" y="82" text-anchor="middle" fill="#F7931E" font-size="18" font-weight="700">T</text>
-
-                        <text x="80" y="75" fill="#111827" font-size="16" font-weight="700">Turner Construction</text>
-                        <text x="80" y="92" fill="#059669" font-size="16">★★★★★</text>
-
-                        <line x1="30" y1="105" x2="290" y2="105" stroke="#E7E5E4" stroke-width="1"/>
-
-                        <text x="40" y="125" fill="#6B7280" font-size="12">Total Bids</text>
-                        <text x="110" y="125" text-anchor="end" fill="#111827" font-size="14" font-weight="600">12</text>
-
-                        <text x="130" y="125" fill="#6B7280" font-size="12">Wins</text>
-                        <text x="170" y="125" text-anchor="end" fill="#111827" font-size="14" font-weight="600">8</text>
-
-                        <text x="190" y="125" fill="#6B7280" font-size="12">Win Rate</text>
-                        <text x="270" y="125" text-anchor="end" fill="#059669" font-size="14" font-weight="700">67%</text>
-
-                        <text x="40" y="150" fill="#6B7280" font-size="12">Avg Payment</text>
-                        <text x="110" y="150" text-anchor="end" fill="#059669" font-size="14" font-weight="600">28 days</text>
-
-                        <text x="130" y="150" fill="#6B7280" font-size="12">Profitability</text>
-                        <text x="270" y="150" text-anchor="end" fill="#059669" font-size="14" font-weight="600">High</text>
-
-                        <text x="40" y="172" fill="#6B7280" font-size="11">Last project: Medical Office (2025) · Won · $2.3M</text>
-                    </svg>
-                </div>
-                <div class="feature-content">
-                    <h3>GC Relationship Tracking</h3>
-                    <p>Track every GC you work with—payment history, communication, profitability, win rates—so you never bid for a bad client twice. Your institutional knowledge, organized.</p>
-                </div>
-            </div>
-        </div>
+<!-- WHO IT'S FOR -->
+<section class="problem-section" id="who">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Who it's for</span>
+      <h2>Anyone submitting a commercial construction bid.</h2>
+      <p>If you receive bid invites and have to decide which ones are worth your time and resources, BidIntell is built for you.</p>
     </div>
-
-    <!-- ROI Calculator Section -->
-    <div class="section">
-        <div class="section-header">
-            <h2>Calculate Your ROI</h2>
-            <p>See how much time and money you'll save in your first month</p>
-        </div>
-        <div class="roi-calculator">
-            <div class="roi-inputs">
-                <div class="roi-input-group">
-                    <label>Bids per year</label>
-                    <input type="number" id="bidsPerYear" value="150" min="12" max="1000">
-                </div>
-                <div class="roi-input-group">
-                    <label>Hours per bid analysis</label>
-                    <input type="number" id="hoursPerBid" value="2" min="0.5" max="40" step="0.5">
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Time spent deciding if you should bid</div>
-                </div>
-                <div class="roi-input-group">
-                    <label>Your hourly rate ($)</label>
-                    <input type="number" id="hourlyRate" value="75" min="25" max="500">
-                </div>
-                <div class="roi-input-group">
-                    <label>Average project size ($)</label>
-                    <input type="number" id="avgProjectSize" value="500000" min="10000" max="50000000" step="10000">
-                </div>
-                <div class="roi-input-group" style="grid-column: 1 / -1;">
-                    <label>Current win rate: <span id="winRateDisplay" style="font-weight: 700; color: var(--brand-primary);">15%</span></label>
-                    <input type="range" id="winRate" value="15" min="5" max="50" step="1"
-                           style="width: 100%; height: 8px; border-radius: 4px; background: linear-gradient(to right, var(--brand-primary) 0%, var(--brand-primary) 30%, #E7E5E4 30%, #E7E5E4 100%); cursor: pointer; -webkit-appearance: none; appearance: none;">
-                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 4px;">
-                        <span>5%</span>
-                        <span>25%</span>
-                        <span>50%</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="roi-results">
-                <div class="roi-result">
-                    <div class="roi-result-label">Time Saved Annually</div>
-                    <div class="roi-result-value" id="hoursSaved">0 hrs</div>
-                </div>
-                <div class="roi-result">
-                    <div class="roi-result-label">Additional Revenue</div>
-                    <div class="roi-result-value" id="additionalRevenue">$0</div>
-                </div>
-                <div class="roi-result">
-                    <div class="roi-result-label">New Win Rate</div>
-                    <div class="roi-result-value" id="newWinRate">0%</div>
-                </div>
-            </div>
-
-            <div class="roi-payback">
-                <div class="roi-payback-label">Payback Period</div>
-                <div class="roi-payback-value" id="paybackPeriod">1 day</div>
-                <p style="margin-top: 8px; font-size: 13px; color: #6B7280;">Based on <span id="subscriptionCost">$49</span>/month subscription cost</p>
-            </div>
-
-            <div class="roi-plan-toggle">
-                Calculate at <button onclick="togglePlan('starter')">$49/mo (Starter)</button> or <button onclick="togglePlan('pro')">$99/mo (Professional)</button>
-            </div>
-        </div>
+    <div class="problem-grid">
+      <div class="problem-card fade-up">
+        <div class="pc-icon">🔧</div>
+        <h3>Subcontractors</h3>
+        <p>Mechanical, electrical, plumbing, drywall, painting, flooring — any trade that bids on commercial projects. Analyze invites, track outcomes, and build intelligence around your win patterns.</p>
+        <div class="stat-callout">From one-person shops to 100+ crews</div>
+      </div>
+      <div class="problem-card fade-up">
+        <div class="pc-icon">📦</div>
+        <h3>Distributors & suppliers</h3>
+        <p>Building material distributors and suppliers who quote on commercial projects. Know which opportunities match your product lines, delivery radius, and client relationships.</p>
+        <div class="stat-callout">Stop quoting projects that go nowhere</div>
+      </div>
+      <div class="problem-card fade-up">
+        <div class="pc-icon">🤝</div>
+        <h3>Manufacturers' reps</h3>
+        <p>Reps who submit pricing on behalf of product manufacturers. Track which specs get selected, which GCs and architects value your products, and where to focus your energy.</p>
+        <div class="stat-callout">Data on what wins, not just what you quoted</div>
+      </div>
     </div>
+  </div>
+</section>
 
-    <!-- Pricing Section -->
-    <div class="section" id="pricing">
-        <div class="section-header">
-            <h2>Simple Pricing. Zero Risk.</h2>
-            <p>Join the beta now—completely FREE. Lock in lifetime 30% discount when we launch.</p>
-        </div>
-        <div class="pricing-grid">
-            <div class="pricing-card">
-                <div class="pricing-tier">Starter</div>
-                <div class="pricing-price">
-                    <span class="price-amount">$49</span>
-                    <span class="price-period">/month</span>
-                </div>
-                <div class="pricing-per-bid">$1.63 per analysis</div>
-                <div class="pricing-description">Perfect for solo operators and small teams</div>
-                <ul class="pricing-features">
-                    <li><strong>30 bid analyses/month</strong></li>
-                    <li>BidIndex scoring with GO/REVIEW/PASS</li>
-                    <li>Contract risk detection</li>
-                    <li>GC relationship tracking</li>
-                    <li>Unlimited AI advisor chat</li>
-                    <li>Project outcome tracking</li>
-                </ul>
-                <a href="app.html"><button class="btn btn-primary pricing-cta">Start Free Beta</button></a>
-            </div>
-            <div class="pricing-card featured">
-                <div class="pricing-badge">Most Popular</div>
-                <div class="pricing-tier">Professional</div>
-                <div class="pricing-price">
-                    <span class="price-amount">$99</span>
-                    <span class="price-period">/month</span>
-                </div>
-                <div class="pricing-per-bid">$1.98 per analysis</div>
-                <div class="pricing-description">For growing businesses and busy teams</div>
-                <ul class="pricing-features">
-                    <li><strong>50 bid analyses/month</strong></li>
-                    <li>Everything in Starter</li>
-                    <li>Advanced client profitability tracking</li>
-                    <li>Market intelligence insights</li>
-                    <li>Priority support</li>
-                    <li>Custom reporting</li>
-                </ul>
-                <a href="app.html"><button class="btn btn-primary pricing-cta">Start Free Beta</button></a>
-            </div>
-        </div>
-        <div class="pricing-note">
-            <strong>Beta Special:</strong> First 100 users get FREE access during beta, then lock in <strong>lifetime 30% off</strong> any paid plan forever. After beta closes: regular pricing applies ($49-$99/mo). No credit card required to join beta.
-        </div>
-        <div class="pricing-enterprise">
-            Need more? <a href="mailto:hello@bidintell.ai" style="color: var(--brand-primary); text-decoration: underline;">Contact us for Enterprise pricing</a>
-        </div>
+<!-- PRICING -->
+<section class="pricing-section" id="pricing">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Simple pricing</span>
+      <h2>Built for the industry. Priced to make sense.</h2>
+      <p>No enterprise sales calls. No per-seat nonsense. Just straightforward plans that pay for themselves after one good bid decision.</p>
     </div>
-
-    <!-- Guarantee Section -->
-    <div class="section">
-        <div class="guarantee">
-            <h2>100% Risk-Free Guarantee</h2>
-            <p>
-                Try BidIntell FREE during beta. If you don't see better bid decisions in your first 30 days, we'll refund you 100%—no questions asked. You have nothing to lose and hours to gain.
-            </p>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <h3>Starter</h3>
+        <div class="price">
+          <span class="amount">$49</span><span class="period">/month</span>
+          <span class="beta-note">Free during beta · Lock in 30% off for life</span>
         </div>
-    </div>
-
-    <!-- Final CTA Section -->
-    <div class="final-cta">
-        <h2>Stop Guessing. Start Winning.</h2>
-        <p>Setup takes 5 minutes. Your first 3 bids are free.</p>
-        <a href="app.html" class="btn">Get Started Free — Unlimited Bids During Beta</a>
-        <p class="final-cta-note">No credit card required · Cancel anytime · Free during beta</p>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-        <div class="footer-links">
-            <a href="#explore">Explore</a>
-            <a href="#pricing">Pricing</a>
-            <a href="mailto:hello@bidintell.ai">Contact</a>
-            <a href="#privacy">Privacy</a>
-            <a href="#terms">Terms</a>
+        <ul class="pricing-features">
+          <li>Up to 25 bid analyses/month</li>
+          <li>Personalized BidIndex Score</li>
+          <li>AI document extraction</li>
+          <li>Outcome tracking dashboard</li>
+          <li>Contract risk flagging</li>
+        </ul>
+        <a href="#apply" class="btn-secondary btn-full">Join Beta — Free</a>
+      </div>
+      <div class="pricing-card featured">
+        <div class="popular-tag">Most Popular</div>
+        <h3>Professional</h3>
+        <div class="price">
+          <span class="amount">$99</span><span class="period">/month</span>
+          <span class="beta-note">Free during beta · Lock in 30% off for life</span>
         </div>
-        <p>© 2026 BidIntell, LLC · Decision Intelligence for Construction Professionals</p>
+        <ul class="pricing-features">
+          <li>Unlimited bid analyses</li>
+          <li>Everything in Starter</li>
+          <li>GC & client risk tagging & notes</li>
+          <li>Email forwarding — auto-analyze (coming soon)</li>
+          <li>Priority support</li>
+        </ul>
+        <a href="#apply" class="btn-primary btn-full">Join Beta — Free →</a>
+      </div>
     </div>
+  </div>
+</section>
 
-    <!-- Scripts -->
-    <script>
-        // Smooth scroll for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
+<!-- CTA -->
+<section class="cta-section" id="apply">
+  <div class="container">
+    <span class="section-tag">Limited beta</span>
+    <h2>Start building your bidding intelligence.</h2>
+    <p>Join the beta and help shape how the construction industry makes bid decisions. Every bid you analyze and every outcome you track makes the system smarter — for you and for everyone using it.</p>
+    <form id="beta-form" class="cta-form" onsubmit="handleBetaSubmit(event)">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+        <input type="text" id="full-name" name="full_name" placeholder="Your Name" required style="grid-column: 1 / -1;">
+        <input type="email" id="email" name="email" placeholder="your@email.com" required>
+        <input type="text" id="company-name" name="company_name" placeholder="Company Name">
+      </div>
+      <div style="margin-bottom: 12px;">
+        <select id="trade" name="trade" required style="width: 100%; padding: 14px 18px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius); color: var(--cloud); font-family: var(--font); font-size: 1rem;">
+          <option value="">Select Your Trade</option>
+          <option value="HVAC">HVAC</option>
+          <option value="Electrical">Electrical</option>
+          <option value="Plumbing">Plumbing</option>
+          <option value="Drywall">Drywall</option>
+          <option value="Framing">Framing</option>
+          <option value="Concrete">Concrete</option>
+          <option value="Masonry">Masonry</option>
+          <option value="Roofing">Roofing</option>
+          <option value="Flooring">Flooring</option>
+          <option value="Painting">Painting</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-primary">Request Access</button>
+      <div id="form-message" style="margin-top: 12px; font-size: 0.9rem; text-align: center;"></div>
+    </form>
+    <p style="font-size:0.8rem; color:var(--slate-light); margin-top:12px;">No credit card required. We'll reach out within 24 hours.</p>
+  </div>
+</section>
 
-        // Intersection Observer for fade-in animations
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="logo-mark">BI</div>
+        <span class="footer-copy">© 2026 BidIntell. Built by the industry, for the industry.</span>
+      </div>
+      <ul class="footer-links">
+        <li><a href="#">Privacy</a></li>
+        <li><a href="#">Terms</a></li>
+        <li><a href="mailto:hello@bidintell.ai">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                }
-            });
-        }, observerOptions);
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// Intersection Observer for fade-up animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.15 });
 
-        document.querySelectorAll('.section').forEach(section => {
-            observer.observe(section);
-        });
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
 
-        // ROI Calculator
-        let currentPlan = 'starter';
+// Initialize Supabase (using anon key for public access)
+const supabaseUrl = 'https://wqwfpnnlxnzzqzntpzuf.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indxd2Zwbm5seG56enF6bnRwenVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc1NjMzMTYsImV4cCI6MjA1MzEzOTMxNn0.9LqGaZj7sCFQ_KhJyB5cKDN9sD-Lf1LnhJTp5v-_r84';
+const { createClient } = supabase;
+const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
-        function calculateROI() {
-            const bidsPerYear = parseFloat(document.getElementById('bidsPerYear').value) || 0;
-            const hoursPerBid = parseFloat(document.getElementById('hoursPerBid').value) || 0;
-            const hourlyRate = parseFloat(document.getElementById('hourlyRate').value) || 0;
-            const winRate = parseFloat(document.getElementById('winRate').value) || 0;
-            const avgProjectSize = parseFloat(document.getElementById('avgProjectSize').value) || 0;
+// Beta form handler with Supabase integration
+async function handleBetaSubmit(e) {
+  e.preventDefault();
 
-            // Update win rate slider display
-            document.getElementById('winRateDisplay').textContent = winRate + '%';
-            const slider = document.getElementById('winRate');
-            const percent = ((winRate - 5) / (50 - 5)) * 100;
-            slider.style.background = `linear-gradient(to right, var(--brand-primary) 0%, var(--brand-primary) ${percent}%, #E7E5E4 ${percent}%, #E7E5E4 100%)`;
+  const form = e.target;
+  const btn = form.querySelector('button[type="submit"]');
+  const messageEl = document.getElementById('form-message');
+  const originalBtnText = btn.textContent;
 
-            // Assumptions:
-            // - BidIntell helps identify 40% of bids as not worth pursuing (bad fit)
-            // - Save 100% of time on those rejected bids (2 hours vs 0)
-            // - Win rate improves by 12.5% (10-15% range) when focusing on better-fit projects
-            const badBids = bidsPerYear * 0.4;
-            const totalHoursSaved = badBids * hoursPerBid;
+  // Get form data
+  const formData = {
+    full_name: form.querySelector('#full-name').value.trim(),
+    email: form.querySelector('#email').value.trim().toLowerCase(),
+    company_name: form.querySelector('#company-name').value.trim() || null,
+    trade: form.querySelector('#trade').value || null
+  };
 
-            // Win rate improvement: 12.5% relative improvement
-            const winRateImprovementPercent = 0.125; // 12.5%
-            const oldWinRate = winRate / 100;
-            const newWinRate = Math.min(oldWinRate * (1 + winRateImprovementPercent), 0.50); // Cap at 50%
-            const additionalWins = (newWinRate - oldWinRate) * bidsPerYear;
-            const additionalRevenue = additionalWins * avgProjectSize;
+  // Disable button
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+  btn.style.opacity = '0.6';
 
-            // Update display
-            document.getElementById('hoursSaved').textContent = Math.round(totalHoursSaved) + ' hrs';
-            document.getElementById('additionalRevenue').textContent = '$' + Math.round(additionalRevenue).toLocaleString();
-            document.getElementById('newWinRate').textContent = Math.round(newWinRate * 100) + '%';
+  try {
+    // Insert into Supabase
+    const { data, error } = await supabaseClient
+      .from('beta_signups')
+      .insert([formData])
+      .select();
 
-            // Calculate payback period
-            const monthlySubscription = currentPlan === 'starter' ? 49 : 99;
-            const annualSubscription = monthlySubscription * 12;
-            const timeSavingsValue = totalHoursSaved * hourlyRate;
-            const totalValue = timeSavingsValue + additionalRevenue;
-            const paybackMonths = totalValue > 0 ? Math.max(0.1, annualSubscription / totalValue * 12) : 12;
+    if (error) {
+      // Check for duplicate email
+      if (error.code === '23505' || error.message.includes('duplicate')) {
+        messageEl.innerHTML = '<span style="color: var(--yellow);">✓ You\'ve already signed up — we\'ll reach out soon.</span>';
+      } else {
+        throw error;
+      }
+    } else {
+      // Success
+      messageEl.innerHTML = '<span style="color: var(--green);">✓ You\'re on the list. We\'ll be in touch soon.</span>';
+      form.reset();
+    }
 
-            if (paybackMonths < 0.5) {
-                document.getElementById('paybackPeriod').textContent = 'Less than 1 week';
-            } else if (paybackMonths < 1) {
-                document.getElementById('paybackPeriod').textContent = Math.ceil(paybackMonths * 4) + ' weeks';
-            } else if (paybackMonths < 2) {
-                document.getElementById('paybackPeriod').textContent = '1 month';
-            } else {
-                document.getElementById('paybackPeriod').textContent = Math.round(paybackMonths) + ' months';
-            }
+    // Update button
+    btn.textContent = '✓ Request Sent';
+    btn.style.background = '#22C55E';
 
-            document.getElementById('subscriptionCost').textContent = '$' + monthlySubscription;
-        }
+    // Reset after 3 seconds
+    setTimeout(() => {
+      btn.textContent = originalBtnText;
+      btn.style.background = '';
+      btn.style.opacity = '1';
+      btn.disabled = false;
+      messageEl.innerHTML = '';
+    }, 5000);
 
-        function togglePlan(plan) {
-            currentPlan = plan;
-            calculateROI();
-        }
+  } catch (error) {
+    console.error('Beta signup error:', error);
+    messageEl.innerHTML = '<span style="color: var(--red);">❌ Something went wrong. Please try again or email hello@bidintell.ai</span>';
+    btn.textContent = originalBtnText;
+    btn.style.opacity = '1';
+    btn.disabled = false;
+  }
+}
 
-        // Add event listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            calculateROI();
-            ['bidsPerYear', 'hoursPerBid', 'hourlyRate', 'winRate', 'avgProjectSize'].forEach(id => {
-                document.getElementById(id).addEventListener('input', calculateROI);
-            });
-        });
-    </script>
+// Mobile menu (simple toggle)
+document.querySelector('.mobile-menu-btn')?.addEventListener('click', () => {
+  const links = document.querySelector('.nav-links');
+  links.style.display = links.style.display === 'flex' ? 'none' : 'flex';
+  if (links.style.display === 'flex') {
+    links.style.position = 'absolute';
+    links.style.top = '64px';
+    links.style.left = '0';
+    links.style.right = '0';
+    links.style.background = 'rgba(11,15,20,0.95)';
+    links.style.flexDirection = 'column';
+    links.style.padding = '16px 24px';
+    links.style.gap = '16px';
+    links.style.borderBottom = '1px solid rgba(255,255,255,0.06)';
+  }
+});
+</script>
+
 </body>
 </html>
