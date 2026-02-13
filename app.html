@@ -22,49 +22,65 @@
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAPxYsWrlpVgYW4xBdXg82Zcp5Ll0_icd0&libraries=places&callback=initGoogleMaps" async defer></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Brand Colors - Matching Logo */
-            --brand-primary: #F7931E;
+            /* Dark base + construction accent - BIDINTELL DESIGN SYSTEM */
+            --ink: #0B0F14;
+            --ink-light: #141A23;
+            --ink-mid: #1C2533;
+            --slate: #384254;
+            --slate-light: #5A6A7E;
+            --fog: #94A3B8;
+            --cloud: #CBD5E1;
+            --white: #F8FAFC;
+            --accent: #F26522;
+            --accent-dark: #D4551A;
+            --accent-glow: rgba(242, 101, 34, 0.15);
+            --green: #22C55E;
+            --green-muted: rgba(34, 197, 94, 0.12);
+            --red: #EF4444;
+            --red-muted: rgba(239, 68, 68, 0.12);
+            --yellow: #EAB308;
+            --yellow-muted: rgba(234, 179, 8, 0.12);
+
+            /* Score Colors (Green 75+, Yellow 50-74, Red <50) */
+            --score-go: #22C55E;
+            --score-go-bg: rgba(34, 197, 94, 0.12);
+            --score-review: #EAB308;
+            --score-review-bg: rgba(234, 179, 8, 0.12);
+            --score-pass: #EF4444;
+            --score-pass-bg: rgba(239, 68, 68, 0.12);
+
+            /* Semantic Aliases - Dark Theme */
+            --text-primary: #F8FAFC;
+            --text-secondary: #CBD5E1;
+            --text-muted: #94A3B8;
+            --bg-page: #0B0F14;
+            --bg-primary: #0B0F14;
+            --bg-secondary: #141A23;
+            --bg-tertiary: #1C2533;
+            --bg-card: #141A23;
+            --bg-hover: #1C2533;
+            --bg-input: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.06);
+            --border-color: rgba(255,255,255,0.06);
+            --border-light: rgba(255,255,255,0.04);
+            --border-focus: #F26522;
+
+            /* Legacy Compatibility */
+            --brand-primary: #F26522;
             --brand-secondary: #2F80ED;
-            --brand-gradient: linear-gradient(135deg, #F7931E 0%, #2F80ED 100%);
-            --brand-gradient-subtle: linear-gradient(135deg, #FFF4E6 0%, #E3F2FD 100%);
-
-            /* Score Colors */
-            --score-go: #059669;
-            --score-go-bg: #ECFDF5;
-            --score-review: #D97706;
-            --score-review-bg: #FFFBEB;
-            --score-pass: #DC2626;
-            --score-pass-bg: #FEF2F2;
-
-            /* Neutrals - Light Theme */
-            --text-primary: #111827;
-            --text-secondary: #6B7280;
-            --text-muted: #9CA3AF;
-            --bg-page: #F9FAFB;
-            --bg-primary: #F9FAFB;
-            --bg-secondary: #FFFFFF;
-            --bg-card: #FFFFFF;
-            --bg-hover: #F3F4F6;
-            --bg-input: #FFFFFF;
-            --border: #E5E7EB;
-            --border-light: #D1D5DB;
-            --border-focus: #F7931E;
-
-            /* Aliases for compatibility */
-            --accent: #F7931E;
-            --accent-hover: #E8831B;
-            --accent-dim: rgba(247, 147, 30, 0.1);
-            --success: #059669;
-            --success-bg: #ECFDF5;
-            --warning: #D97706;
-            --warning-bg: #FFFBEB;
-            --danger: #DC2626;
-            --danger-bg: #FEF2F2;
+            --accent-hover: #D4551A;
+            --accent-dim: rgba(242, 101, 34, 0.15);
+            --success: #22C55E;
+            --success-bg: rgba(34, 197, 94, 0.12);
+            --warning: #EAB308;
+            --warning-bg: rgba(234, 179, 8, 0.12);
+            --danger: #EF4444;
+            --danger-bg: rgba(239, 68, 68, 0.12);
             --info: #2F80ED;
-            --info-bg: #E3F2FD;
+            --info-bg: rgba(47, 128, 237, 0.12);
 
             /* Spacing */
             --space-xs: 4px;
@@ -75,26 +91,30 @@
             --space-2xl: 48px;
             --space-3xl: 64px;
 
-            /* Radius */
-            --radius: 8px;
+            /* Border Radius (6px buttons, 10px cards per design system) */
+            --radius: 6px;
             --radius-sm: 6px;
             --radius-md: 10px;
-            --radius-lg: 16px;
+            --radius-lg: 10px;
             --radius-full: 9999px;
 
-            /* Shadows */
-            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-            --shadow-score: 0 8px 24px rgba(247, 147, 30, 0.15);
+            /* Shadows - Subtle for dark theme */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+            --shadow-score: 0 8px 24px rgba(242, 101, 34, 0.2);
 
             /* Transitions */
             --transition-fast: 150ms ease;
             --transition-base: 250ms ease;
             --transition-slow: 400ms cubic-bezier(0.16, 1, 0.3, 1);
+
+            /* Fonts - DM Sans (text), Space Mono (numbers) */
+            --font: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --mono: 'Space Mono', monospace;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-page); color: var(--text-primary); min-height: 100vh; line-height: 1.5; }
+        body { font-family: var(--font); background: var(--bg-page); color: var(--text-primary); min-height: 100vh; line-height: 1.6; -webkit-font-smoothing: antialiased; }
         .app { display: flex; min-height: 100vh; }
 
         /* Auth Screen */
@@ -282,11 +302,12 @@
         .score-report-header { padding: 32px; text-align: center; background: var(--bg-page); border-bottom: 1px solid var(--border); }
         /* BidIndex Score - THE HERO ELEMENT */
         .score-report-value {
+            font-family: var(--mono);
             font-size: 64px;
-            font-weight: 800;
-            letter-spacing: -0.03em;
+            font-weight: 700;
+            letter-spacing: -0.02em;
             line-height: 1;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
             animation: scoreCountUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .score-report-value.go { color: var(--score-go); }
