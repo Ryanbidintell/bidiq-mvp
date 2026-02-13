@@ -121,7 +121,9 @@
         .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--brand-gradient-subtle); }
         .auth-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 40px; width: 100%; max-width: 400px; box-shadow: var(--shadow-lg); }
         .auth-logo { text-align: center; margin-bottom: 32px; }
-        .auth-logo img { height: 56px; width: auto; margin-bottom: 12px; }
+        .auth-logo .logo-container { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px; }
+        .auth-logo .logo-mark { width: 48px; height: 48px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 1.15rem; font-weight: 700; color: white; letter-spacing: -0.04em; }
+        .auth-logo .logo-text { font-size: 1.75rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
         .auth-logo .tagline { font-family: 'Space Mono', monospace; color: var(--brand-primary); font-size: 11px; letter-spacing: 1px; margin-top: 12px; text-transform: uppercase; }
         .auth-logo .tagline-sub { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
         .auth-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
@@ -139,7 +141,9 @@
         /* Sidebar */
         .sidebar { width: 240px; background: var(--bg-card); border-right: 1px solid var(--border); position: fixed; height: 100vh; display: flex; flex-direction: column; box-shadow: var(--shadow-sm); }
         .logo { padding: 20px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; }
-        .logo img { height: 40px; width: auto; }
+        .logo .logo-container { display: flex; align-items: center; gap: 10px; }
+        .logo .logo-mark { width: 32px; height: 32px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.75rem; font-weight: 700; color: white; letter-spacing: -0.04em; }
+        .logo .logo-text { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
         .logo p { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--brand-primary); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; }
         .nav { flex: 1; padding: 12px 8px; }
         .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius); color: var(--text-secondary); cursor: pointer; margin-bottom: 4px; font-weight: 500; font-size: 14px; transition: all 0.2s; }
@@ -1031,7 +1035,10 @@
     <div class="auth-container" id="authScreen">
         <div class="auth-box">
             <div class="auth-logo">
-                <img src="/bidintell-logo-light.svg" alt="BidIntell" />
+                <div class="logo-container">
+                    <div class="logo-mark">BI</div>
+                    <span class="logo-text">BidIntell</span>
+                </div>
                 <div class="tagline">Decision Intelligence</div>
                 <div class="tagline-sub">for Construction Bidding</div>
             </div>
@@ -1093,7 +1100,10 @@
 
         <aside class="sidebar" id="sidebar">
             <div class="logo">
-                <img src="/bidintell-logo-light.svg" alt="BidIntell" />
+                <div class="logo-container">
+                    <div class="logo-mark">BI</div>
+                    <span class="logo-text">BidIntell</span>
+                </div>
                 <p>Decision Intelligence</p>
             </div>
             <nav class="nav">
