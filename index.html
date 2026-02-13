@@ -1689,25 +1689,8 @@ img { max-width: 100%; display: block; }
     <p>Join the beta and help shape how the construction industry makes bid decisions. Every bid you analyze and every outcome you track makes the system smarter — for you and for everyone using it.</p>
     <form id="beta-form" class="cta-form" onsubmit="handleBetaSubmit(event)">
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-        <input type="text" id="full-name" name="full_name" placeholder="Your Name" required style="grid-column: 1 / -1;">
+        <input type="text" id="full-name" name="full_name" placeholder="Your Name" required>
         <input type="email" id="email" name="email" placeholder="your@email.com" required>
-        <input type="text" id="company-name" name="company_name" placeholder="Company Name">
-      </div>
-      <div style="margin-bottom: 12px;">
-        <select id="trade" name="trade" required style="width: 100%; padding: 14px 18px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius); color: var(--cloud); font-family: var(--font); font-size: 1rem;">
-          <option value="">Select Your Trade</option>
-          <option value="HVAC">HVAC</option>
-          <option value="Electrical">Electrical</option>
-          <option value="Plumbing">Plumbing</option>
-          <option value="Drywall">Drywall</option>
-          <option value="Framing">Framing</option>
-          <option value="Concrete">Concrete</option>
-          <option value="Masonry">Masonry</option>
-          <option value="Roofing">Roofing</option>
-          <option value="Flooring">Flooring</option>
-          <option value="Painting">Painting</option>
-          <option value="Other">Other</option>
-        </select>
       </div>
       <button type="submit" class="btn-primary">Request Access</button>
       <div id="form-message" style="margin-top: 12px; font-size: 0.9rem; text-align: center;"></div>
@@ -1764,9 +1747,7 @@ async function handleBetaSubmit(e) {
   // Get form data
   const formData = {
     full_name: form.querySelector('#full-name').value.trim(),
-    email: form.querySelector('#email').value.trim().toLowerCase(),
-    company_name: form.querySelector('#company-name').value.trim() || null,
-    trade: form.querySelector('#trade').value || null
+    email: form.querySelector('#email').value.trim().toLowerCase()
   };
 
   // Disable button
