@@ -9,7 +9,14 @@
       "Bash(grep:*)",
       "Bash(git push:*)",
       "Bash(npx netlify deploy:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "WebSearch",
+      "WebFetch(domain:www.downtobid.com)",
+      "WebFetch(domain:constructionbids.ai)",
+      "WebFetch(domain:bangertinc.com)",
+      "WebFetch(domain:www.procore.com)",
+      "WebFetch(domain:www.pinpointanalytics.ai)",
+      "Bash(claude mcp:*)"
     ]
   }
 }
