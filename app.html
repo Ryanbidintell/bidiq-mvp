@@ -6296,6 +6296,134 @@ ${truncatedText}`;
             return null;
         }
 
+        // Auto-select GCs that are geographically close to user's office
+        async function autoSelectNearbyGCs(extracted) {
+            if (!currentUser || !supabaseClient) return;
+
+            // Get GC names that were extracted
+            const gcNames = [];
+            if (extracted.gc_names && Array.isArray(extracted.gc_names)) {
+                gcNames.push(...extracted.gc_names);
+            } else if (extracted.general_contractor) {
+                gcNames.push(extracted.general_contractor);
+            } else if (extracted.gc_name) {
+                gcNames.push(extracted.gc_name);
+            }
+
+            if (gcNames.length === 0) return;
+
+            // Get user's office location
+            const settings = await getSettings();
+            if (!settings.officeLocation || !settings.officeLocation.lat || !settings.officeLocation.lng) {
+                console.log('📍 No office location set - skipping auto-select');
+                return;
+            }
+
+            const userLat = settings.officeLocation.lat;
+            const userLng = settings.officeLocation.lng;
+
+            // Get all clients from database
+            const allClients = await getClients();
+
+            // Find matches and calculate distances
+            const AUTO_SELECT_RADIUS_MILES = 50;
+            let autoSelectedCount = 0;
+
+            for (const extractedName of gcNames) {
+                // Find matching GC (exact or fuzzy)
+                const exactMatch = allClients.find(gc =>
+                    gc.name.toLowerCase() === extractedName.toLowerCase()
+                );
+
+                const match = exactMatch || findSimilarGC(extractedName, allClients);
+
+                if (!match) continue;
+
+                // Check if already selected
+                const alreadySelected = selectedGCs.find(gc => gc.name === match.name);
+                if (alreadySelected) {
+                    console.log(`✓ "${match.name}" already selected`);
+                    continue;
+                }
+
+                // If GC has address, calculate distance
+                if (match.address) {
+                    try {
+                        // Parse address to get lat/lng using Google Maps Geocoding
+                        const geocoded = await geocodeAddress(match.address);
+
+                        if (geocoded && geocoded.lat && geocoded.lng) {
+                            const distance = calculateDistance(
+                                userLat,
+                                userLng,
+                                geocoded.lat,
+                                geocoded.lng
+                            );
+
+                            console.log(`📏 Distance to "${match.name}": ${distance} miles`);
+
+                            if (distance <= AUTO_SELECT_RADIUS_MILES) {
+                                // Auto-select this GC
+                                selectedGCs.push({ ...match });
+                                autoSelectedCount++;
+                                console.log(`✅ Auto-selected "${match.name}" (${distance} mi away)`);
+                            } else {
+                                console.log(`⏭️ Skipping "${match.name}" (${distance} mi - too far)`);
+                            }
+                        } else {
+                            console.warn(`⚠️ Could not geocode address for "${match.name}": ${match.address}`);
+                        }
+                    } catch (error) {
+                        console.warn(`⚠️ Error geocoding "${match.name}":`, error);
+                    }
+                } else {
+                    // No address - can't calculate distance, select it anyway (better safe than sorry)
+                    selectedGCs.push({ ...match });
+                    autoSelectedCount++;
+                    console.log(`✅ Auto-selected "${match.name}" (no address to check distance)`);
+                }
+            }
+
+            // Show notification if any were auto-selected
+            if (autoSelectedCount > 0) {
+                showBanner(
+                    `📍 Auto-selected ${autoSelectedCount} nearby client(s) (within ${AUTO_SELECT_RADIUS_MILES} miles)`,
+                    'info'
+                );
+                renderSelectedGCs();
+                updateCompetition();
+                updateAnalyzeBtn();
+            }
+        }
+
+        // Helper: Geocode an address to lat/lng
+        async function geocodeAddress(address) {
+            if (!address) return null;
+
+            // Use Google Maps Geocoding API (requires key)
+            const geocodingKey = 'AIzaSyAz8i3wO8yUSTVYV1WnJ4Qn-WgPZdDl5Pc'; // Same as Places API key
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${geocodingKey}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.status === 'OK' && data.results && data.results.length > 0) {
+                    const location = data.results[0].geometry.location;
+                    return {
+                        lat: location.lat,
+                        lng: location.lng
+                    };
+                } else {
+                    console.warn('Geocoding failed:', data.status);
+                    return null;
+                }
+            } catch (error) {
+                console.error('Geocoding error:', error);
+                return null;
+            }
+        }
+
         // Auto-add extracted GCs to user's database with smart normalization
         async function autoAddExtractedGCs(extracted) {
             if (!currentUser || !supabaseClient) return;
@@ -6713,6 +6841,9 @@ ${truncatedText}`;
 
                 // Auto-add extracted GCs to database (so they appear in selector)
                 await autoAddExtractedGCs(extracted);
+
+                // Auto-select nearby GCs (within 50 miles of user's office)
+                await autoSelectNearbyGCs(extracted);
 
                 // Refresh GC selector UI to show newly added GCs
                 await renderGCSelector();
