@@ -450,6 +450,10 @@ const additionalRevenue = additionalWins * avgProjectSize;
 5. **Environment changes** - Modify .env, Netlify settings
 6. **Deployment** - Deploy to production
 7. **External API calls** - Call external services (other than reading docs)
+8. **Commit secrets** - NEVER commit API keys, webhook secrets, passwords, or tokens to git
+   - Use `STRIPE_SECRET_KEY=Get from Dashboard` in documentation
+   - All sensitive values MUST use environment variables (Netlify/Supabase)
+   - Before every commit: Check for secrets in changed files
 
 ---
 
