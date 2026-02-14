@@ -6247,7 +6247,53 @@ ${truncatedText}`;
             }
         }
 
-        // Auto-add extracted GCs to user's database
+        // Normalize company name (remove office/branch suffixes)
+        function normalizeCompanyName(name) {
+            if (!name) return '';
+
+            // Convert to lowercase for comparison
+            let normalized = name.toLowerCase().trim();
+
+            // Remove common office/branch indicators
+            normalized = normalized
+                // Remove office locations: "- Denver", "(Phoenix)", "Denver Office"
+                .replace(/[,\-\(]\s*([\w\s]+\s+(office|branch|division|location|region|regional))\)*/gi, '')
+                .replace(/[,\-\(]\s*([A-Z][a-z]+(\s+[A-Z][a-z]+)*)\s*\)*/g, '') // Remove "- Phoenix" style
+                // Remove LLC, Inc, Corp suffixes
+                .replace(/\s*(llc|l\.l\.c\.|inc\.?|incorporated|corp\.?|corporation|ltd\.?|limited)\s*$/gi, '')
+                // Clean up extra spaces and punctuation
+                .replace(/\s+/g, ' ')
+                .replace(/[,\-\(\)]+$/g, '')
+                .trim();
+
+            return normalized;
+        }
+
+        // Find if a similar GC already exists (fuzzy match)
+        function findSimilarGC(newName, existingGCs) {
+            const normalizedNew = normalizeCompanyName(newName);
+
+            for (const gc of existingGCs) {
+                const normalizedExisting = normalizeCompanyName(gc.name);
+
+                // Exact match after normalization
+                if (normalizedExisting === normalizedNew) {
+                    return gc;
+                }
+
+                // Check if one name contains the other (handles partial matches)
+                if (normalizedNew.length > 5 && normalizedExisting.length > 5) {
+                    if (normalizedNew.includes(normalizedExisting) ||
+                        normalizedExisting.includes(normalizedNew)) {
+                        return gc;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        // Auto-add extracted GCs to user's database with smart normalization
         async function autoAddExtractedGCs(extracted) {
             if (!currentUser || !supabaseClient) return;
 
@@ -6266,29 +6312,42 @@ ${truncatedText}`;
             // Get existing GCs
             const existingGCs = await getGCs();
 
-            // Add new GCs with default rating
+            // Add new GCs with default rating (with normalization)
             for (const gcName of gcNames) {
                 const name = gcName.trim();
                 if (!name) continue;
 
-                // Check if already exists (case-insensitive)
-                const exists = existingGCs.find(gc =>
+                // Check for exact match OR similar match (handles multiple offices)
+                const exactMatch = existingGCs.find(gc =>
                     gc.name.toLowerCase() === name.toLowerCase()
                 );
 
-                if (!exists) {
-                    console.log(`🏗️ Auto-adding GC: "${name}" with default 3-star rating`);
-                    try {
-                        await saveGC({
-                            name: name,
-                            rating: 3, // Default neutral rating
-                            bids: 0,
-                            wins: 0,
-                            riskTags: []
-                        });
-                    } catch (error) {
-                        console.warn(`Failed to auto-add GC "${name}":`, error);
-                    }
+                if (exactMatch) {
+                    console.log(`📋 GC "${name}" already exists (exact match)`);
+                    continue;
+                }
+
+                // Check for fuzzy match (e.g., "Turner Construction - Denver" matches "Turner Construction")
+                const similarMatch = findSimilarGC(name, existingGCs);
+
+                if (similarMatch) {
+                    console.log(`🔗 GC "${name}" matches existing "${similarMatch.name}" (normalized match)`);
+                    // Don't add duplicate - use existing entry
+                    continue;
+                }
+
+                // Truly new GC - add to database
+                console.log(`🏗️ Auto-adding NEW GC: "${name}" with default 3-star rating`);
+                try {
+                    await saveGC({
+                        name: name,
+                        rating: 3, // Default neutral rating
+                        bids: 0,
+                        wins: 0,
+                        riskTags: []
+                    });
+                } catch (error) {
+                    console.warn(`Failed to auto-add GC "${name}":`, error);
                 }
             }
 
@@ -6604,6 +6663,10 @@ ${truncatedText}`;
 
                 // Auto-add extracted GCs to database (so they appear in selector)
                 await autoAddExtractedGCs(extracted);
+
+                // Refresh GC selector UI to show newly added GCs
+                await renderGCSelector();
+                console.log('✅ GC selector refreshed with auto-added clients');
 
                 // Validate and fix extracted data
                 const validStates = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
