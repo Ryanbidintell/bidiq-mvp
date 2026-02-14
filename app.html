@@ -1513,7 +1513,111 @@
             <div class="tab-content" id="tab-settings">
                 <header class="page-header"><h2 class="page-title">Settings</h2><p class="page-subtitle">Configure BidIntell to match your business</p></header>
                 <div class="page-content">
-                    
+
+                    <!-- User Profile -->
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">👤 User Profile</div>
+                            <div class="settings-card-description">Your contact information and company details</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div class="form-group">
+                                <label class="form-label">Company Name</label>
+                                <input type="text" class="form-input" id="settingCompanyName" placeholder="Your Company LLC" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Your Name</label>
+                                    <input type="text" class="form-input" id="settingUserName" placeholder="John Smith" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Position</label>
+                                    <input type="text" class="form-input" id="settingUserPosition" placeholder="Estimator, Project Manager, etc.">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-input" id="settingUserEmail" placeholder="you@company.com" required>
+                                <div class="form-hint">Used for notifications and support communications</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subscription & Billing -->
+                    <div class="settings-card" id="billingCard">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">💳 Subscription & Billing</div>
+                            <div class="settings-card-description">Manage your subscription and payment methods</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <!-- Beta Period Message -->
+                            <div id="betaPeriodMessage" style="display: none; padding: 16px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(59, 130, 246, 0.1)); border-radius: var(--radius); border: 1px solid rgba(34, 197, 94, 0.3); margin-bottom: 16px;">
+                                <div style="font-size: 14px; font-weight: 600; color: var(--success); margin-bottom: 4px;">🎉 Beta User - Free Until April 1, 2026</div>
+                                <div style="font-size: 13px; color: var(--text-secondary);">
+                                    You're part of our founding beta group! Your account is free until <strong>April 1, 2026</strong>.
+                                    After that, choose a paid plan to continue using BidIntell.
+                                </div>
+                            </div>
+
+                            <!-- Subscription Status -->
+                            <div id="subscriptionStatus">
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--bg-input); border-radius: var(--radius); margin-bottom: 16px;">
+                                    <div>
+                                        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">Current Plan</div>
+                                        <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);" id="currentPlanName">Loading...</div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">Status</div>
+                                        <div style="font-size: 14px; font-weight: 600;" id="subscriptionStatusBadge">
+                                            <span style="padding: 4px 12px; background: var(--bg-secondary); border-radius: var(--radius); color: var(--text-secondary);">Checking...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Upgrade Options (Hidden during beta) -->
+                            <div id="upgradeOptions" style="display: none;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                    <!-- Starter Plan -->
+                                    <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; background: var(--bg-input);">
+                                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Starter</div>
+                                        <div style="font-size: 32px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">$49<span style="font-size: 14px; font-weight: 400; color: var(--text-muted);">/month</span></div>
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">Perfect for getting started</div>
+                                        <ul style="list-style: none; padding: 0; margin: 0 0 16px 0; font-size: 13px; color: var(--text-secondary);">
+                                            <li style="margin-bottom: 8px;">✓ Unlimited bid analysis</li>
+                                            <li style="margin-bottom: 8px;">✓ AI recommendations</li>
+                                            <li style="margin-bottom: 8px;">✓ GC database</li>
+                                            <li style="margin-bottom: 8px;">✓ Outcome tracking</li>
+                                        </ul>
+                                        <button class="btn btn-secondary" onclick="upgradeToStarter()" style="width: 100%;">Upgrade to Starter</button>
+                                    </div>
+
+                                    <!-- Professional Plan -->
+                                    <div style="border: 2px solid var(--accent); border-radius: var(--radius-md); padding: 20px; background: linear-gradient(135deg, rgba(242, 101, 34, 0.05), rgba(242, 101, 34, 0.1)); position: relative;">
+                                        <div style="position: absolute; top: -10px; right: 20px; background: var(--accent); color: white; padding: 4px 12px; border-radius: var(--radius); font-size: 11px; font-weight: 700;">RECOMMENDED</div>
+                                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Professional</div>
+                                        <div style="font-size: 32px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">$99<span style="font-size: 14px; font-weight: 400; color: var(--text-muted);">/month</span></div>
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">For serious bidders</div>
+                                        <ul style="list-style: none; padding: 0; margin: 0 0 16px 0; font-size: 13px; color: var(--text-secondary);">
+                                            <li style="margin-bottom: 8px;">✓ Everything in Starter</li>
+                                            <li style="margin-bottom: 8px;">✓ Advanced analytics</li>
+                                            <li style="margin-bottom: 8px;">✓ Competitor insights</li>
+                                            <li style="margin-bottom: 8px;">✓ Priority support</li>
+                                        </ul>
+                                        <button class="btn btn-primary" onclick="upgradeToProfessional()" style="width: 100%;">Upgrade to Professional</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Manage Billing Button (Only shown if subscribed) -->
+                            <div id="manageBillingSection" style="display: none;">
+                                <button class="btn btn-secondary" onclick="openBillingPortal()" style="width: 100%;">
+                                    ⚙️ Manage Billing & Payment Methods
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <div class="settings-card-title">📍 Business Location</div>
@@ -3279,16 +3383,28 @@ ${fullText.substring(0, 40000)}`;
                 }
 
                 dataCache.settings = {
+                    // User profile fields
+                    company_name: data.company_name || '',
+                    companyName: data.company_name || '',  // Alias for compatibility
+                    user_name: data.user_name || '',
+                    userName: data.user_name || '',  // Alias
+                    user_email: data.user_email || '',
+                    userEmail: data.user_email || '',  // Alias
+                    user_position: data.user_position || '',
+                    userPosition: data.user_position || '',  // Alias
+                    // Company type and installation
                     companyType: data.company_type || 'subcontractor',
                     providesInstallation: data.provides_installation !== false,
                     productLines: data.product_lines || [],
                     productCategories: data.product_categories || [],
+                    // Location fields
                     street: data.street || '',
                     city: data.city || '',
                     state: data.state || '',
                     zip: data.zip || '',
                     radius: data.search_radius || data.radius || 50,
                     locationMatters: data.location_matters !== false,
+                    // Business settings
                     trades: data.trades || ['23', '26'],
                     clientTypes: data.client_types || ['gcs'],
                     riskTolerance: data.risk_tolerance || 'medium',
@@ -3329,6 +3445,12 @@ ${fullText.substring(0, 40000)}`;
                     provides_installation: s.provides_installation !== undefined ? s.provides_installation : (s.providesInstallation !== undefined ? s.providesInstallation : true),
                     product_lines: s.product_lines || s.productLines || [],
                     product_categories: s.product_categories || s.productCategories || [],
+                    // User profile fields
+                    company_name: s.company_name || null,
+                    user_name: s.user_name || null,
+                    user_email: s.user_email || null,
+                    user_position: s.user_position || null,
+                    // Location fields
                     street: s.street || null,
                     city: s.city,
                     state: s.state,
@@ -10455,6 +10577,16 @@ Respond now:`;
             // Initialize product lines for settings management
             settingsProductLines = s.productLines || [];
 
+            // Load user profile fields
+            if (document.getElementById('settingCompanyName')) document.getElementById('settingCompanyName').value = s.company_name || s.companyName || '';
+            if (document.getElementById('settingUserName')) document.getElementById('settingUserName').value = s.user_name || s.userName || '';
+            if (document.getElementById('settingUserEmail')) {
+                // Use user_email from settings, or fall back to auth email
+                document.getElementById('settingUserEmail').value = s.user_email || s.userEmail || currentUser?.email || '';
+            }
+            if (document.getElementById('settingUserPosition')) document.getElementById('settingUserPosition').value = s.user_position || s.userPosition || '';
+
+            // Load location fields
             if (document.getElementById('settingStreet')) document.getElementById('settingStreet').value = s.street || '';
             document.getElementById('settingCity').value = s.city || '';
             document.getElementById('settingState').value = s.state || '';
@@ -10597,6 +10729,9 @@ Respond now:`;
 
             // Initialize Google Places Autocomplete
             setTimeout(() => initAddressAutocomplete(), 500);
+
+            // Load billing status
+            await loadBillingStatus();
         }
 
         // Product line management for settings
@@ -10653,6 +10788,12 @@ Respond now:`;
             const s = {
                 company_type: currentSettings.companyType,
                 provides_installation: currentSettings.providesInstallation,
+                // User profile fields
+                company_name: document.getElementById('settingCompanyName')?.value.trim() || null,
+                user_name: document.getElementById('settingUserName')?.value.trim() || null,
+                user_email: document.getElementById('settingUserEmail')?.value.trim() || null,
+                user_position: document.getElementById('settingUserPosition')?.value.trim() || null,
+                // Location fields
                 street: document.getElementById('settingStreet')?.value.trim() || null,
                 city: document.getElementById('settingCity').value.trim(),
                 state: document.getElementById('settingState').value.trim().toUpperCase(),
@@ -10699,6 +10840,185 @@ Respond now:`;
                 alert('✓ Settings saved to cloud!');
             } catch (e) {
                 alert('❌ Error saving settings: ' + e.message);
+            }
+        }
+
+        // ============================================
+        // BILLING & SUBSCRIPTION FUNCTIONS
+        // ============================================
+
+        // Stripe Price IDs - Replace with your actual Stripe price IDs
+        const STRIPE_PRICES = {
+            starter: 'price_STARTER_MONTHLY',  // Replace with your Stripe price ID
+            professional: 'price_PROFESSIONAL_MONTHLY'  // Replace with your Stripe price ID
+        };
+
+        /**
+         * Load billing status and display subscription info
+         */
+        async function loadBillingStatus() {
+            if (!supabaseClient || !currentUser) return;
+
+            try {
+                // Get user revenue/subscription data
+                const { data: revenue, error } = await supabaseClient
+                    .from('user_revenue')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') {
+                    console.error('Error loading billing status:', error);
+                    return;
+                }
+
+                // Check if user is in beta period
+                const betaEndDate = new Date('2026-04-01T00:00:00Z');
+                const now = new Date();
+                const inBetaPeriod = now < betaEndDate;
+                const isBetaUser = revenue?.beta_user !== false; // Default to true if not set
+
+                // Show/hide beta message
+                const betaMessage = document.getElementById('betaPeriodMessage');
+                if (betaMessage && isBetaUser && inBetaPeriod) {
+                    betaMessage.style.display = 'block';
+                } else if (betaMessage) {
+                    betaMessage.style.display = 'none';
+                }
+
+                // Update subscription status
+                const planNameEl = document.getElementById('currentPlanName');
+                const statusBadgeEl = document.getElementById('subscriptionStatusBadge');
+                const upgradeOptions = document.getElementById('upgradeOptions');
+                const manageBillingSection = document.getElementById('manageBillingSection');
+
+                if (revenue?.status === 'active') {
+                    // User has active subscription
+                    planNameEl.textContent = revenue.plan_name || 'Professional';
+                    statusBadgeEl.innerHTML = '<span style="padding: 4px 12px; background: rgba(34, 197, 94, 0.15); border-radius: var(--radius); color: var(--success);">● Active</span>';
+                    upgradeOptions.style.display = 'none';
+                    manageBillingSection.style.display = 'block';
+                } else if (isBetaUser && inBetaPeriod) {
+                    // Beta user - free until 4/1/26
+                    planNameEl.textContent = 'Beta Access (Free)';
+                    statusBadgeEl.innerHTML = '<span style="padding: 4px 12px; background: rgba(34, 197, 94, 0.15); border-radius: var(--radius); color: var(--success);">● Active (Beta)</span>';
+                    upgradeOptions.style.display = 'none';
+                    manageBillingSection.style.display = 'none';
+                } else {
+                    // Beta ended or no subscription
+                    planNameEl.textContent = 'Free Trial Ended';
+                    statusBadgeEl.innerHTML = '<span style="padding: 4px 12px; background: rgba(239, 68, 68, 0.15); border-radius: var(--radius); color: var(--danger);">● Inactive</span>';
+                    upgradeOptions.style.display = 'block';
+                    manageBillingSection.style.display = 'none';
+                }
+
+            } catch (e) {
+                console.error('Error loading billing status:', e);
+            }
+        }
+
+        /**
+         * Upgrade to Starter plan ($49/mo)
+         */
+        async function upgradeToStarter() {
+            await createCheckoutSession('starter', 'Starter');
+        }
+
+        /**
+         * Upgrade to Professional plan ($99/mo)
+         */
+        async function upgradeToProfessional() {
+            await createCheckoutSession('professional', 'Professional');
+        }
+
+        /**
+         * Create Stripe Checkout Session
+         */
+        async function createCheckoutSession(plan, planName) {
+            if (!currentUser) {
+                alert('Please log in to upgrade');
+                return;
+            }
+
+            try {
+                // Get user info
+                const settings = await getSettings();
+                const email = settings.user_email || settings.userEmail || currentUser.email;
+                const name = settings.user_name || settings.userName || '';
+                const companyName = settings.company_name || settings.companyName || '';
+
+                // Show loading state
+                const button = event?.target;
+                const originalText = button?.textContent;
+                if (button) button.textContent = '⏳ Loading...';
+
+                // Call Netlify function to create checkout session
+                const response = await fetch('/.netlify/functions/stripe-create-checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: currentUser.id,
+                        email,
+                        name,
+                        companyName,
+                        priceId: STRIPE_PRICES[plan],
+                        planName
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to create checkout session');
+                }
+
+                // Redirect to Stripe Checkout
+                window.location.href = data.url;
+
+            } catch (error) {
+                console.error('Checkout error:', error);
+                alert('Error starting checkout: ' + error.message);
+                if (button) button.textContent = originalText;
+            }
+        }
+
+        /**
+         * Open Stripe Customer Portal for managing subscription
+         */
+        async function openBillingPortal() {
+            if (!currentUser) {
+                alert('Please log in to manage billing');
+                return;
+            }
+
+            try {
+                // Show loading state
+                const button = event?.target;
+                const originalText = button?.textContent;
+                if (button) button.textContent = '⏳ Opening...';
+
+                // Call Netlify function to create portal session
+                const response = await fetch('/.netlify/functions/stripe-create-portal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: currentUser.id
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to create portal session');
+                }
+
+                // Redirect to Stripe Customer Portal
+                window.location.href = data.url;
+
+            } catch (error) {
+                console.error('Portal error:', error);
+                alert('Error opening billing portal: ' + error.message);
+                if (button) button.textContent = originalText;
             }
         }
 
