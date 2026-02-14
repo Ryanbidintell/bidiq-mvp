@@ -1942,9 +1942,10 @@
                     <div class="card" style="margin-bottom: 24px;">
                         <div class="card-header">
                             <h3 class="card-title">📋 Project Details</h3>
-                            <div style="display: flex; gap: 8px;">
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                                 <button class="btn btn-sm btn-primary" onclick="reanalyzeProject()" id="reanalyzeBtn">🔄 Re-analyze</button>
                                 <button class="btn btn-sm btn-secondary" onclick="showReuploadModal()" id="reuploadBtn">📤 Upload New Documents</button>
+                                <button class="btn btn-sm btn-secondary" onclick="showAddClientToProjectModal()">+ Add Client</button>
                                 <button class="btn btn-sm btn-secondary" onclick="showOutcomeFromReport()">+ Add Outcome</button>
                                 <button class="btn btn-sm btn-secondary" onclick="printReport()">🖨 Print Report</button>
                                 <button class="btn btn-sm btn-primary" onclick="saveReportEdits()">💾 Save Changes</button>
@@ -10005,6 +10006,146 @@ Respond now:`;
             const projectId = document.getElementById('reportProjectId').value;
             if (projectId) {
                 showOutcome(projectId);
+            }
+        }
+
+        // Add Client to Existing Project
+        async function showAddClientToProjectModal() {
+            const projectId = document.getElementById('reportProjectId').value;
+            if (!projectId) {
+                alert('❌ No project loaded');
+                return;
+            }
+
+            // Get all clients
+            const allClients = await getClients();
+
+            // Get currently selected clients on this project
+            const currentGCNames = reportGCList.map(gc => gc.name.toLowerCase());
+
+            // Filter out already-selected clients
+            const availableClients = allClients.filter(c =>
+                !currentGCNames.includes(c.name.toLowerCase())
+            );
+
+            if (availableClients.length === 0) {
+                alert('All clients are already added to this project!');
+                return;
+            }
+
+            // Build client selector HTML
+            const clientsHTML = availableClients
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(c => {
+                    const stars = '⭐'.repeat(c.rating || 3);
+                    const type = c.clientType || 'general_contractor';
+                    const typeLabel = {
+                        'general_contractor': '🏗️ GC',
+                        'subcontractor': '🔧 Sub',
+                        'end_user': '👤 User',
+                        'building_owner': '🏢 Owner',
+                        'municipality': '🏛️ Muni',
+                        'distributor': '📦 Dist',
+                        'manufacturer_rep': '🏭 Rep',
+                        'developer': '🏙️ Dev'
+                    }[type] || type;
+
+                    return `
+                        <label style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-secondary); border-radius: var(--radius); cursor: pointer; border: 2px solid transparent;"
+                               onmouseover="this.style.borderColor='var(--border-focus)'"
+                               onmouseout="this.style.borderColor='transparent'">
+                            <input type="checkbox" value="${c.name}" class="add-client-checkbox" style="width: 18px; height: 18px;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 4px;">${c.name}</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">
+                                    ${typeLabel} • ${stars}${c.address ? ` • ${c.address.split(',').slice(-2).join(',')}` : ''}
+                                </div>
+                            </div>
+                        </label>
+                    `;
+                }).join('');
+
+            const modal = `
+                <div class="modal-backdrop" id="addClientModal" onclick="if(event.target===this) closeAddClientModal()">
+                    <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <h3 class="modal-title">Add Clients to Project</h3>
+                            <button class="modal-close" onclick="closeAddClientModal()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                                Select additional clients who received this bid invitation. We'll add them and recalculate the competition score.
+                            </p>
+                            <div style="display: grid; gap: 8px;">
+                                ${clientsHTML}
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="closeAddClientModal()">Cancel</button>
+                            <button class="btn btn-primary" onclick="addClientsToProject()">Add Selected Clients</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modal);
+        }
+
+        function closeAddClientModal() {
+            const modal = document.getElementById('addClientModal');
+            if (modal) modal.remove();
+        }
+
+        async function addClientsToProject() {
+            const projectId = document.getElementById('reportProjectId').value;
+            if (!projectId) return;
+
+            // Get selected clients
+            const checkboxes = document.querySelectorAll('.add-client-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert('Please select at least one client');
+                return;
+            }
+
+            const selectedNames = Array.from(checkboxes).map(cb => cb.value);
+
+            // Get full client data
+            const allClients = await getClients();
+            const newClients = allClients.filter(c => selectedNames.includes(c.name));
+
+            // Add to reportGCList
+            reportGCList.push(...newClients);
+
+            // Update project in database
+            try {
+                const { error } = await supabaseClient
+                    .from('projects')
+                    .update({
+                        gcs: reportGCList,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', projectId);
+
+                if (error) throw error;
+
+                // Clear cache
+                dataCache.projects = null;
+
+                // Update UI
+                renderReportGCList();
+
+                showBanner(`✅ Added ${newClients.length} client(s) to project`, 'success');
+
+                closeAddClientModal();
+
+                // Suggest re-analyzing to update competition score
+                if (confirm('Re-analyze project to update competition score with new clients?')) {
+                    await reanalyzeProject();
+                }
+
+            } catch (error) {
+                console.error('Error adding clients:', error);
+                alert('❌ Error adding clients: ' + error.message);
             }
         }
 
