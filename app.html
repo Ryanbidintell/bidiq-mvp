@@ -3721,6 +3721,7 @@ ${fullText.substring(0, 40000)}`;
         async function saveClient(client) {
             if (!supabaseClient || !currentUser) return client;
             dataCache.clients = null; // Invalidate cache
+            dataCache.gcs = null; // Clear legacy cache too
 
             try {
                 const { data, error } = await supabaseClient.from('clients').upsert({
@@ -3751,6 +3752,7 @@ ${fullText.substring(0, 40000)}`;
         async function deleteClient(id) {
             if (!supabaseClient || !currentUser) return;
             dataCache.clients = null;
+            dataCache.gcs = null; // Clear legacy cache too
 
             try {
                 await supabaseClient.from('clients').delete().eq('id', id);
@@ -12144,17 +12146,18 @@ Respond now:`;
                 }
 
                 // Merge bids and wins into primary
-                await supabaseClient.from('general_contractors').update({
+                await supabaseClient.from('clients').update({
                     bids: primaryGC.bids + secondaryGC.bids,
                     wins: primaryGC.wins + secondaryGC.wins,
                     updated_at: new Date().toISOString()
                 }).eq('id', primaryId);
 
                 // Delete secondary
-                await supabaseClient.from('general_contractors').delete().eq('id', secondaryId);
+                await supabaseClient.from('clients').delete().eq('id', secondaryId);
 
-                // Clear cache
+                // Clear both caches
                 dataCache.gcs = null;
+                dataCache.clients = null;
 
                 alert(`✅ GCs merged! Kept "${primaryName}" with ${primaryGC.bids + secondaryGC.bids} total bids.`);
                 findDuplicateGCs();
