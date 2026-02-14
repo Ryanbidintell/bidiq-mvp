@@ -1,8 +1,8 @@
 # 🚀 BidIntell Launch Testing Checklist
 
-**Date:** February 12, 2026
-**Goal:** Validate product is ready for beta users
-**Time Estimate:** 2 hours
+**Date:** February 14, 2026 (Updated with Billing Tests)
+**Goal:** Validate product is ready for beta users + billing launch
+**Time Estimate:** 2.5 hours
 
 ---
 
@@ -176,7 +176,81 @@ When: [what action triggered it]
 
 ---
 
-### 8. GOOGLE ANALYTICS (Verify Tracking)
+### 8. BILLING SYSTEM (Critical for April 1 Launch)
+
+**Beta Period Verification:**
+- [ ] Go to Settings → Billing section
+- [ ] Verify message: "Beta User - Free Until April 1, 2026"
+- [ ] Current Plan shows: "Beta Access (Free)"
+- [ ] Status shows: "Active (Beta)"
+- [ ] Upgrade buttons are HIDDEN (beta users shouldn't see them)
+- [ ] No credit card required
+
+**User Profile Fields:**
+- [ ] Settings → User Profile section exists
+- [ ] Can enter: Company Name, Your Name, Email, Position
+- [ ] Click "Save All Settings"
+- [ ] Reload page → Fields persist correctly
+- [ ] Check database: `SELECT company_name, user_name, user_email, user_position FROM user_settings WHERE user_id = 'YOUR_ID';`
+
+**Test Billing Flow (After Beta - Change Date in Code):**
+To test what happens after April 1, 2026:
+- [ ] Edit app.html line ~10867: Change `new Date('2026-04-01')` to past date
+- [ ] Reload Settings → Billing section
+- [ ] Should now see upgrade buttons:
+  - [ ] "Upgrade to Starter - $49/month"
+  - [ ] "Upgrade to Professional - $99/month"
+
+**Test Stripe Checkout (Use Test Mode!):**
+- [ ] Click "Upgrade to Starter" button
+- [ ] Redirects to Stripe Checkout page
+- [ ] Use test card: `4242 4242 4242 4242`
+- [ ] Any future date, any CVC
+- [ ] Complete checkout
+- [ ] Redirects back to app with success message
+- [ ] Settings page shows:
+  - [ ] "Current Plan: Starter"
+  - [ ] "Status: Active"
+  - [ ] "Billing Period: [dates]"
+  - [ ] "Manage Billing & Payment Methods" button visible
+
+**Test Customer Portal:**
+- [ ] After subscribing, click "Manage Billing & Payment Methods"
+- [ ] Opens Stripe Customer Portal
+- [ ] Can view invoices
+- [ ] Can update payment method
+- [ ] Can cancel subscription
+
+**Verify Webhook Sync:**
+- [ ] After checkout, check Supabase:
+  ```sql
+  SELECT * FROM user_revenue WHERE user_id = 'YOUR_ID';
+  ```
+- [ ] Should show:
+  - [ ] stripe_customer_id populated
+  - [ ] stripe_subscription_id populated
+  - [ ] plan_name = 'Starter' or 'Professional'
+  - [ ] mrr = 49 or 99
+  - [ ] status = 'active'
+  - [ ] billing_period_start and billing_period_end dates correct
+
+**Monitor Webhook Delivery:**
+- [ ] Go to Stripe Dashboard → Webhooks
+- [ ] Find webhook endpoint: `https://bidintell.ai/.netlify/functions/stripe-webhook`
+- [ ] Check "Events" tab → Should see subscription.created event
+- [ ] Status should be "Succeeded" (200 response)
+- [ ] Go to Netlify Dashboard → Functions → stripe-webhook logs
+- [ ] Should see webhook processing logs with no errors
+
+**Test Subscription Cancellation:**
+- [ ] In Customer Portal, click "Cancel subscription"
+- [ ] Confirm cancellation
+- [ ] Check Supabase: Status should update to 'cancelled'
+- [ ] Check webhook logs: Should receive subscription.deleted event
+
+---
+
+### 9. GOOGLE ANALYTICS (Verify Tracking)
 
 - [ ] Open Google Analytics → Reports → Realtime
 - [ ] Visit https://bidintell.ai
@@ -185,7 +259,7 @@ When: [what action triggered it]
 
 ---
 
-### 9. DATABASE VERIFICATION
+### 10. DATABASE VERIFICATION
 
 Quick check that new migrations worked:
 
@@ -213,13 +287,24 @@ Quick check that new migrations worked:
 
 ## ✅ LAUNCH READY CRITERIA
 
-**Can launch when:**
+**Can launch BETA when:**
 - [ ] All "Critical Path" items pass
 - [ ] No P0 or P1 bugs remain
 - [ ] Chrome + Safari work
 - [ ] Mobile is usable
 - [ ] Console has no red errors
 - [ ] Google Analytics tracking works
+- [ ] Beta period displays correctly (free until 4/1/26)
+- [ ] User profile fields save properly
+
+**Can launch PAID (April 1, 2026) when:**
+- [ ] All above BETA criteria pass
+- [ ] Stripe checkout flow works (test mode)
+- [ ] Webhook events sync to database
+- [ ] Customer Portal accessible
+- [ ] Subscription status updates correctly
+- [ ] Cancellation flow works
+- [ ] MRR tracking accurate in Supabase
 
 **P2/P3 bugs:** Document in KNOWN_BUGS.md, fix post-launch
 
