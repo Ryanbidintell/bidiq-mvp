@@ -13286,9 +13286,9 @@ Respond now:`;
                 }
             }
 
-            // Filter matching GCs
+            // Filter matching GCs (match from beginning of name only)
             const matches = deduped.filter(gc =>
-                gc.name.toLowerCase().includes(query)
+                gc.name.toLowerCase().startsWith(query)
             ).slice(0, 10); // Limit to 10 results
 
             if (matches.length === 0) {
