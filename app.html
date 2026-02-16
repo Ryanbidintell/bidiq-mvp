@@ -13156,6 +13156,18 @@ Respond now:`;
                 }, 200);
             });
 
+            // Add click event delegation ONCE (not on every keystroke)
+            dropdown.addEventListener('click', (e) => {
+                const item = e.target.closest('.gc-autocomplete-item');
+                if (item && dropdown.gcMatches) {
+                    const index = parseInt(item.dataset.gcIndex);
+                    const gc = dropdown.gcMatches[index];
+                    if (gc) {
+                        selectGCAutocomplete(gc);
+                    }
+                }
+            });
+
             // Store reference
             gcAutocompleteActive = { input, dropdown, onSelect };
         }
@@ -13171,8 +13183,19 @@ Respond now:`;
             // Get all GCs from database
             const allGCs = await getGCs();
 
+            // Deduplicate by normalized name (handle "Turner Construction - Denver" vs "Turner Construction" etc)
+            const seen = new Map();
+            const deduped = [];
+            for (const gc of allGCs) {
+                const normalized = normalizeCompanyName(gc.name);
+                if (!seen.has(normalized)) {
+                    seen.set(normalized, true);
+                    deduped.push(gc);
+                }
+            }
+
             // Filter matching GCs
-            const matches = allGCs.filter(gc =>
+            const matches = deduped.filter(gc =>
                 gc.name.toLowerCase().includes(query)
             ).slice(0, 10); // Limit to 10 results
 
@@ -13210,18 +13233,6 @@ Respond now:`;
             }).join('');
 
             dropdown.classList.add('active');
-
-            // Add click event delegation for items
-            dropdown.addEventListener('click', (e) => {
-                const item = e.target.closest('.gc-autocomplete-item');
-                if (item && dropdown.gcMatches) {
-                    const index = parseInt(item.dataset.gcIndex);
-                    const gc = dropdown.gcMatches[index];
-                    if (gc) {
-                        selectGCAutocomplete(gc);
-                    }
-                }
-            });
         }
 
         function selectGCAutocomplete(gc) {
