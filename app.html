@@ -6457,9 +6457,14 @@ ${truncatedText}`;
             // Convert to lowercase for comparison
             let normalized = name.toLowerCase().trim();
 
-            // Remove common office/branch indicators
+            // Remove project-specific suffixes (e.g., "at Overlook Core and Shell JV")
             normalized = normalized
-                // Remove office locations: "- Denver", "(Phoenix)", "Denver Office"
+                .replace(/\s+(at|for|on)\s+[\w\s]+(project|building|office|tower|center|jv|joint venture)/gi, '')
+                // Remove JV/Joint Venture indicators
+                .replace(/\s+(jv|joint venture)$/gi, '')
+                // Remove office/project locations: "Offices at Downtown", "Tower Project"
+                .replace(/\s+(offices?|buildings?|projects?|towers?|centers?)\s+(at|in|on|for)\s+[\w\s]+/gi, '')
+                // Remove common office/branch indicators
                 .replace(/[,\-\(]\s*([\w\s]+\s+(office|branch|division|location|region|regional))\)*/gi, '')
                 .replace(/[,\-\(]\s*([A-Z][a-z]+(\s+[A-Z][a-z]+)*)\s*\)*/g, '') // Remove "- Phoenix" style
                 // Remove LLC, Inc, Corp suffixes
@@ -6820,7 +6825,7 @@ IMPORTANT RULES:
 - For bid_deadline: Return ONLY a date string or null. NEVER return specification text, scope descriptions, or any non-date content.
 - For project_name: Use the building name, project title, or owner name — whichever best identifies the project.
 - For building_type: Use context clues like the owner name (e.g., "School" = Education), project description, and scope to classify.
-- For gc_names: 🔴 CRITICAL - DO NOT look in drawings (drawings never have GC info). Look ONLY in text documents: bid invitation letter, project directory, plans holders list, or cover sheet. Extract ALL GC names as array. Common patterns: "Submit bids to: [GC Name]", "General Contractor: [Name]", firm names with addresses in header/footer. If you see multiple GCs bidding (common in public bids), return ALL names.
+- For gc_names: 🔴 CRITICAL - DO NOT look in drawings (drawings never have GC info). Look ONLY in text documents: bid invitation letter, project directory, plans holders list, or cover sheet. Extract ALL GC names as array. Common patterns: "Submit bids to: [GC Name]", "General Contractor: [Name]", firm names with addresses in header/footer. If you see multiple GCs bidding (common in public bids), return ALL names. IMPORTANT: For joint ventures (JV) or project-specific names like "Turner KAI Offices at Overlook JV", extract the BASE company name only (e.g., "Turner Construction"). Remove project-specific suffixes, office locations, and JV partnerships. Examples: "Turner KAI Downtown JV" → "Turner Construction", "McCarthy Denver Office" → "McCarthy Building Companies", "JE Dunn-Crossland JV" → ["JE Dunn Construction", "Crossland Construction"].
 - For gc_addresses: Extract office addresses for each GC if stated in the bid invitation or directory. Match the order of gc_names. Typical format: address appears near GC name in header, footer, or directory listing.
 - For spec_divisions_found: Look for 2-digit CSI MasterFormat division numbers (01-49) in section headers and references.
 - For project_size_sf: 🔴 CRITICAL - Search EVERYWHERE: code notes section, building info tables, cover page, project summary, scope descriptions, and Section 01. Look for ANY SF pattern: "5,000 SF", "5000 square feet", "5000 sq ft", "5,000 GSF", "Building Area: 5000", "Total SF: 5000". Use LARGEST number found (total building). Extract digits only (no commas). EXAMPLE: "5,500 SF" → 5500.
