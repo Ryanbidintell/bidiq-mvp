@@ -7045,15 +7045,16 @@ ${truncatedText}`;
                 // Use multi-provider AI extraction (Claude → OpenAI → Regex fallback)
                 const extracted = await extractWithAI(fullText);
 
-                // Auto-add extracted GCs to database (so they appear in selector)
-                await autoAddExtractedGCs(extracted);
+                // DISABLED: Auto-add extracted GCs to database
+                // Users should manually control their client list
+                // await autoAddExtractedGCs(extracted);
 
-                // Auto-select nearby GCs (within 50 miles of user's office)
-                await autoSelectNearbyGCs(extracted);
+                // DISABLED: Auto-select nearby GCs
+                // Users should manually select which GCs are bidding
+                // await autoSelectNearbyGCs(extracted);
 
-                // Refresh GC selector UI to show newly added GCs
+                // Refresh GC selector UI
                 await renderGCSelector();
-                console.log('✅ GC selector refreshed with auto-added clients');
 
                 // Validate and fix extracted data
                 const validStates = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
