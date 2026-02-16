@@ -4024,6 +4024,35 @@ ${fullText.substring(0, 40000)}`;
                 }
 
                 console.log('✅ Project saved successfully:', data.id);
+
+                // Log first_bid event if this is user's first project (fire and forget)
+                try {
+                    const { count } = await supabaseClient
+                        .from('projects')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('user_id', currentUser.id);
+
+                    if (count === 1) {
+                        // This is the first bid
+                        const userSettings = await getSettings();
+                        const signupDate = userSettings.created_at;
+                        const daysSinceSignup = signupDate ? Math.floor((Date.now() - new Date(signupDate).getTime()) / (1000 * 60 * 60 * 24)) : null;
+
+                        supabaseClient.from('admin_events').insert({
+                            event_type: 'first_bid',
+                            user_id: currentUser.id,
+                            event_data: {
+                                days_since_signup: daysSinceSignup,
+                                project_id: data.id,
+                                bid_score: project.scores?.final || null,
+                                building_type: cleanedExtracted.building_type
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Event logging failed:', e);
+                }
+
                 return { ...project, id: data.id };
             } catch (e) {
                 console.error('❌ saveProject error:', e);
@@ -5683,6 +5712,22 @@ ${fullText.substring(0, 40000)}`;
                 switchTab('analyze');
 
                 console.log('🎉 Onboarding complete!');
+
+                // Log signup event (fire and forget - don't block user flow)
+                try {
+                    supabaseClient.from('admin_events').insert({
+                        event_type: 'signup',
+                        user_id: currentUser.id,
+                        event_data: {
+                            source: onboardingData.acquisition_source || 'unknown',
+                            tier: 'beta',
+                            company_type: onboardingData.companyType,
+                            onboarding_completed_at: new Date().toISOString()
+                        }
+                    });
+                } catch (e) {
+                    console.warn('Event logging failed:', e);
+                }
 
                 // Show helpful keywords prompt
                 setTimeout(() => {
@@ -8869,6 +8914,25 @@ ${truncatedText}`;
                 timestamp: new Date().toISOString()
             };
 
+            // Log score_override event if user disagrees (fire and forget)
+            if (agreement !== 'agree') {
+                try {
+                    const overrideDirection = agreement === 'too_low' ? 'up' : (agreement === 'too_high' ? 'down' : null);
+                    supabaseClient.from('admin_events').insert({
+                        event_type: 'score_override',
+                        user_id: currentUser.id,
+                        event_data: {
+                            direction: overrideDirection,
+                            original_score: currentAnalysis.scores?.final || null,
+                            user_note: overrideNote,
+                            project_name: currentAnalysis.extracted?.project_name || null
+                        }
+                    });
+                } catch (e) {
+                    console.warn('Event logging failed:', e);
+                }
+            }
+
             // Show saving indicator
             const saveBtn = event.target;
             const originalText = saveBtn.innerHTML;
@@ -10998,6 +11062,23 @@ Respond now:`;
                     }).eq('id', id);
                     console.log('✅ Project date updated to:', dateToSave);
                 }
+
+                // Log outcome_recorded event (fire and forget)
+                try {
+                    supabaseClient.from('admin_events').insert({
+                        event_type: 'outcome_recorded',
+                        user_id: currentUser.id,
+                        event_data: {
+                            outcome: type,
+                            confidence: outcomeData.confidence,
+                            project_id: id,
+                            days_since_bid: updatedDate ? Math.floor((new Date() - new Date(updatedDate)) / (1000 * 60 * 60 * 24)) : null
+                        }
+                    });
+                } catch (e) {
+                    console.warn('Event logging failed:', e);
+                }
+
                 closeModal('outcomeModal');
 
                 // Force cache clear and reload
