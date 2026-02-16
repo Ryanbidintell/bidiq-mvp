@@ -12771,22 +12771,45 @@ Respond now:`;
 
                 // Check if onboarding is needed (only if user is authenticated)
                 const settings = await getSettings();
+
+                // SAFEGUARD: Check if user has any projects (if so, they completed onboarding)
+                let hasProjects = false;
+                if (currentUser && supabaseClient) {
+                    const { data: existingProjects } = await supabaseClient
+                        .from('projects')
+                        .select('id')
+                        .eq('user_id', currentUser.id)
+                        .limit(1);
+                    hasProjects = existingProjects && existingProjects.length > 0;
+                }
+
                 console.log('📋 loadAll - checking onboarding:', {
                     onboarding_completed: settings.onboarding_completed,
                     onboarding_type: typeof settings.onboarding_completed,
+                    hasProjects: hasProjects,
                     currentUser: !!currentUser,
                     userId: currentUser?.id
                 });
 
-                // Only show onboarding if explicitly NOT completed (must be false, not undefined)
-                if (settings.onboarding_completed !== true && currentUser && supabaseClient) {
+                // Only show onboarding if explicitly NOT completed AND user has no projects
+                if (settings.onboarding_completed !== true && !hasProjects && currentUser && supabaseClient) {
                     console.log('🎯 Showing onboarding because onboarding_completed =', settings.onboarding_completed);
                     renderOnboardingStep(1);
                     document.getElementById('onboardingModal').classList.add('active');
                     return; // Don't load other data until onboarding is complete
                 } else {
-                    console.log('✅ Skipping onboarding - onboarding_completed:', settings.onboarding_completed);
+                    console.log('✅ Skipping onboarding - onboarding_completed:', settings.onboarding_completed, 'hasProjects:', hasProjects);
                     document.getElementById('onboardingModal').classList.remove('active');
+
+                    // If user has projects but onboarding flag is false, fix it
+                    if (hasProjects && settings.onboarding_completed !== true) {
+                        console.log('🔧 Fixing onboarding flag for user with existing projects');
+                        await supabaseClient
+                            .from('user_settings')
+                            .update({ onboarding_completed: true })
+                            .eq('user_id', currentUser.id);
+                        settings.onboarding_completed = true;
+                    }
                 }
 
                 console.log('📥 Loading keywords...');
