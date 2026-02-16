@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BidIntell Admin Metrics</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f5f5f5;
+            color: #1a1a1a;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .metric-label {
+            font-size: 13px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .metric-change {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .metric-change.positive { color: #27AE60; }
+        .metric-change.negative { color: #E74C3C; }
+        .metric-change.neutral { color: #666; }
+
+        .section {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #1a1a1a;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        th {
+            font-weight: 600;
+            color: #666;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            color: #1a1a1a;
+        }
+
+        .status-pass {
+            color: #27AE60;
+            font-weight: 600;
+        }
+
+        .status-fail {
+            color: #E74C3C;
+            font-weight: 600;
+        }
+
+        .status-close {
+            color: #F39C12;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            background: #FEE;
+            border: 1px solid #E74C3C;
+            color: #C0392B;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 6px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .gate-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .gate-status {
+            font-size: 20px;
+        }
+
+        .gate-label {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .gate-value {
+            font-weight: 600;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 BidIntell Admin Metrics</h1>
+        <p class="subtitle">Founder dashboard - Updated in real-time</p>
+
+        <div id="error-container"></div>
+        <div id="loading" class="loading">Loading metrics...</div>
+        <div id="dashboard" style="display: none;">
+
+            <!-- 7 KEY METRICS -->
+            <div class="metrics-grid" id="metrics-grid"></div>
+
+            <!-- SECTION A: Churn Analysis -->
+            <div class="section">
+                <h2 class="section-title">📉 Churn Analysis (Segmented)</h2>
+                <table id="churn-table">
+                    <thead>
+                        <tr>
+                            <th>Segment</th>
+                            <th>Users 30d Ago</th>
+                            <th>Cancellations</th>
+                            <th>Churn Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- SECTION B: Override & Confidence Tracker -->
+            <div class="section">
+                <h2 class="section-title">🎯 Override & Confidence Tracker</h2>
+                <div class="stat-grid" id="override-stats"></div>
+            </div>
+
+            <!-- SECTION C: Revenue Detail -->
+            <div class="section">
+                <h2 class="section-title">💰 Revenue Detail</h2>
+                <div class="stat-grid" id="revenue-stats"></div>
+            </div>
+
+            <!-- SECTION D: Phase Gate Checklist -->
+            <div class="section">
+                <h2 class="section-title">🚦 Phase Gate Checklist</h2>
+                <h3 style="font-size: 16px; margin: 16px 0 12px; color: #666;">Phase 0: Beta Truth Validation</h3>
+                <div id="phase0-gates"></div>
+
+                <h3 style="font-size: 16px; margin: 24px 0 12px; color: #666;">Phase 1: PMF & Data Integrity</h3>
+                <div id="phase1-gates"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://qyvgzwyjmmfdgvwjazys.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5dmd6d3lqbW1mZGd2d2phenlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgzNDU4NjMsImV4cCI6MjA1MzkyMTg2M30.nsBzMn3zy_qjNNZ8cIlK3v1PKWYHzQwT2n7rq8wOcD0';
+        const ADMIN_EMAILS = ['ryan@fsikc.com', 'ryan@bidintell.ai'];
+
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+
+        // Pricing model
+        const PRICING = {
+            beta: 0,
+            starter: 4900, // $49 in cents
+            professional: 9900, // $99 in cents
+            starter_beta: 3430, // $34.30 (30% off)
+            professional_beta: 6930 // $69.30 (30% off)
+        };
+
+        async function checkAuth() {
+            const { data: { user }, error } = await supabase.auth.getUser();
+
+            if (error || !user) {
+                window.location.href = '/app.html';
+                return false;
+            }
+
+            if (!ADMIN_EMAILS.includes(user.email)) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error-container').innerHTML = `
+                    <div class="error">
+                        <strong>Access Denied</strong><br>
+                        This dashboard is only accessible to the admin account.
+                    </div>
+                `;
+                return false;
+            }
+
+            currentUser = user;
+            return true;
+        }
+
+        async function loadMetrics() {
+            try {
+                // Load all data in parallel
+                const [
+                    usersData,
+                    projectsData,
+                    eventsData,
+                    snapshotsData
+                ] = await Promise.all([
+                    supabase.from('user_settings').select('*'),
+                    supabase.from('projects').select('*'),
+                    supabase.from('admin_events').select('*'),
+                    supabase.from('admin_metrics_snapshots').select('*').order('snapshot_date', { ascending: false }).limit(30)
+                ]);
+
+                const users = usersData.data || [];
+                const projects = projectsData.data || [];
+                const events = eventsData.data || [];
+                const snapshots = snapshotsData.data || [];
+
+                // Calculate current metrics
+                const metrics = calculateMetrics(users, projects, events, snapshots);
+
+                // Render dashboard
+                renderMetricCards(metrics);
+                renderChurnAnalysis(users, events, snapshots);
+                renderOverrideStats(projects, events);
+                renderRevenueDetail(users, metrics);
+                renderPhaseGates(users, projects, events);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading metrics:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error-container').innerHTML = `
+                    <div class="error">
+                        <strong>Error loading metrics:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function calculateMetrics(users, projects, events, snapshots) {
+            const now = new Date();
+            const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+            // Active users (not cancelled)
+            const activeUsers = users.filter(u => u.subscription_status !== 'cancelled');
+
+            // Users by tier
+            const betaUsers = activeUsers.filter(u => u.subscription_tier === 'beta').length;
+            const starterUsers = activeUsers.filter(u => u.subscription_tier === 'starter').length;
+            const professionalUsers = activeUsers.filter(u => u.subscription_tier === 'professional').length;
+            const paidUsers = starterUsers + professionalUsers;
+
+            // Calculate MRR
+            let mrrCents = 0;
+            activeUsers.forEach(u => {
+                if (u.subscription_tier === 'starter') {
+                    mrrCents += u.is_beta_user ? PRICING.starter_beta : PRICING.starter;
+                } else if (u.subscription_tier === 'professional') {
+                    mrrCents += u.is_beta_user ? PRICING.professional_beta : PRICING.professional;
+                }
+            });
+
+            // Churn calculation
+            const cancellationEvents = events.filter(e =>
+                e.event_type === 'cancellation' &&
+                new Date(e.created_at) >= thirtyDaysAgo
+            ).length;
+
+            const paidUsers30DaysAgo = snapshots.length > 0 ?
+                (snapshots[snapshots.length - 1].paid_users || paidUsers) : paidUsers;
+
+            const churnRate = paidUsers30DaysAgo > 0 ?
+                (cancellationEvents / paidUsers30DaysAgo) * 100 : 0;
+
+            // Bids analyzed per user per month
+            const bidsLast30Days = projects.filter(p =>
+                new Date(p.created_at) >= thirtyDaysAgo
+            ).length;
+            const avgBidsPerUser = activeUsers.length > 0 ?
+                (bidsLast30Days / activeUsers.length) : 0;
+
+            // Outcome tracking rate
+            const projectsLast90Days = projects.filter(p =>
+                new Date(p.created_at) >= new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+            );
+            const projectsWithOutcome = projectsLast90Days.filter(p =>
+                p.outcome && p.outcome !== 'pending'
+            ).length;
+            const outcomeTrackingRate = projectsLast90Days.length > 0 ?
+                (projectsWithOutcome / projectsLast90Days.length) * 100 : 0;
+
+            // Activation funnel
+            const signupEvents = events.filter(e => e.event_type === 'signup');
+            const firstBidEvents = events.filter(e => e.event_type === 'first_bid');
+            const completedOnboarding = users.filter(u => u.onboarding_completed).length;
+            const analyzedFirstBid = firstBidEvents.length;
+            const returned7Days = projects.length; // Simplified
+            const analyzed3Plus = users.filter(u => {
+                const userProjects = projects.filter(p => p.user_id === u.user_id);
+                return userProjects.length >= 3;
+            }).length;
+
+            const activationFunnel = {
+                onboarding: users.length > 0 ? (completedOnboarding / users.length) * 100 : 0,
+                firstBid: completedOnboarding > 0 ? (analyzedFirstBid / completedOnboarding) * 100 : 0,
+                returned: analyzedFirstBid > 0 ? (returned7Days / analyzedFirstBid) * 100 : 0,
+                analyzed3Plus: users.length > 0 ? (analyzed3Plus / users.length) * 100 : 0
+            };
+
+            return {
+                totalUsers: activeUsers.length,
+                paidUsers,
+                betaUsers,
+                starterUsers,
+                professionalUsers,
+                mrrCents,
+                churnRate,
+                avgBidsPerUser,
+                outcomeTrackingRate,
+                activationFunnel,
+                bidsLast30Days,
+                cancellationEvents
+            };
+        }
+
+        function renderMetricCards(metrics) {
+            const mrr = (metrics.mrrCents / 100).toFixed(2);
+            const arr = (mrr * 12).toFixed(0);
+            const paidPercent = metrics.totalUsers > 0 ?
+                ((metrics.paidUsers / metrics.totalUsers) * 100).toFixed(0) : 0;
+
+            const cards = [
+                {
+                    label: 'MRR',
+                    value: `$${mrr}`,
+                    change: '+$0 (30d)', // Would calculate from snapshots
+                    changeType: 'neutral'
+                },
+                {
+                    label: 'Total / Paid Users',
+                    value: `${metrics.totalUsers} / ${metrics.paidUsers}`,
+                    change: `${paidPercent}% paid`,
+                    changeType: 'neutral'
+                },
+                {
+                    label: 'Monthly Churn',
+                    value: `${metrics.churnRate.toFixed(1)}%`,
+                    change: metrics.churnRate < 3 ? 'Healthy' : metrics.churnRate < 5 ? 'Watch' : 'High',
+                    changeType: metrics.churnRate < 3 ? 'positive' : metrics.churnRate < 5 ? 'neutral' : 'negative'
+                },
+                {
+                    label: 'Avg Bids/User/Month',
+                    value: metrics.avgBidsPerUser.toFixed(1),
+                    change: metrics.avgBidsPerUser >= 6 ? '✅ Target met' : '⚠️ Below target',
+                    changeType: metrics.avgBidsPerUser >= 6 ? 'positive' : 'negative'
+                },
+                {
+                    label: 'Outcome Tracking',
+                    value: `${metrics.outcomeTrackingRate.toFixed(0)}%`,
+                    change: metrics.outcomeTrackingRate >= 70 ? '✅ Target met' : '⚠️ Below target',
+                    changeType: metrics.outcomeTrackingRate >= 70 ? 'positive' : 'negative'
+                },
+                {
+                    label: 'Activation Funnel',
+                    value: `${metrics.activationFunnel.onboarding.toFixed(0)}% → ${metrics.activationFunnel.firstBid.toFixed(0)}%`,
+                    change: `→ ${metrics.activationFunnel.analyzed3Plus.toFixed(0)}% (3+ bids)`,
+                    changeType: 'neutral'
+                },
+                {
+                    label: 'Tier Distribution',
+                    value: `${metrics.betaUsers}β / ${metrics.starterUsers}S / ${metrics.professionalUsers}P`,
+                    change: 'Beta / Starter / Pro',
+                    changeType: 'neutral'
+                }
+            ];
+
+            document.getElementById('metrics-grid').innerHTML = cards.map(card => `
+                <div class="metric-card">
+                    <div class="metric-label">${card.label}</div>
+                    <div class="metric-value">${card.value}</div>
+                    <div class="metric-change ${card.changeType}">${card.change}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderChurnAnalysis(users, events, snapshots) {
+            const now = new Date();
+            const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+            // Simplistic churn calculation (would need historical data for accurate cohort analysis)
+            const segments = [
+                { name: 'Starter tier', users: users.filter(u => u.subscription_tier === 'starter').length, cancellations: 0 },
+                { name: 'Professional tier', users: users.filter(u => u.subscription_tier === 'professional').length, cancellations: 0 },
+                { name: 'Beta → Paid converts', users: users.filter(u => u.is_beta_user && u.subscription_tier !== 'beta').length, cancellations: 0 },
+                { name: 'Acquisition: Network', users: users.filter(u => u.acquisition_source === 'network').length, cancellations: 0 },
+                { name: 'Acquisition: LinkedIn', users: users.filter(u => u.acquisition_source === 'linkedin').length, cancellations: 0 },
+                { name: 'Acquisition: Referral', users: users.filter(u => u.acquisition_source === 'referral').length, cancellations: 0 },
+                { name: 'Acquisition: Other', users: users.filter(u => ['google', 'forum', 'conference', 'other'].includes(u.acquisition_source)).length, cancellations: 0 }
+            ];
+
+            const tbody = segments.map(seg => {
+                const churnRate = seg.users > 0 ? ((seg.cancellations / seg.users) * 100).toFixed(1) : '0.0';
+                return `
+                    <tr>
+                        <td>${seg.name}</td>
+                        <td>${seg.users}</td>
+                        <td>${seg.cancellations}</td>
+                        <td>${churnRate}%</td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.querySelector('#churn-table tbody').innerHTML = tbody;
+        }
+
+        function renderOverrideStats(projects, events) {
+            const overrideEvents = events.filter(e => e.event_type === 'score_override');
+            const outcomeEvents = events.filter(e => e.event_type === 'outcome_recorded');
+
+            const totalProjects = projects.length;
+            const overrideRate = totalProjects > 0 ? ((overrideEvents.length / totalProjects) * 100).toFixed(1) : '0.0';
+
+            const overridesUp = overrideEvents.filter(e => e.event_data?.direction === 'up').length;
+            const overridesDown = overrideEvents.filter(e => e.event_data?.direction === 'down').length;
+            const totalOverrides = overridesUp + overridesDown;
+
+            const upPercent = totalOverrides > 0 ? ((overridesUp / totalOverrides) * 100).toFixed(0) : '0';
+            const downPercent = totalOverrides > 0 ? ((overridesDown / totalOverrides) * 100).toFixed(0) : '0';
+
+            // Calculate avg confidence from outcomes
+            const confidenceValues = outcomeEvents
+                .map(e => e.event_data?.confidence)
+                .filter(c => c !== null && c !== undefined);
+            const avgConfidence = confidenceValues.length > 0 ?
+                (confidenceValues.reduce((sum, c) => sum + c, 0) / confidenceValues.length).toFixed(1) : '0.0';
+
+            const confidence4Plus = confidenceValues.filter(c => c >= 4).length;
+            const confidence4PlusRate = confidenceValues.length > 0 ?
+                ((confidence4Plus / confidenceValues.length) * 100).toFixed(0) : '0';
+
+            const stats = [
+                { label: 'Override rate', value: `${overrideRate}%` },
+                { label: 'Said score too high', value: `${downPercent}%` },
+                { label: 'Said score too low', value: `${upPercent}%` },
+                { label: 'Avg decision confidence', value: `${avgConfidence} / 5.0` },
+                { label: 'Confidence ≥4 rate', value: `${confidence4PlusRate}%` },
+                { label: 'Target (≥50%)', value: confidence4PlusRate >= 50 ? '✅ Met' : '⚠️ Below' }
+            ];
+
+            document.getElementById('override-stats').innerHTML = stats.map(stat => `
+                <div class="stat-item">
+                    <span class="stat-label">${stat.label}</span>
+                    <span class="stat-value">${stat.value}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderRevenueDetail(users, metrics) {
+            const mrr = metrics.mrrCents / 100;
+            const arr = mrr * 12;
+            const arpu = metrics.totalUsers > 0 ? (mrr / metrics.totalUsers) : 0;
+
+            const starterRevenue = metrics.starterUsers * (PRICING.starter / 100);
+            const proRevenue = metrics.professionalUsers * (PRICING.professional / 100);
+            const totalRevenue = starterRevenue + proRevenue;
+
+            const starterPercent = totalRevenue > 0 ? ((starterRevenue / totalRevenue) * 100).toFixed(0) : 0;
+            const proPercent = totalRevenue > 0 ? ((proRevenue / totalRevenue) * 100).toFixed(0) : 0;
+
+            const stripeFees = mrr * 0.029 + (metrics.paidUsers * 0.30);
+            const claudeCosts = metrics.bidsLast30Days * 0.50; // Estimate $0.50 per bid
+            const grossMargin = mrr > 0 ? (((mrr - stripeFees - claudeCosts) / mrr) * 100).toFixed(0) : 0;
+
+            const stats = [
+                { label: 'Current MRR', value: `$${mrr.toFixed(2)}` },
+                { label: 'ARR (MRR × 12)', value: `$${arr.toFixed(0)}` },
+                { label: 'MRR 30 days ago', value: `$${mrr.toFixed(2)}` }, // Would pull from snapshots
+                { label: 'MRR growth rate', value: '0.0%' }, // Would calculate from snapshots
+                { label: 'Avg revenue per user (ARPU)', value: `$${arpu.toFixed(2)}` },
+                { label: 'Revenue by tier: Starter', value: `$${starterRevenue.toFixed(0)} (${starterPercent}%)` },
+                { label: 'Revenue by tier: Professional', value: `$${proRevenue.toFixed(0)} (${proPercent}%)` },
+                { label: 'Stripe fees (est. 2.9% + $0.30)', value: `$${stripeFees.toFixed(2)}` },
+                { label: 'Claude API costs (est.)', value: `$${claudeCosts.toFixed(2)}` },
+                { label: 'Est. gross margin', value: `${grossMargin}%` }
+            ];
+
+            document.getElementById('revenue-stats').innerHTML = stats.map(stat => `
+                <div class="stat-item">
+                    <span class="stat-label">${stat.label}</span>
+                    <span class="stat-value">${stat.value}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderPhaseGates(users, projects, events) {
+            const completedOnboarding = users.filter(u => u.onboarding_completed).length;
+            const onboardingRate = users.length > 0 ? ((completedOnboarding / users.length) * 100).toFixed(0) : 0;
+
+            const firstBidEvents = events.filter(e => e.event_type === 'first_bid');
+            const firstBidWithin48h = firstBidEvents.filter(e => {
+                const days = e.event_data?.days_since_signup;
+                return days !== null && days !== undefined && days <= 2;
+            }).length;
+            const firstBidRate = firstBidEvents.length > 0 ? ((firstBidWithin48h / firstBidEvents.length) * 100).toFixed(0) : 0;
+
+            const overrideEvents = events.filter(e => e.event_type === 'score_override');
+            const overrideRate = projects.length > 0 ? ((overrideEvents.length / projects.length) * 100).toFixed(0) : 0;
+
+            const overridesWithNotes = overrideEvents.filter(e => e.event_data?.user_note && e.event_data.user_note.length > 5).length;
+            const notesRate = overrideEvents.length > 0 ? ((overridesWithNotes / overrideEvents.length) * 100).toFixed(0) : 0;
+
+            const outcomesRecorded = events.filter(e => e.event_type === 'outcome_recorded');
+            const projectsWithOutcome = projects.filter(p => p.outcome && p.outcome !== 'pending').length;
+            const outcomeRate = projects.length > 0 ? ((projectsWithOutcome / projects.length) * 100).toFixed(0) : 0;
+
+            const phase0Gates = [
+                { metric: 'Onboarding completion ≥80%', current: onboardingRate, target: 80, unit: '%' },
+                { metric: 'First bid analyzed within 48 hrs ≥70%', current: firstBidRate, target: 70, unit: '%' },
+                { metric: 'Manual override response rate ≥90%', current: overrideRate, target: 90, unit: '%' },
+                { metric: 'Override notes filled when disagreeing ≥50%', current: notesRate, target: 50, unit: '%' },
+                { metric: 'Outcome recorded within 45 days ≥70%', current: outcomeRate, target: 70, unit: '%' },
+                { metric: 'User says score "makes sense" ≥7/10', current: 0, target: 7, unit: '/10', manual: true }
+            ];
+
+            // Phase 1 gates
+            const weeklyActiveEstimators = 0; // Would need weekly activity tracking
+            const avgBidsPerUser = (metrics.bidsLast30Days / users.length).toFixed(1);
+            const confidence4Plus = events.filter(e => e.event_type === 'outcome_recorded' && e.event_data?.confidence >= 4).length;
+            const confidence4PlusRate = outcomesRecorded.length > 0 ? ((confidence4Plus / outcomesRecorded.length) * 100).toFixed(0) : 0;
+
+            const phase1Gates = [
+                { metric: 'Weekly active estimators ≥60% of paid users', current: 0, target: 60, unit: '%', manual: true },
+                { metric: 'Bids analyzed per user/month ≥6', current: avgBidsPerUser, target: 6, unit: '' },
+                { metric: 'Outcome confidence ≥4 in ≥50% of outcomes', current: confidence4PlusRate, target: 50, unit: '%' },
+                { metric: '"Would be painful to lose" ≥40%', current: 0, target: 40, unit: '%', manual: true },
+                { metric: 'Monthly churn <3%', current: metrics.churnRate.toFixed(1), target: 3, unit: '%', inverse: true },
+                { metric: 'Users recording declines ≥80%', current: 0, target: 80, unit: '%', manual: true }
+            ];
+
+            function renderGates(gates, containerId) {
+                const html = gates.map(gate => {
+                    const current = parseFloat(gate.current);
+                    const target = parseFloat(gate.target);
+                    const passing = gate.inverse ? current < target : current >= target;
+                    const close = Math.abs(current - target) / target < 0.15;
+                    const status = passing ? '✅ PASS' : close ? '⚠️ CLOSE' : '❌ FAIL';
+                    const statusClass = passing ? 'status-pass' : close ? 'status-close' : 'status-fail';
+
+                    return `
+                        <div class="gate-item">
+                            <span class="gate-status">${passing ? '✅' : close ? '⚠️' : '❌'}</span>
+                            <span class="gate-label">${gate.metric}${gate.manual ? ' (manual tracking)' : ''}</span>
+                            <span class="gate-value ${statusClass}">
+                                ${current}${gate.unit} ${gate.inverse ? '<' : '/'} ${target}${gate.unit}
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById(containerId).innerHTML = html;
+            }
+
+            renderGates(phase0Gates, 'phase0-gates');
+            renderGates(phase1Gates, 'phase1-gates');
+        }
+
+        // Initialize
+        (async () => {
+            const isAuth = await checkAuth();
+            if (isAuth) {
+                await loadMetrics();
+            }
+        })();
+    </script>
+</body>
+</html>
