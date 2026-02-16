@@ -3311,18 +3311,27 @@ ${fullText.substring(0, 40000)}`;
 
                 const risks = JSON.parse(content.trim());
 
+                // Map risk_type to type (normalize the response format)
+                const normalizedRisks = risks.map(r => ({
+                    type: r.risk_type || r.type || 'unknown_risk',
+                    confidence: r.confidence || 0.5,
+                    evidence: r.evidence || r.description || '',
+                    location: r.location || r.page || '',
+                    page: r.page || r.location || ''
+                }));
+
                 // Categorize by confidence tier
                 const risksByTier = {
-                    high: risks.filter(r => r.confidence >= 0.80),
-                    medium: risks.filter(r => r.confidence >= 0.50 && r.confidence < 0.80),
-                    low: risks.filter(r => r.confidence < 0.50)
+                    high: normalizedRisks.filter(r => r.confidence >= 0.80),
+                    medium: normalizedRisks.filter(r => r.confidence >= 0.50 && r.confidence < 0.80),
+                    low: normalizedRisks.filter(r => r.confidence < 0.50)
                 };
 
                 return {
                     hasContractLanguage: true,
-                    risksDetected: risks,
+                    risksDetected: normalizedRisks,
                     risksByTier: risksByTier,
-                    totalRisks: risks.length
+                    totalRisks: normalizedRisks.length
                 };
 
             } catch (error) {
@@ -7669,18 +7678,25 @@ ${truncatedText}`;
                 };
 
                 const risksHtml = contractRisks.risksDetected.map(risk => {
-                    const riskType = risk.type || 'Unknown Risk';
-                    const riskLabel = riskLabels[riskType] || riskType;
+                    const riskType = risk.type || 'unknown_risk';
+                    const riskLabel = riskLabels[riskType] || riskType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                     const confidence = risk.confidence ? `${(risk.confidence * 100).toFixed(0)}% confidence` : '';
-                    const level = risk.level || risk.severity || 'moderate';
+
+                    // Determine level based on confidence
+                    const confValue = risk.confidence || 0.5;
+                    const level = confValue >= 0.80 ? 'high' : confValue >= 0.50 ? 'moderate' : 'low';
                     const levelIcon = level === 'high' ? '🔴' : level === 'moderate' ? '⚪' : '🟡';
+
+                    // Use evidence field for context
+                    const context = risk.evidence || risk.context || '';
+                    const location = risk.location || '';
 
                     return `
                         <div style="margin-bottom: 8px; padding: 8px; background: var(--bg-secondary); border-radius: 6px;">
                             <div style="font-weight: 600; color: var(--text-primary);">
                                 ${levelIcon} ${riskLabel}${confidence ? ` <span style="color: var(--text-muted); font-weight: 400;">(${confidence})</span>` : ''}
                             </div>
-                            ${risk.context ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">"${risk.context}"</div>` : ''}
+                            ${context ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">"${context}"${location ? ` — ${location}` : ''}</div>` : ''}
                         </div>
                     `;
                 }).join('');
