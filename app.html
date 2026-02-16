@@ -7070,6 +7070,12 @@ ${truncatedText}`;
                 // Layer 0: AI Contract Risk Detection
                 const contractRisks = await detectContractRisks(fullText);
 
+                // Fix: Update has_contract_language based on actual detection results
+                // The AI extraction might return false, but detectContractRisks is more accurate
+                if (contractRisks.hasContractLanguage) {
+                    extracted.has_contract_language = true;
+                }
+
                 updateProgress(58, 'Identifying building type...');
 
                 // Layer 0: Building Type Extraction
@@ -9903,6 +9909,17 @@ ${truncatedText}`;
 
                 const extracted = await extractWithAI(combinedText);
 
+                // Step 2.5: Re-detect contract risks from new documents
+                progressText.textContent = 'Detecting contract risks...';
+                progressBar.style.width = '60%';
+
+                const contractRisks = await detectContractRisks(combinedText);
+
+                // Fix: Update has_contract_language based on actual detection results
+                if (contractRisks.hasContractLanguage) {
+                    extracted.has_contract_language = true;
+                }
+
                 // Step 3: Recalculate scores
                 progressText.textContent = 'Calculating scores...';
                 progressBar.style.width = '70%';
@@ -9916,7 +9933,7 @@ ${truncatedText}`;
                     project.goodFound || [],
                     project.badFound || [],
                     project.tradesFound || [],
-                    project.contractRisks || [],
+                    contractRisks,  // Use NEW contract risks, not old ones
                     null
                 );
 
@@ -9937,6 +9954,7 @@ ${truncatedText}`;
                     extracted_data: extracted,
                     full_text: combinedText, // Save new full text
                     scores: scores,
+                    contract_risks: contractRisks,  // Save NEW contract risks
                     validation_status: validationStatus,
                     ai_advisor_output: aiAdvisorOutput,
                     intelligence_tags: intelligenceTags,
@@ -9952,6 +9970,7 @@ ${truncatedText}`;
                     full_text: combinedText,
                     scores,
                     distance: scores.distance,
+                    contractRisks: contractRisks,  // Include NEW contract risks
                     validation_status: validationStatus,
                     ai_advisor_output: aiAdvisorOutput,
                     intelligence_tags: intelligenceTags
