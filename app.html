@@ -3356,31 +3356,83 @@ Return JSON with this exact format:
                 };
             }
 
-            // Use Claude to detect specific contract risks with confidence scores
-            const prompt = `Analyze the following construction contract language and identify specific risks. For each risk, provide a confidence score (0.0-1.0) indicating how clearly the risky language appears.
+            // Use Claude to detect specific contract risks with semantic understanding
+            const prompt = `You are a construction contract risk analyst specializing in subcontractor agreements.
 
-RISK TYPES TO DETECT:
-1. pay_if_paid - "Pay if paid" or "Pay when paid" clauses
-2. liquidated_damages - Liquidated damages clauses
-3. indemnification - Broad indemnification or hold harmless language
-4. no_damages_delay - "No damages for delay" clauses
-5. consequential_waiver - Waiver of consequential damages
-6. high_retainage - Retainage over 10%
-7. slow_payment - Payment terms over 45 days
-8. termination_convenience - Termination for convenience clauses
-9. excessive_warranty - Warranty periods over 2 years
+Analyze the following contract text and identify ALL risk clauses that would concern a subcontractor.
 
-Return ONLY a valid JSON array:
-[
-  {
-    "risk_type": "pay_if_paid",
-    "confidence": 0.95,
-    "evidence": "Brief quote showing the risky language",
-    "location": "Section reference if available"
-  }
-]
+CRITICAL DETECTION RULES:
+1. Clauses often do NOT use their common names. "Paid-when-paid" never literally appears — look for the LEGAL MECHANISM instead.
+2. Pay attention to WHO bears the risk in each clause.
+3. Distinguish between severity levels based on legal enforceability and financial impact.
 
-Return [] if no risks are clearly present.
+CLAUSE LIBRARY — What to look for and HOW they actually appear:
+
+## PAY-IF-PAID (HIGHEST RISK)
+Common names: pay-if-paid, conditional payment
+What it really says: "condition precedent of payment by the Owner" or "only with funds received from Owner" or "subject to the express condition precedent of payment therefor by the Owner"
+Why it matters: Contractor has ZERO obligation to pay sub if owner doesn't pay. Sub bears owner's credit risk.
+Key distinguisher: Uses "condition precedent" language. This is legally stronger than pay-when-paid.
+
+## PAY-WHEN-PAID (HIGH RISK)
+Common names: pay-when-paid, timing of payment
+What it really says: "payment within X days after contractor receives payment from owner" or "payment shall be made when contractor receives payment"
+Why it matters: Creates timing dependency but contractor still ultimately owes the money.
+Key distinguisher: Sets payment TIMING but doesn't eliminate the obligation entirely.
+
+## NO-DAMAGE-FOR-DELAY (HIGH RISK)
+Common names: no damage for delay, delay waiver
+What it really says: "not entitled to claim cost reimbursement for delay except to the limited extent contractor has recovered from owner" or "extension of time shall be the sole remedy"
+Why it matters: Sub can't recover costs when GC causes delays. Only gets time, not money.
+
+## BROAD FORM INDEMNIFICATION (HIGH RISK)
+What it really says: "indemnify, hold harmless and defend contractor... from and against any and all claims" — especially dangerous when it covers contractor's own negligence.
+Why it matters: Sub pays for contractor's mistakes. May be unenforceable in some states.
+
+## FLOW-DOWN / INCORPORATION BY REFERENCE (MEDIUM RISK)
+What it really says: "bound by all terms of the general contract" or "prime contract terms are incorporated herein"
+Why it matters: Sub inherits risks from a contract they may never have seen.
+
+## CONSEQUENTIAL DAMAGES WAIVER (MEDIUM RISK - if one-sided)
+What it really says: "waives all claims for lost profit, home office overhead, and indirect damages"
+Why it matters: If only the sub waives (not mutual), sub can't recover real losses.
+
+## JURY TRIAL WAIVER (MEDIUM RISK)
+What it really says: "expressly agrees to waive right to trial by jury"
+
+## LIQUIDATED DAMAGES FLOW-DOWN (HIGH RISK)
+What it really says: "subcontractor shall be liable for liquidated damages" or LD amounts passed through
+
+## TERMINATION FOR CONVENIENCE (MEDIUM RISK)
+What it really says: "contractor may terminate without cause" — check if sub gets profit on unperformed work
+
+## CHANGE ORDER RESTRICTIONS (MEDIUM RISK)
+What it really says: "notice within X hours/days" with very short windows, or "failure to notify constitutes waiver"
+
+Respond in this exact JSON format:
+{
+  "risks_found": [
+    {
+      "clause_type": "pay_if_paid",
+      "severity": "high",
+      "classification": "pay-if-paid (condition precedent)",
+      "exact_quote": "the first 20-30 words of the actual clause text...",
+      "page_reference": "estimated page or section if detectable",
+      "plain_english": "What this means for the subcontractor in one sentence"
+    }
+  ],
+  "overall_risk_level": "high",
+  "risk_summary": "2-3 sentence summary of the contract's overall risk profile for a subcontractor",
+  "risk_score_penalty": 20
+}
+
+The risk_score_penalty should be:
+- 0-5: Standard/fair contract terms
+- 6-15: Moderately aggressive, common in commercial construction
+- 16-25: Very aggressive, multiple high-risk clauses
+- 26-30: Extremely aggressive, recommend legal review before bidding
+
+IMPORTANT: If you detect a pay-if-paid clause with "condition precedent" language, ALWAYS classify it as pay-if-paid (not pay-when-paid). This distinction matters legally.
 
 Contract text:
 ${fullText.substring(0, 40000)}`;
@@ -3391,29 +3443,37 @@ ${fullText.substring(0, 40000)}`;
                 const content = await callAI('detect_contract_risks', fullText.substring(0, 40000), prompt);
                 console.log('📨 AI response received:', content.substring(0, 500));
 
-                // Parse JSON
-                if (content.includes('```')) {
-                    const match = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-                    if (match) content = match[1];
+                // Parse JSON - strip markdown if present
+                let jsonStr = content.trim();
+                if (jsonStr.includes('```')) {
+                    const match = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+                    if (match) jsonStr = match[1].trim();
                 }
 
-                const risks = safeJSONParse(content.trim());
-                console.log('✅ Parsed contract risks:', risks);
+                const response = safeJSONParse(jsonStr);
+                console.log('✅ Parsed contract risk response:', response);
 
-                // Map risk_type to type (normalize the response format)
-                const normalizedRisks = risks.map(r => ({
-                    type: r.risk_type || r.type || 'unknown_risk',
-                    confidence: r.confidence || 0.5,
-                    evidence: r.evidence || r.description || '',
-                    location: r.location || r.page || '',
-                    page: r.page || r.location || ''
+                // Extract risks from new format
+                const risksArray = response.risks_found || response.risks || response || [];
+                const riskScorePenalty = response.risk_score_penalty || 0;
+                const overallRiskLevel = response.overall_risk_level || 'medium';
+                const riskSummary = response.risk_summary || '';
+
+                // Normalize to internal format
+                const normalizedRisks = risksArray.map(r => ({
+                    type: r.clause_type || r.risk_type || r.type || 'unknown_risk',
+                    severity: r.severity || 'medium',
+                    classification: r.classification || r.type || 'Unknown',
+                    evidence: r.exact_quote || r.evidence || r.description || '',
+                    location: r.page_reference || r.location || r.page || '',
+                    plainEnglish: r.plain_english || ''
                 }));
 
-                // Categorize by confidence tier
+                // Categorize by severity tier
                 const risksByTier = {
-                    high: normalizedRisks.filter(r => r.confidence >= 0.80),
-                    medium: normalizedRisks.filter(r => r.confidence >= 0.50 && r.confidence < 0.80),
-                    low: normalizedRisks.filter(r => r.confidence < 0.50)
+                    high: normalizedRisks.filter(r => r.severity === 'high'),
+                    medium: normalizedRisks.filter(r => r.severity === 'medium'),
+                    low: normalizedRisks.filter(r => r.severity === 'low')
                 };
 
                 console.log('🎯 Contract risk detection complete:', {
@@ -3421,14 +3481,18 @@ ${fullText.substring(0, 40000)}`;
                     high: risksByTier.high.length,
                     medium: risksByTier.medium.length,
                     low: risksByTier.low.length,
-                    risks: normalizedRisks.map(r => ({ type: r.type, confidence: r.confidence }))
+                    penalty: riskScorePenalty,
+                    risks: normalizedRisks.map(r => ({ type: r.type, severity: r.severity, classification: r.classification }))
                 });
 
                 return {
                     hasContractLanguage: true,
                     risksDetected: normalizedRisks,
                     risksByTier: risksByTier,
-                    totalRisks: normalizedRisks.length
+                    totalRisks: normalizedRisks.length,
+                    riskScorePenalty: riskScorePenalty,
+                    overallRiskLevel: overallRiskLevel,
+                    riskSummary: riskSummary
                 };
 
             } catch (error) {
@@ -7859,48 +7923,84 @@ ${truncatedText}`;
 
                 const riskLabels = {
                     pay_if_paid: 'Pay-if-Paid',
-                    liquidated_damages: 'Liquidated Damages',
-                    indemnification: 'Broad Indemnification',
+                    pay_when_paid: 'Pay-When-Paid',
+                    liquidated_damages: 'Liquidated Damages Flow-Down',
+                    indemnification: 'Broad Form Indemnification',
                     no_damages_delay: 'No Damages for Delay',
-                    consequential_waiver: 'Consequential Waiver',
+                    no_damage_for_delay: 'No Damages for Delay',
+                    consequential_waiver: 'Consequential Damages Waiver',
+                    consequential_damages_waiver: 'Consequential Damages Waiver',
                     high_retainage: 'High Retainage',
-                    slow_payment: 'Slow Payment',
+                    retainage: 'Retainage Terms',
+                    slow_payment: 'Slow Payment Terms',
                     termination_convenience: 'Termination for Convenience',
-                    excessive_warranty: 'Excessive Warranty',
-                    insurance_requirements: 'High Insurance'
+                    excessive_warranty: 'Excessive Warranty Period',
+                    insurance_requirements: 'High Insurance Requirements',
+                    flow_down: 'Flow-Down / Incorporation by Reference',
+                    jury_waiver: 'Jury Trial Waiver',
+                    jury_trial_waiver: 'Jury Trial Waiver',
+                    dispute_resolution: 'Binding Arbitration',
+                    change_order_restrictions: 'Change Order Notice Restrictions'
                 };
 
                 const risksHtml = contractRisks.risksDetected.map(risk => {
                     const riskType = risk.type || 'unknown_risk';
                     const riskLabel = riskLabels[riskType] || riskType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                    const confidence = risk.confidence ? `${(risk.confidence * 100).toFixed(0)}% confidence` : '';
 
-                    // Determine level based on confidence
-                    const confValue = risk.confidence || 0.5;
-                    const level = confValue >= 0.80 ? 'high' : confValue >= 0.50 ? 'moderate' : 'low';
-                    const levelIcon = level === 'high' ? '🔴' : level === 'moderate' ? '⚪' : '🟡';
+                    // Use severity from AI response
+                    const severity = risk.severity || 'medium';
+                    const levelIcon = severity === 'high' ? '🔴' : severity === 'medium' ? '⚪' : '🟡';
+                    const levelLabel = severity === 'high' ? 'HIGH RISK' : severity === 'medium' ? 'MODERATE' : 'LOW RISK';
 
-                    // Use evidence field for context
-                    const context = risk.evidence || risk.context || '';
+                    // Show classification if available (e.g., "pay-if-paid (condition precedent)")
+                    const classification = risk.classification || '';
+
+                    // Show plain English explanation
+                    const plainEnglish = risk.plainEnglish || '';
+
+                    // Show exact quote from contract
+                    const exactQuote = risk.evidence || '';
                     const location = risk.location || '';
 
                     return `
-                        <div style="margin-bottom: 8px; padding: 8px; background: var(--bg-secondary); border-radius: 6px;">
-                            <div style="font-weight: 600; color: var(--text-primary);">
-                                ${levelIcon} ${riskLabel}${confidence ? ` <span style="color: var(--text-muted); font-weight: 400;">(${confidence})</span>` : ''}
+                        <div style="margin-bottom: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; border-left: 3px solid ${severity === 'high' ? 'var(--danger)' : severity === 'medium' ? 'var(--warning)' : 'var(--text-muted)'};">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                <span style="font-size: 16px;">${levelIcon}</span>
+                                <span style="font-weight: 600; color: var(--text-primary);">${riskLabel}</span>
+                                <span style="color: var(--text-muted); font-size: 11px; font-weight: 500; text-transform: uppercase;">${levelLabel}</span>
                             </div>
-                            ${context ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">"${context}"${location ? ` — ${location}` : ''}</div>` : ''}
+                            ${classification && classification !== riskLabel ? `<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; font-style: italic;">${classification}</div>` : ''}
+                            ${plainEnglish ? `<div style="font-size: 13px; color: var(--text-primary); margin-bottom: 8px;">${plainEnglish}</div>` : ''}
+                            ${exactQuote ? `<div style="font-size: 11px; color: var(--text-muted); padding: 8px; background: rgba(0,0,0,0.05); border-radius: 4px; font-family: monospace; line-height: 1.4;">"${exactQuote.substring(0, 150)}${exactQuote.length > 150 ? '...' : ''}"${location ? ` — ${location}` : ''}</div>` : ''}
                         </div>
                     `;
                 }).join('');
 
+                // Show overall risk summary if available
+                const summaryHtml = contractRisks.riskSummary ? `
+                    <div style="font-size: 13px; color: var(--text-primary); margin: 8px 0; line-height: 1.5;">
+                        ${contractRisks.riskSummary}
+                    </div>
+                ` : '';
+
+                // Show score penalty if available
+                const penaltyHtml = contractRisks.riskScorePenalty ? `
+                    <div style="font-size: 12px; color: var(--danger); margin-top: 8px; font-weight: 500;">
+                        Score penalty: -${contractRisks.riskScorePenalty} points
+                    </div>
+                ` : '';
+
                 const html = `
                     <div style="margin-top:12px;padding:12px;background:rgba(239,68,68,0.1);border-radius:var(--radius);border-left:4px solid var(--danger);">
                         <strong style="color:var(--danger);">⚠️ Contract Risks Detected</strong>
-                        <div style="font-size: 13px; color: var(--text-secondary); margin: 8px 0 12px 0;">
+                        <div style="font-size: 13px; color: var(--text-secondary); margin: 8px 0 4px 0;">
                             These clauses may increase project risk. Review carefully before bidding.
                         </div>
-                        ${risksHtml}
+                        ${summaryHtml}
+                        ${penaltyHtml}
+                        <div style="margin-top: 12px;">
+                            ${risksHtml}
+                        </div>
                     </div>
                 `;
 
