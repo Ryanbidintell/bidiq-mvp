@@ -2235,7 +2235,7 @@
             <!-- Progress Bar -->
             <div style="padding: 16px 24px 0; background: var(--bg-secondary);">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="font-size: 12px; color: var(--text-muted);">Step <span id="onboardingCurrentStep">1</span> of 10</span>
+                    <span style="font-size: 12px; color: var(--text-muted);">Step <span id="onboardingCurrentStep">1</span> of 11</span>
                     <span style="font-size: 12px; color: var(--text-muted);"><span id="onboardingProgress">14</span>% complete</span>
                 </div>
                 <div style="height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden;">
@@ -2886,7 +2886,8 @@
             aiAdvisorName: 'Sam',
             aiAdvisorTone: 'supportive',
             gcsAdded: 0,
-            sampleBidUploaded: false
+            sampleBidUploaded: false,
+            acquisition_source: null  // How user heard about BidIntell
         };
 
         // Helper function to get ISO week number
@@ -5005,15 +5006,15 @@ ${fullText.substring(0, 40000)}`;
             const skipBtn = document.getElementById('onboardingSkipBtn');
 
             // Update progress
-            const progress = Math.round((step / 10) * 100);
+            const progress = Math.round((step / 11) * 100);
             document.getElementById('onboardingCurrentStep').textContent = step;
             document.getElementById('onboardingProgress').textContent = progress;
             document.getElementById('onboardingProgressBar').style.width = progress + '%';
 
             // Show/hide back button
             backBtn.style.display = step === 1 ? 'none' : 'inline-flex';
-            skipBtn.style.display = step === 10 ? 'none' : 'inline-block';
-            nextBtn.textContent = step === 10 ? 'Complete Setup 🎉' : 'Next →';
+            skipBtn.style.display = step === 11 ? 'none' : 'inline-block';
+            nextBtn.textContent = step === 11 ? 'Complete Setup 🎉' : 'Next →';
 
             // Render step content
             if (step === 1) {
@@ -5119,6 +5120,36 @@ ${fullText.substring(0, 40000)}`;
                     }
                 }, 100);
             } else if (step === 3) {
+                // NEW STEP 3: Acquisition Source
+                body.innerHTML = `
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">👋</div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 12px;">How did you hear about BidIntell?</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 32px;">This helps us understand what's working (optional - you can skip)</p>
+                        <div style="max-width: 500px; margin: 0 auto;">
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                ${[
+                                    { value: 'network', icon: '🤝', label: 'My professional network', desc: 'Someone I know recommended it' },
+                                    { value: 'linkedin', icon: '💼', label: 'LinkedIn', desc: 'Saw a post or ad on LinkedIn' },
+                                    { value: 'referral', icon: '🎯', label: 'Referral from another user', desc: 'An existing BidIntell user referred me' },
+                                    { value: 'google', icon: '🔍', label: 'Google search', desc: 'Found it searching online' },
+                                    { value: 'forum', icon: '💬', label: 'Construction forum/Reddit', desc: 'Saw it mentioned in a community' },
+                                    { value: 'conference', icon: '🎪', label: 'Conference or event', desc: 'Met the team or saw a booth' },
+                                    { value: 'other', icon: '✨', label: 'Other', desc: 'Found it another way' }
+                                ].map(opt => `
+                                    <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.acquisition_source === opt.value ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
+                                        <input type="radio" name="onboarding_acquisitionSource" value="${opt.value}" ${onboardingData.acquisition_source === opt.value ? 'checked' : ''} onchange="onboardingData.acquisition_source = this.value; renderOnboardingStep(3); setTimeout(() => onboardingNext(), 300);" style="margin-top: 4px; accent-color: var(--accent);">
+                                        <div style="flex: 1; text-align: left;">
+                                            <div style="font-size: 16px; margin-bottom: 4px;">${opt.icon} <strong>${opt.label}</strong></div>
+                                            <div style="font-size: 13px; color: var(--text-muted);">${opt.desc}</div>
+                                        </div>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (step === 4) {
                 if (onboardingData.companyType === 'subcontractor') {
                     // Show CSI divisions for subcontractors
                     body.innerHTML = `
@@ -5177,7 +5208,7 @@ ${fullText.substring(0, 40000)}`;
                         </div>
                     `;
                 }
-            } else if (step === 4) {
+            } else if (step === 5) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
                         <div style="font-size: 64px; margin-bottom: 16px;">📍</div>
@@ -5198,7 +5229,7 @@ ${fullText.substring(0, 40000)}`;
                         </div>
                     </div>
                 `;
-            } else if (step === 5) {
+            } else if (step === 6) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
                         <div style="font-size: 64px; margin-bottom: 16px;">⚖️</div>
@@ -5212,7 +5243,7 @@ ${fullText.substring(0, 40000)}`;
                                     { value: 'high', icon: '🚀', label: 'High Tolerance', desc: 'Only warn about major red flags - I can handle risk' }
                                 ].map(opt => `
                                     <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.riskTolerance === opt.value ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
-                                        <input type="radio" name="onboarding_riskTolerance" value="${opt.value}" ${onboardingData.riskTolerance === opt.value ? 'checked' : ''} onchange="onboardingData.riskTolerance = this.value; renderOnboardingStep(5); setTimeout(() => onboardingNext(), 300);" style="margin-top: 4px; accent-color: var(--accent);">
+                                        <input type="radio" name="onboarding_riskTolerance" value="${opt.value}" ${onboardingData.riskTolerance === opt.value ? 'checked' : ''} onchange="onboardingData.riskTolerance = this.value; renderOnboardingStep(6); setTimeout(() => onboardingNext(), 300);" style="margin-top: 4px; accent-color: var(--accent);">
                                         <div style="flex: 1; text-align: left;">
                                             <div style="font-size: 16px; margin-bottom: 4px;">${opt.icon} <strong>${opt.label}</strong></div>
                                             <div style="font-size: 13px; color: var(--text-muted);">${opt.desc}</div>
@@ -5223,7 +5254,7 @@ ${fullText.substring(0, 40000)}`;
                         </div>
                     </div>
                 `;
-            } else if (step === 6) {
+            } else if (step === 7) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
                         <div style="font-size: 64px; margin-bottom: 16px;">🏗️</div>
@@ -5237,7 +5268,7 @@ ${fullText.substring(0, 40000)}`;
                                     { value: 'slow', icon: '🟡', label: 'At Capacity', desc: 'We\'re full - only show best fits' }
                                 ].map(opt => `
                                     <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.capacity === opt.value ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
-                                        <input type="radio" name="onboarding_capacity" value="${opt.value}" ${onboardingData.capacity === opt.value ? 'checked' : ''} onchange="onboardingData.capacity = this.value; renderOnboardingStep(6); setTimeout(() => onboardingNext(), 300);" style="margin-top: 4px; accent-color: var(--accent);">
+                                        <input type="radio" name="onboarding_capacity" value="${opt.value}" ${onboardingData.capacity === opt.value ? 'checked' : ''} onchange="onboardingData.capacity = this.value; renderOnboardingStep(7); setTimeout(() => onboardingNext(), 300);" style="margin-top: 4px; accent-color: var(--accent);">
                                         <div style="flex: 1; text-align: left;">
                                             <div style="font-size: 16px; margin-bottom: 4px;">${opt.icon} <strong>${opt.label}</strong></div>
                                             <div style="font-size: 13px; color: var(--text-muted);">${opt.desc}</div>
@@ -5248,7 +5279,7 @@ ${fullText.substring(0, 40000)}`;
                         </div>
                     </div>
                 `;
-            } else if (step === 7) {
+            } else if (step === 8) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
                         <div style="font-size: 64px; margin-bottom: 16px;">🤖</div>
@@ -5283,7 +5314,7 @@ ${fullText.substring(0, 40000)}`;
                                         { value: 'data_nerd', icon: '📊', label: 'Data Nerd', desc: 'Analytical, statistical, loves the numbers' }
                                     ].map(opt => `
                                         <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.aiAdvisorTone === opt.value ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
-                                            <input type="radio" name="onboarding_aiAdvisorTone" value="${opt.value}" ${onboardingData.aiAdvisorTone === opt.value ? 'checked' : ''} onchange="onboardingData.aiAdvisorTone = this.value; renderOnboardingStep(7);" style="margin-top: 4px; accent-color: var(--accent);">
+                                            <input type="radio" name="onboarding_aiAdvisorTone" value="${opt.value}" ${onboardingData.aiAdvisorTone === opt.value ? 'checked' : ''} onchange="onboardingData.aiAdvisorTone = this.value; renderOnboardingStep(8);" style="margin-top: 4px; accent-color: var(--accent);">
                                             <div style="flex: 1; text-align: left;">
                                                 <div style="font-size: 16px; margin-bottom: 4px;">${opt.icon} <strong>${opt.label}</strong></div>
                                                 <div style="font-size: 13px; color: var(--text-muted);">${opt.desc}</div>
@@ -5299,7 +5330,7 @@ ${fullText.substring(0, 40000)}`;
                         </div>
                     </div>
                 `;
-            } else if (step === 8) {
+            } else if (step === 9) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
                         <div style="font-size: 64px; margin-bottom: 16px;">🤝</div>
@@ -5333,7 +5364,7 @@ ${fullText.substring(0, 40000)}`;
                         </div>
                     </div>
                 `;
-            } else if (step === 9) {
+            } else if (step === 10) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
                         <div style="font-size: 64px; margin-bottom: 16px;">🤝</div>
@@ -5359,7 +5390,7 @@ ${fullText.substring(0, 40000)}`;
                             <div class="form-group">
                                 <label class="form-label">Your Rating</label>
                                 <div style="display: flex; gap: 8px; font-size: 32px; margin-top: 8px;">
-                                    ${[1,2,3,4,5].map(i => `<span onclick="onboardingData.gcRating = ${i}; renderOnboardingStep(9);" style="cursor: pointer; color: ${i <= (onboardingData.gcRating || 3) ? 'var(--warning)' : 'var(--text-muted)'};">★</span>`).join('')}
+                                    ${[1,2,3,4,5].map(i => `<span onclick="onboardingData.gcRating = ${i}; renderOnboardingStep(10);" style="cursor: pointer; color: ${i <= (onboardingData.gcRating || 3) ? 'var(--warning)' : 'var(--text-muted)'};">★</span>`).join('')}
                                 </div>
                                 <div class="form-hint">How would you rate working with this client?</div>
                             </div>
@@ -5369,7 +5400,7 @@ ${fullText.substring(0, 40000)}`;
                         </div>
                     </div>
                 `;
-            } else if (step === 10) {
+            } else if (step === 11) {
                 const companyTypeLabel = onboardingData.companyType === 'subcontractor' ? 'Subcontractor' :
                                         onboardingData.companyType === 'distributor' ? 'Distributor' : 'Manufacturer Rep';
                 const tradesOrProducts = onboardingData.companyType === 'subcontractor' ?
@@ -5604,6 +5635,7 @@ ${fullText.substring(0, 40000)}`;
                 capacity: onboardingData.capacity,
                 ai_advisor_name: onboardingData.aiAdvisorName,
                 ai_advisor_tone: onboardingData.aiAdvisorTone,
+                acquisition_source: onboardingData.acquisition_source || null,  // How user heard about BidIntell
                 weights: {
                     location: locationWeight,
                     keywords: keywordsWeight,
