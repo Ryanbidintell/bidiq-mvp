@@ -9584,12 +9584,22 @@ ${truncatedText}`;
                     }
                 }
 
+                // Display contract risks if detected
+                let contractRisksHtml = '';
+                if (p.contractRisks && p.contractRisks.hasContractLanguage) {
+                    const risksDisplay = formatContractRisksForDisplay(p.contractRisks);
+                    if (risksDisplay.hasRisks) {
+                        contractRisksHtml = risksDisplay.html;
+                    }
+                }
+
                 // Populate score content
                 const scoreHTML = `
                     <div class="score-report">
                         <div class="score-report-header">
                             <div class="score-report-value ${p.scores.recommendation.toLowerCase()}">${p.scores.final}</div>
                             <div class="score-report-rec">${p.scores.recommendation}</div>
+                            ${contractRisksHtml}
                         </div>
                         ${renderComponent('📍', 'Location Fit', p.scores.components.location)}
                         ${renderComponent('🔑', 'Keywords & Contract', p.scores.components.keywords)}
