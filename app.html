@@ -7948,23 +7948,32 @@ ${truncatedText}`;
                 };
 
                 const risksHtml = contractRisks.risksDetected.map(risk => {
-                    const riskType = risk.type || 'unknown_risk';
+                    // Normalize risk type (handle both old and new formats)
+                    let riskType = risk.type || risk.clause_type || 'unknown_risk';
+                    // Clean up risk type - remove suffixes like "_incorporation"
+                    riskType = riskType.replace(/_incorporation$/, '').replace(/_waiver$/, '_restrictions');
                     const riskLabel = riskLabels[riskType] || riskType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
-                    // Use severity from AI response
-                    const severity = risk.severity || 'medium';
-                    const levelIcon = severity === 'high' ? '🔴' : severity === 'medium' ? '⚪' : '🟡';
-                    const levelLabel = severity === 'high' ? 'HIGH RISK' : severity === 'medium' ? 'MODERATE' : 'LOW RISK';
+                    // Use severity from NEW format, or convert confidence to severity for OLD format
+                    let severity = risk.severity;
+                    if (!severity && risk.confidence !== undefined) {
+                        const conf = risk.confidence;
+                        severity = conf >= 0.80 ? 'high' : conf >= 0.50 ? 'medium' : 'low';
+                    }
+                    severity = severity || 'medium';
+
+                    const levelIcon = severity === 'high' ? '🔴' : severity === 'medium' ? '🟠' : '🟡';
+                    const levelLabel = severity === 'high' ? 'HIGH RISK' : severity === 'medium' ? 'MODERATE RISK' : 'LOW RISK';
 
                     // Show classification if available (e.g., "pay-if-paid (condition precedent)")
                     const classification = risk.classification || '';
 
-                    // Show plain English explanation
-                    const plainEnglish = risk.plainEnglish || '';
+                    // Show plain English explanation (handle both field names)
+                    const plainEnglish = risk.plainEnglish || risk.plain_english || '';
 
-                    // Show exact quote from contract
-                    const exactQuote = risk.evidence || '';
-                    const location = risk.location || '';
+                    // Show exact quote from contract (handle both field names)
+                    const exactQuote = risk.evidence || risk.exact_quote || risk.context || '';
+                    const location = risk.location || risk.page_reference || risk.page || '';
 
                     return `
                         <div style="margin-bottom: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; border-left: 3px solid ${severity === 'high' ? 'var(--danger)' : severity === 'medium' ? 'var(--warning)' : 'var(--text-muted)'};">
@@ -7994,10 +8003,18 @@ ${truncatedText}`;
                     </div>
                 ` : '';
 
+                // Get overall risk level and count
+                const riskCount = contractRisks.risksDetected.length;
+                const overallLevel = (contractRisks.overallRiskLevel || contractRisks.overall_risk_level || 'medium').toUpperCase();
+                const overallColor = overallLevel === 'HIGH' ? 'var(--danger)' : overallLevel === 'MEDIUM' ? 'var(--warning)' : 'var(--text-muted)';
+
                 const html = `
                     <div style="margin-top:12px;padding:12px;background:rgba(239,68,68,0.1);border-radius:var(--radius);border-left:4px solid var(--danger);">
-                        <strong style="color:var(--danger);">⚠️ Contract Risks Detected</strong>
-                        <div style="font-size: 13px; color: var(--text-secondary); margin: 8px 0 4px 0;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <strong style="color:var(--danger);">⚠️ Contract Risks Detected (${riskCount})</strong>
+                            <span style="color: ${overallColor}; font-weight: 600; font-size: 14px;">Overall: ${overallLevel}</span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
                             These clauses may increase project risk. Review carefully before bidding.
                         </div>
                         ${summaryHtml}
