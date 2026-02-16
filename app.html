@@ -3190,6 +3190,46 @@
         const DEFAULT_SETTINGS = { city: '', state: '', radius: 50, locationMatters: true, trades: ['23', '26'], riskTolerance: 'medium', capacity: 'steady', weights: { location: 25, keywords: 30, gc: 25, trade: 20 }, decisionTime: 45, defaultStars: 3, onboarding_completed: false };
 
         // ============================================
+        // TEXT SANITIZATION HELPERS
+        // ============================================
+
+        /**
+         * Remove null characters from strings (Postgres can't handle them)
+         */
+        function sanitizeText(text) {
+            if (typeof text !== 'string') return text;
+            return text.replace(/\u0000/g, '');
+        }
+
+        /**
+         * Recursively sanitize all strings in an object/array
+         * Removes null characters that Postgres TEXT fields can't store
+         */
+        function deepSanitize(obj) {
+            if (obj === null || obj === undefined) return obj;
+
+            if (typeof obj === 'string') {
+                return sanitizeText(obj);
+            }
+
+            if (Array.isArray(obj)) {
+                return obj.map(item => deepSanitize(item));
+            }
+
+            if (typeof obj === 'object') {
+                const sanitized = {};
+                for (const key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        sanitized[key] = deepSanitize(obj[key]);
+                    }
+                }
+                return sanitized;
+            }
+
+            return obj;
+        }
+
+        // ============================================
         // SAFE JSON PARSING HELPER
         // ============================================
 
@@ -3940,7 +3980,9 @@ ${fullText.substring(0, 40000)}`;
                 );
 
                 const now = new Date();
-                const { data, error } = await supabaseClient.from('projects').insert({
+
+                // Deep sanitize all data to remove null characters before saving
+                const projectData = deepSanitize({
                     user_id: currentUser.id,
                     extracted_data: cleanedExtracted,
                     scores: project.scores,
@@ -3968,7 +4010,9 @@ ${fullText.substring(0, 40000)}`;
                     created_year: now.getFullYear(),
                     created_month: now.getMonth() + 1,
                     created_week: getWeekNumber(now)
-                }).select().single();
+                });
+
+                const { data, error } = await supabaseClient.from('projects').insert(projectData).select().single();
 
                 if (error) {
                     console.error('❌ Database error saving project:', error);
@@ -9962,16 +10006,19 @@ ${truncatedText}`;
                 progressText.textContent = 'Saving to database...';
                 progressBar.style.width = '95%';
 
-                const { error } = await supabaseClient.from('projects').update({
-                    extracted_data: extracted,
-                    full_text: combinedText, // Save new full text
-                    scores: scores,
-                    contract_risks: contractRisks,  // Save NEW contract risks
-                    validation_status: validationStatus,
-                    ai_advisor_output: aiAdvisorOutput,
-                    intelligence_tags: intelligenceTags,
+                // Deep sanitize all data to remove null characters before saving
+                const sanitizedData = {
+                    extracted_data: deepSanitize(extracted),
+                    full_text: sanitizeText(combinedText),
+                    scores: deepSanitize(scores),
+                    contract_risks: deepSanitize(contractRisks),
+                    validation_status: deepSanitize(validationStatus),
+                    ai_advisor_output: sanitizeText(aiAdvisorOutput),
+                    intelligence_tags: deepSanitize(intelligenceTags),
                     updated_at: new Date().toISOString()
-                }).eq('id', project.id);
+                };
+
+                const { error } = await supabaseClient.from('projects').update(sanitizedData).eq('id', project.id);
 
                 if (error) throw error;
 
