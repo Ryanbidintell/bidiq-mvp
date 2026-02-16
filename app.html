@@ -3190,6 +3190,37 @@
         const DEFAULT_SETTINGS = { city: '', state: '', radius: 50, locationMatters: true, trades: ['23', '26'], riskTolerance: 'medium', capacity: 'steady', weights: { location: 25, keywords: 30, gc: 25, trade: 20 }, decisionTime: 45, defaultStars: 3, onboarding_completed: false };
 
         // ============================================
+        // SAFE JSON PARSING HELPER
+        // ============================================
+
+        /**
+         * Safely parse JSON with automatic fixing of common escape sequence issues
+         * Fixes "unsupported Unicode escape sequence" errors from AI responses
+         */
+        function safeJSONParse(jsonStr) {
+            try {
+                return JSON.parse(jsonStr);
+            } catch (parseError) {
+                console.warn('⚠️ JSON parse failed, attempting to fix escape sequences...', parseError.message);
+
+                // Fix common escape sequence issues
+                // Replace backslashes that aren't part of valid escape sequences
+                // Valid: \", \\, \/, \b, \f, \n, \r, \t, \uXXXX
+                let fixedJson = jsonStr.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+
+                try {
+                    const result = JSON.parse(fixedJson);
+                    console.log('✅ JSON fixed and parsed successfully');
+                    return result;
+                } catch (secondError) {
+                    console.error('❌ Could not fix JSON:', secondError.message);
+                    console.error('JSON snippet:', jsonStr.substring(0, 500));
+                    throw new Error('AI returned invalid JSON format: ' + secondError.message);
+                }
+            }
+        }
+
+        // ============================================
         // CONTRACT RISK DETECTION WITH CONFIDENCE WEIGHTING
         // ============================================
 
@@ -3235,7 +3266,7 @@ Return JSON with this exact format:
                     if (match) jsonStr = match[1];
                 }
 
-                const result = JSON.parse(jsonStr.trim());
+                const result = safeJSONParse(jsonStr.trim());
                 return result;
             } catch (error) {
                 console.error('Building type extraction failed:', error);
@@ -3309,7 +3340,7 @@ ${fullText.substring(0, 40000)}`;
                     if (match) content = match[1];
                 }
 
-                const risks = JSON.parse(content.trim());
+                const risks = safeJSONParse(content.trim());
 
                 // Map risk_type to type (normalize the response format)
                 const normalizedRisks = risks.map(r => ({
@@ -6385,7 +6416,7 @@ ${truncatedText}`;
                     if (match) jsonStr = match[1];
                 }
 
-                const extracted = JSON.parse(jsonStr.trim());
+                const extracted = safeJSONParse(jsonStr.trim());
                 console.log('🔍 OpenAI extracted (raw):', extracted);
                 return extracted;
             } catch (e) {
@@ -6778,15 +6809,16 @@ ${truncatedText}`;
             try {
                 // Use backend API instead of direct Claude call
                 const content = await callAI('extract_project_details', truncatedText, prompt);
-                
+
                 // Parse JSON from response (handle markdown code blocks)
                 let jsonStr = content;
                 if (content.includes('```')) {
                     const match = content.match(/```(?:json)?\s*([\s\S]*?)```/);
                     if (match) jsonStr = match[1];
                 }
-                
-                const extracted = JSON.parse(jsonStr.trim());
+
+                // Use safe JSON parsing with automatic escape sequence fixing
+                const extracted = safeJSONParse(jsonStr.trim());
                 console.log('🔍 Claude extracted (raw):', extracted);
 
                 // Clean up extracted data
