@@ -7038,8 +7038,11 @@ ${truncatedText}`;
                     throw new Error('Could not extract text from the uploaded PDFs. Please ensure they are valid PDF files.');
                 }
                 
-                const fullText = allPages.map(p => p.text).join('\n\n');
-                
+                let fullText = allPages.map(p => p.text).join('\n\n');
+
+                // Sanitize text: Remove null characters that Postgres can't handle
+                fullText = fullText.replace(/\u0000/g, '');
+
                 updateProgress(50, 'AI analyzing project details...');
 
                 // Use multi-provider AI extraction (Claude → OpenAI → Regex fallback)
@@ -9908,6 +9911,9 @@ ${truncatedText}`;
                 if (combinedText.length < 100) {
                     throw new Error('Could not extract text from PDFs');
                 }
+
+                // Sanitize text: Remove null characters that Postgres can't handle
+                combinedText = combinedText.replace(/\u0000/g, '');
 
                 // Step 2: Extract data with AI
                 progressText.textContent = 'Analyzing documents with AI...';
