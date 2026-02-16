@@ -45,3 +45,8 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+# Scheduled Functions
+[[functions]]
+  name = "daily-snapshot"
+  schedule = "0 0 * * *"  # Run daily at midnight UTC
