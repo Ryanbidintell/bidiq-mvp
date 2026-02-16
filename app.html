@@ -3279,7 +3279,13 @@ Return JSON with this exact format:
         }
 
         async function detectContractRisks(fullText) {
+            console.log('🔍 Contract Risk Detection starting...', {
+                textLength: fullText?.length,
+                firstChars: fullText?.substring(0, 200)
+            });
+
             if (!fullText || fullText.length < 100) {
+                console.log('⏭️ Skipping - text too short');
                 return {
                     hasContractLanguage: false,
                     risksDetected: [],
@@ -3289,11 +3295,19 @@ Return JSON with this exact format:
 
             // Quick check: does document contain contract language?
             const contractIndicators = ['shall', 'agreement', 'contract', 'terms', 'conditions', 'indemnify', 'warranty'];
-            const hasContractLanguage = contractIndicators.some(word =>
+            const foundIndicators = contractIndicators.filter(word =>
                 new RegExp(`\\b${word}\\b`, 'i').test(fullText.substring(0, 10000))
             );
+            const hasContractLanguage = foundIndicators.length > 0;
+
+            console.log('📋 Contract language check:', {
+                hasContractLanguage,
+                foundIndicators,
+                searchedChars: Math.min(10000, fullText.length)
+            });
 
             if (!hasContractLanguage) {
+                console.log('⏭️ No contract language found - skipping AI detection');
                 return {
                     hasContractLanguage: false,
                     risksDetected: [],
@@ -3331,8 +3345,10 @@ Contract text:
 ${fullText.substring(0, 40000)}`;
 
             try {
+                console.log('🤖 Calling AI for contract risk detection...');
                 // Use backend callAI function instead of direct API call
                 const content = await callAI('detect_contract_risks', fullText.substring(0, 40000), prompt);
+                console.log('📨 AI response received:', content.substring(0, 500));
 
                 // Parse JSON
                 if (content.includes('```')) {
@@ -3341,6 +3357,7 @@ ${fullText.substring(0, 40000)}`;
                 }
 
                 const risks = safeJSONParse(content.trim());
+                console.log('✅ Parsed contract risks:', risks);
 
                 // Map risk_type to type (normalize the response format)
                 const normalizedRisks = risks.map(r => ({
@@ -3358,6 +3375,14 @@ ${fullText.substring(0, 40000)}`;
                     low: normalizedRisks.filter(r => r.confidence < 0.50)
                 };
 
+                console.log('🎯 Contract risk detection complete:', {
+                    total: normalizedRisks.length,
+                    high: risksByTier.high.length,
+                    medium: risksByTier.medium.length,
+                    low: risksByTier.low.length,
+                    risks: normalizedRisks.map(r => ({ type: r.type, confidence: r.confidence }))
+                });
+
                 return {
                     hasContractLanguage: true,
                     risksDetected: normalizedRisks,
@@ -3366,7 +3391,7 @@ ${fullText.substring(0, 40000)}`;
                 };
 
             } catch (error) {
-                console.error('Contract risk detection error:', error);
+                console.error('❌ Contract risk detection error:', error);
                 return {
                     hasContractLanguage: true,
                     risksDetected: [],
