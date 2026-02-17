@@ -254,7 +254,7 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5dmd6d3lqbW1mZGd2d2phenlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgzNDU4NjMsImV4cCI6MjA1MzkyMTg2M30.nsBzMn3zy_qjNNZ8cIlK3v1PKWYHzQwT2n7rq8wOcD0';
         const ADMIN_EMAILS = ['ryan@fsikc.com', 'ryan@bidintell.ai'];
 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
 
@@ -268,7 +268,7 @@
         };
 
         async function checkAuth() {
-            const { data: { user }, error } = await supabase.auth.getUser();
+            const { data: { user }, error } = await supabaseClient.auth.getUser();
 
             if (error || !user) {
                 window.location.href = '/app.html';
@@ -299,10 +299,10 @@
                     eventsData,
                     snapshotsData
                 ] = await Promise.all([
-                    supabase.from('user_settings').select('*'),
-                    supabase.from('projects').select('*'),
-                    supabase.from('admin_events').select('*'),
-                    supabase.from('admin_metrics_snapshots').select('*').order('snapshot_date', { ascending: false }).limit(30)
+                    supabaseClient.from('user_settings').select('*'),
+                    supabaseClient.from('projects').select('*'),
+                    supabaseClient.from('admin_events').select('*'),
+                    supabaseClient.from('admin_metrics_snapshots').select('*').order('snapshot_date', { ascending: false }).limit(30)
                 ]);
 
                 const users = usersData.data || [];
