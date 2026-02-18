@@ -2756,7 +2756,7 @@
                     .from('user_revenue')
                     .select('*')
                     .eq('user_id', currentUser.id)
-                    .single();
+                    .maybeSingle();
 
                 // Check if beta period has ended
                 const betaEndDate = new Date('2026-04-01T00:00:00Z');
@@ -11905,9 +11905,9 @@ Respond now:`;
                     .from('user_revenue')
                     .select('*')
                     .eq('user_id', currentUser.id)
-                    .single();
+                    .maybeSingle();
 
-                if (error && error.code !== 'PGRST116') {
+                if (error) {
                     console.error('Error loading billing status:', error);
                     return;
                 }
