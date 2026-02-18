@@ -498,6 +498,7 @@ const additionalRevenue = additionalWins * avgProjectSize;
 2. Check `DATA_SAFETY_PROTOCOL.md` - Does this affect data?
 3. Check `KNOWN_BUGS.md` - Is this already tracked?
 4. Check `MEMORY.md` - Any recent context?
+5. ## Before ANY code change, read and follow BIDIQ_SKILL.md
 
 **When user is frustrated:**
 1. Check `MEMORY.md` - What happened recently?
