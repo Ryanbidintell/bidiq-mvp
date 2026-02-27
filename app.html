@@ -2723,6 +2723,7 @@
                 } else {
                     currentUser = data.user;
                     console.log('Signup successful, showing app');
+                    gtag('event', 'sign_up', { method: 'email' });
                     showApp();
                 }
             } catch (err) {
@@ -4184,6 +4185,10 @@ ${fullText.substring(0, 40000)}`;
 
                 if (savedProject && savedProject.id) {
                     currentAnalysis.id = savedProject.id;
+                    gtag('event', 'project_saved', {
+                        score: currentAnalysis.scores?.final || 0,
+                        recommendation: currentAnalysis.scores?.recommendation || ''
+                    });
                     console.log('✅ Project saved manually:', savedProject.id);
 
                     // Clear projects cache to force refresh
@@ -5763,6 +5768,7 @@ ${fullText.substring(0, 40000)}`;
                     alert('Settings saved but onboarding flag may not have persisted. You may see onboarding again on next visit.');
                 }
 
+                gtag('event', 'onboarding_completed');
                 // Close modal and reload
                 closeModal('onboardingModal');
 
@@ -5931,11 +5937,14 @@ ${fullText.substring(0, 40000)}`;
         fileInput.addEventListener('change', e => handleFiles(e.target.files));
 
         function handleFiles(files) {
+            let added = 0;
             for (const f of files) {
                 if (f.type === 'application/pdf' && !uploadedFiles.find(x => x.name === f.name)) {
                     uploadedFiles.push(f);
+                    added++;
                 }
             }
+            if (added > 0) gtag('event', 'bid_uploaded', { file_count: uploadedFiles.length });
             renderFileList();
             updateAnalyzeBtn();
         }
@@ -7404,6 +7413,11 @@ ${truncatedText}`;
                 };
 
                 // No auto-save - user must click "Save to Projects" button
+                gtag('event', 'bid_analyzed', {
+                    score: scores?.final || 0,
+                    recommendation: scores?.recommendation || '',
+                    has_contract_risks: (contractRisks?.risks?.length || 0) > 0
+                });
                 console.log('📊 Analysis complete. Ready to save manually.');
 
                 updateProgress(100, 'Done!');
@@ -9534,6 +9548,11 @@ ${truncatedText}`;
             }
 
             console.log('📄 Opening report for project:', p);
+            gtag('event', 'report_viewed', {
+                score: p.scores?.final || 0,
+                recommendation: p.scores?.recommendation || '',
+                outcome: p.outcome || 'pending'
+            });
 
             try {
                 // Store current project ID globally for save function
@@ -11248,6 +11267,7 @@ Respond now:`;
                     await viewReport(id);
                 }
 
+                gtag('event', 'outcome_recorded', { outcome: type });
                 console.log('✅ Outcome saved and UI refreshed');
             } catch (error) {
                 console.error('❌ Failed to save outcome:', error);
@@ -11910,6 +11930,7 @@ Respond now:`;
             try {
                 await saveSettingsStorage(s);
                 await updateCapacity();
+                gtag('event', 'settings_updated');
                 // Reload settings from database to confirm they were saved
                 dataCache.settings = null;
                 await loadSettings();
