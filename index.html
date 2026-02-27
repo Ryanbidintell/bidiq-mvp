@@ -1718,6 +1718,19 @@ img { max-width: 100%; display: block; }
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// If user is already logged in to the app, redirect them straight to the app
+(async () => {
+  try {
+    const appUrl = 'https://szifhqmrddmdkgschkkw.supabase.co';
+    const appKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6aWZocW1yZGRtZGtnc2Noa2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwOTkyMDUsImV4cCI6MjA4NDY3NTIwNX0.XSStBZABbfJRMkGqwG-uh2X6nco7GqtiIxUg_0HHlZE';
+    const appClient = supabase.createClient(appUrl, appKey);
+    const { data: { session } } = await appClient.auth.getSession();
+    if (session) window.location.href = '/app';
+  } catch (e) {
+    // Non-fatal — just show landing page normally
+  }
+})();
+
 // Intersection Observer for fade-up animations
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
