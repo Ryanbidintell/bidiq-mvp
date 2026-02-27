@@ -2869,6 +2869,7 @@
         let uploadedFiles = [];
         let selectedClients = []; // New: supports GCs, End Users, Building Owners
         let selectedGCs = []; // Legacy: kept for backward compatibility
+        let gcSelectorRenderedList = []; // Tracks last-rendered list for event delegation
         let currentAnalysis = null;
         let newClientRatingValue = 3;
         let newGCRatingValue = 3; // Legacy
@@ -5997,10 +5998,11 @@ ${fullText.substring(0, 40000)}`;
             } else if (filtered.length === 0) {
                 listEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">No matches found.<br>Click "Add New" to add this client</div>';
             } else {
-                listEl.innerHTML = filtered.map(gc => {
+                gcSelectorRenderedList = filtered;
+                listEl.innerHTML = filtered.map((gc, index) => {
                     const isSelected = selectedGCs.find(s => s.name === gc.name);
                     const winRate = gc.bids > 0 ? Math.round(gc.wins / gc.bids * 100) + '% win' : '';
-                    return `<div class="gc-selector-item ${isSelected ? 'selected' : ''}" onclick="toggleGC('${gc.name.replace(/'/g, "\\'")}')">
+                    return `<div class="gc-selector-item ${isSelected ? 'selected' : ''}" data-gc-index="${index}">
                         <span>${gc.name} ${winRate ? '<span style="color:var(--text-muted);font-size:11px;">(' + winRate + ')</span>' : ''}</span>
                         <span style="color:var(--accent);">${'★'.repeat(gc.rating)}${'☆'.repeat(5 - gc.rating)}</span>
                     </div>`;
@@ -6265,6 +6267,29 @@ ${fullText.substring(0, 40000)}`;
             gcSearchInput.addEventListener('keypress', e => { if (e.key === 'Enter') addNewGCFromSearch(); });
         } else {
             console.warn('gcSearchInput element not found on page load');
+        }
+
+        // GC selector list — event delegation via mousedown to avoid click/blur race condition
+        const gcSelectorList = document.getElementById('gcSelectorList');
+        if (gcSelectorList) {
+            gcSelectorList.addEventListener('mousedown', e => {
+                const item = e.target.closest('[data-gc-index]');
+                if (!item) return;
+                e.preventDefault(); // Prevent input from losing focus (which would close the list)
+                const index = parseInt(item.dataset.gcIndex, 10);
+                const gc = gcSelectorRenderedList[index];
+                if (!gc) return;
+                const idx = selectedGCs.findIndex(s => s.name === gc.name);
+                if (idx >= 0) {
+                    selectedGCs.splice(idx, 1);
+                } else {
+                    selectedGCs.push({ ...gc });
+                    document.getElementById('gcSearchInput').value = '';
+                }
+                renderGCSelector();
+                updateCompetition();
+                updateAnalyzeBtn();
+            });
         }
 
         // PDF extraction
