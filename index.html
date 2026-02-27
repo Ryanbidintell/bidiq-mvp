@@ -1783,7 +1783,17 @@ async function handleBetaSubmit(e) {
         throw error;
       }
     } else {
-      // Success
+      // Success — send confirmation email (fire and forget)
+      fetch('/.netlify/functions/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emailType: 'beta_application',
+          fullName: formData.full_name,
+          userEmail: formData.email
+        })
+      }).catch(() => {}); // Non-fatal if email fails
+
       messageEl.innerHTML = '<span style="color: var(--green);">✓ You\'re on the list. We\'ll be in touch soon.</span>';
       form.reset();
     }
