@@ -5177,7 +5177,7 @@ ${fullText.substring(0, 40000)}`;
                         try {
                             const placeAutocomplete = new google.maps.places.PlaceAutocompleteElement({
                                 types: ['address'],
-                                componentRestrictions: { country: 'us' }
+                                includedRegionCodes: ['us']
                             });
                             placeAutocomplete.style.width = '100%';
                             placeAutocomplete.style.display = 'block';
@@ -5749,6 +5749,23 @@ ${fullText.substring(0, 40000)}`;
                 default_stars: 3,
                 onboarding_completed: true
             };
+
+            // Fallback: if user typed address but autocomplete didn't capture lat/lng, geocode now
+            if (!onboardingData.officeLocation && onboardingData.city && onboardingData.state) {
+                try {
+                    const addr = onboardingData.street
+                        ? `${onboardingData.street}, ${onboardingData.city}, ${onboardingData.state}`
+                        : `${onboardingData.city}, ${onboardingData.state}`;
+                    const coords = await geocode(addr);
+                    if (coords) {
+                        onboardingData.officeLocation = { lat: coords.lat, lng: coords.lon };
+                        settings.officeLocation = onboardingData.officeLocation;
+                        console.log('📍 Fallback geocode succeeded:', onboardingData.officeLocation);
+                    }
+                } catch (e) {
+                    console.warn('📍 Fallback geocode failed (non-fatal):', e);
+                }
+            }
 
             console.log('💾 Saving onboarding settings...', settings);
 
