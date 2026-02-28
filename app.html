@@ -1198,10 +1198,10 @@
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     🛠️ Operations
                 </div>
-                <a href="/admin.html" class="nav-item" id="adminMetricsNavItem" style="display: none;">
+                <div class="nav-item" data-tab="metrics" id="adminMetricsNavItem" style="display: none;">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                     📊 Metrics
-                </a>
+                </div>
             </nav>
             <div class="sidebar-footer">
                 <div class="capacity-box capacity-steady" id="capacityIndicator">
@@ -1924,6 +1924,22 @@
                         </div>
                     </div>
 
+                </div>
+            </div>
+
+            <!-- Founder Metrics Tab -->
+            <div class="tab-content" id="tab-metrics">
+                <header class="page-header">
+                    <h2 class="page-title">📊 Founder Metrics</h2>
+                    <p class="page-subtitle">Platform health, revenue, and activation data</p>
+                </header>
+                <div class="page-content">
+                    <div id="metrics-tab-body">
+                        <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+                            <div class="spinner"></div>
+                            <div style="margin-top:12px;">Loading metrics...</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -4462,6 +4478,8 @@ ${fullText.substring(0, 40000)}`;
             } else if (id === 'dashboard') {
                 // Refresh dashboard
                 await loadDashboard();
+            } else if (id === 'metrics') {
+                await loadMetricsTab();
             }
         }
         document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', async () => await switchTab(i.dataset.tab)));
@@ -13419,6 +13437,158 @@ Respond now:`;
             alert(`Feature coming soon: View ${email}'s projects and analytics in a modal`);
             // TODO: Implement modal with user's project list, scores, outcomes, etc.
         }
+
+        // ── Founder Metrics Tab ─────────────────────────────────────────────
+        const METRICS_PRICING = {
+            starter: 4900, starter_beta: 3430,
+            professional: 9900, professional_beta: 6930
+        };
+
+        async function loadMetricsTab() {
+            const body = document.getElementById('metrics-tab-body');
+            if (!body) return;
+            body.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text-muted);"><div class="spinner"></div><div style="margin-top:12px;">Loading metrics...</div></div>';
+            try {
+                const [usersData, projectsData, eventsData, snapshotsData] = await Promise.all([
+                    supabaseClient.from('user_settings').select('*'),
+                    supabaseClient.from('projects').select('user_id,outcome,scores,created_at'),
+                    supabaseClient.from('admin_events').select('*').then(r => { if (r.error) console.warn('admin_events:', r.error.message); return r; }),
+                    supabaseClient.from('admin_metrics_snapshots').select('*').order('snapshot_date', { ascending: false }).limit(30).then(r => { if (r.error) console.warn('admin_metrics_snapshots:', r.error.message); return r; })
+                ]);
+                const users = usersData.data || [];
+                const projects = projectsData.data || [];
+                const events = eventsData.data || [];
+                const snapshots = snapshotsData.data || [];
+                const metrics = metricsCalc(users, projects, events, snapshots);
+                body.innerHTML = metricsRenderAll(users, projects, events, snapshots, metrics);
+            } catch (e) {
+                console.error('loadMetricsTab error:', e);
+                body.innerHTML = `<div style="padding:16px;background:var(--danger-bg);border:1px solid var(--danger);border-radius:var(--radius);color:var(--danger);">❌ Error loading metrics: ${e.message}</div>`;
+            }
+        }
+
+        function metricsCalc(users, projects, events, snapshots) {
+            const now = new Date();
+            const d30 = new Date(now - 30*24*60*60*1000);
+            const d90 = new Date(now - 90*24*60*60*1000);
+            const active = users.filter(u => u.subscription_status !== 'cancelled');
+            const betaUsers = active.filter(u => u.subscription_tier === 'beta').length;
+            const starterUsers = active.filter(u => u.subscription_tier === 'starter').length;
+            const proUsers = active.filter(u => u.subscription_tier === 'professional').length;
+            const paidUsers = starterUsers + proUsers;
+            let mrrCents = 0;
+            active.forEach(u => {
+                if (u.subscription_tier === 'starter') mrrCents += u.is_beta_user ? METRICS_PRICING.starter_beta : METRICS_PRICING.starter;
+                else if (u.subscription_tier === 'professional') mrrCents += u.is_beta_user ? METRICS_PRICING.professional_beta : METRICS_PRICING.professional;
+            });
+            const cancellations = events.filter(e => e.event_type === 'cancellation' && new Date(e.created_at) >= d30).length;
+            const paidBase = snapshots.length > 0 ? (snapshots[snapshots.length-1].paid_users || paidUsers) : paidUsers;
+            const churnRate = paidBase > 0 ? (cancellations / paidBase) * 100 : 0;
+            const bidsLast30 = projects.filter(p => new Date(p.created_at) >= d30).length;
+            const avgBids = active.length > 0 ? bidsLast30 / active.length : 0;
+            const proj90 = projects.filter(p => new Date(p.created_at) >= d90);
+            const outcomeRate = proj90.length > 0 ? (proj90.filter(p => p.outcome && p.outcome !== 'pending').length / proj90.length) * 100 : 0;
+            const completedOnboarding = users.filter(u => u.onboarding_completed).length;
+            const firstBidEvents = events.filter(e => e.event_type === 'first_bid');
+            const analyzed3Plus = users.filter(u => projects.filter(p => p.user_id === u.user_id).length >= 3).length;
+            return {
+                totalUsers: active.length, paidUsers, betaUsers, starterUsers, proUsers, mrrCents,
+                churnRate, avgBids, outcomeRate, bidsLast30, cancellations,
+                activationFunnel: {
+                    onboarding: users.length > 0 ? (completedOnboarding / users.length) * 100 : 0,
+                    firstBid: completedOnboarding > 0 ? (firstBidEvents.length / completedOnboarding) * 100 : 0,
+                    analyzed3Plus: users.length > 0 ? (analyzed3Plus / users.length) * 100 : 0
+                }
+            };
+        }
+
+        function metricsRenderAll(users, projects, events, snapshots, m) {
+            const mrr = (m.mrrCents / 100).toFixed(2);
+            const arr = (m.mrrCents / 100 * 12).toFixed(0);
+            const paidPct = m.totalUsers > 0 ? ((m.paidUsers / m.totalUsers) * 100).toFixed(0) : 0;
+
+            // Key metric cards
+            const cards = [
+                { label: 'MRR', value: `$${mrr}`, note: `ARR: $${arr}`, color: 'var(--success)' },
+                { label: 'Users / Paid', value: `${m.totalUsers} / ${m.paidUsers}`, note: `${paidPct}% paid`, color: 'var(--text-primary)' },
+                { label: 'Beta Users', value: m.betaUsers, note: `${m.starterUsers} Starter · ${m.proUsers} Pro`, color: 'var(--accent)' },
+                { label: 'Monthly Churn', value: `${m.churnRate.toFixed(1)}%`, note: m.churnRate < 3 ? '✅ Healthy' : m.churnRate < 5 ? '⚠️ Watch' : '🚨 High', color: m.churnRate < 3 ? 'var(--success)' : m.churnRate < 5 ? 'var(--warning)' : 'var(--danger)' },
+                { label: 'Bids / User / Mo', value: m.avgBids.toFixed(1), note: m.avgBids >= 6 ? '✅ Target met' : '⚠️ Below 6 target', color: m.avgBids >= 6 ? 'var(--success)' : 'var(--warning)' },
+                { label: 'Outcome Tracking', value: `${m.outcomeRate.toFixed(0)}%`, note: m.outcomeRate >= 70 ? '✅ Target met' : '⚠️ Below 70% target', color: m.outcomeRate >= 70 ? 'var(--success)' : 'var(--warning)' },
+                { label: 'Activation Funnel', value: `${m.activationFunnel.onboarding.toFixed(0)}% → ${m.activationFunnel.firstBid.toFixed(0)}%`, note: `${m.activationFunnel.analyzed3Plus.toFixed(0)}% analyzed 3+`, color: 'var(--text-primary)' },
+            ];
+
+            const cardsHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px;">
+                ${cards.map(c => `<div style="padding:16px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);">
+                    <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:6px;">${c.label}</div>
+                    <div style="font-size:26px;font-weight:700;color:${c.color};margin-bottom:4px;">${c.value}</div>
+                    <div style="font-size:12px;color:var(--text-muted);">${c.note}</div>
+                </div>`).join('')}
+            </div>`;
+
+            // Phase gates
+            const completedOnboarding = users.filter(u => u.onboarding_completed).length;
+            const onboardingRate = users.length > 0 ? (completedOnboarding / users.length * 100).toFixed(0) : 0;
+            const firstBidEvents = events.filter(e => e.event_type === 'first_bid');
+            const overrideEvents = events.filter(e => e.event_type === 'score_override');
+            const outcomesRecorded = events.filter(e => e.event_type === 'outcome_recorded');
+            const overrideRate = projects.length > 0 ? (overrideEvents.length / projects.length * 100).toFixed(0) : 0;
+            const conf4Plus = outcomesRecorded.filter(e => (e.event_data?.confidence || 0) >= 4).length;
+            const conf4Rate = outcomesRecorded.length > 0 ? (conf4Plus / outcomesRecorded.length * 100).toFixed(0) : 0;
+            const outcomesPct = projects.length > 0 ? (projects.filter(p => p.outcome && p.outcome !== 'pending').length / projects.length * 100).toFixed(0) : 0;
+
+            function gateRow(metric, current, target, unit, inverse, manual) {
+                const cur = parseFloat(current);
+                const tgt = parseFloat(target);
+                const pass = inverse ? cur < tgt : cur >= tgt;
+                const close = !pass && Math.abs(cur - tgt) / Math.max(tgt, 1) < 0.15;
+                const icon = pass ? '✅' : close ? '⚠️' : '❌';
+                const col = pass ? 'var(--success)' : close ? 'var(--warning)' : 'var(--danger)';
+                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);margin-bottom:6px;">
+                    <span style="font-size:13px;color:var(--text-secondary);">${icon} ${metric}${manual ? ' <em style="color:var(--text-muted)">(manual)</em>' : ''}</span>
+                    <span style="font-size:13px;font-weight:600;color:${col};">${current}${unit} ${inverse ? '<' : '/'} ${target}${unit}</span>
+                </div>`;
+            }
+
+            const phase0Html = [
+                gateRow('Onboarding completion ≥80%', onboardingRate, 80, '%'),
+                gateRow('First bid within 48h ≥70%', firstBidEvents.length > 0 ? (firstBidEvents.filter(e => (e.event_data?.days_since_signup||99) <= 2).length / firstBidEvents.length * 100).toFixed(0) : 0, 70, '%'),
+                gateRow('Override response rate ≥90%', overrideRate, 90, '%'),
+                gateRow('Outcome recorded ≥70%', outcomesPct, 70, '%'),
+                gateRow('Score confidence ≥4 in ≥50% of outcomes', conf4Rate, 50, '%'),
+            ].join('');
+
+            const phase1Html = [
+                gateRow('Bids/user/month ≥6', m.avgBids.toFixed(1), 6, ''),
+                gateRow('Outcome confidence ≥4 ≥50%', conf4Rate, 50, '%'),
+                gateRow('Monthly churn <3%', m.churnRate.toFixed(1), 3, '%', true),
+                gateRow('Weekly active ≥60% of paid', 0, 60, '%', false, true),
+                gateRow('"Painful to lose" ≥40%', 0, 40, '%', false, true),
+            ].join('');
+
+            // Revenue detail
+            const revenueStats = [
+                ['MRR', `$${mrr}`], ['ARR', `$${arr}`],
+                ['ARPU', `$${m.totalUsers > 0 ? (m.mrrCents / 100 / m.totalUsers).toFixed(2) : '0.00'}`],
+                ['Starter revenue', `$${(m.starterUsers * METRICS_PRICING.starter / 100).toFixed(0)}`],
+                ['Pro revenue', `$${(m.proUsers * METRICS_PRICING.professional / 100).toFixed(0)}`],
+                ['Stripe fees (est.)', `$${(m.mrrCents / 100 * 0.029 + m.paidUsers * 0.30).toFixed(2)}`],
+                ['Claude costs (est. $0.50/bid)', `$${(m.bidsLast30 * 0.50).toFixed(2)}`],
+                ['Est. gross margin', `${m.mrrCents > 0 ? (((m.mrrCents/100) - (m.mrrCents/100*0.029 + m.paidUsers*0.30) - (m.bidsLast30*0.50)) / (m.mrrCents/100) * 100).toFixed(0) : 0}%`],
+            ].map(([l, v]) => `<div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);margin-bottom:6px;"><span style="font-size:13px;color:var(--text-muted);">${l}</span><span style="font-size:13px;font-weight:600;color:var(--text-primary);">${v}</span></div>`).join('');
+
+            const card = (title, content) => `<div class="settings-card" style="margin-bottom:20px;">
+                <div class="settings-card-header"><div class="settings-card-title">${title}</div></div>
+                <div class="settings-card-body">${content}</div>
+            </div>`;
+
+            return cardsHtml
+                + card('💰 Revenue', revenueStats)
+                + card('🎯 Phase 0 — Beta Truth Validation', phase0Html)
+                + card('🚀 Phase 1 — PMF & Data Integrity', phase1Html)
+                + `<div style="text-align:right;font-size:11px;color:var(--text-muted);margin-top:8px;">Last loaded: ${new Date().toLocaleString()}</div>`;
+        }
+        // ── End Founder Metrics Tab ──────────────────────────────────────────
 
         async function loadProfitabilityData() {
             try {
