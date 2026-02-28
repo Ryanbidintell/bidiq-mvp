@@ -13429,20 +13429,19 @@ Respond now:`;
                 const { data: apiUsage, error: apiError } = await supabaseClient
                     .from('api_usage')
                     .select('user_id, api_provider, model, operation, cost_usd, input_tokens, output_tokens, created_at');
+                if (apiError) console.warn('api_usage query error:', apiError.message);
 
                 // Fetch revenue data
                 const { data: revenue, error: revenueError } = await supabaseClient
                     .from('user_revenue')
                     .select('user_id, plan_name, mrr, status');
+                if (revenueError) console.warn('user_revenue query error:', revenueError.message);
 
                 // Fetch user settings for email addresses
                 const { data: users, error: usersError } = await supabaseClient
                     .from('user_settings')
                     .select('user_id, created_at');
-
-                if (apiError || revenueError || usersError) {
-                    throw new Error('Failed to load profitability data');
-                }
+                if (usersError) console.warn('user_settings query error:', usersError.message);
 
                 // Calculate total costs
                 const totalCosts = (apiUsage || []).reduce((sum, u) => sum + parseFloat(u.cost_usd || 0), 0);

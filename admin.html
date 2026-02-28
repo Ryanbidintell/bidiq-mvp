@@ -292,7 +292,7 @@
 
         async function loadMetrics() {
             try {
-                // Load all data in parallel
+                // Load all data in parallel — each query fails gracefully
                 const [
                     usersData,
                     projectsData,
@@ -301,8 +301,8 @@
                 ] = await Promise.all([
                     supabaseClient.from('user_settings').select('*'),
                     supabaseClient.from('projects').select('*'),
-                    supabaseClient.from('admin_events').select('*'),
-                    supabaseClient.from('admin_metrics_snapshots').select('*').order('snapshot_date', { ascending: false }).limit(30)
+                    supabaseClient.from('admin_events').select('*').then(r => { if (r.error) console.warn('admin_events:', r.error.message); return r; }),
+                    supabaseClient.from('admin_metrics_snapshots').select('*').order('snapshot_date', { ascending: false }).limit(30).then(r => { if (r.error) console.warn('admin_metrics_snapshots:', r.error.message); return r; })
                 ]);
 
                 const users = usersData.data || [];
