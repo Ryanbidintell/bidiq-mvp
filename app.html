@@ -4042,7 +4042,10 @@ ${fullText.substring(0, 40000)}`;
                     architect_name: project.extracted.architect_name || null,
                     general_contractor: project.extracted.gc_name || null,
                     scope_summary: project.extracted.scope_summary || null,
-                    spec_divisions_found: project.extracted.spec_divisions_found || []
+                    spec_divisions_found: project.extracted.spec_divisions_found || [],
+                    // Winner's Curse detection fields
+                    multiple_bidders_expected: project.extracted.multiple_bidders_expected || false,
+                    bid_shopping_language: project.extracted.bid_shopping_language || false
                 };
 
                 // Generate fingerprint for duplicate detection
@@ -9787,6 +9790,9 @@ ${truncatedText}`;
                     }
                 }
 
+                // Recalculate Winner's Curse from saved extracted data
+                const winnersCurseRisk = calculateWinnersCurseRisk(p.extracted);
+
                 // Populate score content
                 const scoreHTML = `
                     <div class="score-report">
@@ -9794,7 +9800,7 @@ ${truncatedText}`;
                             <div class="score-report-value ${p.scores.recommendation.toLowerCase()}">${p.scores.final}</div>
                             <div class="score-report-rec">${p.scores.recommendation}</div>
                             ${contractRisksHtml}
-                            ${p.winnersCurseRisk ? renderWinnersCurseCard(p.winnersCurseRisk) : ''}
+                            ${winnersCurseRisk ? renderWinnersCurseCard(winnersCurseRisk) : ''}
                             ${p.bid_divisions_submitted && p.bid_divisions_submitted.length > 0 ? `<div style="margin-top:12px;padding:10px 14px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);font-size:13px;"><span style="font-weight:600;color:var(--text-primary);">📋 Submitted:</span> <span style="color:var(--text-secondary);">${p.bid_divisions_submitted.map(d => 'Div ' + d).join(', ')}</span></div>` : ''}
                         </div>
                         ${renderComponent('📍', 'Location Fit', p.scores.components.location)}
