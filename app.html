@@ -6118,8 +6118,11 @@ ${fullText.substring(0, 40000)}`;
 
         function renderSelectedGCs() {
             const container = document.getElementById('selectedGCsList');
+            const searchActive = (document.getElementById('gcSearchInput')?.value || '').trim().length > 0;
 
             if (selectedGCs.length === 0) {
+                // Hide placeholder while dropdown is open — they occupy the same visual space
+                if (searchActive) { container.innerHTML = ''; return; }
                 container.innerHTML = `
                     <div style="padding: 20px; text-align: center; background: var(--bg-secondary); border-radius: var(--radius); border: 2px dashed var(--border-color); margin: 16px 0;">
                         <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 8px;">
@@ -6747,7 +6750,8 @@ ${truncatedText}`;
             if (extracted.bid_deadline) {
                 const deadline = new Date(extracted.bid_deadline);
                 if (!isNaN(deadline.getTime())) {
-                    flags.rushedTimeline = (deadline - new Date()) / (1000 * 60 * 60 * 24) < 10;
+                    const daysUntil = (deadline - new Date()) / (1000 * 60 * 60 * 24);
+                    flags.rushedTimeline = daysUntil >= 0 && daysUntil < 10;
                 }
             }
             const activeFlags = Object.entries(flags).filter(([,v]) => v);
