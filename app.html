@@ -1472,6 +1472,17 @@
                         </div>
                     </div>
 
+                    <!-- Bid ROI by Building Type -->
+                    <div class="card" id="bidROICard" style="display:none;">
+                        <div class="card-header">
+                            <h3 class="card-title">Bid ROI by Building Type</h3>
+                            <div class="form-hint">Expected value per estimating hour, by project type</div>
+                        </div>
+                        <div class="card-body">
+                            <div id="bidROISection"></div>
+                        </div>
+                    </div>
+
                     <!-- Building Type Breakdown -->
                     <div class="card">
                         <div class="card-header">
@@ -1859,6 +1870,13 @@
                                     <input type="number" class="form-input" id="settingDecisionTime" value="45" min="5" max="240">
                                     <div class="form-hint">How long does it typically take you to review a bid? Used for "Hours Saved" calculation.</div>
                                 </div>
+                                <div class="form-group">
+                                    <label class="form-label">Target Bid Margin (%)</label>
+                                    <input type="number" class="form-input" id="settingTargetMargin" value="15" min="1" max="60" step="0.5">
+                                    <div class="form-hint">Your typical markup target. Used in Bid Economics expected value calculation.</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Default GC Rating</label>
                                     <select class="form-select" id="settingDefaultStars">
@@ -3223,7 +3241,7 @@
         // Data cache for performance
         let dataCache = { settings: null, keywords: null, clients: null, gcs: null, projects: null }; // gcs kept for backward compat
         
-        const DEFAULT_SETTINGS = { city: '', state: '', radius: 50, locationMatters: true, trades: ['23', '26'], riskTolerance: 'medium', capacity: 'steady', weights: { location: 25, keywords: 30, gc: 25, trade: 20 }, decisionTime: 45, defaultStars: 3, onboarding_completed: false };
+        const DEFAULT_SETTINGS = { city: '', state: '', radius: 50, locationMatters: true, trades: ['23', '26'], riskTolerance: 'medium', capacity: 'steady', weights: { location: 25, keywords: 30, gc: 25, trade: 20 }, decisionTime: 45, defaultStars: 3, target_margin: 15, onboarding_completed: false };
 
         // ============================================
         // TEXT SANITIZATION HELPERS
@@ -3746,6 +3764,7 @@ ${fullText.substring(0, 40000)}`;
                     weights: weights,
                     decisionTime: data.decision_time || 45,  // INTEGER minutes instead of 'normal'
                     defaultStars: data.default_stars || 3,
+                    target_margin: data.target_margin || 15,
                     onboarding_completed: data.onboarding_completed === true  // Explicit boolean check
                 };
                 return dataCache.settings;
@@ -3798,6 +3817,7 @@ ${fullText.substring(0, 40000)}`;
                     weights: s.weights,
                     decision_time: s.decision_time || s.decisionTime,
                     default_stars: s.default_stars || s.defaultStars,
+                    target_margin: s.target_margin || 15,
                     onboarding_completed: s.onboarding_completed !== undefined ? s.onboarding_completed : false,
                     baseline_win_rate: s.baseline_win_rate || null,
                     updated_at: new Date().toISOString()
@@ -6832,6 +6852,103 @@ ${truncatedText}`;
             </div>`;
         }
 
+        // Bid Economics: estimate hours to prepare a bid based on document complexity
+        function calculateEstimatedHours(analysis) {
+            if (!analysis || !analysis.extracted) return 2.0;
+            const e = analysis.extracted;
+            let hours = 1.5; // base
+            // Spec divisions found
+            const divCount = (e.spec_divisions_found || []).length;
+            hours += divCount * 0.35;
+            // Building type complexity
+            const complexTypes = ['Healthcare', 'Higher Education', 'Data Center', 'Laboratory'];
+            const moderateTypes = ['Education', 'Government', 'Industrial'];
+            const bt = typeof e.building_type === 'string' ? e.building_type : (e.building_type?.type || '');
+            if (complexTypes.includes(bt)) hours += 1.5;
+            else if (moderateTypes.includes(bt)) hours += 0.75;
+            // Contract risk count (complex specs = more time)
+            const risks = (analysis.contractRisks || []).length;
+            hours += Math.min(risks * 0.2, 1.0);
+            // File count
+            const files = analysis.fileCount || 1;
+            if (files > 3) hours += 0.5;
+            if (files > 6) hours += 0.5;
+            return Math.min(Math.round(hours * 2) / 2, 8.0); // round to nearest 0.5h, cap at 8h
+        }
+
+        // Global handler for bid economics real-time calculation
+        window.updateBidEconomics = function(value, estimatedHours, winRate, margin) {
+            const v = parseFloat(value);
+            const expectedEl = document.getElementById('bidEconExpected');
+            const dphEl = document.getElementById('bidEconDollarPerHour');
+            const dphValEl = document.getElementById('bidEconDph');
+            if (!expectedEl) return;
+            if (!v || v <= 0 || !winRate) {
+                expectedEl.innerHTML = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">EXPECTED VALUE</div><div style="font-size:18px;font-weight:700;color:var(--text-muted);">—</div><div style="font-size:10px;color:var(--text-muted);">enter scope value</div>`;
+                if (dphEl) dphEl.style.display = 'none';
+                return;
+            }
+            const expected = v * (margin / 100) * (winRate / 100);
+            const dph = estimatedHours > 0 ? expected / estimatedHours : 0;
+            const fmt = n => n >= 1000 ? '$' + (n / 1000).toFixed(1) + 'k' : '$' + n.toFixed(0);
+            expectedEl.innerHTML = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">EXPECTED VALUE</div><div style="font-size:18px;font-weight:700;color:var(--success);">${fmt(expected)}</div><div style="font-size:10px;color:var(--text-muted);">scope × margin × win rate</div>`;
+            if (dphEl && dphValEl) {
+                dphEl.style.display = 'block';
+                dphValEl.textContent = fmt(dph) + '/hr';
+            }
+        };
+
+        function renderBidEconomicsCard(analysis, settings) {
+            const estimatedHours = calculateEstimatedHours(analysis);
+            const margin = settings.target_margin || 15;
+            const projects = allProjectsCache || [];
+            const withOutcomes = projects.filter(p => p.outcome === 'won' || p.outcome === 'lost');
+            const wins = withOutcomes.filter(p => p.outcome === 'won').length;
+            const winRate = withOutcomes.length >= 3 ? Math.round(wins / withOutcomes.length * 100) : null;
+            const winRateDisplay = winRate !== null ? winRate + '%' : '—';
+            const winRateNote = winRate === null
+                ? `track ${Math.max(0, 3 - withOutcomes.length)} more outcomes`
+                : `${withOutcomes.length} outcomes`;
+            const winRateJs = winRate !== null ? winRate : 0;
+
+            return `<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border);">
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--accent);font-weight:700;margin-bottom:10px;">BID ECONOMICS</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                    <div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.08em;">Your Scope Value ($)</div>
+                        <input type="number" class="form-input" id="bidEconValue" placeholder="e.g. 450000" style="font-size:14px;" oninput="updateBidEconomics(this.value, ${estimatedHours}, ${winRateJs}, ${margin})">
+                    </div>
+                    <div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.08em;">Est. Hours to Bid</div>
+                        <div style="font-size:28px;font-weight:700;color:var(--text-primary);line-height:1;">${estimatedHours}<span style="font-size:13px;color:var(--text-muted);font-weight:400;">h</span></div>
+                        <div style="font-size:11px;color:var(--text-muted);">based on doc complexity</div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
+                    <div style="background:var(--bg-tertiary);border-radius:var(--radius);padding:10px;text-align:center;">
+                        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;">Win Rate</div>
+                        <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${winRateDisplay}</div>
+                        <div style="font-size:10px;color:var(--text-muted);">${winRateNote}</div>
+                    </div>
+                    <div style="background:var(--bg-tertiary);border-radius:var(--radius);padding:10px;text-align:center;">
+                        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;">Target Margin</div>
+                        <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${margin}%</div>
+                        <div style="font-size:10px;color:var(--text-muted);">from settings</div>
+                    </div>
+                    <div id="bidEconExpected" style="background:var(--bg-tertiary);border-radius:var(--radius);padding:10px;text-align:center;">
+                        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;">Expected Value</div>
+                        <div style="font-size:20px;font-weight:700;color:var(--text-muted);">—</div>
+                        <div style="font-size:10px;color:var(--text-muted);">enter scope value</div>
+                    </div>
+                </div>
+                <div id="bidEconDollarPerHour" style="display:none;padding:10px 12px;background:rgba(242,101,34,0.08);border:1px solid rgba(242,101,34,0.2);border-radius:var(--radius);text-align:center;margin-bottom:8px;">
+                    <span style="font-size:12px;color:var(--text-muted);">Expected return per estimating hour: </span>
+                    <span id="bidEconDph" style="font-size:17px;font-weight:700;color:var(--accent);"></span>
+                </div>
+                <div style="font-size:11px;color:var(--text-muted);">Expected value = scope × margin × win rate. ${winRate === null ? 'Track more outcomes to unlock win rate.' : 'Enter your scope value above to calculate.'}</div>
+            </div>`;
+        }
+
         // Normalize company name (remove office/branch suffixes)
         function normalizeCompanyName(name) {
             if (!name) return '';
@@ -8313,6 +8430,8 @@ ${truncatedText}`;
                     ${renderComponent('🏢', 'GC Relationship', analysis.scores.components.gc)}
                     ${renderComponent(settings.companyType === 'subcontractor' ? '🔧' : '📦', settings.companyType === 'subcontractor' ? 'Trade Match' : 'Product Match', analysis.scores.components.trade)}
                     ${analysis.scores.components.competitive?.weight > 0 ? renderComponent('⚔️', 'Competitive Pressure', analysis.scores.components.competitive) : ''}
+
+                    ${renderBidEconomicsCard(analysis, settings)}
 
                     ${renderExtractedDataSection(analysis.extracted, analysis.gcs)}
 
@@ -9887,6 +10006,7 @@ ${truncatedText}`;
                         ${renderComponent('🏢', 'GC Relationship', p.scores.components.gc)}
                         ${renderComponent(tradeIcon, tradeLabel, p.scores.components.trade)}
                         ${p.scores.components.competitive?.weight > 0 ? renderComponent('⚔️', 'Competitive Pressure', p.scores.components.competitive) : ''}
+                        ${renderBidEconomicsCard({ extracted: p.extracted || {}, contractRisks: [], fileCount: 1 }, settings)}
                     </div>
 
                     <div class="manual-override" style="margin-top:20px;padding:16px;background:var(--bg-tertiary);border-radius:var(--radius);border:1px solid var(--border-color);">
@@ -11225,6 +11345,11 @@ Respond now:`;
                         <input type="number" class="form-input" id="outcomeBidderCount" min="1" max="50" placeholder="e.g. 4">
                         <div class="form-hint">Including yours. This trains AI to predict competition on future bids.</div>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">Hours spent estimating (optional)</label>
+                        <input type="number" class="form-input" id="outcomeHoursSpent" min="0.5" max="40" step="0.5" placeholder="e.g. 3.5">
+                        <div class="form-hint">Actual hours to prepare this bid. Improves Bid Economics accuracy over time.</div>
+                    </div>
                     ${divisionFieldHtml}`;
             } else if (type === 'lost') {
                 html = `
@@ -11269,6 +11394,11 @@ Respond now:`;
                         <label class="form-label">How many sub-bids were collected for your trade?</label>
                         <input type="number" class="form-input" id="outcomeBidderCount" min="1" max="50" placeholder="e.g. 4">
                         <div class="form-hint">Including yours. This trains AI to predict competition on future bids.</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Hours spent estimating (optional)</label>
+                        <input type="number" class="form-input" id="outcomeHoursSpent" min="0.5" max="40" step="0.5" placeholder="e.g. 3.5">
+                        <div class="form-hint">Actual hours to prepare this bid. Improves Bid Economics accuracy over time.</div>
                     </div>
                     ${divisionFieldHtml}`;
             } else if (type === 'ghost') {
@@ -11453,6 +11583,8 @@ Respond now:`;
                 outcomeData.margin = document.getElementById('outcomeMargin')?.value;
                 outcomeData.howCompetitive = document.getElementById('outcomeHowCompetitive')?.value;
                 outcomeData.pricingFeedback = document.getElementById('outcomePricingFeedback')?.value;
+                const hoursSpentWon = parseFloat(document.getElementById('outcomeHoursSpent')?.value);
+                if (hoursSpentWon > 0) outcomeData.hours_spent = hoursSpentWon;
                 // Update GC wins
                 const projects = await getProjects();
                 const p = projects.find(x => x.id === id);
@@ -11471,6 +11603,8 @@ Respond now:`;
                 outcomeData.winner = document.getElementById('outcomeWinner')?.value;
                 outcomeData.otherCompetitors = document.getElementById('outcomeOtherCompetitors')?.value?.split(',').map(s => s.trim()).filter(Boolean) || [];
                 outcomeData.pricingFeedback = document.getElementById('outcomePricingFeedback')?.value;
+                const hoursSpentLost = parseFloat(document.getElementById('outcomeHoursSpent')?.value);
+                if (hoursSpentLost > 0) outcomeData.hours_spent = hoursSpentLost;
             } else if (type === 'ghost') {
                 outcomeData.daysSince = parseInt(document.getElementById('outcomeDaysSince')?.value) || 60;
                 outcomeData.ghostedGCs = document.getElementById('outcomeGhostedGCs')?.value;
@@ -11983,6 +12117,7 @@ Respond now:`;
             document.getElementById('settingCapacity').value = s.capacity;
             document.getElementById('settingDecisionTime').value = s.decisionTime;
             document.getElementById('settingDefaultStars').value = s.defaultStars;
+            if (document.getElementById('settingTargetMargin')) document.getElementById('settingTargetMargin').value = s.target_margin || 15;
 
             // AI Advisor settings
             const aiAdvisorName = s.ai_advisor_name || 'Sam';
@@ -12190,6 +12325,7 @@ Respond now:`;
                 capacity: document.getElementById('settingCapacity').value,
                 decisionTime: parseInt(document.getElementById('settingDecisionTime').value) || 45,
                 defaultStars: parseInt(document.getElementById('settingDefaultStars').value),
+                target_margin: parseFloat(document.getElementById('settingTargetMargin')?.value) || 15,
                 ai_advisor_name: document.getElementById('settingAiAdvisorName').value === 'Custom'
                     ? document.getElementById('settingCustomAdvisorName').value.trim() || 'Sam'
                     : document.getElementById('settingAiAdvisorName').value,
@@ -12927,6 +13063,67 @@ Respond now:`;
             }
         }
 
+        // Bid ROI Analytics: expected $/hr by building type (requires hours_spent + amount in outcome_data)
+        function renderBidROIAnalytics(projects) {
+            const card = document.getElementById('bidROICard');
+            const container = document.getElementById('bidROISection');
+            if (!card || !container) return;
+
+            // Collect projects with outcome + amount + hours_spent
+            const settings = dataCache.settings || {};
+            const margin = settings.target_margin || 15;
+            const withOutcomes = projects.filter(p => p.outcome === 'won' || p.outcome === 'lost');
+            const withHours = withOutcomes.filter(p => p.outcome_data?.hours_spent > 0 && p.outcome_data?.amount > 0);
+
+            if (withHours.length < 2) {
+                card.style.display = 'none';
+                return;
+            }
+
+            card.style.display = 'block';
+
+            // Group by building type
+            const byType = {};
+            withHours.forEach(p => {
+                const bt = (typeof p.extracted?.building_type === 'string' ? p.extracted.building_type : p.extracted?.building_type?.type) || 'Unknown';
+                if (!byType[bt]) byType[bt] = { totalAmount: 0, totalHours: 0, count: 0 };
+                const amount = parseFloat(p.outcome_data.amount) || 0;
+                const hours = parseFloat(p.outcome_data.hours_spent) || 0;
+                const winRate = withOutcomes.filter(x => (typeof x.extracted?.building_type === 'string' ? x.extracted.building_type : x.extracted?.building_type?.type) === bt).length;
+                const wins = withOutcomes.filter(x => x.outcome === 'won' && (typeof x.extracted?.building_type === 'string' ? x.extracted.building_type : x.extracted?.building_type?.type) === bt).length;
+                const wr = winRate > 0 ? wins / winRate : 0;
+                byType[bt].totalAmount += amount * (margin / 100) * wr;
+                byType[bt].totalHours += hours;
+                byType[bt].count++;
+            });
+
+            const rows = Object.entries(byType)
+                .map(([type, d]) => ({ type, dph: d.totalHours > 0 ? d.totalAmount / d.totalHours : 0, count: d.count }))
+                .filter(r => r.dph > 0)
+                .sort((a, b) => b.dph - a.dph);
+
+            if (rows.length === 0) { card.style.display = 'none'; return; }
+
+            const maxDph = rows[0].dph;
+            const fmt = n => n >= 1000 ? '$' + (n / 1000).toFixed(1) + 'k' : '$' + n.toFixed(0);
+
+            container.innerHTML = `
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Based on ${withHours.length} bids with actual hours + bid amounts recorded. Expected value = bid amount × ${margin}% margin × win rate.</div>
+                ${rows.map(r => `
+                    <div style="margin-bottom:10px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <span style="font-size:13px;font-weight:600;">${r.type}</span>
+                            <span style="font-size:14px;font-weight:700;color:var(--accent);">${fmt(r.dph)}/hr</span>
+                        </div>
+                        <div style="background:var(--bg-tertiary);border-radius:4px;height:6px;overflow:hidden;">
+                            <div style="background:var(--accent);height:100%;width:${Math.round(r.dph / maxDph * 100)}%;border-radius:4px;"></div>
+                        </div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${r.count} bid${r.count > 1 ? 's' : ''} tracked</div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
         // Generate Building Type Breakdown Chart
         function renderBuildingTypeChart(projects) {
             const canvas = document.getElementById('buildingTypeChart');
@@ -13029,6 +13226,8 @@ Respond now:`;
 
                 document.getElementById('topGCsTable').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('worstGCsTable').innerHTML = '<div class="help-text">No data available yet.</div>';
+                const bidROICardEl = document.getElementById('bidROICard');
+                if (bidROICardEl) bidROICardEl.style.display = 'none';
 
                 return;
             }
@@ -13039,6 +13238,7 @@ Respond now:`;
             await renderGCPerformanceTables(projects);
             await renderClientTypePerformance(projects);
             renderBuildingTypeChart(projects);
+            renderBidROIAnalytics(projects);
 
             // Calculate metrics
             const accuracy = calculatePredictionAccuracy(projects);
