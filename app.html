@@ -1441,8 +1441,8 @@
                     <!-- GC Performance Tables -->
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">🏆 Top Performing GCs</h3>
-                            <div class="form-hint">GCs with the highest win rates (minimum 3 bids)</div>
+                            <h3 class="card-title">🏆 Top Performing Clients</h3>
+                            <div class="form-hint">Clients with the highest win rates (minimum 3 bids)</div>
                         </div>
                         <div class="card-body">
                             <div id="topGCsTable"></div>
@@ -1451,8 +1451,8 @@
 
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">👻 High Ghost Rate GCs</h3>
-                            <div class="form-hint">GCs with the highest ghost/decline rates</div>
+                            <h3 class="card-title">👻 High Ghost Rate Clients</h3>
+                            <div class="form-hint">Clients with the highest ghost/decline rates</div>
                         </div>
                         <div class="card-body">
                             <div id="worstGCsTable"></div>
@@ -12622,13 +12622,13 @@ Respond now:`;
             });
         }
 
-        // Generate Top/Worst GC Tables
+        // Generate Top/Worst Client Tables
         async function renderGCPerformanceTables(projects) {
-            // Get all GCs
-            const gcs = await getGCs();
+            // Get all clients (all types)
+            const gcs = await getClients();
             if (!gcs || gcs.length === 0) {
-                document.getElementById('topGCsTable').innerHTML = '<div class="help-text">No GC data available yet.</div>';
-                document.getElementById('worstGCsTable').innerHTML = '<div class="help-text">No GC data available yet.</div>';
+                document.getElementById('topGCsTable').innerHTML = '<div class="help-text">No client data available yet.</div>';
+                document.getElementById('worstGCsTable').innerHTML = '<div class="help-text">No client data available yet.</div>';
                 return;
             }
 
@@ -12662,7 +12662,7 @@ Respond now:`;
                     <table style="width:100%; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 2px solid var(--border); text-align: left;">
-                                <th style="padding: 12px;">GC Name</th>
+                                <th style="padding: 12px;">Client Name</th>
                                 <th style="padding: 12px; text-align: center;">Total Bids</th>
                                 <th style="padding: 12px; text-align: center;">Won</th>
                                 <th style="padding: 12px; text-align: center;">Win Rate</th>
@@ -12688,7 +12688,7 @@ Respond now:`;
                     </table>
                 `;
             } else {
-                document.getElementById('topGCsTable').innerHTML = '<div class="help-text">Need at least 3 bids with outcomes per GC to show performance rankings.</div>';
+                document.getElementById('topGCsTable').innerHTML = '<div class="help-text">Need at least 3 bids with outcomes per client to show performance rankings.</div>';
             }
 
             // Render Worst GCs
@@ -12697,7 +12697,7 @@ Respond now:`;
                     <table style="width:100%; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 2px solid var(--border); text-align: left;">
-                                <th style="padding: 12px;">GC Name</th>
+                                <th style="padding: 12px;">Client Name</th>
                                 <th style="padding: 12px; text-align: center;">Total Bids</th>
                                 <th style="padding: 12px; text-align: center;">Ghosted</th>
                                 <th style="padding: 12px; text-align: center;">Ghost Rate</th>
@@ -12719,6 +12719,7 @@ Respond now:`;
                 `;
             } else {
                 document.getElementById('worstGCsTable').innerHTML = '<div class="help-text">No ghost/decline data available yet.</div>';
+
             }
         }
 
@@ -12931,7 +12932,22 @@ Respond now:`;
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: {
-                        legend: { position: 'right' },
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                generateLabels: function(chart) {
+                                    const dataset = chart.data.datasets[0];
+                                    const total = dataset.data.reduce((a, b) => a + b, 0);
+                                    return chart.data.labels.map((label, i) => ({
+                                        text: `${label}  ${((dataset.data[i] / total) * 100).toFixed(1)}%`,
+                                        fillStyle: dataset.backgroundColor[i],
+                                        strokeStyle: dataset.backgroundColor[i],
+                                        lineWidth: 0,
+                                        index: i
+                                    }));
+                                }
+                            }
+                        },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
@@ -12970,6 +12986,7 @@ Respond now:`;
 
                 document.getElementById('topGCsTable').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('worstGCsTable').innerHTML = '<div class="help-text">No data available yet.</div>';
+
                 return;
             }
 
