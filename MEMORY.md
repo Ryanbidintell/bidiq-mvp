@@ -30,7 +30,7 @@
 
 **4 Modules Implemented:**
 1. **Division Tracking** — Division checkboxes in outcome modal for all 4 types; saved to `projects.bid_divisions_submitted`; shown on report
-2. **Winner's Curse Risk** — AI extracts `multiple_bidders_expected` + `bid_shopping_language`; `calculateWinnersCurseRisk()` flags 5 risk indicators; card shown in report header
+2. **Bid Risk** (renamed from Winner's Curse) — AI extracts `multiple_bidders_expected` + `bid_shopping_language` + `vague_scope`; `calculateBidRisk()` flags 5 risk indicators; `renderBidRiskCard()` shown in report header. `lowValuePerSF` flag removed, replaced with `vagueScope`.
 3. **GC Relationship Classification** — `classifyGCRelationship(gc)` → ⭐ Repeat Partner / ⚠️ One-Shot / 🔄 Building / ❓ No History; shown in GC cards and `renderComponent()` GC section
 4. **Competitive Pressure** — 5th BidIndex component at 10% weight; activates after 3+ outcomes; reads from `gc_competition_density` table; shown in score report
 
