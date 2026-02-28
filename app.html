@@ -4239,6 +4239,7 @@ ${fullText.substring(0, 40000)}`;
                 const { data, error } = await supabaseClient.from('projects').update({
                     outcome,
                     outcome_data: outcomeData,
+                    outcome_confidence: outcomeData.confidence || null,
                     updated_at: new Date().toISOString()
                 }).eq('id', id).select().single();
 
@@ -8004,6 +8005,108 @@ ${truncatedText}`;
             return { final, recommendation: rec, components, weights };
         }
 
+        // Format contract risks for display — used in both renderResult and viewReport
+        function formatContractRisksForDisplay(contractRisks) {
+            if (!contractRisks || !contractRisks.risksDetected || contractRisks.risksDetected.length === 0) {
+                return { hasRisks: false, html: '' };
+            }
+
+            const riskLabels = {
+                pay_if_paid: 'Pay-if-Paid',
+                pay_when_paid: 'Pay-When-Paid',
+                liquidated_damages: 'Liquidated Damages Flow-Down',
+                indemnification: 'Broad Form Indemnification',
+                no_damages_delay: 'No Damages for Delay',
+                no_damage_for_delay: 'No Damages for Delay',
+                consequential_waiver: 'Consequential Damages Waiver',
+                consequential_damages_waiver: 'Consequential Damages Waiver',
+                high_retainage: 'High Retainage',
+                retainage: 'Retainage Terms',
+                slow_payment: 'Slow Payment Terms',
+                termination_convenience: 'Termination for Convenience',
+                excessive_warranty: 'Excessive Warranty Period',
+                insurance_requirements: 'High Insurance Requirements',
+                flow_down: 'Flow-Down / Incorporation by Reference',
+                jury_waiver: 'Jury Trial Waiver',
+                jury_trial_waiver: 'Jury Trial Waiver',
+                dispute_resolution: 'Binding Arbitration',
+                change_order_restrictions: 'Change Order Notice Restrictions'
+            };
+
+            const risksHtml = contractRisks.risksDetected.map(risk => {
+                // Normalize risk type (handle both old and new formats)
+                let riskType = risk.type || risk.clause_type || 'unknown_risk';
+                riskType = riskType.replace(/_incorporation$/, '').replace(/_waiver$/, '_restrictions');
+                const riskLabel = riskLabels[riskType] || riskType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+                // Use severity from NEW format, or convert confidence to severity for OLD format
+                let severity = risk.severity;
+                if (!severity && risk.confidence !== undefined) {
+                    const conf = risk.confidence;
+                    severity = conf >= 0.80 ? 'high' : conf >= 0.50 ? 'medium' : 'low';
+                }
+                severity = severity || 'medium';
+
+                const levelIcon = severity === 'high' ? '🔴' : severity === 'medium' ? '🟠' : '🟡';
+                const levelLabel = severity === 'high' ? 'HIGH RISK' : severity === 'medium' ? 'MODERATE RISK' : 'LOW RISK';
+                const borderColor = severity === 'high' ? 'var(--danger)' : severity === 'medium' ? 'var(--warning)' : 'var(--text-muted)';
+
+                const classification = risk.classification || '';
+                const plainEnglish = risk.plainEnglish || risk.plain_english || '';
+                const exactQuote = risk.evidence || risk.exact_quote || risk.context || '';
+                const location = risk.location || risk.page_reference || risk.page || '';
+
+                return `
+                    <div style="margin-bottom: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; border-left: 3px solid ${borderColor};">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+                            <span style="font-size: 16px;">${levelIcon}</span>
+                            <span style="font-weight: 600; color: var(--text-primary);">${riskLabel}</span>
+                            <span style="color: var(--text-muted); font-size: 11px; font-weight: 500; text-transform: uppercase;">${levelLabel}</span>
+                            ${location ? `<span style="font-size: 11px; color: var(--text-muted); background: var(--bg-input); padding: 2px 6px; border-radius: 4px; font-family: monospace;">${location}</span>` : ''}
+                        </div>
+                        ${classification && classification !== riskLabel ? `<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; font-style: italic;">${classification}</div>` : ''}
+                        ${plainEnglish ? `<div style="font-size: 13px; color: var(--text-primary); margin-bottom: 8px;">${plainEnglish}</div>` : ''}
+                        ${exactQuote ? `<div style="font-size: 11px; color: var(--text-muted); padding: 8px; background: rgba(0,0,0,0.05); border-radius: 4px; font-family: monospace; line-height: 1.4;">"${exactQuote.substring(0, 150)}${exactQuote.length > 150 ? '...' : ''}"</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            const summaryHtml = contractRisks.riskSummary ? `
+                <div style="font-size: 13px; color: var(--text-primary); margin: 8px 0; line-height: 1.5;">
+                    ${contractRisks.riskSummary}
+                </div>
+            ` : '';
+
+            const penaltyHtml = contractRisks.riskScorePenalty ? `
+                <div style="font-size: 12px; color: var(--danger); margin-top: 8px; font-weight: 500;">
+                    Score penalty: -${contractRisks.riskScorePenalty} points
+                </div>
+            ` : '';
+
+            const riskCount = contractRisks.risksDetected.length;
+            const overallLevel = (contractRisks.overallRiskLevel || contractRisks.overall_risk_level || 'medium').toUpperCase();
+            const overallColor = overallLevel === 'HIGH' ? 'var(--danger)' : overallLevel === 'MEDIUM' ? 'var(--warning)' : 'var(--text-muted)';
+
+            const html = `
+                <div style="margin-top:12px;padding:12px;background:rgba(239,68,68,0.1);border-radius:var(--radius);border-left:4px solid var(--danger);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <strong style="color:var(--danger);">⚠️ Contract Risks Detected (${riskCount})</strong>
+                        <span style="color: ${overallColor}; font-weight: 600; font-size: 14px;">Overall: ${overallLevel}</span>
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
+                        These clauses may increase project risk. Review carefully before bidding.
+                    </div>
+                    ${summaryHtml}
+                    ${penaltyHtml}
+                    <div style="margin-top: 12px;">
+                        ${risksHtml}
+                    </div>
+                </div>
+            `;
+
+            return { hasRisks: true, html };
+        }
+
         async function renderResult(analysis, similarBid = null, volumeWarning = null, duplicateCheck = null) {
             const settings = await getSettings();
             const recClass = analysis.scores.recommendation.toLowerCase();
@@ -8073,115 +8176,6 @@ ${truncatedText}`;
                     <div style="margin-top:12px;">
                         ${formatBuildingTypeForDisplay(analysis.buildingType)}
                     </div>`;
-            }
-
-            // Helper function to format contract risks for display
-            function formatContractRisksForDisplay(contractRisks) {
-                if (!contractRisks || !contractRisks.risksDetected || contractRisks.risksDetected.length === 0) {
-                    return { hasRisks: false, html: '' };
-                }
-
-                const riskLabels = {
-                    pay_if_paid: 'Pay-if-Paid',
-                    pay_when_paid: 'Pay-When-Paid',
-                    liquidated_damages: 'Liquidated Damages Flow-Down',
-                    indemnification: 'Broad Form Indemnification',
-                    no_damages_delay: 'No Damages for Delay',
-                    no_damage_for_delay: 'No Damages for Delay',
-                    consequential_waiver: 'Consequential Damages Waiver',
-                    consequential_damages_waiver: 'Consequential Damages Waiver',
-                    high_retainage: 'High Retainage',
-                    retainage: 'Retainage Terms',
-                    slow_payment: 'Slow Payment Terms',
-                    termination_convenience: 'Termination for Convenience',
-                    excessive_warranty: 'Excessive Warranty Period',
-                    insurance_requirements: 'High Insurance Requirements',
-                    flow_down: 'Flow-Down / Incorporation by Reference',
-                    jury_waiver: 'Jury Trial Waiver',
-                    jury_trial_waiver: 'Jury Trial Waiver',
-                    dispute_resolution: 'Binding Arbitration',
-                    change_order_restrictions: 'Change Order Notice Restrictions'
-                };
-
-                const risksHtml = contractRisks.risksDetected.map(risk => {
-                    // Normalize risk type (handle both old and new formats)
-                    let riskType = risk.type || risk.clause_type || 'unknown_risk';
-                    // Clean up risk type - remove suffixes like "_incorporation"
-                    riskType = riskType.replace(/_incorporation$/, '').replace(/_waiver$/, '_restrictions');
-                    const riskLabel = riskLabels[riskType] || riskType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-
-                    // Use severity from NEW format, or convert confidence to severity for OLD format
-                    let severity = risk.severity;
-                    if (!severity && risk.confidence !== undefined) {
-                        const conf = risk.confidence;
-                        severity = conf >= 0.80 ? 'high' : conf >= 0.50 ? 'medium' : 'low';
-                    }
-                    severity = severity || 'medium';
-
-                    const levelIcon = severity === 'high' ? '🔴' : severity === 'medium' ? '🟠' : '🟡';
-                    const levelLabel = severity === 'high' ? 'HIGH RISK' : severity === 'medium' ? 'MODERATE RISK' : 'LOW RISK';
-
-                    // Show classification if available (e.g., "pay-if-paid (condition precedent)")
-                    const classification = risk.classification || '';
-
-                    // Show plain English explanation (handle both field names)
-                    const plainEnglish = risk.plainEnglish || risk.plain_english || '';
-
-                    // Show exact quote from contract (handle both field names)
-                    const exactQuote = risk.evidence || risk.exact_quote || risk.context || '';
-                    const location = risk.location || risk.page_reference || risk.page || '';
-
-                    return `
-                        <div style="margin-bottom: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; border-left: 3px solid ${severity === 'high' ? 'var(--danger)' : severity === 'medium' ? 'var(--warning)' : 'var(--text-muted)'};">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                <span style="font-size: 16px;">${levelIcon}</span>
-                                <span style="font-weight: 600; color: var(--text-primary);">${riskLabel}</span>
-                                <span style="color: var(--text-muted); font-size: 11px; font-weight: 500; text-transform: uppercase;">${levelLabel}</span>
-                            </div>
-                            ${classification && classification !== riskLabel ? `<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; font-style: italic;">${classification}</div>` : ''}
-                            ${plainEnglish ? `<div style="font-size: 13px; color: var(--text-primary); margin-bottom: 8px;">${plainEnglish}</div>` : ''}
-                            ${exactQuote ? `<div style="font-size: 11px; color: var(--text-muted); padding: 8px; background: rgba(0,0,0,0.05); border-radius: 4px; font-family: monospace; line-height: 1.4;">"${exactQuote.substring(0, 150)}${exactQuote.length > 150 ? '...' : ''}"${location ? ` — ${location}` : ''}</div>` : ''}
-                        </div>
-                    `;
-                }).join('');
-
-                // Show overall risk summary if available
-                const summaryHtml = contractRisks.riskSummary ? `
-                    <div style="font-size: 13px; color: var(--text-primary); margin: 8px 0; line-height: 1.5;">
-                        ${contractRisks.riskSummary}
-                    </div>
-                ` : '';
-
-                // Show score penalty if available
-                const penaltyHtml = contractRisks.riskScorePenalty ? `
-                    <div style="font-size: 12px; color: var(--danger); margin-top: 8px; font-weight: 500;">
-                        Score penalty: -${contractRisks.riskScorePenalty} points
-                    </div>
-                ` : '';
-
-                // Get overall risk level and count
-                const riskCount = contractRisks.risksDetected.length;
-                const overallLevel = (contractRisks.overallRiskLevel || contractRisks.overall_risk_level || 'medium').toUpperCase();
-                const overallColor = overallLevel === 'HIGH' ? 'var(--danger)' : overallLevel === 'MEDIUM' ? 'var(--warning)' : 'var(--text-muted)';
-
-                const html = `
-                    <div style="margin-top:12px;padding:12px;background:rgba(239,68,68,0.1);border-radius:var(--radius);border-left:4px solid var(--danger);">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                            <strong style="color:var(--danger);">⚠️ Contract Risks Detected (${riskCount})</strong>
-                            <span style="color: ${overallColor}; font-weight: 600; font-size: 14px;">Overall: ${overallLevel}</span>
-                        </div>
-                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
-                            These clauses may increase project risk. Review carefully before bidding.
-                        </div>
-                        ${summaryHtml}
-                        ${penaltyHtml}
-                        <div style="margin-top: 12px;">
-                            ${risksHtml}
-                        </div>
-                    </div>
-                `;
-
-                return { hasRisks: true, html };
             }
 
             // Helper function to format building type for display
@@ -13948,20 +13942,8 @@ Respond now:`;
 
         // Initialize autocomplete for all GC inputs when DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize for analyze tab GC search
-            const gcSearchInput = document.getElementById('gcSearchInput');
-            if (gcSearchInput) {
-                initGCAutocomplete('gcSearchInput', async (gc) => {
-                    console.log('🔍 Autocomplete selected:', gc.name);
-                    // Auto-select the GC
-                    await toggleGC(gc.name);
-                    console.log('✅ toggleGC completed, selectedGCs:', selectedGCs.map(g => g.name));
-                    // Clear search
-                    gcSearchInput.value = '';
-                    await renderGCSelector();
-                    console.log('✅ Client added from autocomplete');
-                });
-            }
+            // NOTE: gcSearchInput has its own dropdown mechanism (renderGCSelector + mousedown delegation)
+            // Do NOT add initGCAutocomplete here — it would overlay a z-index:1000 dropdown that intercepts clicks
 
             // Initialize for report GC input
             const reportGCInput = document.getElementById('reportGCInput');
