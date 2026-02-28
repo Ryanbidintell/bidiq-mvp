@@ -21,7 +21,29 @@
 - **Priority:** Get 5-10 beta users actively using it, monitor funnel events
 - **Paid Launch:** April 1, 2026
 
-## Latest Session (Feb 27, 2026)
+## Latest Session (Feb 27, 2026) — Session 2
+### Game Theory Intelligence Modules (commit 2e49aa1)
+
+**SQL Migration:** `game-theory-migration.sql` — run in Supabase SQL Editor BEFORE testing
+- `ALTER TABLE projects ADD COLUMN bid_divisions_submitted TEXT[] DEFAULT '{}'`
+- `CREATE TABLE gc_competition_density (...)` with RLS
+
+**4 Modules Implemented:**
+1. **Division Tracking** — Division checkboxes in outcome modal for all 4 types; saved to `projects.bid_divisions_submitted`; shown on report
+2. **Winner's Curse Risk** — AI extracts `multiple_bidders_expected` + `bid_shopping_language`; `calculateWinnersCurseRisk()` flags 5 risk indicators; card shown in report header
+3. **GC Relationship Classification** — `classifyGCRelationship(gc)` → ⭐ Repeat Partner / ⚠️ One-Shot / 🔄 Building / ❓ No History; shown in GC cards and `renderComponent()` GC section
+4. **Competitive Pressure** — 5th BidIndex component at 10% weight; activates after 3+ outcomes; reads from `gc_competition_density` table; shown in score report
+
+**Key Changes:**
+- `calculateScores()` now async with `gcNames` param — calls `getCompetitivePressureScore()`
+- `updateOutcomeFields()` is now async (call site uses `(async()=>{await updateOutcomeFields()})()`)
+- `getProjects()` now maps `bid_divisions_submitted` from DB
+- Both extraction prompts (extractWithOpenAI + main) updated with new fields
+- `components.gc.details.allGCs` added for full GC list in renderComponent
+
+**⚠️ MUST RUN SQL MIGRATION BEFORE TESTING**
+
+## Previous Session (Feb 27, 2026) — Session 1
 ### GA4 Event Tracking + GC Selector Fix (commit 19c6c9a)
 
 **GA4 Measurement ID:** G-XGYJLV0E6G (already installed in both app.html + index.html)
