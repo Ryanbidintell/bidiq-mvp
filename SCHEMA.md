@@ -1,6 +1,6 @@
 # BidIQ Database Schema Documentation
 
-**Last Updated:** February 9, 2026
+**Last Updated:** February 27, 2026
 **Database:** Supabase PostgreSQL
 **Version:** 1.5 (Beta Testing Phase)
 
@@ -16,6 +16,11 @@ BidIQ uses **Supabase PostgreSQL** with **Row Level Security (RLS)** enabled on 
 3. `projects` - Analyzed bids with scores and outcomes
 4. `keywords` - User's trade-specific search terms
 5. `general_contractors` - GC database with ratings and history
+6. `gc_competition_density` - Per-GC competition data for Module 4 (Competitive Pressure Score)
+
+**Schema Changes (Feb 27, 2026 — Game Theory Modules):**
+- `projects.bid_divisions_submitted` — `TEXT[]` — CSI divisions user actually bid on (Module 1)
+- NEW TABLE: `gc_competition_density` — bidder count data per GC outcome (Module 4)
 
 ---
 

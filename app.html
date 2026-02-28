@@ -2067,7 +2067,7 @@
                 <input type="hidden" id="outcomeProjectId">
                 <div class="form-group">
                     <label class="form-label">What happened with this bid?</label>
-                    <select class="form-select" id="outcomeType" onchange="updateOutcomeFields()">
+                    <select class="form-select" id="outcomeType" onchange="(async()=>{await updateOutcomeFields();})()">
                         <option value="">Select outcome...</option>
                         <option value="won">🎉 Won - We got the job!</option>
                         <option value="lost">❌ Lost - Someone else got it</option>
@@ -3989,7 +3989,9 @@ ${fullText.substring(0, 40000)}`;
                     // Layer 0 data
                     contractRisks: p.contract_risks || [],
                     marketMetroArea: p.market_metro_area || null,
-                    buildingType: p.building_type ? { type: p.building_type } : null
+                    buildingType: p.building_type ? { type: p.building_type } : null,
+                    // Module 1: Division tracking
+                    bid_divisions_submitted: p.bid_divisions_submitted || []
                 }));
                 console.log('✅ Mapped projects:', dataCache.projects.length);
                 return dataCache.projects;
@@ -6656,7 +6658,9 @@ ${fullText.substring(0, 40000)}`;
   "architect_name": "The architect or design firm name if mentioned.",
   "gc_name": "The general contractor name if mentioned.",
   "spec_divisions_found": "Array of CSI division numbers found in the documents. Example: [3, 4, 5, 7, 8, 9, 10, 12, 26].",
-  "scope_summary": "A brief 2-3 sentence summary of the project scope and major work items."
+  "scope_summary": "A brief 2-3 sentence summary of the project scope and major work items.",
+  "multiple_bidders_expected": "Boolean. True if document implies many competing subs: pre-qualified lists, mandatory pre-bid meetings, 'all subs are encouraged to bid', bid registry, or bid bond required. Return true or false.",
+  "bid_shopping_language": "Boolean. True if document contains bid shopping risk language: 'reserve the right to negotiate', 'best and final', 'revised bids', 'post-bid clarifications'. Return true or false."
 }
 
 IMPORTANT RULES:
@@ -6688,6 +6692,87 @@ ${truncatedText}`;
                 console.error('OpenAI extraction failed:', e);
                 throw e;
             }
+        }
+
+        // Module 2: Winner's Curse Risk Flag
+        function calculateWinnersCurseRisk(extracted) {
+            const flags = {};
+            const pubTypes = ['Government', 'Education', 'Higher Education', 'Infrastructure'];
+            flags.isPublicBid = pubTypes.includes(extracted.building_type);
+            flags.multipleBidders = !!extracted.multiple_bidders_expected;
+            flags.bidShoppingLanguage = !!extracted.bid_shopping_language;
+            if (extracted.estimated_value && extracted.project_size_sf > 1000) {
+                flags.lowValuePerSF = (extracted.estimated_value / extracted.project_size_sf) < 50;
+            }
+            if (extracted.bid_deadline) {
+                const deadline = new Date(extracted.bid_deadline);
+                if (!isNaN(deadline.getTime())) {
+                    flags.rushedTimeline = (deadline - new Date()) / (1000 * 60 * 60 * 24) < 10;
+                }
+            }
+            const activeFlags = Object.entries(flags).filter(([,v]) => v);
+            if (activeFlags.length === 0) return null;
+            const level = activeFlags.length >= 3 ? 'high' : activeFlags.length === 2 ? 'elevated' : 'moderate';
+            return { level, count: activeFlags.length, flags };
+        }
+
+        // Module 3: GC Relationship Classification
+        function classifyGCRelationship(gc) {
+            if (!gc || (gc.bids || 0) === 0) return { type: 'unknown', label: '❓ No History', color: 'var(--text-muted)' };
+            const bids = gc.bids || 0;
+            const wins = gc.wins || 0;
+            if (bids >= 3 && wins >= 2) return { type: 'repeat_partner', label: '⭐ Repeat Partner', color: 'var(--success)' };
+            if (bids >= 3 && wins === 0) return { type: 'one_shot', label: '⚠️ One-Shot Pattern', color: 'var(--danger)' };
+            if (bids >= 1) return { type: 'building', label: '🔄 Building Relationship', color: 'var(--warning)' };
+            return { type: 'unknown', label: '❓ No History', color: 'var(--text-muted)' };
+        }
+
+        // Module 4: Competitive Pressure Score
+        async function getCompetitivePressureScore(gcNames, buildingType) {
+            if (!supabaseClient || !currentUser || !gcNames?.length) {
+                return { score: 50, weight: 0, reason: 'No competition data yet', details: { status: 'insufficient_data' } };
+            }
+            try {
+                const { data } = await supabaseClient
+                    .from('gc_competition_density')
+                    .select('bidder_count, outcome')
+                    .eq('user_id', currentUser.id)
+                    .in('gc_name', gcNames);
+                if (!data || data.length < 3) {
+                    return { score: 50, weight: 0, reason: `Need ${3 - (data?.length || 0)} more outcomes to activate`, details: { status: 'insufficient_data', count: data?.length || 0 } };
+                }
+                const avg = data.reduce((sum, r) => sum + r.bidder_count, 0) / data.length;
+                const score = avg <= 2 ? 90 : avg <= 4 ? 75 : avg <= 7 ? 55 : avg <= 10 ? 40 : 25;
+                return {
+                    score,
+                    weight: 10,
+                    reason: `Avg ${avg.toFixed(1)} bidders on similar ${gcNames[0]} jobs`,
+                    details: { avgBidders: avg, count: data.length, status: 'active' }
+                };
+            } catch (e) {
+                return { score: 50, weight: 0, reason: 'Competition data unavailable', details: { status: 'error' } };
+            }
+        }
+
+        // Module 2: Render Winner's Curse Card
+        function renderWinnersCurseCard(risk) {
+            const colors = { moderate: 'var(--warning)', elevated: 'var(--danger)', high: '#7f1d1d' };
+            const labels = { moderate: '⚠️ Moderate', elevated: '🔴 Elevated', high: '🚨 High' };
+            const flagLabels = {
+                isPublicBid: 'Public/government bid (all bids are public)',
+                multipleBidders: 'Many competing bidders expected',
+                bidShoppingLanguage: 'Bid shopping language detected',
+                lowValuePerSF: 'Suspiciously low $/SF ratio',
+                rushedTimeline: 'Rushed bid timeline (<10 days)'
+            };
+            const activeFlags = Object.entries(risk.flags).filter(([,v]) => v).map(([k]) => flagLabels[k]);
+            return `<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:var(--radius);border-left:4px solid ${colors[risk.level]};">
+                <div style="font-weight:700;color:${colors[risk.level]};margin-bottom:8px;">${labels[risk.level]} Winner's Curse Risk</div>
+                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">This bid shows ${risk.count} risk indicator${risk.count > 1 ? 's' : ''} for winner's curse — where the winner overpays due to intense competition.</div>
+                <ul style="margin:0;padding-left:20px;font-size:13px;color:var(--text-secondary);">
+                    ${activeFlags.map(f => `<li>${f}</li>`).join('')}
+                </ul>
+            </div>`;
         }
 
         // Normalize company name (remove office/branch suffixes)
@@ -7056,7 +7141,9 @@ ${truncatedText}`;
 
   "contract_language_present": "true/false — Are there any contract terms, conditions, or agreement language in these documents?",
 
-  "scope_summary": "A brief 2-3 sentence summary of the project scope and major work items."
+  "scope_summary": "A brief 2-3 sentence summary of the project scope and major work items.",
+  "multiple_bidders_expected": "Boolean. True if document implies many competing subs: pre-qualified lists, mandatory pre-bid meetings, 'all subs are encouraged to bid', bid registry, or bid bond required. Return true or false.",
+  "bid_shopping_language": "Boolean. True if document contains bid shopping risk language: 'reserve the right to negotiate', 'best and final', 'revised bids', 'post-bid clarifications'. Return true or false."
 }
 
 IMPORTANT RULES:
@@ -7374,7 +7461,9 @@ ${truncatedText}`;
                     ? `${extracted.project_city} Metro, ${extracted.project_state}`
                     : null;
 
-                const scores = await calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks, tradeDetection);
+                const winnersCurseRisk = calculateWinnersCurseRisk(extracted);
+                const gcNames = selectedGCs.map(g => g.name);
+                const scores = await calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks, tradeDetection, gcNames);
 
                 updateProgress(90, 'Running Intelligence Engine...');
 
@@ -7420,6 +7509,7 @@ ${truncatedText}`;
                     contractRisks,
                     buildingType,
                     marketMetroArea,
+                    winnersCurseRisk,
                     createdAt: new Date().toISOString(),
                     outcome: 'pending', // Default outcome
                     // Intelligence Engine Data
@@ -7580,7 +7670,7 @@ ${truncatedText}`;
             return match ? match[1].trim() : null;
         }
 
-        async function calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks = null, tradeDetection = null) {
+        async function calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks = null, tradeDetection = null, gcNames = []) {
             const components = {};
             let weights = { ...settings.weights };
 
@@ -7844,7 +7934,7 @@ ${truncatedText}`;
                 finalScore: gcScore,
                 bestGC: bestGC?.name
             });
-            components.gc = { score: gcScore, weight: weights.gc, reason: `${gcCount} GC${gcCount > 1 ? 's' : ''} bidding${compPenalty ? ' (-' + compPenalty + ' competition penalty)' : ''}`, details: { gcCount, compPenalty, bestGC: bestGC ? { name: bestGC.name, rate: bestGC.bids > 0 ? Math.round(bestGC.wins / bestGC.bids * 100) : null, rating: bestGC.rating } : null } };
+            components.gc = { score: gcScore, weight: weights.gc, reason: `${gcCount} GC${gcCount > 1 ? 's' : ''} bidding${compPenalty ? ' (-' + compPenalty + ' competition penalty)' : ''}`, details: { gcCount, compPenalty, bestGC: bestGC ? { name: bestGC.name, rate: bestGC.bids > 0 ? Math.round(bestGC.wins / bestGC.bids * 100) : null, rating: bestGC.rating } : null, allGCs: selectedGCs.map(g => ({ name: g.name, bids: g.bids || 0, wins: g.wins || 0, rating: g.rating || 0 })) } };
 
             // Trade/Product Match
             if (settings.companyType === 'subcontractor') {
@@ -7896,9 +7986,19 @@ ${truncatedText}`;
                 }
             }
 
+            // Module 4: Competitive Pressure
+            const compPressure = await getCompetitivePressureScore(gcNames, extracted.building_type);
+            components.competitive = { ...compPressure, weight: compPressure.weight };
+
             // Final
+            if (components.competitive?.weight > 0) {
+                const adjust = 0.1;
+                ['location', 'keywords', 'gc', 'trade'].forEach(k => {
+                    if (components[k]) components[k].weight = Math.round(components[k].weight * (1 - adjust));
+                });
+            }
             let final = 0;
-            for (const k of ['location', 'keywords', 'gc', 'trade']) if (components[k].weight > 0) final += components[k].score * (components[k].weight / 100);
+            for (const k of ['location', 'keywords', 'gc', 'trade', 'competitive']) if (components[k] && components[k].weight > 0) final += components[k].score * (components[k].weight / 100);
             final = Math.round(final);
             const rec = final >= 80 ? 'GO' : final >= 60 ? 'REVIEW' : 'PASS';
             return { final, recommendation: rec, components, weights };
@@ -8138,11 +8238,13 @@ ${truncatedText}`;
                         ${volumeHtml}
                         ${contractRisksHtml}
                         ${gcRiskHtml}
+                        ${analysis.winnersCurseRisk ? renderWinnersCurseCard(analysis.winnersCurseRisk) : ''}
                     </div>
                     ${renderComponent('📍', 'Location Fit', analysis.scores.components.location)}
                     ${renderComponent('🔑', 'Keywords & Contract', analysis.scores.components.keywords)}
                     ${renderComponent('🏢', 'GC Relationship', analysis.scores.components.gc)}
                     ${renderComponent(settings.companyType === 'subcontractor' ? '🔧' : '📦', settings.companyType === 'subcontractor' ? 'Trade Match' : 'Product Match', analysis.scores.components.trade)}
+                    ${analysis.scores.components.competitive?.weight > 0 ? renderComponent('⚔️', 'Competitive Pressure', analysis.scores.components.competitive) : ''}
 
                     ${renderExtractedDataSection(analysis.extracted, analysis.gcs)}
 
@@ -8258,9 +8360,10 @@ ${truncatedText}`;
                         ${(gcs || []).map(gc => {
                             const winRate = gc.bids > 0 ? Math.round((gc.wins / gc.bids) * 100) : 0;
                             const stars = '★'.repeat(gc.rating) + '☆'.repeat(5 - gc.rating);
+                            const rel = classifyGCRelationship(gc);
                             return `
                                 <div style="padding:12px;background:var(--bg-primary);border-radius:8px;border:1px solid var(--border-color);">
-                                    <div style="font-weight:600;font-size:14px;margin-bottom:4px;">${gc.name}</div>
+                                    <div style="font-weight:600;font-size:14px;margin-bottom:4px;">${gc.name}<span style="font-size:11px;font-weight:600;color:${rel.color};margin-left:6px;">${rel.label}</span></div>
                                     <div style="color:var(--accent);font-size:16px;margin-bottom:4px;">${stars}</div>
                                     <div style="font-size:12px;color:var(--text-muted);">
                                         ${gc.bids > 0 ? `${gc.wins} wins / ${gc.bids} bids (${winRate}%)` : 'No history yet'}
@@ -8353,7 +8456,16 @@ ${truncatedText}`;
                 } else {
                     relationshipText = `(${b.rating}★ rating)`;
                 }
-                details = `<div class="score-component-details"><strong>Best relationship:</strong> ${b.name} ${relationshipText}${comp.details.compPenalty ? `<br><span style="color:var(--warning)">Competition penalty: -${comp.details.compPenalty} points (${comp.details.gcCount} GCs bidding)</span>` : ''}</div>`;
+                details = `<div class="score-component-details"><strong>Best relationship:</strong> ${b.name} ${relationshipText}${comp.details.compPenalty ? `<br><span style="color:var(--warning)">Competition penalty: -${comp.details.compPenalty} points (${comp.details.gcCount} GCs bidding)</span>` : ''}`;
+                if (comp.details.allGCs && comp.details.allGCs.length > 0) {
+                    details += `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">`;
+                    for (const gc of comp.details.allGCs) {
+                        const rel = classifyGCRelationship(gc);
+                        details += `<span style="font-size:11px;font-weight:600;color:${rel.color};background:var(--bg-secondary);padding:2px 8px;border-radius:12px;border:1px solid var(--border-color);">${gc.name}: ${rel.label}</span>`;
+                    }
+                    details += `</div>`;
+                }
+                details += `</div>`;
             }
             
             // Trade Match details (for subcontractors)
@@ -8396,6 +8508,16 @@ ${truncatedText}`;
                 }
             }
             
+            // Competitive Pressure details
+            if (title === 'Competitive Pressure') {
+                const d = comp.details;
+                if (d?.status === 'insufficient_data') {
+                    details = `<div class="score-component-details" style="color:var(--text-muted);">Track ${3 - (d.count || 0)} more bid outcomes to activate this score.</div>`;
+                } else if (d?.status === 'active') {
+                    details = `<div class="score-component-details"><strong>Based on ${d.count} past bids</strong><br><span style="color:var(--text-muted)">Avg ${d.avgBidders?.toFixed(1)} bidders competing for your trade on similar jobs</span></div>`;
+                }
+            }
+
             return `<div class="score-component"><div class="score-component-header"><div class="score-component-title">${icon} ${title} <span style="color:var(--text-muted);font-size:11px;font-weight:normal;">(${comp.weight}% weight)</span></div><div class="score-component-value">${comp.score}/100</div></div><div class="score-component-bar"><div class="score-component-fill ${fillClass}" style="width:${comp.score}%"></div></div><div class="score-component-reason">${comp.reason}</div>${details}</div>`;
         }
 
@@ -9678,11 +9800,14 @@ ${truncatedText}`;
                             <div class="score-report-value ${p.scores.recommendation.toLowerCase()}">${p.scores.final}</div>
                             <div class="score-report-rec">${p.scores.recommendation}</div>
                             ${contractRisksHtml}
+                            ${p.winnersCurseRisk ? renderWinnersCurseCard(p.winnersCurseRisk) : ''}
+                            ${p.bid_divisions_submitted && p.bid_divisions_submitted.length > 0 ? `<div style="margin-top:12px;padding:10px 14px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);font-size:13px;"><span style="font-weight:600;color:var(--text-primary);">📋 Submitted:</span> <span style="color:var(--text-secondary);">${p.bid_divisions_submitted.map(d => 'Div ' + d).join(', ')}</span></div>` : ''}
                         </div>
                         ${renderComponent('📍', 'Location Fit', p.scores.components.location)}
                         ${renderComponent('🔑', 'Keywords & Contract', p.scores.components.keywords)}
                         ${renderComponent('🏢', 'GC Relationship', p.scores.components.gc)}
                         ${renderComponent(tradeIcon, tradeLabel, p.scores.components.trade)}
+                        ${p.scores.components.competitive?.weight > 0 ? renderComponent('⚔️', 'Competitive Pressure', p.scores.components.competitive) : ''}
                     </div>
 
                     <div class="manual-override" style="margin-top:20px;padding:16px;background:var(--bg-tertiary);border-radius:var(--radius);border:1px solid var(--border-color);">
@@ -9744,9 +9869,10 @@ ${truncatedText}`;
                     p.gcs.forEach(gc => {
                         const winRate = gc.bids > 0 ? Math.round((gc.wins / gc.bids) * 100) : 0;
                         const stars = '★'.repeat(gc.rating) + '☆'.repeat(5 - gc.rating);
+                        const rel = classifyGCRelationship(gc);
                         gcsHTML += `
                             <div style="padding: 16px; background: var(--bg-tertiary); border-radius: var(--radius); border: 1px solid var(--border-color);">
-                                <div style="font-weight: 600; font-size: 15px; margin-bottom: 6px; color: var(--text-primary);">${gc.name}</div>
+                                <div style="font-weight: 600; font-size: 15px; margin-bottom: 6px; color: var(--text-primary);">${gc.name}<span style="font-size:11px;font-weight:600;color:${rel.color};margin-left:6px;">${rel.label}</span></div>
                                 <div style="color: var(--accent); font-size: 18px; margin-bottom: 6px;">${stars}</div>
                                 <div style="font-size: 13px; color: var(--text-muted);">
                                     ${gc.bids > 0 ? `${gc.wins} wins / ${gc.bids} bids (${winRate}% win rate)` : 'No history yet'}
@@ -10933,7 +11059,7 @@ Respond now:`;
             openModal('outcomeModal');
         }
 
-        function updateOutcomeFields() {
+        async function updateOutcomeFields() {
             const type = document.getElementById('outcomeType').value;
             let html = '';
 
@@ -10941,6 +11067,30 @@ Respond now:`;
             const projectId = document.getElementById('outcomeProjectId').value;
             const project = allProjectsCache.find(p => p.id === projectId);
             const currentDate = project?.created_at ? new Date(project.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+
+            // Module 1: Build division checkboxes
+            const specDivisions = (project?.extracted?.spec_divisions_found || []).map(String);
+            const settings = await getSettings();
+            const userDivisions = (settings.trades || []).map(String);
+            const allDivisions = [...new Set([...userDivisions, ...specDivisions])].sort((a,b) => parseInt(a)-parseInt(b));
+            const divisionNames = {
+                '03':'Concrete','05':'Metals','06':'Wood','07':'Thermal/Moisture','08':'Openings',
+                '09':'Finishes','21':'Fire Protection','22':'Plumbing','23':'HVAC',
+                '26':'Electrical','27':'Communications','28':'Electronic Safety','31':'Earthwork','32':'Exterior Improvements'
+            };
+            const divHtml = allDivisions.length > 0 ? allDivisions.map(d =>
+                `<label style="display:flex;align-items:center;gap:8px;margin-bottom:4px;cursor:pointer;">
+                    <input type="checkbox" class="div-checkbox" value="${d}" ${userDivisions.includes(d) ? 'checked' : ''}>
+                    <span>Div ${d}${divisionNames[d] ? ' — ' + divisionNames[d] : ''}</span>
+                </label>`).join('') : '<span style="color:var(--text-muted);font-size:13px;">Complete onboarding to see your trade divisions here</span>';
+            const divisionFieldHtml = `
+                <div class="form-group">
+                    <label class="form-label">Which divisions did you submit? <span style="color:var(--text-muted);font-weight:400;">(check all that apply)</span></label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;">
+                        ${divHtml}
+                    </div>
+                    <div class="form-hint">Pre-checked = your configured trades. Uncheck any you didn't bid.</div>
+                </div>`;
 
             if (type === 'won') {
                 html = `
@@ -10990,7 +11140,13 @@ Respond now:`;
                         <label class="form-label">Pricing & Win Feedback (helps AI learn for future bids)</label>
                         <textarea class="form-input" id="outcomePricingFeedback" rows="3" placeholder="e.g., 'GC said we won because of better healthcare experience' or 'Client valued our past work on similar projects'"></textarea>
                         <div class="form-hint">Share why you won - AI will learn from this for future recommendations</div>
-                    </div>`;
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">How many sub-bids were collected for your trade?</label>
+                        <input type="number" class="form-input" id="outcomeBidderCount" min="1" max="50" placeholder="e.g. 4">
+                        <div class="form-hint">Including yours. This trains AI to predict competition on future bids.</div>
+                    </div>
+                    ${divisionFieldHtml}`;
             } else if (type === 'lost') {
                 html = `
                     <div class="form-group">
@@ -11029,7 +11185,13 @@ Respond now:`;
                         <label class="form-label">Why did you lose? (helps AI learn for future bids)</label>
                         <textarea class="form-input" id="outcomePricingFeedback" rows="3" placeholder="e.g., 'Winner had better healthcare experience' or 'GC said pricing was too high and winner offered value engineering'"></textarea>
                         <div class="form-hint">AI learns from this feedback - be specific about what the GC/client said</div>
-                    </div>`;
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">How many sub-bids were collected for your trade?</label>
+                        <input type="number" class="form-input" id="outcomeBidderCount" min="1" max="50" placeholder="e.g. 4">
+                        <div class="form-hint">Including yours. This trains AI to predict competition on future bids.</div>
+                    </div>
+                    ${divisionFieldHtml}`;
             } else if (type === 'ghost') {
                 html = `
                     <div class="form-group">
@@ -11064,7 +11226,8 @@ Respond now:`;
                         </div>
                         <div class="form-hint">1 = Should have followed up more, 5 = Expected this response</div>
                         <input type="hidden" id="outcomeConfidence" value="3">
-                    </div>`;
+                    </div>
+                    ${divisionFieldHtml}`;
             } else if (type === 'declined') {
                 html = `
                     <div class="form-group">
@@ -11112,7 +11275,8 @@ Respond now:`;
                         </div>
                         <div class="form-hint">1 = Maybe should have bid, 5 = Definitely right to pass</div>
                         <input type="hidden" id="outcomeConfidence" value="3">
-                    </div>`;
+                    </div>
+                    ${divisionFieldHtml}`;
             }
             document.getElementById('outcomeFields').innerHTML = html;
             // Initialize confidence to 3
@@ -11240,11 +11404,41 @@ Respond now:`;
                 }
             }
 
+            // Module 1: Capture submitted divisions
+            const checkedDivs = Array.from(document.querySelectorAll('.div-checkbox:checked')).map(cb => cb.value);
+
+            // Module 4: Capture bidder count
+            const bidderCount = parseInt(document.getElementById('outcomeBidderCount')?.value);
+
             // Get the updated date if user changed it
             const updatedDate = document.getElementById('outcomeDate')?.value;
 
             try {
                 await updateProjectOutcome(id, type, outcomeData);
+
+                // Module 1: Save submitted divisions
+                if (checkedDivs.length > 0) {
+                    await supabaseClient.from('projects').update({ bid_divisions_submitted: checkedDivs }).eq('id', id);
+                    console.log('✅ Bid divisions saved:', checkedDivs);
+                }
+
+                // Module 4: Save bidder count to gc_competition_density
+                if ((type === 'won' || type === 'lost') && bidderCount > 0) {
+                    const p = allProjectsCache.find(x => x.id === id);
+                    if (p && p.gcs && p.gcs.length > 0) {
+                        for (const gc of p.gcs) {
+                            await supabaseClient.from('gc_competition_density').insert({
+                                user_id: currentUser.id,
+                                gc_name: gc.name,
+                                building_type: p.extracted?.building_type || null,
+                                bidder_count: bidderCount,
+                                outcome: type,
+                                project_id: id
+                            });
+                        }
+                        console.log('✅ Competition density saved for', p.gcs.length, 'GC(s)');
+                    }
+                }
 
                 // Update the project date if changed
                 if (updatedDate) {
