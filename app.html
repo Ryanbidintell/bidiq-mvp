@@ -3770,6 +3770,7 @@ ${fullText.substring(0, 40000)}`;
                     decision_time: s.decision_time || s.decisionTime,
                     default_stars: s.default_stars || s.defaultStars,
                     onboarding_completed: s.onboarding_completed !== undefined ? s.onboarding_completed : false,
+                    baseline_win_rate: s.baseline_win_rate || null,
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'user_id' });
 
@@ -5545,6 +5546,17 @@ ${fullText.substring(0, 40000)}`;
                                     <div>🤝 GCs Added: <strong>${onboardingData.gcsAdded}</strong></div>
                                 </div>
                             </div>
+                            <div style="background: var(--bg-secondary); padding: 16px 20px; border-radius: var(--radius); margin-bottom: 16px; border-left: 3px solid var(--accent);">
+                                <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); font-weight: 600; margin-bottom: 8px;">Optional — takes 5 seconds</div>
+                                <label style="font-weight: 600; color: var(--text-primary); font-size: 14px; display: block; margin-bottom: 10px;">What's your approximate win rate on commercial bids right now?</label>
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <input type="number" id="onboarding_win_rate" min="1" max="100" placeholder="e.g. 25" style="width: 80px; padding: 8px 10px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 15px; text-align: center;" oninput="saveBaselineWinRate(this.value)">
+                                        <span style="color: var(--text-muted); font-size: 15px;">%</span>
+                                    </div>
+                                    <span style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">We'll track how this changes as you use BidIntell — real data beats guesswork.</span>
+                                </div>
+                            </div>
                             <div style="background: linear-gradient(135deg, var(--accent-dim), rgba(34, 197, 94, 0.1)); padding: 20px; border-radius: var(--radius); border: 2px solid var(--accent);">
                                 <h4 style="color: var(--text-primary); margin-bottom: 8px;">🚀 Next Step: Analyze Your First Bid</h4>
                                 <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
@@ -5697,6 +5709,12 @@ ${fullText.substring(0, 40000)}`;
                 customField.style.display = 'none';
                 onboardingData.aiAdvisorName = value;
             }
+        }
+
+        async function saveBaselineWinRate(value) {
+            const rate = parseInt(value);
+            if (!rate || rate < 1 || rate > 100 || !supabaseClient || !currentUser) return;
+            await supabaseClient.from('user_settings').update({ baseline_win_rate: rate }).eq('user_id', currentUser.id);
         }
 
         async function completeOnboarding() {
