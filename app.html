@@ -4062,7 +4062,8 @@ ${fullText.substring(0, 40000)}`;
                     spec_divisions_found: project.extracted.spec_divisions_found || [],
                     // Winner's Curse detection fields
                     multiple_bidders_expected: project.extracted.multiple_bidders_expected || false,
-                    bid_shopping_language: project.extracted.bid_shopping_language || false
+                    bid_shopping_language: project.extracted.bid_shopping_language || false,
+                    vague_scope: project.extracted.vague_scope || false
                 };
 
                 // Generate fingerprint for duplicate detection
@@ -6700,7 +6701,8 @@ ${fullText.substring(0, 40000)}`;
   "spec_divisions_found": "Array of CSI division numbers found in the documents. Example: [3, 4, 5, 7, 8, 9, 10, 12, 26].",
   "scope_summary": "A brief 2-3 sentence summary of the project scope and major work items.",
   "multiple_bidders_expected": "Boolean. True if document implies many competing subs: pre-qualified lists, mandatory pre-bid meetings, 'all subs are encouraged to bid', bid registry, or bid bond required. Return true or false.",
-  "bid_shopping_language": "Boolean. True if document contains bid shopping risk language: 'reserve the right to negotiate', 'best and final', 'revised bids', 'post-bid clarifications'. Return true or false."
+  "bid_shopping_language": "Boolean. True if document contains bid shopping risk language: 'reserve the right to negotiate', 'best and final', 'revised bids', 'post-bid clarifications'. Return true or false.",
+  "vague_scope": "Boolean. True if the document contains significant undefined scope: multiple instances of 'TBD', 'by others', 'NIC', 'not in contract', 'specifications to follow', 'drawings not yet issued', or 'scope to be determined'. Return true or false."
 }
 
 IMPORTANT RULES:
@@ -6734,16 +6736,14 @@ ${truncatedText}`;
             }
         }
 
-        // Module 2: Winner's Curse Risk Flag
-        function calculateWinnersCurseRisk(extracted) {
+        // Module 2: Bid Risk Flag
+        function calculateBidRisk(extracted) {
             const flags = {};
             const pubTypes = ['Government', 'Education', 'Higher Education', 'Infrastructure'];
             flags.isPublicBid = pubTypes.includes(extracted.building_type);
             flags.multipleBidders = !!extracted.multiple_bidders_expected;
             flags.bidShoppingLanguage = !!extracted.bid_shopping_language;
-            if (extracted.estimated_value && extracted.project_size_sf > 1000) {
-                flags.lowValuePerSF = (extracted.estimated_value / extracted.project_size_sf) < 50;
-            }
+            flags.vagueScope = !!extracted.vague_scope;
             if (extracted.bid_deadline) {
                 const deadline = new Date(extracted.bid_deadline);
                 if (!isNaN(deadline.getTime())) {
@@ -7183,7 +7183,8 @@ ${truncatedText}`;
 
   "scope_summary": "A brief 2-3 sentence summary of the project scope and major work items.",
   "multiple_bidders_expected": "Boolean. True if document implies many competing subs: pre-qualified lists, mandatory pre-bid meetings, 'all subs are encouraged to bid', bid registry, or bid bond required. Return true or false.",
-  "bid_shopping_language": "Boolean. True if document contains bid shopping risk language: 'reserve the right to negotiate', 'best and final', 'revised bids', 'post-bid clarifications'. Return true or false."
+  "bid_shopping_language": "Boolean. True if document contains bid shopping risk language: 'reserve the right to negotiate', 'best and final', 'revised bids', 'post-bid clarifications'. Return true or false.",
+  "vague_scope": "Boolean. True if the document contains significant undefined scope: multiple instances of 'TBD', 'by others', 'NIC', 'not in contract', 'specifications to follow', 'drawings not yet issued', or 'scope to be determined'. Return true or false."
 }
 
 IMPORTANT RULES:
