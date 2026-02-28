@@ -123,6 +123,30 @@ exports.handler = async function(event, context) {
             return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
         }
 
+        // ── Contact form submission ──────────────────────────────────────────
+        if (emailType === 'contact_form') {
+            const { fullName, userEmail, company, subject, message } = body;
+
+            await sendEmail({
+                to: 'hello@bidintell.ai',
+                subject: `[BidIntell Contact] ${subject} — from ${fullName}`,
+                htmlBody: `
+                    <h2>New Contact Form Submission</h2>
+                    <p><strong>Name:</strong> ${fullName}</p>
+                    <p><strong>Email:</strong> <a href="mailto:${userEmail}">${userEmail}</a></p>
+                    ${company ? `<p><strong>Company:</strong> ${company}</p>` : ''}
+                    <p><strong>Topic:</strong> ${subject}</p>
+                    <hr style="margin: 16px 0; border: none; border-top: 1px solid #eee;">
+                    <p><strong>Message:</strong></p>
+                    <p style="white-space: pre-wrap; color: #333;">${message}</p>
+                    <hr style="margin: 16px 0; border: none; border-top: 1px solid #eee;">
+                    <p style="font-size: 12px; color: #888;">Sent from bidintell.ai/contact · ${new Date().toLocaleString()}</p>
+                `
+            });
+
+            return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+        }
+
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'Unknown emailType' }) };
 
     } catch (error) {
