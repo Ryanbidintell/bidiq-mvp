@@ -302,39 +302,52 @@
         .modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
         
         /* Score report */
-        .score-report { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-md); }
-        .score-report-header { padding: 32px; text-align: center; background: var(--bg-page); border-bottom: 1px solid var(--border); }
+        /* ─── Score Report ─────────────────────────────────────────────────── */
+        .score-report { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 0 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(242,101,34,0.07); }
+        .score-report-header { padding: 28px 28px 20px; background: linear-gradient(160deg, #1C2533 0%, #141A23 100%); border-bottom: 1px solid var(--border); text-align: center; position: relative; }
+        .score-report-header::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+        .score-report-header.rec-go::before { background: linear-gradient(90deg, transparent, rgba(34,197,94,0.8) 50%, transparent); }
+        .score-report-header.rec-review::before { background: linear-gradient(90deg, transparent, rgba(234,179,8,0.8) 50%, transparent); }
+        .score-report-header.rec-pass::before { background: linear-gradient(90deg, transparent, rgba(239,68,68,0.8) 50%, transparent); }
+        .report-header-tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); font-weight: 700; margin-bottom: 18px; }
+        .score-hero { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 14px; }
         /* BidIndex Score - THE HERO ELEMENT */
-        .score-report-value {
-            font-family: var(--mono);
-            font-size: 64px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            line-height: 1;
-            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-            animation: scoreCountUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .score-report-value.go { color: var(--score-go); }
-        .score-report-value.review { color: var(--score-review); }
-        .score-report-value.pass { color: var(--score-pass); }
-
-        @keyframes scoreCountUp {
-            from { opacity: 0; transform: scale(0.8) translateY(20px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
+        .score-report-value { font-family: var(--mono); font-size: 72px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; animation: scoreCountUp 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .score-report-value.go { color: var(--score-go); filter: drop-shadow(0 0 24px rgba(34,197,94,0.45)); }
+        .score-report-value.review { color: var(--score-review); filter: drop-shadow(0 0 24px rgba(234,179,8,0.45)); }
+        .score-report-value.pass { color: var(--score-pass); filter: drop-shadow(0 0 24px rgba(239,68,68,0.45)); }
+        @keyframes scoreCountUp { from { opacity: 0; transform: scale(0.8) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .rec-pill { display: inline-flex; align-items: center; padding: 5px 16px; border-radius: 99px; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+        .rec-pill.go { background: rgba(34,197,94,0.12); color: var(--success); border: 1px solid rgba(34,197,94,0.28); }
+        .rec-pill.review { background: rgba(234,179,8,0.12); color: var(--warning); border: 1px solid rgba(234,179,8,0.28); }
+        .rec-pill.pass { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.28); }
         .score-report-rec { font-size: 18px; font-weight: 700; margin-top: 12px; }
-        .score-component { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        .report-project-name { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; }
+        .meta-chips-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 6px; }
+        .meta-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 99px; font-size: 11px; color: var(--text-muted); }
+        /* Score Components */
+        .score-component { padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); }
         .score-component:last-child { border-bottom: none; }
+        .score-component-inner { background: var(--bg-tertiary); border-radius: var(--radius); padding: 14px 16px; border-left: 3px solid rgba(255,255,255,0.06); }
+        .score-component-inner.high { border-left-color: var(--success); }
+        .score-component-inner.medium { border-left-color: var(--warning); }
+        .score-component-inner.low { border-left-color: var(--danger); }
+        .component-section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
         .score-component-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .score-component-title { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
-        .score-component-value { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 15px; }
-        .score-component-bar { height: 8px; background: var(--bg-input); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-        .score-component-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
-        .score-component-fill.high { background: var(--success); }
-        .score-component-fill.medium { background: var(--warning); }
-        .score-component-fill.low { background: var(--danger); }
+        .score-component-title { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; color: var(--text-primary); }
+        .score-component-value { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 16px; }
+        .score-component-value.score-high { color: var(--success); }
+        .score-component-value.score-medium { color: var(--warning); }
+        .score-component-value.score-low { color: var(--danger); }
+        .score-denom { font-size: 11px; color: var(--text-muted); font-weight: 400; }
+        .score-component-bar { height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; margin-bottom: 10px; }
+        .score-component-fill { height: 100%; border-radius: 2px; transition: width 0.5s cubic-bezier(0.16,1,0.3,1); }
+        .score-component-fill.high { background: linear-gradient(90deg, var(--success), rgba(34,197,94,0.6)); box-shadow: 0 0 8px rgba(34,197,94,0.5); }
+        .score-component-fill.medium { background: linear-gradient(90deg, var(--warning), rgba(234,179,8,0.6)); box-shadow: 0 0 8px rgba(234,179,8,0.4); }
+        .score-component-fill.low { background: linear-gradient(90deg, var(--danger), rgba(239,68,68,0.6)); box-shadow: 0 0 8px rgba(239,68,68,0.4); }
+        .insight-quote { margin-top: 8px; padding: 8px 12px; background: rgba(0,0,0,0.28); border-radius: 4px; font-size: 12px; color: var(--cloud); line-height: 1.5; font-style: italic; }
         .score-component-reason { font-size: 13px; color: var(--text-secondary); }
-        .score-component-details { margin-top: 10px; padding: 10px; background: var(--bg-input); border-radius: var(--radius); font-size: 12px; }
+        .score-component-details { margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: var(--radius); font-size: 12px; }
         
         .keyword-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin: 2px; }
         .keyword-tag.good { background: var(--success-bg); color: var(--success); }
@@ -1462,7 +1475,7 @@
                     <!-- Building Type Breakdown -->
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">🏗️ Projects by Building Type</h3>
+                            <h3 class="card-title">Projects by Building Type</h3>
                             <div class="form-hint">Distribution of your analyzed projects</div>
                         </div>
                         <div class="card-body">
@@ -8262,14 +8275,31 @@ ${truncatedText}`;
                     </div>`;
             }
 
+            // Build deadline chip for header
+            const deadlineChip = (() => {
+                if (!analysis.extracted.bid_deadline) return '';
+                const d = new Date(analysis.extracted.bid_deadline);
+                if (isNaN(d.getTime())) return '';
+                const days = Math.round((d - new Date()) / (1000 * 60 * 60 * 24));
+                const label = days < 0 ? 'Closed' : days === 0 ? 'Due today' : `Due in ${days}d`;
+                return `<span class="meta-chip">📅 ${label}</span>`;
+            })();
+            const buildingChip = analysis.buildingType?.type ? `<span class="meta-chip">🏗️ ${analysis.buildingType.type}</span>` : '';
+
             document.getElementById('analysisResult').innerHTML = `
                 <div class="score-report">
-                    <div class="score-report-header">
-                        <div class="score-report-value ${recClass}">${analysis.scores.final}</div>
-                        <div class="score-report-rec">${analysis.scores.recommendation} — ${recText}</div>
-                        <p style="color:var(--text-primary);margin-top:12px;font-size:16px;font-weight:600;">${projectName}</p>
-                        ${locationStr ? `<p style="color:var(--text-muted);font-size:13px;">${locationStr}</p>` : ''}
-                        ${buildingTypeHtml}
+                    <div class="score-report-header rec-${recClass}">
+                        <div class="report-header-tag">BidIndex™ Intelligence Report</div>
+                        <div class="score-hero">
+                            <div class="score-report-value ${recClass}">${analysis.scores.final}</div>
+                            <div class="rec-pill ${recClass}">${analysis.scores.recommendation} — ${recText}</div>
+                        </div>
+                        <div class="report-project-name">${projectName}</div>
+                        <div class="meta-chips-row">
+                            ${locationStr ? `<span class="meta-chip">📍 ${locationStr}</span>` : ''}
+                            ${buildingChip}
+                            ${deadlineChip}
+                        </div>
                         ${capMsg}
                         ${duplicateHtml}
                         ${similarBidHtml}
@@ -8556,7 +8586,7 @@ ${truncatedText}`;
                 }
             }
 
-            return `<div class="score-component"><div class="score-component-header"><div class="score-component-title">${icon} ${title} <span style="color:var(--text-muted);font-size:11px;font-weight:normal;">(${comp.weight}% weight)</span></div><div class="score-component-value">${comp.score}/100</div></div><div class="score-component-bar"><div class="score-component-fill ${fillClass}" style="width:${comp.score}%"></div></div><div class="score-component-reason">${comp.reason}</div>${details}</div>`;
+            return `<div class="score-component"><div class="score-component-inner ${fillClass}"><div class="component-section-label">${title.toUpperCase()} · ${comp.weight}% WEIGHT</div><div class="score-component-header"><div class="score-component-title">${icon} ${title}</div><div class="score-component-value score-${fillClass}">${comp.score}<span class="score-denom">/100</span></div></div><div class="score-component-bar"><div class="score-component-fill ${fillClass}" style="width:${comp.score}%"></div></div>${comp.reason ? `<div class="insight-quote">${comp.reason}</div>` : ''}${details}</div></div>`;
         }
 
         // Generate improvement tips based on scores
@@ -8598,9 +8628,9 @@ ${truncatedText}`;
             const aiSummary = summaryParts.join(' ');
 
             return `
-                <div style="margin-top: 20px; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border-left: 4px solid var(--accent);">
-                    <h4 style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: var(--text-primary);">📊 AI Analysis Summary</h4>
-                    <p style="margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-secondary);">${aiSummary}</p>
+                <div style="margin-top:0;padding:14px 16px;background:var(--bg-tertiary);border-radius:var(--radius);border-left:3px solid var(--accent);">
+                    <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--accent);font-weight:700;margin-bottom:8px;">AI Analysis Summary</div>
+                    <p style="margin:0;font-size:13px;line-height:1.65;color:var(--cloud);">${aiSummary}</p>
                 </div>
             `;
         }
@@ -9835,11 +9865,19 @@ ${truncatedText}`;
                 const bidRisk = calculateBidRisk(p.extracted);
 
                 // Populate score content
+                const recClassSaved = p.scores.recommendation.toLowerCase();
+                const recTextSaved = { GO: 'Strong fit', REVIEW: 'Review carefully', PASS: 'Poor fit' }[p.scores.recommendation] || '';
+                const locStrSaved = [p.extracted?.project_city, p.extracted?.project_state].filter(Boolean).join(', ');
+                const btSaved = (typeof p.extracted?.building_type === 'string' ? p.extracted.building_type : p.extracted?.building_type?.type) || '';
                 const scoreHTML = `
                     <div class="score-report">
-                        <div class="score-report-header">
-                            <div class="score-report-value ${p.scores.recommendation.toLowerCase()}">${p.scores.final}</div>
-                            <div class="score-report-rec">${p.scores.recommendation}</div>
+                        <div class="score-report-header rec-${recClassSaved}">
+                            <div class="report-header-tag">BidIndex™ Intelligence Report</div>
+                            <div class="score-hero">
+                                <div class="score-report-value ${recClassSaved}">${p.scores.final}</div>
+                                <div class="rec-pill ${recClassSaved}">${p.scores.recommendation}${recTextSaved ? ` — ${recTextSaved}` : ''}</div>
+                            </div>
+                            ${(locStrSaved || btSaved) ? `<div class="meta-chips-row">${locStrSaved ? `<span class="meta-chip">📍 ${locStrSaved}</span>` : ''}${btSaved ? `<span class="meta-chip">🏗️ ${btSaved}</span>` : ''}</div>` : ''}
                             ${contractRisksHtml}
                             ${bidRisk ? renderBidRiskCard(bidRisk) : ''}
                             ${p.bid_divisions_submitted && p.bid_divisions_submitted.length > 0 ? `<div style="margin-top:12px;padding:10px 14px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);font-size:13px;"><span style="font-weight:600;color:var(--text-primary);">📋 Submitted:</span> <span style="color:var(--text-secondary);">${p.bid_divisions_submitted.map(d => 'Div ' + d).join(', ')}</span></div>` : ''}
@@ -12585,7 +12623,9 @@ Respond now:`;
             // Group by month
             const monthlyVolume = {};
             projects.forEach(p => {
+                if (!p.created_at) return;
                 const date = new Date(p.created_at);
+                if (isNaN(date.getTime())) return;
                 const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
                 monthlyVolume[monthKey] = (monthlyVolume[monthKey] || 0) + 1;
             });
@@ -12934,7 +12974,9 @@ Respond now:`;
                     plugins: {
                         legend: {
                             position: 'right',
+                            onClick: () => {},
                             labels: {
+                                color: '#F8FAFC',
                                 generateLabels: function(chart) {
                                     const dataset = chart.data.datasets[0];
                                     const total = dataset.data.reduce((a, b) => a + b, 0);
@@ -12943,6 +12985,7 @@ Respond now:`;
                                         fillStyle: dataset.backgroundColor[i],
                                         strokeStyle: dataset.backgroundColor[i],
                                         lineWidth: 0,
+                                        hidden: false,
                                         index: i
                                     }));
                                 }
