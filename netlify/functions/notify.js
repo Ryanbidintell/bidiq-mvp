@@ -150,6 +150,57 @@ exports.handler = async function(event, context) {
             return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
         }
 
+        // ── Beta-to-paid transition warning ─────────────────────────────────
+        if (emailType === 'beta_to_paid_warning') {
+            const { fullName, userEmail, planName, planPrice } = body;
+            const firstName = (fullName || 'there').split(' ')[0];
+            const plan = planName || 'Starter';
+            const price = planPrice || '$49';
+
+            await sendEmail({
+                to: userEmail,
+                subject: `Important: BidIntell billing starts April 1`,
+                htmlBody: `
+                    <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #1a1a2e;">
+                        <div style="background: #0B0F14; padding: 24px; border-radius: 8px 8px 0 0; border-bottom: 2px solid #F26522;">
+                            <div style="font-weight: 700; font-size: 20px; color: #F8FAFC;">BidIntell</div>
+                        </div>
+                        <div style="padding: 32px 24px; background: #141A23; border-radius: 0 0 8px 8px;">
+                            <h2 style="color: #F8FAFC; margin-bottom: 16px;">Hey ${firstName} — heads up on billing</h2>
+                            <p style="color: #CBD5E1; line-height: 1.7;">Thanks for being a founding member of BidIntell. We're wrapping up the free beta period and wanted to give you advance notice before anything changes.</p>
+
+                            <div style="background: #1C2533; border: 1px solid #384254; border-left: 3px solid #F26522; border-radius: 6px; padding: 16px 20px; margin: 24px 0;">
+                                <div style="font-weight: 700; color: #F8FAFC; margin-bottom: 8px;">What's changing</div>
+                                <p style="color: #CBD5E1; margin: 0; font-size: 14px; line-height: 1.7;"><strong style="color: #F8FAFC;">April 1, 2026:</strong> The free beta ends and billing begins at <strong style="color: #F8FAFC;">${price}/month</strong> (${plan} plan).<br>As a founding member, you've locked in your pricing for as long as you stay subscribed.</p>
+                            </div>
+
+                            <p style="color: #CBD5E1; line-height: 1.7;"><strong style="color: #F8FAFC;">No action needed</strong> — your account continues automatically. We'll send a reminder closer to the date.</p>
+
+                            <p style="color: #CBD5E1; line-height: 1.7;">If you'd like to update or cancel before billing starts, you can do that anytime from the app:</p>
+
+                            <div style="text-align: center; margin: 28px 0;">
+                                <a href="https://bidintell.ai/app" style="background: #F26522; color: white; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: 700; display: inline-block;">Manage My Plan →</a>
+                            </div>
+
+                            <p style="color: #94A3B8; font-size: 14px; line-height: 1.7;">Questions? Just reply to this email — I personally read everything.</p>
+
+                            <p style="color: #94A3B8; margin-top: 24px; font-size: 14px;">— Ryan<br><em>Founder, BidIntell</em></p>
+                        </div>
+                        <p style="font-size: 11px; color: #5A6A7E; text-align: center; margin-top: 16px;">BidIntell · <a href="https://bidintell.ai" style="color: #5A6A7E;">bidintell.ai</a> · <a href="https://bidintell.ai/legal" style="color: #5A6A7E;">Privacy & Terms</a></p>
+                    </div>
+                `
+            });
+
+            // Notify Ryan too
+            await sendEmail({
+                to: 'ryan@fsikc.com',
+                subject: `✅ Beta-to-paid warning sent to ${fullName} (${userEmail})`,
+                htmlBody: `<p>Beta-to-paid transition email sent to <strong>${fullName}</strong> (${userEmail}) for the <strong>${plan}</strong> plan at <strong>${price}/mo</strong>.</p>`
+            });
+
+            return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+        }
+
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'Unknown emailType' }) };
 
     } catch (error) {

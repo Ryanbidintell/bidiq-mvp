@@ -236,6 +236,17 @@
             </div>
 
             <!-- SECTION D: Phase Gate Checklist -->
+            <div class="section" id="email-tool-section">
+                <h2 class="section-title">📧 Beta-to-Paid Transition Emails</h2>
+                <p style="color:#666;margin-bottom:16px;font-size:14px;">Send the billing start warning email to users before April 1. User data loads from <code>user_settings</code>. Click "Preview" to see who will receive it, then "Send All" to fire.</p>
+                <div style="display:flex;gap:10px;margin-bottom:16px;">
+                    <button onclick="loadUsersForEmail()" style="background:#4F46E5;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;">Load Users</button>
+                    <button onclick="sendAllTransitionEmails()" id="sendAllBtn" disabled style="background:#DC2626;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;opacity:0.5;">Send All Warning Emails</button>
+                </div>
+                <div id="email-user-list" style="font-size:13px;"></div>
+                <div id="email-send-log" style="font-size:12px;color:#666;margin-top:12px;max-height:200px;overflow-y:auto;"></div>
+            </div>
+
             <div class="section">
                 <h2 class="section-title">🚦 Phase Gate Checklist</h2>
                 <h3 style="font-size: 16px; margin: 16px 0 12px; color: #666;">Phase 0: Beta Truth Validation</h3>
@@ -660,6 +671,69 @@
 
             renderGates(phase0Gates, 'phase0-gates');
             renderGates(phase1Gates, 'phase1-gates');
+        }
+
+        // ── Beta-to-paid email tool ──────────────────────────────────────────
+        let emailUserData = [];
+
+        async function loadUsersForEmail() {
+            const list = document.getElementById('email-user-list');
+            list.innerHTML = '<em>Loading...</em>';
+            const { data, error } = await supabaseClient.from('user_settings').select('user_id, user_name, user_email, company_name, onboarding_completed');
+            if (error || !data) { list.innerHTML = `<span style="color:red">Error: ${error?.message}</span>`; return; }
+            const withEmail = data.filter(u => u.user_email);
+            emailUserData = withEmail;
+            list.innerHTML = `
+                <p style="margin-bottom:8px;font-weight:600;">${withEmail.length} users with email addresses found:</p>
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <tr style="background:#f5f5f5;font-weight:600;"><td style="padding:6px 8px;">Name</td><td style="padding:6px 8px;">Email</td><td style="padding:6px 8px;">Company</td><td style="padding:6px 8px;">Onboarded</td></tr>
+                    ${withEmail.map(u => `<tr style="border-top:1px solid #eee;">
+                        <td style="padding:6px 8px;">${u.user_name || '—'}</td>
+                        <td style="padding:6px 8px;">${u.user_email}</td>
+                        <td style="padding:6px 8px;">${u.company_name || '—'}</td>
+                        <td style="padding:6px 8px;">${u.onboarding_completed ? '✅' : '—'}</td>
+                    </tr>`).join('')}
+                </table>
+            `;
+            const sendBtn = document.getElementById('sendAllBtn');
+            if (withEmail.length > 0) { sendBtn.disabled = false; sendBtn.style.opacity = '1'; }
+        }
+
+        async function sendAllTransitionEmails() {
+            if (!emailUserData.length) { alert('Load users first'); return; }
+            if (!confirm(`Send billing warning email to ${emailUserData.length} users? This cannot be undone.`)) return;
+            const log = document.getElementById('email-send-log');
+            const btn = document.getElementById('sendAllBtn');
+            btn.disabled = true; btn.textContent = 'Sending...'; btn.style.opacity = '0.5';
+            log.innerHTML = '';
+            let sent = 0, failed = 0;
+            for (const user of emailUserData) {
+                try {
+                    const res = await fetch('/.netlify/functions/notify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            emailType: 'beta_to_paid_warning',
+                            fullName: user.user_name || user.company_name || 'there',
+                            userEmail: user.user_email,
+                            planName: 'Starter',
+                            planPrice: '$49'
+                        })
+                    });
+                    if (res.ok) {
+                        sent++;
+                        log.innerHTML += `<div style="color:green">✅ Sent to ${user.user_email}</div>`;
+                    } else {
+                        throw new Error(await res.text());
+                    }
+                } catch (e) {
+                    failed++;
+                    log.innerHTML += `<div style="color:red">❌ Failed: ${user.user_email} — ${e.message}</div>`;
+                }
+                await new Promise(r => setTimeout(r, 300)); // rate limit
+            }
+            log.innerHTML += `<div style="font-weight:600;margin-top:8px;">Done: ${sent} sent, ${failed} failed.</div>`;
+            btn.textContent = `Sent ${sent}/${emailUserData.length}`;
         }
 
         // Initialize
