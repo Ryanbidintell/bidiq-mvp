@@ -6926,8 +6926,12 @@ ${truncatedText}`;
                 const dph = estimatedHours > 0 ? expected / estimatedHours : 0;
                 expectedHtml = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;">Expected Value</div><div style="font-size:20px;font-weight:700;color:var(--success);">${fmt(expected)}</div><div style="font-size:10px;color:var(--text-muted);">scope × margin × win rate</div>`;
                 dphHtml = `<div style="display:block;padding:10px 12px;background:rgba(242,101,34,0.08);border:1px solid rgba(242,101,34,0.2);border-radius:var(--radius);text-align:center;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-muted);">Expected return per estimating hour: </span><span style="font-size:17px;font-weight:700;color:var(--accent);">${fmt(dph)}/hr</span></div>`;
+            } else if (savedAmount && !winRate) {
+                const needed = Math.max(0, 3 - withOutcomes.length);
+                expectedHtml = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;">Expected Value</div><div style="font-size:16px;font-weight:700;color:var(--warning);">Almost there</div><div style="font-size:10px;color:var(--text-muted);">track ${needed} more outcome${needed !== 1 ? 's' : ''}</div>`;
+                dphHtml = '';
             } else {
-                expectedHtml = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;">Expected Value</div><div style="font-size:20px;font-weight:700;color:var(--text-muted);">—</div><div style="font-size:10px;color:var(--text-muted);">${savedAmount ? 'track more outcomes' : 'enter scope value'}</div>`;
+                expectedHtml = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;">Expected Value</div><div style="font-size:20px;font-weight:700;color:var(--text-muted);">—</div><div style="font-size:10px;color:var(--text-muted);">enter scope value</div>`;
                 dphHtml = '';
             }
 
