@@ -931,6 +931,103 @@ img { max-width: 100%; display: block; }
   margin: 0 auto;
 }
 .theory-footer strong { color: var(--white); font-weight: 600; }
+
+/* ===== ROI CALCULATOR ===== */
+.roi-section {
+  padding: 100px 0;
+  background: var(--ink-light);
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+.roi-card {
+  background: var(--ink);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.roi-inputs { padding: 40px; border-right: 1px solid rgba(255,255,255,0.06); }
+.roi-results { padding: 40px; background: var(--ink-mid); }
+.roi-input-group { margin-bottom: 28px; }
+.roi-input-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 0.875rem;
+  color: var(--cloud);
+  font-weight: 500;
+}
+.roi-input-value { font-family: var(--mono); font-size: 0.875rem; color: var(--accent); font-weight: 700; }
+.roi-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--slate);
+  outline: none;
+  cursor: pointer;
+}
+.roi-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  transition: transform 0.15s;
+  box-shadow: 0 0 0 3px rgba(242,101,34,0.2);
+}
+.roi-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+.roi-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; border: none; }
+.roi-results-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+.roi-big-number {
+  font-family: var(--mono);
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: var(--green);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.roi-big-label { font-size: 0.875rem; color: var(--fog); margin-bottom: 32px; }
+.roi-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 0.875rem;
+  gap: 16px;
+}
+.roi-stat-row:last-of-type { border-bottom: none; }
+.roi-stat-label { color: var(--fog); padding-top: 2px; }
+.roi-stat-nums { text-align: right; }
+.roi-stat-before { font-family: var(--mono); font-size: 0.78rem; color: var(--slate-light); text-decoration: line-through; }
+.roi-stat-after { font-family: var(--mono); font-size: 0.875rem; color: var(--white); font-weight: 700; }
+.roi-stat-delta { font-family: var(--mono); font-size: 0.75rem; color: var(--green); }
+.roi-cta-row {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.roi-payback { font-size: 0.8rem; color: var(--fog); margin-bottom: 14px; line-height: 1.5; }
+@media (max-width: 960px) {
+  .roi-card { grid-template-columns: 1fr; }
+  .roi-inputs { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
+}
+@media (max-width: 640px) {
+  .roi-inputs, .roi-results { padding: 28px 24px; }
+}
 </style>
 </head>
 <body>
@@ -947,6 +1044,7 @@ img { max-width: 100%; display: block; }
       <li><a href="#features">Features</a></li>
       <li><a href="#intelligence">Intelligence</a></li>
       <li><a href="#who">Who It's For</a></li>
+      <li><a href="#calculator">Calculator</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li><a href="/contact">Contact</a></li>
       <li><a href="/app" style="color: var(--cloud);">Sign In</a></li>
@@ -1396,6 +1494,91 @@ img { max-width: 100%; display: block; }
   </div>
 </section>
 
+<!-- ROI CALCULATOR -->
+<section class="roi-section" id="calculator">
+  <div class="container">
+    <div class="section-header fade-up">
+      <span class="section-tag">Bid Economics</span>
+      <h2>What is one better bid decision worth?</h2>
+      <p>Plug in your numbers. See what smarter bidding looks like in actual dollars.</p>
+    </div>
+    <div class="roi-card fade-up">
+      <!-- INPUTS -->
+      <div class="roi-inputs">
+        <div class="roi-input-group">
+          <div class="roi-input-label">
+            <span>Bids you review per year</span>
+            <span class="roi-input-value" id="lbl-bids">40 bids</span>
+          </div>
+          <input type="range" class="roi-slider" id="sl-bids" min="10" max="150" step="5" value="40" oninput="calcROI()">
+        </div>
+        <div class="roi-input-group">
+          <div class="roi-input-label">
+            <span>Hours to evaluate each bid</span>
+            <span class="roi-input-value" id="lbl-hours">6 hrs</span>
+          </div>
+          <input type="range" class="roi-slider" id="sl-hours" min="2" max="24" step="1" value="6" oninput="calcROI()">
+        </div>
+        <div class="roi-input-group">
+          <div class="roi-input-label">
+            <span>Current win rate</span>
+            <span class="roi-input-value" id="lbl-winrate">20%</span>
+          </div>
+          <input type="range" class="roi-slider" id="sl-winrate" min="5" max="50" step="1" value="20" oninput="calcROI()">
+        </div>
+        <div class="roi-input-group">
+          <div class="roi-input-label">
+            <span>Average project value</span>
+            <span class="roi-input-value" id="lbl-value">$250K</span>
+          </div>
+          <input type="range" class="roi-slider" id="sl-value" min="50000" max="2000000" step="25000" value="250000" oninput="calcROI()">
+        </div>
+        <div class="roi-input-group" style="margin-bottom:0;">
+          <div class="roi-input-label">
+            <span>Net margin on won work</span>
+            <span class="roi-input-value" id="lbl-margin">12%</span>
+          </div>
+          <input type="range" class="roi-slider" id="sl-margin" min="5" max="30" step="1" value="12" oninput="calcROI()">
+        </div>
+      </div>
+      <!-- RESULTS -->
+      <div class="roi-results">
+        <div class="roi-results-label">Your Bid Economics</div>
+        <div class="roi-big-number" id="roi-additional-margin">$47K</div>
+        <div class="roi-big-label">additional margin per year with BidIntell</div>
+        <div class="roi-stat-row">
+          <div class="roi-stat-label">Estimating hours / year</div>
+          <div class="roi-stat-nums">
+            <div class="roi-stat-before" id="stat-hours-before">240 hrs</div>
+            <div class="roi-stat-after" id="stat-hours-after">144 hrs</div>
+            <div class="roi-stat-delta" id="stat-hours-delta">−96 hrs saved</div>
+          </div>
+        </div>
+        <div class="roi-stat-row">
+          <div class="roi-stat-label">Expected wins / year</div>
+          <div class="roi-stat-nums">
+            <div class="roi-stat-before" id="stat-wins-before">8.0</div>
+            <div class="roi-stat-after" id="stat-wins-after">9.0</div>
+            <div class="roi-stat-delta" id="stat-wins-delta">+1.0 more wins</div>
+          </div>
+        </div>
+        <div class="roi-stat-row">
+          <div class="roi-stat-label">Annual margin earned</div>
+          <div class="roi-stat-nums">
+            <div class="roi-stat-before" id="stat-margin-before">$240K</div>
+            <div class="roi-stat-after" id="stat-margin-after">$287K</div>
+            <div class="roi-stat-delta" id="stat-margin-delta">+$47K</div>
+          </div>
+        </div>
+        <div class="roi-cta-row">
+          <div class="roi-payback" id="roi-payback-line">At $49/mo, that's an 80× return — if even half holds.</div>
+          <a href="#apply" class="btn-primary">Get Started Free →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- PRICING -->
 <section class="pricing-section" id="pricing">
   <div class="container">
@@ -1496,6 +1679,86 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.15 });
 
 document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+// ── ROI Calculator ─────────────────────────────────────────────────────────
+function fmtDollars(n) {
+  if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
+  if (n >= 10000) return '$' + Math.round(n / 1000) + 'K';
+  return '$' + Math.round(n).toLocaleString();
+}
+
+function updateSliderBg(id, val, min, max) {
+  const pct = ((val - min) / (max - min)) * 100;
+  const el = document.getElementById(id);
+  if (el) el.style.background = `linear-gradient(to right, var(--accent) ${pct}%, var(--slate) ${pct}%)`;
+}
+
+function calcROI() {
+  const bids     = parseInt(document.getElementById('sl-bids').value);
+  const hours    = parseInt(document.getElementById('sl-hours').value);
+  const winPct   = parseInt(document.getElementById('sl-winrate').value);
+  const avgValue = parseInt(document.getElementById('sl-value').value);
+  const marginPct = parseInt(document.getElementById('sl-margin').value);
+
+  const winRate = winPct / 100;
+  const margin  = marginPct / 100;
+
+  // Labels
+  document.getElementById('lbl-bids').textContent    = bids + ' bids';
+  document.getElementById('lbl-hours').textContent   = hours + ' hrs';
+  document.getElementById('lbl-winrate').textContent = winPct + '%';
+  document.getElementById('lbl-value').textContent   = fmtDollars(avgValue);
+  document.getElementById('lbl-margin').textContent  = marginPct + '%';
+
+  // Current state
+  const currentHours  = bids * hours;
+  const currentWins   = bids * winRate;
+  const currentMargin = currentWins * avgValue * margin;
+
+  // With BidIntell: 40% time reduction + 12.5% relative win rate lift (capped at 60%)
+  const hoursSaved   = Math.round(bids * hours * 0.40);
+  const newHours     = currentHours - hoursSaved;
+  const newWinRate   = Math.min(winRate * 1.125, 0.60);
+  const addlWins     = bids * (newWinRate - winRate);
+  const addlMargin   = addlWins * avgValue * margin;
+  const newMargin    = currentMargin + addlMargin;
+
+  // Stats
+  document.getElementById('stat-hours-before').textContent = currentHours.toLocaleString() + ' hrs';
+  document.getElementById('stat-hours-after').textContent  = newHours.toLocaleString() + ' hrs';
+  document.getElementById('stat-hours-delta').textContent  = '−' + hoursSaved + ' hrs saved';
+
+  document.getElementById('stat-wins-before').textContent  = currentWins.toFixed(1);
+  document.getElementById('stat-wins-after').textContent   = (bids * newWinRate).toFixed(1);
+  document.getElementById('stat-wins-delta').textContent   = '+' + addlWins.toFixed(1) + ' more wins';
+
+  document.getElementById('stat-margin-before').textContent = fmtDollars(Math.round(currentMargin));
+  document.getElementById('stat-margin-after').textContent  = fmtDollars(Math.round(newMargin));
+  document.getElementById('stat-margin-delta').textContent  = '+' + fmtDollars(Math.round(addlMargin));
+
+  // Big number
+  document.getElementById('roi-additional-margin').textContent = fmtDollars(Math.round(addlMargin));
+
+  // Payback line
+  const annualCost = 588; // $49 × 12
+  const roiX = Math.round(addlMargin / annualCost);
+  const payback = document.getElementById('roi-payback-line');
+  if (roiX > 1) {
+    payback.textContent = `At $49/mo, that's a ${roiX}× return — if even half of that estimate holds.`;
+  } else {
+    payback.textContent = 'Every better bid decision compounds over time — and this system keeps learning.';
+  }
+
+  // Update slider fills
+  updateSliderBg('sl-bids',    bids,    10,    150);
+  updateSliderBg('sl-hours',   hours,   2,     24);
+  updateSliderBg('sl-winrate', winPct,  5,     50);
+  updateSliderBg('sl-value',   avgValue, 50000, 2000000);
+  updateSliderBg('sl-margin',  marginPct, 5,   30);
+}
+
+document.addEventListener('DOMContentLoaded', calcROI);
+// ──────────────────────────────────────────────────────────────────────────
 
 // Initialize Supabase
 const supabaseUrl = 'https://wqwfpnnlxnzzqzntpzuf.supabase.co';
