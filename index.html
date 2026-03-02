@@ -1021,12 +1021,82 @@ img { max-width: 100%; display: block; }
   border-top: 1px solid rgba(255,255,255,0.06);
 }
 .roi-payback { font-size: 0.8rem; color: var(--fog); margin-bottom: 14px; line-height: 1.5; }
+.roi-method-toggle {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: var(--slate-light);
+  text-decoration: underline;
+  text-decoration-color: rgba(90,106,126,0.4);
+  text-underline-offset: 2px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font);
+  margin-bottom: 24px;
+  transition: color 0.2s;
+}
+.roi-method-toggle:hover { color: var(--fog); }
+.roi-method-panel {
+  display: none;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-left: 2px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  font-size: 0.8rem;
+  color: var(--fog);
+  line-height: 1.65;
+}
+.roi-method-panel.open { display: block; }
+.roi-email-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.roi-email-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  background: var(--ink);
+  border: 1px solid var(--slate);
+  border-radius: var(--radius);
+  color: var(--white);
+  font-family: var(--font);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.roi-email-input::placeholder { color: var(--slate-light); }
+.roi-email-input:focus { border-color: var(--accent); }
+.roi-email-btn {
+  padding: 10px 16px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, opacity 0.2s;
+}
+.roi-email-btn:hover { background: var(--accent-dark); }
+.roi-email-btn:disabled { opacity: 0.6; cursor: default; }
+.roi-email-success {
+  display: none;
+  font-size: 0.875rem;
+  color: var(--green);
+  padding: 10px 14px;
+  background: var(--green-muted);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+}
 @media (max-width: 960px) {
   .roi-card { grid-template-columns: 1fr; }
   .roi-inputs { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06); }
 }
 @media (max-width: 640px) {
   .roi-inputs, .roi-results { padding: 28px 24px; }
+  .roi-email-row { flex-direction: column; }
 }
 </style>
 </head>
@@ -1546,6 +1616,8 @@ img { max-width: 100%; display: block; }
         <div class="roi-results-label">Your Bid Economics</div>
         <div class="roi-big-number" id="roi-additional-margin">$47K</div>
         <div class="roi-big-label">additional margin per year with BidIntell</div>
+        <button class="roi-method-toggle" onclick="toggleROIMethod()">How we calculate this ↓</button>
+        <div class="roi-method-panel" id="roi-method-panel">BidIntell helps you skip low-fit bids and focus on winnable work. We estimate that better bid selection saves ~40% of evaluation time and improves win rates by 12–15% relative to your baseline. Your results above are based on the numbers you entered.</div>
         <div class="roi-stat-row">
           <div class="roi-stat-label">Estimating hours / year</div>
           <div class="roi-stat-nums">
@@ -1571,7 +1643,14 @@ img { max-width: 100%; display: block; }
           </div>
         </div>
         <div class="roi-cta-row">
-          <div class="roi-payback" id="roi-payback-line">At $49/mo, that's an 80× return — if even half holds.</div>
+          <div class="roi-payback" id="roi-payback-line">At $99/mo, that's a 40× return — if even half holds.</div>
+          <div id="roi-email-wrap" style="margin-bottom:14px;">
+            <div class="roi-email-row">
+              <input type="email" class="roi-email-input" id="roi-email-input" placeholder="your@email.com">
+              <button class="roi-email-btn" id="roi-email-btn" onclick="submitROIEmail()">Email Me My ROI Breakdown →</button>
+            </div>
+            <div class="roi-email-success" id="roi-email-success">Check your inbox! 📬 We saved your numbers.</div>
+          </div>
           <a href="#apply" class="btn-primary">Get Started Free →</a>
         </div>
       </div>
@@ -1681,6 +1760,8 @@ const observer = new IntersectionObserver((entries) => {
 document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
 
 // ── ROI Calculator ─────────────────────────────────────────────────────────
+let roiState = {};
+
 function fmtDollars(n) {
   if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
   if (n >= 10000) return '$' + Math.round(n / 1000) + 'K';
@@ -1693,11 +1774,20 @@ function updateSliderBg(id, val, min, max) {
   if (el) el.style.background = `linear-gradient(to right, var(--accent) ${pct}%, var(--slate) ${pct}%)`;
 }
 
+function toggleROIMethod() {
+  const panel = document.getElementById('roi-method-panel');
+  const btn   = panel.previousElementSibling;
+  panel.classList.toggle('open');
+  btn.textContent = panel.classList.contains('open')
+    ? 'How we calculate this ↑'
+    : 'How we calculate this ↓';
+}
+
 function calcROI() {
-  const bids     = parseInt(document.getElementById('sl-bids').value);
-  const hours    = parseInt(document.getElementById('sl-hours').value);
-  const winPct   = parseInt(document.getElementById('sl-winrate').value);
-  const avgValue = parseInt(document.getElementById('sl-value').value);
+  const bids      = parseInt(document.getElementById('sl-bids').value);
+  const hours     = parseInt(document.getElementById('sl-hours').value);
+  const winPct    = parseInt(document.getElementById('sl-winrate').value);
+  const avgValue  = parseInt(document.getElementById('sl-value').value);
   const marginPct = parseInt(document.getElementById('sl-margin').value);
 
   const winRate = winPct / 100;
@@ -1716,21 +1806,21 @@ function calcROI() {
   const currentMargin = currentWins * avgValue * margin;
 
   // With BidIntell: 40% time reduction + 12.5% relative win rate lift (capped at 60%)
-  const hoursSaved   = Math.round(bids * hours * 0.40);
-  const newHours     = currentHours - hoursSaved;
-  const newWinRate   = Math.min(winRate * 1.125, 0.60);
-  const addlWins     = bids * (newWinRate - winRate);
-  const addlMargin   = addlWins * avgValue * margin;
-  const newMargin    = currentMargin + addlMargin;
+  const hoursSaved = Math.round(bids * hours * 0.40);
+  const newHours   = currentHours - hoursSaved;
+  const newWinRate = Math.min(winRate * 1.125, 0.60);
+  const addlWins   = bids * (newWinRate - winRate);
+  const addlMargin = addlWins * avgValue * margin;
+  const newMargin  = currentMargin + addlMargin;
 
   // Stats
   document.getElementById('stat-hours-before').textContent = currentHours.toLocaleString() + ' hrs';
   document.getElementById('stat-hours-after').textContent  = newHours.toLocaleString() + ' hrs';
   document.getElementById('stat-hours-delta').textContent  = '−' + hoursSaved + ' hrs saved';
 
-  document.getElementById('stat-wins-before').textContent  = currentWins.toFixed(1);
-  document.getElementById('stat-wins-after').textContent   = (bids * newWinRate).toFixed(1);
-  document.getElementById('stat-wins-delta').textContent   = '+' + addlWins.toFixed(1) + ' more wins';
+  document.getElementById('stat-wins-before').textContent = currentWins.toFixed(1);
+  document.getElementById('stat-wins-after').textContent  = (bids * newWinRate).toFixed(1);
+  document.getElementById('stat-wins-delta').textContent  = '+' + addlWins.toFixed(1) + ' more wins';
 
   document.getElementById('stat-margin-before').textContent = fmtDollars(Math.round(currentMargin));
   document.getElementById('stat-margin-after').textContent  = fmtDollars(Math.round(newMargin));
@@ -1739,22 +1829,62 @@ function calcROI() {
   // Big number
   document.getElementById('roi-additional-margin').textContent = fmtDollars(Math.round(addlMargin));
 
-  // Payback line
-  const annualCost = 588; // $49 × 12
+  // Payback line ($99/mo = $1,188/yr)
+  const annualCost = 1188;
   const roiX = Math.round(addlMargin / annualCost);
   const payback = document.getElementById('roi-payback-line');
   if (roiX > 1) {
-    payback.textContent = `At $49/mo, that's a ${roiX}× return — if even half of that estimate holds.`;
+    payback.textContent = `At $99/mo, that's a ${roiX}× return — if even half of that estimate holds.`;
   } else {
     payback.textContent = 'Every better bid decision compounds over time — and this system keeps learning.';
   }
 
-  // Update slider fills
-  updateSliderBg('sl-bids',    bids,    10,    150);
-  updateSliderBg('sl-hours',   hours,   2,     24);
-  updateSliderBg('sl-winrate', winPct,  5,     50);
-  updateSliderBg('sl-value',   avgValue, 50000, 2000000);
-  updateSliderBg('sl-margin',  marginPct, 5,   30);
+  // Slider fills
+  updateSliderBg('sl-bids',    bids,      10,    150);
+  updateSliderBg('sl-hours',   hours,     2,     24);
+  updateSliderBg('sl-winrate', winPct,    5,     50);
+  updateSliderBg('sl-value',   avgValue,  50000, 2000000);
+  updateSliderBg('sl-margin',  marginPct, 5,     30);
+
+  // Persist state for email capture
+  roiState = { bids, hours, winPct, avgValue, marginPct, hoursSaved, addlMargin: Math.round(addlMargin) };
+}
+
+async function submitROIEmail() {
+  const emailEl = document.getElementById('roi-email-input');
+  const btn     = document.getElementById('roi-email-btn');
+  const success = document.getElementById('roi-email-success');
+  const email   = emailEl.value.trim().toLowerCase();
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    emailEl.style.borderColor = 'var(--red)';
+    emailEl.focus();
+    return;
+  }
+  emailEl.style.borderColor = '';
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  try {
+    await supabaseClient.from('roi_calculator_leads').insert([{
+      email,
+      bids_per_year:                roiState.bids,
+      hours_per_bid:                roiState.hours,
+      win_rate:                     roiState.winPct,
+      avg_project_value:            roiState.avgValue,
+      net_margin:                   roiState.marginPct,
+      calculated_savings:           roiState.hoursSaved,
+      calculated_additional_margin: roiState.addlMargin,
+      source:                       'landing_page_calculator'
+    }]);
+  } catch (e) {
+    // Silently continue — don't block the success state on DB error
+    console.warn('ROI lead capture failed:', e);
+  }
+
+  // Show success regardless
+  document.querySelector('.roi-email-row').style.display = 'none';
+  success.style.display = 'block';
 }
 
 document.addEventListener('DOMContentLoaded', calcROI);
