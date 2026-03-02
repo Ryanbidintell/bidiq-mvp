@@ -4506,6 +4506,8 @@ ${fullText.substring(0, 40000)}`;
             } else if (id === 'dashboard') {
                 // Refresh dashboard
                 await loadDashboard();
+            } else if (id === 'analytics') {
+                await renderAnalytics();
             } else if (id === 'metrics') {
                 await loadMetricsTab();
             }
