@@ -1617,7 +1617,14 @@ img { max-width: 100%; display: block; }
         <div class="roi-big-number" id="roi-additional-margin">$47K</div>
         <div class="roi-big-label">additional margin per year with BidIntell</div>
         <button class="roi-method-toggle" onclick="toggleROIMethod()">How we calculate this ↓</button>
-        <div class="roi-method-panel" id="roi-method-panel">BidIntell helps you skip low-fit bids and focus on winnable work. We estimate that better bid selection saves ~40% of evaluation time and improves win rates by 12–15% relative to your baseline. Your results above are based on the numbers you entered.</div>
+        <div class="roi-method-panel" id="roi-method-panel">
+          <p style="font-weight:600;color:var(--cloud);margin-bottom:10px;">How we calculate this:</p>
+          <p style="margin-bottom:10px;">Industry data shows the average subcontractor wins about 1 in 5 bids. That means roughly 80% of your estimating time goes toward projects you won't win.</p>
+          <p style="margin-bottom:10px;">BidIntell helps you identify low-fit bids before you invest hours estimating them — so you can focus that time on projects where you have a real shot.</p>
+          <p style="margin-bottom:10px;"><strong style="color:var(--cloud);">Time savings</strong> are based on skipping bids that score below your threshold. If you currently spend <strong style="color:var(--accent);" id="roi-method-hours">6</strong> hours per bid and BidIntell helps you pass on even 2–3 poor-fit bids per month, that's the time saved above.</p>
+          <p style="margin-bottom:10px;"><strong style="color:var(--cloud);">Win rate improvement</strong> assumes that focusing on better-fit projects — right location, right GC, right scope — naturally increases your hit rate. The exact improvement depends on your current selectivity.</p>
+          <p style="font-style:italic;color:var(--slate-light);margin:0;">These projections will sharpen as you use BidIntell and track real outcomes.</p>
+        </div>
         <div class="roi-stat-row">
           <div class="roi-stat-label">Estimating hours / year</div>
           <div class="roi-stat-nums">
@@ -1845,6 +1852,10 @@ function calcROI() {
   updateSliderBg('sl-winrate', winPct,    5,     50);
   updateSliderBg('sl-value',   avgValue,  50000, 2000000);
   updateSliderBg('sl-margin',  marginPct, 5,     30);
+
+  // Keep dynamic hours in methodology tooltip
+  const methodHours = document.getElementById('roi-method-hours');
+  if (methodHours) methodHours.textContent = hours;
 
   // Persist state for email capture
   roiState = { bids, hours, winPct, avgValue, marginPct, hoursSaved, addlMargin: Math.round(addlMargin) };
