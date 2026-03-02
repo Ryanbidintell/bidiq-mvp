@@ -17,7 +17,10 @@ async function sendEmail({ to, subject, htmlBody }) {
             HtmlBody: htmlBody
         })
     });
-    if (!response.ok) throw new Error(`Postmark API error: ${response.status}`);
+    if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}));
+        throw new Error(`Postmark error ${response.status}: [${errBody.ErrorCode}] ${errBody.Message || 'unknown'}`);
+    }
     return response;
 }
 
