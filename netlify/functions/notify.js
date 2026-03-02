@@ -201,6 +201,83 @@ exports.handler = async function(event, context) {
             return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
         }
 
+        // ── ROI calculator breakdown ─────────────────────────────────────────
+        if (emailType === 'roi_breakdown') {
+            const { userEmail, bids, hours, winRate, avgValue, margin, hoursSaved, addlMargin } = body;
+
+            const fmt = (n) => {
+                if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
+                if (n >= 10000)   return '$' + Math.round(n / 1000) + 'K';
+                return '$' + Math.round(n).toLocaleString();
+            };
+
+            await sendEmail({
+                to: userEmail,
+                subject: `Your BidIntell ROI breakdown`,
+                htmlBody: `
+                    <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #1a1a2e;">
+                        <div style="background: #0B0F14; padding: 24px; border-radius: 8px 8px 0 0; border-bottom: 2px solid #F26522;">
+                            <div style="font-weight: 700; font-size: 20px; color: #F8FAFC;">BidIntell</div>
+                        </div>
+                        <div style="padding: 32px 24px; background: #141A23; border-radius: 0 0 8px 8px;">
+                            <h2 style="color: #F8FAFC; margin-bottom: 8px;">Your bid economics snapshot</h2>
+                            <p style="color: #94A3B8; margin-bottom: 24px; font-size: 14px;">Based on the numbers you entered in the calculator.</p>
+
+                            <div style="background: #1C2533; border-radius: 6px; padding: 20px; margin-bottom: 24px;">
+                                <div style="font-size: 13px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Potential additional margin / year</div>
+                                <div style="font-size: 2.5rem; font-weight: 700; color: #22C55E; font-family: monospace; line-height: 1;">${fmt(addlMargin)}</div>
+                            </div>
+
+                            <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+                                <tr style="border-bottom:1px solid #384254;">
+                                    <td style="padding:10px 0; color:#94A3B8;">Bids reviewed / year</td>
+                                    <td style="padding:10px 0; color:#F8FAFC; text-align:right; font-family:monospace;">${bids}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #384254;">
+                                    <td style="padding:10px 0; color:#94A3B8;">Hours per bid evaluation</td>
+                                    <td style="padding:10px 0; color:#F8FAFC; text-align:right; font-family:monospace;">${hours} hrs</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #384254;">
+                                    <td style="padding:10px 0; color:#94A3B8;">Current win rate</td>
+                                    <td style="padding:10px 0; color:#F8FAFC; text-align:right; font-family:monospace;">${winRate}%</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #384254;">
+                                    <td style="padding:10px 0; color:#94A3B8;">Average project value</td>
+                                    <td style="padding:10px 0; color:#F8FAFC; text-align:right; font-family:monospace;">${fmt(avgValue)}</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #384254;">
+                                    <td style="padding:10px 0; color:#94A3B8;">Net margin</td>
+                                    <td style="padding:10px 0; color:#F8FAFC; text-align:right; font-family:monospace;">${margin}%</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0; color:#94A3B8;">Estimating hours saved / year</td>
+                                    <td style="padding:10px 0; color:#22C55E; text-align:right; font-family:monospace;">−${hoursSaved} hrs</td>
+                                </tr>
+                            </table>
+
+                            <div style="text-align:center; margin-bottom:24px;">
+                                <a href="https://bidintell.ai/#apply" style="background:#F26522;color:white;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:700;display:inline-block;">Get Started Free →</a>
+                            </div>
+
+                            <p style="color:#94A3B8; font-size:13px; line-height:1.6;">These numbers are based on industry averages and your inputs. Actual results will vary — and get more accurate the more you use BidIntell to track real outcomes.</p>
+
+                            <p style="color:#5A6A7E; margin-top:24px; font-size:13px;">— Ryan<br><em>Founder, BidIntell</em></p>
+                        </div>
+                        <p style="font-size:11px; color:#5A6A7E; text-align:center; margin-top:16px;">BidIntell · <a href="https://bidintell.ai" style="color:#5A6A7E;">bidintell.ai</a> · <a href="https://bidintell.ai/legal" style="color:#5A6A7E;">Privacy &amp; Terms</a></p>
+                    </div>
+                `
+            });
+
+            // Internal notification
+            await sendEmail({
+                to: 'ryan@fsikc.com',
+                subject: `📊 New ROI calculator lead: ${userEmail}`,
+                htmlBody: `<p>New ROI calculator lead captured.</p><p><strong>Email:</strong> ${userEmail}</p><p><strong>Numbers:</strong> ${bids} bids/yr, ${hours} hrs/bid, ${winRate}% win rate, ${fmt(avgValue)} avg value, ${margin}% margin</p><p><strong>Projected additional margin:</strong> ${fmt(addlMargin)}/yr</p>`
+            });
+
+            return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+        }
+
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'Unknown emailType' }) };
 
     } catch (error) {

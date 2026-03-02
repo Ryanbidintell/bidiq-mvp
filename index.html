@@ -774,6 +774,7 @@ img { max-width: 100%; display: block; }
 }
 .cta-form input::placeholder { color: var(--slate-light); }
 .cta-form input:focus { border-color: var(--accent); }
+.beta-fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 
 /* ===== FOOTER ===== */
 .footer { padding: 48px 0 36px; border-top: 1px solid rgba(255,255,255,0.04); }
@@ -817,6 +818,7 @@ img { max-width: 100%; display: block; }
   .proof-bar-inner { gap: 32px; }
   .proof-divider { display: none; }
   .cta-form { flex-direction: column; }
+  .beta-fields-grid { grid-template-columns: 1fr; }
   .kanban-demo { grid-template-columns: repeat(2, 1fr); }
   .footer-inner { flex-direction: column; text-align: center; }
 }
@@ -1716,7 +1718,7 @@ img { max-width: 100%; display: block; }
     <h2>Start building intelligence around your bids.</h2>
     <p>Access is free through March 31, 2026. Every bid you analyze and every outcome you record makes the system smarter — for you and for every sub on the platform. Users who sign up now lock in founding member pricing after April 1.</p>
     <form id="beta-form" class="cta-form" onsubmit="handleBetaSubmit(event)">
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+      <div class="beta-fields-grid">
         <input type="text" id="full-name" name="full_name" placeholder="Your Name" required>
         <input type="email" id="email" name="email" placeholder="your@email.com" required>
       </div>
@@ -1889,8 +1891,28 @@ async function submitROIEmail() {
       source:                       'landing_page_calculator'
     }]);
   } catch (e) {
-    // Silently continue — don't block the success state on DB error
     console.warn('ROI lead capture failed:', e);
+  }
+
+  // Send breakdown email
+  try {
+    await fetch('/.netlify/functions/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        emailType:  'roi_breakdown',
+        userEmail:  email,
+        bids:       roiState.bids,
+        hours:      roiState.hours,
+        winRate:    roiState.winPct,
+        avgValue:   roiState.avgValue,
+        margin:     roiState.marginPct,
+        hoursSaved: roiState.hoursSaved,
+        addlMargin: roiState.addlMargin
+      })
+    });
+  } catch (e) {
+    console.warn('ROI email send failed:', e);
   }
 
   // Show success regardless
@@ -1923,49 +1945,55 @@ async function handleBetaSubmit(e) {
   btn.textContent = 'Submitting...';
   btn.style.opacity = '0.6';
 
+  // 1. Try Supabase insert — log errors but never surface them to the user
+  let isDuplicate = false;
   try {
-    const { data, error } = await supabaseClient
+    const { error } = await supabaseClient
       .from('beta_signups')
       .insert([formData])
       .select();
-
     if (error) {
       if (error.code === '23505' || error.message.includes('duplicate')) {
-        messageEl.innerHTML = '<span style="color: var(--yellow);">✓ You\'ve already signed up — we\'ll reach out soon.</span>';
+        isDuplicate = true;
       } else {
-        throw error;
+        console.error('beta_signups insert error:', error.code, error.message);
       }
-    } else {
-      fetch('/.netlify/functions/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          emailType: 'beta_application',
-          fullName: formData.full_name,
-          userEmail: formData.email
-        })
-      }).catch(() => {});
-      messageEl.innerHTML = '<span style="color: var(--green);">✓ You\'re on the list. We\'ll be in touch soon.</span>';
-      form.reset();
     }
+  } catch (dbErr) {
+    console.error('Supabase unavailable:', dbErr);
+  }
 
-    btn.textContent = '✓ Request Sent';
-    btn.style.background = '#22C55E';
-    setTimeout(() => {
-      btn.textContent = originalBtnText;
-      btn.style.background = '';
-      btn.style.opacity = '1';
-      btn.disabled = false;
-      messageEl.innerHTML = '';
-    }, 5000);
+  // 2. Always fire notification email — this is the reliable capture path
+  try {
+    await fetch('/.netlify/functions/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        emailType: 'beta_application',
+        fullName: formData.full_name,
+        userEmail: formData.email
+      })
+    });
+  } catch (notifyErr) {
+    console.error('Notify error:', notifyErr);
+  }
 
-  } catch (error) {
-    console.error('Beta signup error:', error);
-    messageEl.innerHTML = '<span style="color: var(--red);">❌ Something went wrong. Please try again or email hello@bidintell.ai</span>';
+  // 3. Show result
+  if (isDuplicate) {
+    messageEl.innerHTML = '<span style="color: var(--yellow);">✓ You\'ve already signed up — we\'ll reach out soon.</span>';
+  } else {
+    messageEl.innerHTML = '<span style="color: var(--green);">✓ You\'re on the list. We\'ll be in touch soon.</span>';
+    form.reset();
+  }
+  btn.textContent = '✓ Request Sent';
+  btn.style.background = '#22C55E';
+  setTimeout(() => {
     btn.textContent = originalBtnText;
+    btn.style.background = '';
     btn.style.opacity = '1';
     btn.disabled = false;
-  }
+    messageEl.innerHTML = '';
+  }, 5000);
 }
 
 // Mobile menu
