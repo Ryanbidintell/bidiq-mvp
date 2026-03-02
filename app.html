@@ -348,6 +348,9 @@
         .insight-quote { margin-top: 8px; padding: 8px 12px; background: rgba(0,0,0,0.28); border-radius: 4px; font-size: 12px; color: var(--cloud); line-height: 1.5; font-style: italic; }
         .score-component-reason { font-size: 13px; color: var(--text-secondary); }
         .score-component-details { margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: var(--radius); font-size: 12px; }
+        .rpt-tab { padding: 10px 18px; font-size: 13px; font-weight: 600; color: var(--text-muted); background: transparent; border: none; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; transition: color 0.15s, border-color 0.15s; }
+        .rpt-tab:hover { color: var(--text-primary); }
+        .rpt-tab-active { color: var(--accent) !important; border-bottom-color: var(--accent) !important; }
         
         .keyword-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin: 2px; }
         .keyword-tag.good { background: var(--success-bg); color: var(--success); }
@@ -2062,44 +2065,27 @@
                         </div>
                     </div>
 
-                    <!-- General Contractors Bidding Card -->
-                    <div class="card" style="margin-bottom: 24px;">
-                        <div class="card-header">
-                            <h3 class="card-title">🏢 General Contractors Bidding</h3>
-                        </div>
-                        <div class="card-body">
-                            <div id="reportGCsContent"></div>
-                        </div>
+                    <!-- Report Tabs -->
+                    <div style="display:flex;gap:0;border-bottom:2px solid var(--border-color);margin-bottom:20px;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+                        <button class="rpt-tab rpt-tab-active" onclick="switchRptTab(this,'score')">Score</button>
+                        <button class="rpt-tab" onclick="switchRptTab(this,'contract')">Contract</button>
+                        <button class="rpt-tab" onclick="switchRptTab(this,'intel')">Intel</button>
+                        <button class="rpt-tab" onclick="switchRptTab(this,'economics')">Economics</button>
                     </div>
 
-                    <!-- Score Report Card -->
-                    <div class="card" style="margin-bottom: 24px;">
-                        <div class="card-header">
-                            <h3 class="card-title">📊 AI Scoring Analysis</h3>
-                        </div>
-                        <div class="card-body">
-                            <div id="reportScoreContent"></div>
-                        </div>
+                    <div id="rpt-score" class="rpt-panel">
+                        <div id="reportScoreContent"></div>
                     </div>
-
-                    <!-- AI Recommendations Card -->
-                    <div class="card" style="margin-bottom: 24px;">
-                        <div class="card-header">
-                            <h3 class="card-title">💡 AI Recommendations</h3>
-                        </div>
-                        <div class="card-body">
-                            <div id="reportRecommendations"></div>
-                        </div>
+                    <div id="rpt-contract" class="rpt-panel" style="display:none">
+                        <div id="reportContractContent"></div>
                     </div>
-
-                    <!-- Extracted Data Card -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">📄 Extracted Data</h3>
-                        </div>
-                        <div class="card-body">
-                            <div id="reportExtractedData"></div>
-                        </div>
+                    <div id="rpt-intel" class="rpt-panel" style="display:none">
+                        <div id="reportGCsContent" style="margin-bottom:20px;"></div>
+                        <div id="reportRecommendations" style="margin-bottom:20px;"></div>
+                        <div id="reportExtractedData"></div>
+                    </div>
+                    <div id="rpt-economics" class="rpt-panel" style="display:none">
+                        <div id="reportEconomicsContent"></div>
                     </div>
 
                 </div>
@@ -6801,6 +6787,15 @@ ${truncatedText}`;
             return { level, count: activeFlags.length, flags };
         }
 
+        // Report tab switching
+        function switchRptTab(btn, tab) {
+            document.querySelectorAll('.rpt-tab').forEach(t => t.classList.remove('rpt-tab-active'));
+            document.querySelectorAll('.rpt-panel').forEach(p => p.style.display = 'none');
+            btn.classList.add('rpt-tab-active');
+            const panel = document.getElementById('rpt-' + tab);
+            if (panel) panel.style.display = 'block';
+        }
+
         // Module 3: GC Relationship Classification
         function classifyGCRelationship(gc) {
             if (!gc || (gc.bids || 0) === 0) return { type: 'unknown', label: '❓ No History', color: 'var(--text-muted)' };
@@ -6906,7 +6901,7 @@ ${truncatedText}`;
             }
         };
 
-        function renderBidEconomicsCard(analysis, settings) {
+        function renderBidEconomicsCard(analysis, settings, savedOutcome) {
             const estimatedHours = calculateEstimatedHours(analysis);
             const margin = settings.target_margin || 15;
             const projects = allProjectsCache || [];
@@ -6919,17 +6914,38 @@ ${truncatedText}`;
                 : `${withOutcomes.length} outcomes`;
             const winRateJs = winRate !== null ? winRate : 0;
 
-            return `<div style="margin-top:16px;padding:16px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border);">
+            // Pre-populate from tracked outcome data
+            const savedAmount = parseFloat(savedOutcome?.amount || savedOutcome?.final_amount || '') || '';
+            const actualHours = parseFloat(savedOutcome?.hours_spent || '') || null;
+
+            // Pre-compute expected value if we have all inputs
+            const fmt = n => n >= 1000 ? '$' + (n/1000).toFixed(1) + 'k' : '$' + Math.round(n).toLocaleString();
+            let expectedHtml, dphHtml;
+            if (savedAmount && winRate) {
+                const expected = savedAmount * (margin / 100) * (winRate / 100);
+                const dph = estimatedHours > 0 ? expected / estimatedHours : 0;
+                expectedHtml = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;">Expected Value</div><div style="font-size:20px;font-weight:700;color:var(--success);">${fmt(expected)}</div><div style="font-size:10px;color:var(--text-muted);">scope × margin × win rate</div>`;
+                dphHtml = `<div style="display:block;padding:10px 12px;background:rgba(242,101,34,0.08);border:1px solid rgba(242,101,34,0.2);border-radius:var(--radius);text-align:center;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-muted);">Expected return per estimating hour: </span><span style="font-size:17px;font-weight:700;color:var(--accent);">${fmt(dph)}/hr</span></div>`;
+            } else {
+                expectedHtml = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;">Expected Value</div><div style="font-size:20px;font-weight:700;color:var(--text-muted);">—</div><div style="font-size:10px;color:var(--text-muted);">${savedAmount ? 'track more outcomes' : 'enter scope value'}</div>`;
+                dphHtml = '';
+            }
+
+            const hoursHtml = actualHours
+                ? `<div style="font-size:28px;font-weight:700;color:var(--text-primary);line-height:1;">${actualHours}<span style="font-size:13px;color:var(--text-muted);font-weight:400;">h actual</span></div><div style="font-size:11px;color:var(--text-muted);">est. ${estimatedHours}h from doc complexity</div>`
+                : `<div style="font-size:28px;font-weight:700;color:var(--text-primary);line-height:1;">${estimatedHours}<span style="font-size:13px;color:var(--text-muted);font-weight:400;">h</span></div><div style="font-size:11px;color:var(--text-muted);">based on doc complexity</div>`;
+
+            return `<div style="padding:16px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border);">
                 <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--accent);font-weight:700;margin-bottom:10px;">BID ECONOMICS</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
                     <div>
                         <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.08em;">Your Scope Value ($)</div>
-                        <input type="number" class="form-input" id="bidEconValue" placeholder="e.g. 450000" style="font-size:14px;" oninput="updateBidEconomics(this.value, ${estimatedHours}, ${winRateJs}, ${margin})">
+                        <input type="number" class="form-input" id="bidEconValue" value="${savedAmount}" placeholder="Enter your scope ($)" style="font-size:14px;" oninput="updateBidEconomics(this.value, ${estimatedHours}, ${winRateJs}, ${margin})">
+                        ${savedAmount ? '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">from outcome tracking</div>' : ''}
                     </div>
                     <div>
-                        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.08em;">Est. Hours to Bid</div>
-                        <div style="font-size:28px;font-weight:700;color:var(--text-primary);line-height:1;">${estimatedHours}<span style="font-size:13px;color:var(--text-muted);font-weight:400;">h</span></div>
-                        <div style="font-size:11px;color:var(--text-muted);">based on doc complexity</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.08em;">Hours to Bid</div>
+                        ${hoursHtml}
                     </div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
@@ -6941,19 +6957,14 @@ ${truncatedText}`;
                     <div style="background:var(--bg-tertiary);border-radius:var(--radius);padding:10px;text-align:center;">
                         <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;">Target Margin</div>
                         <div style="font-size:20px;font-weight:700;color:var(--text-primary);">${margin}%</div>
-                        <div style="font-size:10px;color:var(--text-muted);">from settings</div>
+                        <div style="font-size:10px;color:var(--text-muted);">Settings → Bid Defaults</div>
                     </div>
                     <div id="bidEconExpected" style="background:var(--bg-tertiary);border-radius:var(--radius);padding:10px;text-align:center;">
-                        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;">Expected Value</div>
-                        <div style="font-size:20px;font-weight:700;color:var(--text-muted);">—</div>
-                        <div style="font-size:10px;color:var(--text-muted);">enter scope value</div>
+                        ${expectedHtml}
                     </div>
                 </div>
-                <div id="bidEconDollarPerHour" style="display:none;padding:10px 12px;background:rgba(242,101,34,0.08);border:1px solid rgba(242,101,34,0.2);border-radius:var(--radius);text-align:center;margin-bottom:8px;">
-                    <span style="font-size:12px;color:var(--text-muted);">Expected return per estimating hour: </span>
-                    <span id="bidEconDph" style="font-size:17px;font-weight:700;color:var(--accent);"></span>
-                </div>
-                <div style="font-size:11px;color:var(--text-muted);">Expected value = scope × margin × win rate. ${winRate === null ? 'Track more outcomes to unlock win rate.' : 'Enter your scope value above to calculate.'}</div>
+                ${dphHtml}
+                <div style="font-size:11px;color:var(--text-muted);">Expected value = scope × margin × win rate. ${winRate === null ? 'Track more outcomes to unlock win rate.' : savedAmount ? '' : 'Enter scope value above to calculate.'}</div>
             </div>`;
         }
 
@@ -8438,8 +8449,6 @@ ${truncatedText}`;
                     ${renderComponent('🏢', 'GC Relationship', analysis.scores.components.gc)}
                     ${renderComponent(settings.companyType === 'subcontractor' ? '🔧' : '📦', settings.companyType === 'subcontractor' ? 'Trade Match' : 'Product Match', analysis.scores.components.trade)}
                     ${analysis.scores.components.competitive?.weight > 0 ? renderComponent('⚔️', 'Competitive Pressure', analysis.scores.components.competitive) : ''}
-
-                    ${renderBidEconomicsCard(analysis, settings)}
 
                     ${renderExtractedDataSection(analysis.extracted, analysis.gcs)}
 
@@ -10014,7 +10023,6 @@ ${truncatedText}`;
                         ${renderComponent('🏢', 'GC Relationship', p.scores.components.gc)}
                         ${renderComponent(tradeIcon, tradeLabel, p.scores.components.trade)}
                         ${p.scores.components.competitive?.weight > 0 ? renderComponent('⚔️', 'Competitive Pressure', p.scores.components.competitive) : ''}
-                        ${renderBidEconomicsCard({ extracted: p.extracted || {}, contractRisks: [], fileCount: 1 }, settings)}
                     </div>
 
                     <div class="manual-override" style="margin-top:20px;padding:16px;background:var(--bg-tertiary);border-radius:var(--radius);border:1px solid var(--border-color);">
@@ -10037,6 +10045,21 @@ ${truncatedText}`;
                     </div>
                 `;
                 document.getElementById('reportScoreContent').innerHTML = scoreHTML;
+
+                // Contract tab
+                let contractTabHtml = '';
+                if (p.contractRisks && p.contractRisks.hasContractLanguage) {
+                    const risksDisplay = formatContractRisksForDisplay(p.contractRisks);
+                    contractTabHtml = risksDisplay.hasRisks ? risksDisplay.html : '';
+                }
+                if (!contractTabHtml) {
+                    contractTabHtml = '<div style="padding:32px;text-align:center;color:var(--text-muted);">No contract risk flags detected in this document.</div>';
+                }
+                document.getElementById('reportContractContent').innerHTML = contractTabHtml;
+
+                // Economics tab
+                document.getElementById('reportEconomicsContent').innerHTML =
+                    renderBidEconomicsCard({ extracted: p.extracted || {}, contractRisks: [], fileCount: p.fileCount || 1 }, settings, p.outcome_data);
 
                 // Add visual feedback for report agreement radio buttons and auto-save
                 setTimeout(() => {
