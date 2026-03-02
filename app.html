@@ -1270,7 +1270,7 @@
                         <div class="stat-card" style="background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(59,130,246,0.1));border-color:var(--success);">
                             <div class="stat-label">AI Learning Progress</div>
                             <div class="stat-value" id="statDataMoat">--</div>
-                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;"><span id="statOutcomeRate">0</span>% outcomes tracked • Trains AI</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;"><span id="statOutcomeRate">0 of 0</span> projects • Trains AI</div>
                         </div>
                     </div>
                     <div class="card">
@@ -9556,19 +9556,18 @@ ${truncatedText}`;
             let totalRisks = 0;
             let riskyProjects = 0;
             projects.forEach(p => {
-                if (p.contract_risks && p.contract_risks.risksDetected && p.contract_risks.risksDetected.length > 0) {
-                    totalRisks += p.contract_risks.risksDetected.length;
+                if (p.contractRisks && p.contractRisks.risksDetected && p.contractRisks.risksDetected.length > 0) {
+                    totalRisks += p.contractRisks.risksDetected.length;
                     riskyProjects++;
                 }
             });
             animateValue('statContractRisks', 0, totalRisks);
             document.getElementById('statRiskyProjects').textContent = riskyProjects;
 
-            // AI Learning Progress (% of projects with outcomes - trains AI for better recommendations)
+            // AI Learning Progress (count of projects with outcomes - trains AI for better recommendations)
             const projectsWithOutcomes = projects.filter(p => p.outcome && p.outcome !== 'pending').length;
-            const outcomeRate = projects.length > 0 ? Math.round((projectsWithOutcomes / projects.length) * 100) : 0;
-            document.getElementById('statDataMoat').textContent = outcomeRate > 0 ? outcomeRate + '%' : '--';
-            document.getElementById('statOutcomeRate').textContent = outcomeRate;
+            document.getElementById('statDataMoat').textContent = projectsWithOutcomes > 0 ? projectsWithOutcomes : '--';
+            document.getElementById('statOutcomeRate').textContent = `${projectsWithOutcomes} of ${projects.length}`;
 
             const recent = projects.slice(0, 5);
             if (recent.length === 0) {
