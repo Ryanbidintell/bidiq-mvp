@@ -21,7 +21,35 @@
 - **Priority:** Get 5-10 beta users actively using it, monitor funnel events
 - **Paid Launch:** April 1, 2026
 
-## Latest Session (Mar 2, 2026) — Session 4
+## Latest Session (Mar 2, 2026) — Session 5
+### Magic Link Signup Flow — FULLY WORKING ✅
+**Problem chain resolved:**
+1. Wrong Supabase URL in index.html (old project) → fixed
+2. Supabase built-in email → unreliable for Gmail, abandoned
+3. Postmark SMTP via Supabase → didn't work
+4. Admin API generate_link + Postmark → correct approach but env var issues
+   - `SUPABASE_SERVICE_KEY` had wrong value → user re-copied service_role key from Supabase → Project Settings → API
+   - `POSTMARK_API_KEY` was FSI Marketing server token, not BidIntell server → updated to BidIntell server token
+   - `hello@bidintell.ai` sender not verified in Postmark → added sender signature + verified DKIM/Return-Path
+
+**Final working architecture:**
+- `handleBetaSubmit` in index.html calls `/.netlify/functions/notify` with `emailType: 'magic_link'`
+- notify.js generates magic link via Supabase admin API (`/auth/v1/admin/generate_link` with service_role key)
+- Sends branded email via Postmark from `hello@bidintell.ai` with the action_link
+- Beta signup recorded silently to `beta_signups` table (non-blocking)
+
+**Env vars required in Netlify:**
+- `SUPABASE_SERVICE_KEY` = service_role key from Supabase → Project Settings → API
+- `POSTMARK_API_KEY` = BidIntell server token (NOT FSI Marketing server token)
+
+**Also built this session:**
+- ROI Calculator on landing page (5 sliders, live results panel, email capture → `roi_calculator_leads` table)
+- `roi_calculator_leads` table — run `roi-calculator-migration.sql` in Supabase
+- `emailType: 'roi_breakdown'` in notify.js — sends branded breakdown email via Postmark
+
+---
+
+## Previous Session (Mar 2, 2026) — Session 4
 ### Launch Readiness: Legal, Emails, Landing Page (commit ff03b63)
 - **legal.html** — ToS + Privacy Policy created (both sections on one page, /legal)
 - **app.html** — Fixed broken Terms/Privacy links (were calling nonexistent showPage() → now /legal#terms)
