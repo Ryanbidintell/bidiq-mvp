@@ -1,5 +1,6 @@
 -- Game Theory Intelligence Modules Migration
 -- Run in Supabase SQL Editor
+-- Safe to re-run — all statements are idempotent
 
 -- Module 1: Track which CSI divisions were submitted
 ALTER TABLE projects
@@ -17,7 +18,18 @@ CREATE TABLE IF NOT EXISTS gc_competition_density (
     created_at timestamp with time zone DEFAULT now()
 );
 ALTER TABLE gc_competition_density ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can manage their own competition data"
-ON gc_competition_density FOR ALL USING (user_id = auth.uid());
-CREATE INDEX idx_gc_competition_user ON gc_competition_density(user_id);
-CREATE INDEX idx_gc_competition_gc_name ON gc_competition_density(gc_name);
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'gc_competition_density'
+        AND policyname = 'Users can manage their own competition data'
+    ) THEN
+        CREATE POLICY "Users can manage their own competition data"
+        ON gc_competition_density FOR ALL USING (user_id = auth.uid());
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_gc_competition_user ON gc_competition_density(user_id);
+CREATE INDEX IF NOT EXISTS idx_gc_competition_gc_name ON gc_competition_density(gc_name);
