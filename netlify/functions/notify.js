@@ -278,6 +278,68 @@ exports.handler = async function(event, context) {
             return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
         }
 
+        // ── Magic link (bypass Supabase email, send via Postmark) ────────────
+        if (emailType === 'magic_link') {
+            const { userEmail, fullName } = body;
+            const firstName = (fullName || 'there').split(' ')[0];
+            const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+            const supabaseUrl = 'https://szifhqmrddmdkgschkkw.supabase.co';
+
+            // Generate magic link via Supabase admin API
+            const linkRes = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${serviceRoleKey}`,
+                    'apikey': serviceRoleKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    type: 'magiclink',
+                    email: userEmail,
+                    redirect_to: 'https://bidintell.ai/app'
+                })
+            });
+
+            if (!linkRes.ok) {
+                const err = await linkRes.json().catch(() => ({}));
+                throw new Error(`generate_link failed: ${err.message || linkRes.status}`);
+            }
+
+            const { action_link } = await linkRes.json();
+
+            // Send branded welcome email with the link
+            await sendEmail({
+                to: userEmail,
+                subject: `Your BidIntell login link, ${firstName}!`,
+                htmlBody: `
+                    <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #1a1a2e;">
+                        <div style="background: #0B0F14; padding: 24px; border-radius: 8px 8px 0 0; border-bottom: 2px solid #F26522;">
+                            <div style="font-weight: 700; font-size: 20px; color: #F8FAFC;">BidIntell</div>
+                        </div>
+                        <div style="padding: 32px 24px; background: #141A23; border-radius: 0 0 8px 8px;">
+                            <h2 style="color: #F8FAFC; margin-bottom: 16px;">You're in, ${firstName}!</h2>
+                            <p style="color: #CBD5E1; line-height: 1.7;">Click the button below to log in and start your first analysis. The link expires in 24 hours.</p>
+                            <div style="text-align: center; margin: 32px 0;">
+                                <a href="${action_link}" style="background: #F26522; color: white; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block;">Open BidIntell →</a>
+                            </div>
+                            <p style="color: #94A3B8; font-size: 13px; line-height: 1.6;">Access is free through March 31, 2026. Every bid you analyze and outcome you record makes the system smarter for you.</p>
+                            <p style="color: #5A6A7E; margin-top: 24px; font-size: 13px;">— Ryan<br><em>Founder, BidIntell</em></p>
+                        </div>
+                        <p style="font-size: 11px; color: #5A6A7E; text-align: center; margin-top: 16px;">BidIntell · <a href="https://bidintell.ai" style="color: #5A6A7E;">bidintell.ai</a> · <a href="https://bidintell.ai/legal" style="color: #5A6A7E;">Privacy &amp; Terms</a></p>
+                    </div>
+                `
+            });
+
+            // Notify Ryan
+            await sendEmail({
+                to: 'ryan@fsikc.com',
+                subject: `🎉 New BidIntell signup: ${fullName} (${userEmail})`,
+                htmlBody: `<p>New signup — magic link sent via Postmark.</p><p><strong>Name:</strong> ${fullName}</p><p><strong>Email:</strong> ${userEmail}</p>`
+            });
+
+            return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+        }
+
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'Unknown emailType' }) };
 
     } catch (error) {

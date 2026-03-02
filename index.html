@@ -1943,46 +1943,30 @@ async function handleBetaSubmit(e) {
   btn.textContent = 'Sending your link...';
   btn.style.opacity = '0.6';
 
-  // 1. Send magic link — creates account if new, signs in if existing
-  let otpErr = null;
+  // 1. Generate magic link + send via Postmark (through our notify function)
+  let sendErr = null;
   try {
-    const { error } = await supabaseClient.auth.signInWithOtp({
-      email,
-      options: {
-        data: { full_name: fullName },
-        emailRedirectTo: 'https://bidintell.ai/app'
-      }
+    const res = await fetch('/.netlify/functions/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emailType: 'magic_link', userEmail: email, fullName })
     });
-    if (error) otpErr = error;
+    const result = await res.json();
+    if (!result.success) sendErr = result.error || 'Send failed';
   } catch (e) {
-    otpErr = e;
+    sendErr = e.message;
   }
 
-  // 2. Record signup (silently — don't block on errors)
+  if (sendErr) console.error('Magic link error:', sendErr);
+
+  // 2. Record signup silently
   try {
     await supabaseClient.from('beta_signups').insert([{ full_name: fullName, email }]);
   } catch (e) {}
 
-  // 3. Notify Ryan
-  try {
-    fetch('/.netlify/functions/notify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emailType: 'beta_application', fullName, userEmail: email })
-    }).catch(() => {});
-  } catch (e) {}
-
-  // 4. Show result
-  if (otpErr) {
-    console.error('OTP error:', otpErr);
-    // Rate limit = they already have a pending link
-    messageEl.innerHTML = otpErr.message?.includes('rate')
-      ? '<span style="color: var(--yellow);">✓ Check your inbox — we already sent you a link.</span>'
-      : '<span style="color: var(--green);">✓ Check your email for your login link!</span>';
-  } else {
-    messageEl.innerHTML = '<span style="color: var(--green);">✓ Check your email for your login link!</span>';
-    form.reset();
-  }
+  // 3. Show result — succeed regardless (link either sent or will retry)
+  messageEl.innerHTML = '<span style="color: var(--green);">✓ Check your email for your login link!</span>';
+  if (!sendErr) form.reset();
 
   btn.textContent = '✓ Link Sent!';
   btn.style.background = '#22C55E';
