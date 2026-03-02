@@ -21,7 +21,32 @@
 - **Priority:** Get 5-10 beta users actively using it, monitor funnel events
 - **Paid Launch:** April 1, 2026
 
-## Latest Session (Feb 27, 2026) — Session 2
+## Latest Session (Feb 27, 2026) — Session 3
+### Bid Economics Feature + Report Polish (commit 947238b)
+
+**SQL Migration:** `bid-economics-migration.sql` — run in Supabase SQL Editor
+- `ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS target_margin INTEGER DEFAULT 15;`
+
+**Features added:**
+1. **Bid Economics Card** — appears on every report (new + saved) after BidIndex components
+   - Auto-estimates hours to bid using: spec divisions (×0.35h), building type, contract risks, file count (cap 8h)
+   - User enters scope value → calculates expected value = scope × margin × win rate
+   - Shows $/hr return on estimating time
+   - Win rate sourced from their real outcome history (needs 3+ outcomes)
+2. **Target Margin setting** — new field in Settings tab, default 15%, saved to user_settings
+3. **Outcome forms** — "Hours spent estimating" field added to won + lost forms (optional, saves to outcome_data.hours_spent)
+4. **Analytics: Bid ROI by Building Type** — appears after 2+ bids with hours+amount tracked; shows $/hr by building type as bar chart
+
+**Also fixed this session:**
+- Winner's Curse → Bid Risk rename complete (app + index.html)
+- GC selector placeholder overlapping dropdown — fixed with searchActive check
+- rushedTimeline false positive on past reports — fixed with `daysUntil >= 0 && daysUntil < 10`
+- Analytics: renamed to "Top/High Ghost Rate Clients", building type chart % + white legend + no click-to-hide
+- Report redesign: premium dark gradient header, glow lines, rec-pill, meta-chips, score-component-inner with colored border, insight-quote
+- Bid volume chart Invalid Date guard
+- `updateBidEconomics` is window-level global (needed for oninput in template literals)
+
+## Previous Session (Feb 27, 2026) — Session 2
 ### Game Theory Intelligence Modules (commit 2e49aa1)
 
 **SQL Migration:** `game-theory-migration.sql` — run in Supabase SQL Editor BEFORE testing
