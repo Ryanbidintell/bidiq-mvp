@@ -1722,7 +1722,7 @@ img { max-width: 100%; display: block; }
         <input type="text" id="full-name" name="full_name" placeholder="Your Name" required>
         <input type="email" id="email" name="email" placeholder="your@email.com" required>
       </div>
-      <button type="submit" class="btn-primary">Request Access</button>
+      <button type="submit" class="btn-primary">Get Instant Access →</button>
       <div id="form-message" style="margin-top: 12px; font-size: 0.9rem; text-align: center;"></div>
     </form>
     <p style="font-size:0.8rem; color:var(--slate-light); margin-top:12px;">No credit card required. Access is free through March 31, 2026.</p>
@@ -1936,56 +1936,55 @@ async function handleBetaSubmit(e) {
   const messageEl = document.getElementById('form-message');
   const originalBtnText = btn.textContent;
 
-  const formData = {
-    full_name: form.querySelector('#full-name').value.trim(),
-    email: form.querySelector('#email').value.trim().toLowerCase()
-  };
+  const fullName = form.querySelector('#full-name').value.trim();
+  const email    = form.querySelector('#email').value.trim().toLowerCase();
 
   btn.disabled = true;
-  btn.textContent = 'Submitting...';
+  btn.textContent = 'Sending your link...';
   btn.style.opacity = '0.6';
 
-  // 1. Try Supabase insert — log errors but never surface them to the user
-  let isDuplicate = false;
+  // 1. Send magic link — creates account if new, signs in if existing
+  let otpErr = null;
   try {
-    const { error } = await supabaseClient
-      .from('beta_signups')
-      .insert([formData])
-      .select();
-    if (error) {
-      if (error.code === '23505' || error.message.includes('duplicate')) {
-        isDuplicate = true;
-      } else {
-        console.error('beta_signups insert error:', error.code, error.message);
+    const { error } = await supabaseClient.auth.signInWithOtp({
+      email,
+      options: {
+        data: { full_name: fullName },
+        emailRedirectTo: 'https://bidintell.ai/app'
       }
-    }
-  } catch (dbErr) {
-    console.error('Supabase unavailable:', dbErr);
+    });
+    if (error) otpErr = error;
+  } catch (e) {
+    otpErr = e;
   }
 
-  // 2. Always fire notification email — this is the reliable capture path
+  // 2. Record signup (silently — don't block on errors)
   try {
-    await fetch('/.netlify/functions/notify', {
+    await supabaseClient.from('beta_signups').insert([{ full_name: fullName, email }]);
+  } catch (e) {}
+
+  // 3. Notify Ryan
+  try {
+    fetch('/.netlify/functions/notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        emailType: 'beta_application',
-        fullName: formData.full_name,
-        userEmail: formData.email
-      })
-    });
-  } catch (notifyErr) {
-    console.error('Notify error:', notifyErr);
-  }
+      body: JSON.stringify({ emailType: 'beta_application', fullName, userEmail: email })
+    }).catch(() => {});
+  } catch (e) {}
 
-  // 3. Show result
-  if (isDuplicate) {
-    messageEl.innerHTML = '<span style="color: var(--yellow);">✓ You\'ve already signed up — we\'ll reach out soon.</span>';
+  // 4. Show result
+  if (otpErr) {
+    console.error('OTP error:', otpErr);
+    // Rate limit = they already have a pending link
+    messageEl.innerHTML = otpErr.message?.includes('rate')
+      ? '<span style="color: var(--yellow);">✓ Check your inbox — we already sent you a link.</span>'
+      : '<span style="color: var(--green);">✓ Check your email for your login link!</span>';
   } else {
-    messageEl.innerHTML = '<span style="color: var(--green);">✓ You\'re on the list. We\'ll be in touch soon.</span>';
+    messageEl.innerHTML = '<span style="color: var(--green);">✓ Check your email for your login link!</span>';
     form.reset();
   }
-  btn.textContent = '✓ Request Sent';
+
+  btn.textContent = '✓ Link Sent!';
   btn.style.background = '#22C55E';
   setTimeout(() => {
     btn.textContent = originalBtnText;
@@ -1993,7 +1992,7 @@ async function handleBetaSubmit(e) {
     btn.style.opacity = '1';
     btn.disabled = false;
     messageEl.innerHTML = '';
-  }, 5000);
+  }, 6000);
 }
 
 // Mobile menu
