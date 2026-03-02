@@ -296,6 +296,9 @@ exports.handler = async function(event, context) {
                 if (payload.role !== 'service_role') {
                     throw new Error(`key has role="${payload.role}" — must be "service_role". You may have pasted the anon key instead.`);
                 }
+                if (payload.ref && payload.ref !== 'szifhqmrddmdkgschkkw') {
+                    throw new Error(`key belongs to wrong project: ref="${payload.ref}" (expected "szifhqmrddmdkgschkkw")`);
+                }
             } catch (e) {
                 throw new Error(`SUPABASE_SERVICE_KEY invalid: ${e.message}`);
             }
