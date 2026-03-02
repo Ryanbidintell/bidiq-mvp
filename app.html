@@ -6907,11 +6907,11 @@ ${truncatedText}`;
             const projects = allProjectsCache || [];
             const withOutcomes = projects.filter(p => p.outcome === 'won' || p.outcome === 'lost');
             const wins = withOutcomes.filter(p => p.outcome === 'won').length;
-            const winRate = withOutcomes.length >= 3 ? Math.round(wins / withOutcomes.length * 100) : null;
+            const winRate = withOutcomes.length >= 1 ? Math.round(wins / withOutcomes.length * 100) : null;
             const winRateDisplay = winRate !== null ? winRate + '%' : '—';
             const winRateNote = winRate === null
-                ? `track ${Math.max(0, 3 - withOutcomes.length)} more outcomes`
-                : `${withOutcomes.length} outcomes`;
+                ? 'track a won or lost outcome'
+                : `${withOutcomes.length} outcome${withOutcomes.length !== 1 ? 's' : ''}${withOutcomes.length < 3 ? ' — early estimate' : ''}`;
             const winRateJs = winRate !== null ? winRate : 0;
 
             // Pre-populate from tracked outcome data
