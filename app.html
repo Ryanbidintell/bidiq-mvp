@@ -11276,10 +11276,9 @@ Respond now:`;
             const currentDate = project?.created_at ? new Date(project.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
 
             // Module 1: Build division checkboxes
-            const specDivisions = (project?.extracted?.spec_divisions_found || []).map(String);
             const settings = await getSettings();
             const userDivisions = (settings.trades || []).map(String);
-            const allDivisions = [...new Set([...userDivisions, ...specDivisions])].sort((a,b) => parseInt(a)-parseInt(b));
+            const allDivisions = [...new Set(userDivisions)].sort((a,b) => parseInt(a)-parseInt(b));
             const divisionNames = {
                 '03':'Concrete','05':'Metals','06':'Wood','07':'Thermal/Moisture','08':'Openings',
                 '09':'Finishes','21':'Fire Protection','22':'Plumbing','23':'HVAC',
