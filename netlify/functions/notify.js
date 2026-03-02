@@ -282,7 +282,7 @@ exports.handler = async function(event, context) {
         if (emailType === 'magic_link') {
             const { userEmail, fullName } = body;
             const firstName = (fullName || 'there').split(' ')[0];
-            const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+            const serviceRoleKey = process.env.SUPABASE_SERVICE_KEY;
             const supabaseUrl = 'https://szifhqmrddmdkgschkkw.supabase.co';
 
             // Generate magic link via Supabase admin API
