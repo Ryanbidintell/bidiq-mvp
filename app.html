@@ -2069,7 +2069,7 @@
                     <div style="display:flex;gap:0;border-bottom:2px solid var(--border-color);margin-bottom:20px;overflow-x:auto;-webkit-overflow-scrolling:touch;">
                         <button class="rpt-tab rpt-tab-active" onclick="switchRptTab(this,'score')">Score</button>
                         <button class="rpt-tab" onclick="switchRptTab(this,'contract')">Contract</button>
-                        <button class="rpt-tab" onclick="switchRptTab(this,'intel')">Intel</button>
+                        <button class="rpt-tab" onclick="switchRptTab(this,'intel')">Intelligence</button>
                         <button class="rpt-tab" onclick="switchRptTab(this,'economics')">Economics</button>
                     </div>
 
@@ -6964,7 +6964,11 @@ ${truncatedText}`;
                     </div>
                 </div>
                 ${dphHtml}
-                <div style="font-size:11px;color:var(--text-muted);">Expected value = scope × margin × win rate. ${winRate === null ? 'Track more outcomes to unlock win rate.' : savedAmount ? '' : 'Enter scope value above to calculate.'}</div>
+                <div style="font-size:12px;color:var(--text-muted);line-height:1.6;border-top:1px solid var(--border-color);padding-top:10px;margin-top:4px;">
+                    <strong style="color:var(--text-secondary);">How this works:</strong> Enter your bid scope (what you're quoting), and BidIntell calculates the <em>expected dollar return</em> on the time you spend estimating — based on your real win rate and target margin. A higher $/hr means this bid is worth your time. A low number means you're spending hours chasing long shots.
+                    ${winRate === null ? '<br><span style="color:var(--warning);">⚠ Win rate unlocks after 3 tracked outcomes (won or lost).</span>' : ''}
+                    ${!savedAmount ? '<br>Enter your scope value above to see your numbers.' : ''}
+                </div>
             </div>`;
         }
 
@@ -10059,7 +10063,7 @@ ${truncatedText}`;
 
                 // Economics tab
                 document.getElementById('reportEconomicsContent').innerHTML =
-                    renderBidEconomicsCard({ extracted: p.extracted || {}, contractRisks: [], fileCount: p.fileCount || 1 }, settings, p.outcome_data);
+                    renderBidEconomicsCard({ extracted: p.extracted || {}, contractRisks: [], fileCount: p.fileCount || 1 }, settings, p.outcomeData);
 
                 // Add visual feedback for report agreement radio buttons and auto-save
                 setTimeout(() => {
