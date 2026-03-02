@@ -17,10 +17,7 @@ async function sendEmail({ to, subject, htmlBody }) {
             HtmlBody: htmlBody
         })
     });
-    if (!response.ok) {
-        const errBody = await response.json().catch(() => ({}));
-        throw new Error(`Postmark error ${response.status}: [${errBody.ErrorCode}] ${errBody.Message || 'unknown'}`);
-    }
+    if (!response.ok) throw new Error(`Postmark API error: ${response.status}`);
     return response;
 }
 
@@ -287,24 +284,6 @@ exports.handler = async function(event, context) {
             const firstName = (fullName || 'there').split(' ')[0];
             const serviceRoleKey = process.env.SUPABASE_SERVICE_KEY;
             const supabaseUrl = 'https://szifhqmrddmdkgschkkw.supabase.co';
-
-            // Validate key before calling Supabase
-            if (!serviceRoleKey) {
-                throw new Error('SUPABASE_SERVICE_KEY env var is not set');
-            }
-            try {
-                const parts = serviceRoleKey.trim().split('.');
-                if (parts.length !== 3) throw new Error('not a JWT');
-                const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
-                if (payload.role !== 'service_role') {
-                    throw new Error(`key has role="${payload.role}" — must be "service_role". You may have pasted the anon key instead.`);
-                }
-                if (payload.ref && payload.ref !== 'szifhqmrddmdkgschkkw') {
-                    throw new Error(`key belongs to wrong project: ref="${payload.ref}" (expected "szifhqmrddmdkgschkkw")`);
-                }
-            } catch (e) {
-                throw new Error(`SUPABASE_SERVICE_KEY invalid: ${e.message}`);
-            }
 
             // Generate magic link via Supabase admin API
             const linkRes = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
