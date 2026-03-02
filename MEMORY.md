@@ -21,7 +21,15 @@
 - **Priority:** Get 5-10 beta users actively using it, monitor funnel events
 - **Paid Launch:** April 1, 2026
 
-## Latest Session (Feb 27, 2026) — Session 3
+## Latest Session (Mar 2, 2026) — Session 4
+### Launch Readiness: Legal, Emails, Landing Page (commit ff03b63)
+- **legal.html** — ToS + Privacy Policy created (both sections on one page, /legal)
+- **app.html** — Fixed broken Terms/Privacy links (were calling nonexistent showPage() → now /legal#terms)
+- **index.html** — Updated beta language to "Free through March 31" + "Founding member pricing"
+- **notify.js** — Added emailType: 'beta_to_paid_warning' email template (branded, with billing date + plan)
+- **admin.html** — Added "Beta-to-Paid Transition Emails" tool: Load Users + Send All with rate limiting
+- Mobile CSS fixes: score report wraps on 480px
+
 ### Bid Economics Feature + Report Polish (commit 947238b)
 
 **SQL Migration:** `bid-economics-migration.sql` — run in Supabase SQL Editor
