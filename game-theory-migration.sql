@@ -19,17 +19,9 @@ CREATE TABLE IF NOT EXISTS gc_competition_density (
 );
 ALTER TABLE gc_competition_density ENABLE ROW LEVEL SECURITY;
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies
-        WHERE tablename = 'gc_competition_density'
-        AND policyname = 'Users can manage their own competition data'
-    ) THEN
-        CREATE POLICY "Users can manage their own competition data"
-        ON gc_competition_density FOR ALL USING (user_id = auth.uid());
-    END IF;
-END $$;
+DROP POLICY IF EXISTS "Users can manage their own competition data" ON gc_competition_density;
+CREATE POLICY "Users can manage their own competition data"
+ON gc_competition_density FOR ALL USING (user_id = auth.uid());
 
 CREATE INDEX IF NOT EXISTS idx_gc_competition_user ON gc_competition_density(user_id);
 CREATE INDEX IF NOT EXISTS idx_gc_competition_gc_name ON gc_competition_density(gc_name);
