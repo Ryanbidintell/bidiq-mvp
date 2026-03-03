@@ -14,12 +14,52 @@
 
 ---
 
-## Current Status (Feb 27, 2026)
+## Current Status (Mar 3, 2026)
 - **Phase:** 1.5 (Beta Testing)
 - **Location:** C:\Users\RyanElder\OneDrive - Facility Systems\bidiq-mvp
-- **Status:** 🎉 LIVE at bidintell.ai — billing live, GA4 live, 30 users in last 28 days
-- **Priority:** Get 5-10 beta users actively using it, monitor funnel events
+- **Status:** 🎉 LIVE at bidintell.ai — billing live, GA4 live, Google + Microsoft OAuth live
+- **Priority:** Get beta testers actively using it, monitor funnel events
 - **Paid Launch:** April 1, 2026
+
+## Latest Session (Mar 3, 2026) — Session 6
+### Auth, Dashboard Fixes, OAuth
+
+**Dashboard stat fixes:**
+- AI Learning Progress — now shows count (e.g. "2") not percentage; subtitle shows "2 of 15 projects • Trains AI"
+- Contract Risks Found — was reading `p.contract_risks` (snake_case) but projects map to `p.contractRisks` (camelCase) — fixed
+- Analytics charts blank — charts rendered at page load while tab hidden (0px canvas); fixed by re-rendering on tab switch in `switchTab()`
+- Admin Operations tab — auto-loads stats on switch, removed "Load Stats" button
+- Founder Metrics tab — added Beta Users table at top showing per-user: Company, Email, Bids, Outcomes, Last Active, Plan, Setup status
+
+**Magic link login fix:**
+- Added "Email me a login link" to Sign In form for users without passwords (beta signups)
+- `handleMagicLogin()` calls `/.netlify/functions/notify` with `emailType: 'magic_link'`
+
+**Microsoft SafeLinks fix (corporate email):**
+- Root cause: SafeLinks pre-clicks every link in email, burning one-time Supabase tokens
+- Fix: Created `auth.html` intermediate page at `/auth` — email links to `bidintell.ai/auth?token=...` instead of Supabase directly
+- SafeLinks scans our button page (no JS execution), token preserved until real user clicks
+- Updated `notify.js` to extract token from `action_link` and build safe URL
+- Added `/auth` route to `netlify.toml`
+
+**Google + Microsoft OAuth:**
+- Added "Continue with Google" and "Continue with Microsoft" buttons to login screen
+- `handleOAuthLogin(provider)` calls `supabaseClient.auth.signInWithOAuth()`
+- Google: configured in Google Cloud Console + Supabase — WORKING ✅
+- Microsoft (Azure): configured with "Any Entra ID Tenant + Personal" — WORKING ✅
+- CSS: `.btn-oauth` white button style matching Google/Microsoft brand guidelines
+- This bypasses SafeLinks entirely for corporate users
+
+**Project moved:**
+- Old path: `C:\Users\RyanElder\bidiq-mvp`
+- New path: `C:\Users\RyanElder\OneDrive - Facility Systems\bidiq-mvp`
+- Backed up to both OneDrive (FSI) and GitHub
+
+**Beta tester issue (cstergos@fdccontract.com):**
+- FDC is on Office 365 — SafeLinks was burning tokens
+- SafeLinks fix deployed — tokens now preserved
+- Recommended: use "Continue with Microsoft" for instant access, no email needed
+- FDC may also have firewall blocking `supabase.co` — Tim at Accent (IT) needs to whitelist `*.supabase.co` and `bidintell.ai` if issue persists
 
 ## Latest Session (Mar 2, 2026) — Session 5
 ### Magic Link Signup Flow — FULLY WORKING ✅
