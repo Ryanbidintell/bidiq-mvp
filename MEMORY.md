@@ -16,7 +16,7 @@
 
 ## Current Status (Feb 27, 2026)
 - **Phase:** 1.5 (Beta Testing)
-- **Location:** C:\Users\RyanElder\bidiq-mvp
+- **Location:** C:\Users\RyanElder\OneDrive - Facility Systems\bidiq-mvp
 - **Status:** 🎉 LIVE at bidintell.ai — billing live, GA4 live, 30 users in last 28 days
 - **Priority:** Get 5-10 beta users actively using it, monitor funnel events
 - **Paid Launch:** April 1, 2026
