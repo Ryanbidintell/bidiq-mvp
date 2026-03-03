@@ -285,24 +285,36 @@ exports.handler = async function(event, context) {
             const serviceRoleKey = process.env.SUPABASE_SERVICE_KEY;
             const supabaseUrl = 'https://szifhqmrddmdkgschkkw.supabase.co';
 
-            // Generate magic link via Supabase admin API
-            const linkRes = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${serviceRoleKey}`,
-                    'apikey': serviceRoleKey,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    type: 'magiclink',
-                    email: userEmail,
-                    redirect_to: 'https://bidintell.ai/app'
-                })
-            });
+            const generateLink = async (type) => {
+                return fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${serviceRoleKey}`,
+                        'apikey': serviceRoleKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        type,
+                        email: userEmail,
+                        redirect_to: 'https://bidintell.ai/app'
+                    })
+                });
+            };
 
+            // Try magic link (existing user) first; fall back to signup (new user)
+            let linkRes = await generateLink('magiclink');
+            let isNewUser = false;
             if (!linkRes.ok) {
-                const err = await linkRes.json().catch(() => ({}));
-                throw new Error(`generate_link failed: ${err.message || linkRes.status}`);
+                const errBody = await linkRes.json().catch(() => ({}));
+                const errMsg = (errBody.message || errBody.msg || '').toLowerCase();
+                if (errMsg.includes('not found') || errMsg.includes('no user') || linkRes.status === 422 || linkRes.status === 404) {
+                    linkRes = await generateLink('signup');
+                    isNewUser = true;
+                }
+                if (!linkRes.ok) {
+                    const err2 = await linkRes.json().catch(() => ({}));
+                    throw new Error(`generate_link failed: ${err2.message || linkRes.status}`);
+                }
             }
 
             const linkData = await linkRes.json();
@@ -344,8 +356,10 @@ exports.handler = async function(event, context) {
             // Notify Ryan
             await sendEmail({
                 to: 'ryan@fsikc.com',
-                subject: `🎉 New BidIntell signup: ${fullName} (${userEmail})`,
-                htmlBody: `<p>New signup — magic link sent via Postmark.</p><p><strong>Name:</strong> ${fullName}</p><p><strong>Email:</strong> ${userEmail}</p>`
+                subject: isNewUser ? `🎉 New BidIntell signup: ${userEmail}` : `🔑 Login link sent: ${userEmail}`,
+                htmlBody: isNewUser
+                    ? `<p>New user signup — magic link sent via Postmark.</p><p><strong>Email:</strong> ${userEmail}</p>`
+                    : `<p>Existing user requested a login link.</p><p><strong>Email:</strong> ${userEmail}</p>`
             });
 
             return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
