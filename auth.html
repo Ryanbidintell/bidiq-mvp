@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BidIntell — Open Your Account</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0B0F14;
+            color: #F8FAFC;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .card {
+            background: #141A23;
+            border: 1px solid #1C2533;
+            border-radius: 12px;
+            padding: 48px 40px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 36px;
+        }
+        .logo-mark {
+            width: 36px;
+            height: 36px;
+            background: #F26522;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+            color: white;
+        }
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: #F8FAFC;
+        }
+        .icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #F8FAFC;
+            margin-bottom: 12px;
+        }
+        p {
+            font-size: 15px;
+            color: #94A3B8;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+        .btn {
+            display: inline-block;
+            background: #F26522;
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s;
+            width: 100%;
+        }
+        .btn:hover { background: #d4561e; }
+        .btn:disabled {
+            background: #384254;
+            cursor: not-allowed;
+        }
+        .note {
+            font-size: 12px;
+            color: #5A6A7E;
+            margin-top: 20px;
+            margin-bottom: 0;
+        }
+        .error-msg {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 8px;
+            padding: 14px 18px;
+            color: #FCA5A5;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-top: 16px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">
+            <div class="logo-mark">BI</div>
+            <span class="logo-text">BidIntell</span>
+        </div>
+
+        <div id="readyState">
+            <div class="icon">🔓</div>
+            <h1>You're almost in</h1>
+            <p>Click the button below to open your BidIntell account. Your session is ready.</p>
+            <button class="btn" id="openBtn" onclick="openApp()">Open BidIntell →</button>
+            <p class="note">This link expires in 24 hours and can only be used once.</p>
+        </div>
+
+        <div id="errorState" style="display:none;">
+            <div class="icon">⚠️</div>
+            <h1>Link not found</h1>
+            <p>This login link is missing or invalid. Go back to the app and request a new one.</p>
+            <a class="btn" href="https://bidintell.ai/app">Go to Sign In →</a>
+        </div>
+
+        <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <script>
+        // Check for token on load — but DO NOT auto-redirect
+        // This is intentional: prevents Microsoft SafeLinks from consuming the token
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        const type = params.get('type') || 'magiclink';
+
+        if (!token) {
+            document.getElementById('readyState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+        }
+
+        function openApp() {
+            if (!token) return;
+
+            const btn = document.getElementById('openBtn');
+            btn.disabled = true;
+            btn.textContent = 'Opening...';
+
+            const supabaseUrl = 'https://szifhqmrddmdkgschkkw.supabase.co';
+            const redirectTo = encodeURIComponent('https://bidintell.ai/app');
+            window.location.href = `${supabaseUrl}/auth/v1/verify?token=${encodeURIComponent(token)}&type=${encodeURIComponent(type)}&redirect_to=${redirectTo}`;
+        }
+    </script>
+</body>
+</html>

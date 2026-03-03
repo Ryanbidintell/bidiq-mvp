@@ -36,6 +36,11 @@
   to = "/contact.html"
   status = 200
 
+[[redirects]]
+  from = "/auth"
+  to = "/auth.html"
+  status = 200
+
 [[headers]]
   for = "/api/*"
   [headers.values]

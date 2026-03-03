@@ -305,9 +305,20 @@ exports.handler = async function(event, context) {
                 throw new Error(`generate_link failed: ${err.message || linkRes.status}`);
             }
 
-            const { action_link } = await linkRes.json();
+            const linkData = await linkRes.json();
+            const { action_link } = linkData;
 
-            // Send branded welcome email with the link
+            // Extract the OTP token and build a SafeLinks-resistant intermediate URL.
+            // Microsoft SafeLinks pre-clicks every link in corporate emails, which burns
+            // one-time Supabase tokens before the user sees them. By linking to our own
+            // /auth page (which shows a button), SafeLinks scans a harmless HTML page
+            // and the token is only consumed when the real user clicks the button.
+            const actionUrl = new URL(action_link);
+            const otpToken = actionUrl.searchParams.get('token');
+            const otpType = actionUrl.searchParams.get('type') || 'magiclink';
+            const safeLoginUrl = `https://bidintell.ai/auth?token=${encodeURIComponent(otpToken)}&type=${encodeURIComponent(otpType)}`;
+
+            // Send branded welcome email with the safe intermediate link
             await sendEmail({
                 to: userEmail,
                 subject: `Your BidIntell login link, ${firstName}!`,
@@ -320,7 +331,7 @@ exports.handler = async function(event, context) {
                             <h2 style="color: #F8FAFC; margin-bottom: 16px;">You're in, ${firstName}!</h2>
                             <p style="color: #CBD5E1; line-height: 1.7;">Click the button below to log in and start your first analysis. The link expires in 24 hours.</p>
                             <div style="text-align: center; margin: 32px 0;">
-                                <a href="${action_link}" style="background: #F26522; color: white; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block;">Open BidIntell →</a>
+                                <a href="${safeLoginUrl}" style="background: #F26522; color: white; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block;">Open BidIntell →</a>
                             </div>
                             <p style="color: #94A3B8; font-size: 13px; line-height: 1.6;">Access is free through March 31, 2026. Every bid you analyze and outcome you record makes the system smarter for you.</p>
                             <p style="color: #5A6A7E; margin-top: 24px; font-size: 13px;">— Ryan<br><em>Founder, BidIntell</em></p>
