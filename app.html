@@ -1963,9 +1963,8 @@
                             <div class="settings-card-description">Platform health and usage metrics</div>
                         </div>
                         <div class="settings-card-body">
-                            <button class="btn btn-secondary" onclick="loadSystemStats()">📈 Load Stats</button>
-                            <div id="systemStats" style="margin-top: 16px;">
-                                <p style="color: var(--text-muted);">Click "Load Stats" to view system metrics</p>
+                            <div id="systemStats">
+                                <p style="color: var(--text-muted);">Loading...</p>
                             </div>
                         </div>
                     </div>
@@ -4539,6 +4538,8 @@ ${fullText.substring(0, 40000)}`;
                 await renderAnalytics();
             } else if (id === 'metrics') {
                 await loadMetricsTab();
+            } else if (id === 'admin') {
+                await loadSystemStats();
             }
         }
         document.querySelectorAll('.nav-item').forEach(i => i.addEventListener('click', async () => await switchTab(i.dataset.tab)));
@@ -13915,7 +13916,44 @@ Respond now:`;
                 <div class="settings-card-body">${content}</div>
             </div>`;
 
-            return cardsHtml
+            // Beta user table — per-user breakdown
+            const d30 = new Date(Date.now() - 30*24*60*60*1000);
+            const userRows = users.map(u => {
+                const userProjects = projects.filter(p => p.user_id === u.user_id);
+                const lastProject = userProjects.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                const lastActive = lastProject ? new Date(lastProject.created_at) : null;
+                const isActive30 = lastActive && lastActive >= d30;
+                const outcomes = userProjects.filter(p => p.outcome && p.outcome !== 'pending').length;
+                const tier = u.subscription_tier || 'beta';
+                const tierColor = tier === 'professional' ? 'var(--accent)' : tier === 'starter' ? 'var(--success)' : 'var(--text-muted)';
+                return `<tr style="border-bottom:1px solid var(--border-color);">
+                    <td style="padding:10px 8px;font-size:13px;">${u.company_name || '—'}</td>
+                    <td style="padding:10px 8px;font-size:12px;color:var(--text-muted);">${u.user_email || '—'}</td>
+                    <td style="padding:10px 8px;font-size:13px;text-align:center;">${userProjects.length}</td>
+                    <td style="padding:10px 8px;font-size:13px;text-align:center;">${outcomes}</td>
+                    <td style="padding:10px 8px;font-size:12px;color:${isActive30 ? 'var(--success)' : 'var(--text-muted)'};">${lastActive ? lastActive.toLocaleDateString() : 'Never'}</td>
+                    <td style="padding:10px 8px;font-size:12px;font-weight:600;color:${tierColor};">${tier}</td>
+                    <td style="padding:10px 8px;font-size:12px;color:${u.onboarding_completed ? 'var(--success)' : 'var(--warning)'};">${u.onboarding_completed ? '✅' : '⏳'}</td>
+                </tr>`;
+            }).join('');
+
+            const betaTableHtml = `<div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead><tr style="border-bottom:2px solid var(--border-color);">
+                        <th style="padding:8px;font-size:12px;text-align:left;color:var(--text-muted);">Company</th>
+                        <th style="padding:8px;font-size:12px;text-align:left;color:var(--text-muted);">Email</th>
+                        <th style="padding:8px;font-size:12px;text-align:center;color:var(--text-muted);">Bids</th>
+                        <th style="padding:8px;font-size:12px;text-align:center;color:var(--text-muted);">Outcomes</th>
+                        <th style="padding:8px;font-size:12px;text-align:left;color:var(--text-muted);">Last Active</th>
+                        <th style="padding:8px;font-size:12px;text-align:left;color:var(--text-muted);">Plan</th>
+                        <th style="padding:8px;font-size:12px;text-align:left;color:var(--text-muted);">Setup</th>
+                    </tr></thead>
+                    <tbody>${userRows || '<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--text-muted);">No users yet</td></tr>'}</tbody>
+                </table>
+            </div>`;
+
+            return card('👥 Beta Users', betaTableHtml)
+                + cardsHtml
                 + card('💰 Revenue', revenueStats)
                 + card('🎯 Phase 0 — Beta Truth Validation', phase0Html)
                 + card('🚀 Phase 1 — PMF & Data Integrity', phase1Html)
