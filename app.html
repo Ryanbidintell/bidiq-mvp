@@ -2826,7 +2826,13 @@
                 }
             } catch (err) {
                 console.error('Signup error:', err);
-                showAuthError(err.message || 'Signup failed. Please try again.');
+                if (err.message && err.message.toLowerCase().includes('already registered')) {
+                    showAuthError('You already have an account. Sign in instead, or use "Email me a login link" if you forgot your password.');
+                    switchAuthTab('login');
+                    document.getElementById('loginEmail').value = email;
+                } else {
+                    showAuthError(err.message || 'Signup failed. Please try again.');
+                }
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Create Account';
