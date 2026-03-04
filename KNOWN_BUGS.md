@@ -43,7 +43,9 @@
 ## 🔍 OTHER POTENTIAL BUGS (To Investigate)
 
 ### P0 - Critical (Blocks Usage)
-- [ ] None currently known
+- [x] Login redirect — fixed (auth.html verifyOtp + token param handling)
+- [x] Auto-emails not firing — fixed (decoupled notify from user email)
+- [x] Geolocation bug — fixed (prior session)
 
 ### P1 - High (Hurts Accuracy)
 - [ ] BidIndex scores - need real-world validation
