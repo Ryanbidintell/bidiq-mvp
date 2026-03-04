@@ -135,9 +135,9 @@
         .btn-oauth:hover { background: #f8f9fa; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         .auth-error { background: var(--danger-bg); border: 1px solid rgba(239,68,68,0.3); color: var(--danger); padding: 12px; border-radius: var(--radius); margin-bottom: 16px; font-size: 14px; display: none; }
         .auth-success { background: var(--success-bg); border: 1px solid rgba(16,185,129,0.3); color: var(--success); padding: 12px; border-radius: var(--radius); margin-bottom: 16px; font-size: 14px; display: none; }
-        /* Hide browser-native password clear/reveal buttons */
-        #authPassword::-ms-clear, #authPassword::-ms-reveal { display: none; }
-        #authPassword::-webkit-credentials-auto-fill-button { display: none; }
+        /* Hide browser-native clear/reveal buttons on all inputs */
+        input::-ms-clear, input::-ms-reveal { display: none; }
+        input::-webkit-credentials-auto-fill-button, input::-webkit-contacts-auto-fill-button { display: none; }
         .user-info { font-size: 12px; color: var(--text-muted); padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
         .user-info span { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .logout-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 11px; padding: 4px 8px; border-radius: 4px; }
