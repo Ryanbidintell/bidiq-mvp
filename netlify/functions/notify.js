@@ -40,7 +40,7 @@ exports.handler = async function(event, context) {
         if (!emailType || emailType === 'error') {
             const { errorType, errorMessage, userEmail, stackTrace } = body;
             await sendEmail({
-                to: 'ryan@bidintell.ai',
+                to: 'ryan@fsikc.com',
                 subject: `🚨 BidIQ Error: ${errorType}`,
                 htmlBody: `
                     <h2>Error Report</h2>
@@ -141,11 +141,7 @@ exports.handler = async function(event, context) {
             `;
             const contactSubject = `[BidIntell Contact] ${subject} — from ${fullName}`;
 
-            // Send to both inboxes so it doesn't get lost
-            await Promise.all([
-                sendEmail({ to: 'ryan@fsikc.com', subject: contactSubject, htmlBody: contactHtml }),
-                sendEmail({ to: 'ryan@bidintell.ai', subject: contactSubject, htmlBody: contactHtml })
-            ]);
+            await sendEmail({ to: 'ryan@fsikc.com', subject: contactSubject, htmlBody: contactHtml });
 
             return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
         }
@@ -350,7 +346,7 @@ exports.handler = async function(event, context) {
 
             // Internal notification — fire and forget, never block user on this
             sendEmail({
-                to: 'ryan@bidintell.ai',
+                to: 'ryan@fsikc.com',
                 subject: isNewUser ? `New signup: ${userEmail}` : `Login link sent: ${userEmail}`,
                 htmlBody: isNewUser
                     ? `<p>New user — magic link sent.</p><p><strong>Email:</strong> ${userEmail}</p>`
