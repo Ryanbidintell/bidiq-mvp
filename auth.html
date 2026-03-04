@@ -146,7 +146,8 @@
         if (rawLink) {
             try {
                 const linkUrl = new URL(rawLink);
-                token_hash = linkUrl.searchParams.get('token_hash');
+                // Admin API uses 'token' param; newer versions may use 'token_hash'
+                token_hash = linkUrl.searchParams.get('token_hash') || linkUrl.searchParams.get('token');
                 verifyType = linkUrl.searchParams.get('type') || 'magiclink';
             } catch(e) {}
         }
