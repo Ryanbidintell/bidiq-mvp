@@ -132,7 +132,17 @@
         // Check for link on load — but DO NOT auto-redirect
         // This is intentional: prevents Microsoft SafeLinks from consuming the token
         const params = new URLSearchParams(window.location.search);
-        const link = params.get('link');
+
+        // Support both ?link= (new) and legacy ?token= format
+        let link = params.get('link');
+        if (!link) {
+            const token = params.get('token');
+            const type = params.get('type') || 'magiclink';
+            if (token) {
+                const supabaseUrl = 'https://szifhqmrddmdkgschkkw.supabase.co';
+                link = `${supabaseUrl}/auth/v1/verify?token=${encodeURIComponent(token)}&type=${encodeURIComponent(type)}&redirect_to=${encodeURIComponent('https://bidintell.ai/app')}`;
+            }
+        }
 
         if (!link) {
             document.getElementById('readyState').style.display = 'none';

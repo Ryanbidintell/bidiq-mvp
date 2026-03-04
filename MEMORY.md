@@ -42,6 +42,11 @@
 
 **All 3 OAuth providers LIVE:** Google ✅ Microsoft ✅ LinkedIn ✅
 
+**IMPORTANT: ryan@bidintell.ai has NO mailbox yet — never use as email recipient**
+- All notify.js emails go to ryan@fsikc.com
+- hello@bidintell.ai is sender-only (Postmark verified domain for outbound)
+- When bidintell.ai email is set up, update notify.js recipient addresses
+
 ---
 
 ## Previous Session (Mar 3, 2026) — Session 6
