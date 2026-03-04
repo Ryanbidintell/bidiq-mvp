@@ -1101,15 +1101,7 @@
                     <div class="form-group" style="margin-bottom:10px;">
                         <input type="email" class="form-input" id="authEmail" placeholder="you@company.com" required autocomplete="email" style="font-size:15px;padding:12px 14px;">
                     </div>
-                    <div id="passwordRow" style="margin-bottom:10px;position:relative;">
-                        <input type="password" class="form-input" id="authPassword" placeholder="Password (optional)" autocomplete="current-password" oninput="updateAuthBtn()" style="font-size:15px;padding:12px 14px;padding-right:56px;">
-                        <button type="button" onclick="toggleAuthPassword()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;padding:4px 8px;" id="showPwBtn">Show</button>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                        <span style="font-size:11px;color:var(--text-muted);">No password? Leave blank — we'll email you a link.</span>
-                        <button type="button" onclick="handleForgotPassword()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;text-decoration:underline;padding:0;">Forgot password?</button>
-                    </div>
-                    <button type="submit" class="btn btn-primary" id="continueBtn" style="width:100%;padding:13px;font-size:15px;font-weight:600;">
+                    <button type="submit" class="btn btn-primary" id="continueBtn" style="width:100%;padding:13px;font-size:15px;font-weight:600;margin-top:10px;">
                         Continue &rarr;
                     </button>
                 </form>
@@ -2657,31 +2649,6 @@
             document.getElementById('authSuccess').style.display = 'none';
         }
 
-        function updateAuthBtn() {
-            const pw = document.getElementById('authPassword').value;
-            document.getElementById('continueBtn').textContent = pw ? 'Sign In' : 'Continue →';
-        }
-
-        async function handleForgotPassword() {
-            const email = document.getElementById('authEmail').value.trim().toLowerCase();
-            if (!email) { showAuthError('Enter your email address first.'); return; }
-            if (!supabaseClient) return;
-            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-                redirectTo: 'https://bidintell.ai/app'
-            });
-            if (error) {
-                showAuthError(error.message);
-            } else {
-                showAuthSuccess('Password reset email sent — check your inbox.');
-            }
-        }
-
-        function toggleAuthPassword() {
-            const inp = document.getElementById('authPassword');
-            const btn = document.getElementById('showPwBtn');
-            inp.type = inp.type === 'password' ? 'text' : 'password';
-            btn.textContent = inp.type === 'password' ? 'Show' : 'Hide';
-        }
 
         let _resendTimer = null;
         function startResendCountdown() {
@@ -2707,27 +2674,6 @@
             const email = document.getElementById('authEmail').value.trim().toLowerCase();
             if (!email) { showAuthError('Please enter your email address.'); return; }
             const btn = document.getElementById('continueBtn');
-            const password = document.getElementById('authPassword').value;
-
-            // Password mode — if they typed a password, try sign in
-            if (password) {
-                if (!supabaseClient) { showAuthError('Database not connected. Please refresh.'); return; }
-                btn.disabled = true;
-                btn.textContent = 'Signing in...';
-                try {
-                    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                    if (error) throw error;
-                    currentUser = data.user;
-                    showApp();
-                } catch (err) {
-                    showAuthError(err.message || 'Sign in failed. Check your password.');
-                    btn.disabled = false;
-                    btn.textContent = 'Sign In';
-                }
-                return;
-            }
-
-            // Magic link mode — no password entered
             btn.disabled = true;
             btn.textContent = 'Sending link...';
             document.getElementById('authError').style.display = 'none';
