@@ -17,11 +17,38 @@
 ## Current Status (Mar 3, 2026)
 - **Phase:** 1.5 (Beta Testing)
 - **Location:** C:\Users\RyanElder\OneDrive - Facility Systems\bidiq-mvp
-- **Status:** 🎉 LIVE at bidintell.ai — billing live, GA4 live, Google + Microsoft OAuth live
+- **Status:** 🎉 LIVE at bidintell.ai — billing live, GA4 live, all 3 OAuth providers live
 - **Priority:** Get beta testers actively using it, monitor funnel events
 - **Paid Launch:** April 1, 2026
 
-## Latest Session (Mar 3, 2026) — Session 7
+## Latest Session (Mar 3, 2026) — Session 8
+### Auth Polish + Microsoft OAuth Fix
+
+**Auth screen improvements:**
+- Password field now shown by default (was hidden behind toggle)
+- Placeholder: "Password (optional)" — hint below: "No password? Leave blank — we'll email you a link."
+- Submit button dynamically changes: "Sign In" if password typed, "Continue →" if blank
+- Removed "Have a password? Sign in with it" toggle button
+- Browser clear/reveal buttons hidden globally on ALL inputs (was only `#authPassword`)
+
+**Microsoft OAuth fix:**
+- Root cause: `email` and `User.Read` permissions were listed in Azure but NOT consented
+- Fix: Granted admin consent in Azure Portal → App registrations → API permissions → "Grant admin consent for Facility Systems"
+- External users from other orgs see standard one-time Microsoft consent dialog (normal behavior)
+- Added `prompt: 'select_account'` to force Microsoft account picker (prevents auto-login to last account)
+
+**CTA form (index.html):**
+- Removed name field — email only, single row inline with button
+- Reduced input padding (11px 16px), cleaner look
+- handleBetaSubmit updated to not require full_name
+
+**⚠️ CRITICAL LESSON: Always `git push` after commits — 3 commits sat undeployed**
+
+**IMPORTANT: ryan@bidintell.ai has NO mailbox yet — never use as email recipient**
+- All notify.js emails go to ryan@fsikc.com
+- hello@bidintell.ai is sender-only (Postmark verified domain for outbound)
+
+## Previous Session (Mar 3, 2026) — Session 7
 ### Unified Auth Screen + LinkedIn OAuth
 
 **New unified auth screen:**
@@ -41,11 +68,6 @@
 - Configured in Supabase → Auth → Providers → LinkedIn (OIDC)
 
 **All 3 OAuth providers LIVE:** Google ✅ Microsoft ✅ LinkedIn ✅
-
-**IMPORTANT: ryan@bidintell.ai has NO mailbox yet — never use as email recipient**
-- All notify.js emails go to ryan@fsikc.com
-- hello@bidintell.ai is sender-only (Postmark verified domain for outbound)
-- When bidintell.ai email is set up, update notify.js recipient addresses
 
 ---
 

@@ -1124,11 +1124,12 @@
                     We sent a login link to<br><strong id="authSentEmail" style="color:var(--text-primary);"></strong>
                 </p>
                 <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">
-                    Click the link in the email to sign in. It expires in 24 hours.<br>
+                    Usually arrives within 1–2 minutes. Click the link to sign in — it expires in 24 hours.<br><br>
+                    Using a corporate email? It may take a few extra minutes.<br>
                     Check your spam folder if you don't see it.
                 </p>
                 <button id="resendBtn" class="btn btn-secondary" style="width:100%;margin-bottom:10px;" onclick="handleResend()" disabled>
-                    Resend link <span id="resendCountdown">(30s)</span>
+                    Resend link <span id="resendCountdown">(90s)</span>
                 </button>
                 <button type="button" onclick="showAuthMain()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;text-decoration:underline;padding:4px;">
                     &larr; Use a different email
@@ -2670,7 +2671,7 @@
             const btn = document.getElementById('resendBtn');
             const countdown = document.getElementById('resendCountdown');
             btn.disabled = true;
-            let secs = 30;
+            let secs = 90;
             countdown.textContent = `(${secs}s)`;
             _resendTimer = setInterval(() => {
                 secs--;

@@ -1960,7 +1960,7 @@ async function handleBetaSubmit(e) {
   } catch (e) {}
 
   // 3. Show result — succeed regardless (link either sent or will retry)
-  messageEl.innerHTML = '<span style="color: var(--green);">✓ Check your email for your login link!</span>';
+  messageEl.innerHTML = '<span style="color: var(--green);">✓ Link sent! Usually arrives within 1–2 minutes. Check spam if you don\'t see it.</span>';
   if (!sendErr) form.reset();
 
   btn.textContent = '✓ Link Sent!';
