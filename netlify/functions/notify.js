@@ -354,9 +354,9 @@ exports.handler = async function(event, context) {
                 `
             });
 
-            // Notify Ryan
+            // Notify Ryan (always goes to ryan@bidintell.ai regardless of who logged in)
             await sendEmail({
-                to: 'ryan@fsikc.com',
+                to: 'ryan@bidintell.ai',
                 subject: isNewUser ? `🎉 New BidIntell signup: ${userEmail}` : `🔑 Login link sent: ${userEmail}`,
                 htmlBody: isNewUser
                     ? `<p>New user signup — magic link sent via Postmark.</p><p><strong>Email:</strong> ${userEmail}</p>`
