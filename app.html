@@ -2678,7 +2678,10 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ emailType: 'magic_link', userEmail: email, fullName: '' })
                 });
-                if (!res.ok) throw new Error('Send failed');
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || `Server error ${res.status}`);
+                }
                 // Show the success panel
                 document.getElementById('authMain').style.display = 'none';
                 document.getElementById('authSent').style.display = 'block';
@@ -2686,7 +2689,7 @@
                 if (_resendTimer) clearInterval(_resendTimer);
                 startResendCountdown();
             } catch (err) {
-                showAuthError('Could not send link. Please try again or email hello@bidintell.ai');
+                showAuthError('Could not send link: ' + err.message);
                 btn.disabled = false;
                 btn.textContent = 'Continue →';
             }

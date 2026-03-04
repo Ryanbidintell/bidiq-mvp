@@ -285,6 +285,9 @@ exports.handler = async function(event, context) {
             const supabaseUrl = 'https://szifhqmrddmdkgschkkw.supabase.co';
 
             const generateLink = async (type) => {
+                const payload = { type, email: userEmail, redirect_to: 'https://bidintell.ai/app' };
+                // Some Supabase versions require a password field for signup type
+                if (type === 'signup') payload.password = Math.random().toString(36).slice(-12) + 'A1!';
                 return fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
                     method: 'POST',
                     headers: {
@@ -292,11 +295,7 @@ exports.handler = async function(event, context) {
                         'apikey': serviceRoleKey,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        type,
-                        email: userEmail,
-                        redirect_to: 'https://bidintell.ai/app'
-                    })
+                    body: JSON.stringify(payload)
                 });
             };
 
