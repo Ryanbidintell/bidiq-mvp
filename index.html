@@ -759,22 +759,22 @@ img { max-width: 100%; display: block; }
   margin-right: auto;
   line-height: 1.7;
 }
-.cta-form { display: flex; gap: 10px; max-width: 460px; margin: 0 auto; }
+.cta-form { display: flex; gap: 10px; max-width: 500px; margin: 0 auto; align-items: center; }
 .cta-form input {
   flex: 1;
-  padding: 14px 18px;
+  padding: 11px 16px;
   background: var(--ink);
   border: 1px solid var(--slate);
   border-radius: var(--radius);
   color: var(--white);
   font-family: var(--font);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   outline: none;
   transition: border-color 0.2s;
+  min-width: 0;
 }
 .cta-form input::placeholder { color: var(--slate-light); }
 .cta-form input:focus { border-color: var(--accent); }
-.beta-fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 
 /* ===== FOOTER ===== */
 .footer { padding: 48px 0 36px; border-top: 1px solid rgba(255,255,255,0.04); }
@@ -818,7 +818,6 @@ img { max-width: 100%; display: block; }
   .proof-bar-inner { gap: 32px; }
   .proof-divider { display: none; }
   .cta-form { flex-direction: column; }
-  .beta-fields-grid { grid-template-columns: 1fr; }
   .kanban-demo { grid-template-columns: repeat(2, 1fr); }
   .footer-inner { flex-direction: column; text-align: center; }
 }
@@ -1718,13 +1717,10 @@ img { max-width: 100%; display: block; }
     <h2>Start building intelligence around your bids.</h2>
     <p>Access is free through March 31, 2026. Every bid you analyze and every outcome you record makes the system smarter — for you and for every sub on the platform. Users who sign up now lock in founding member pricing after April 1.</p>
     <form id="beta-form" class="cta-form" onsubmit="handleBetaSubmit(event)">
-      <div class="beta-fields-grid">
-        <input type="text" id="full-name" name="full_name" placeholder="Your Name" required>
-        <input type="email" id="email" name="email" placeholder="your@email.com" required>
-      </div>
-      <button type="submit" class="btn-primary">Get Instant Access →</button>
-      <div id="form-message" style="margin-top: 12px; font-size: 0.9rem; text-align: center;"></div>
+      <input type="email" id="email" name="email" placeholder="your@company.com" required>
+      <button type="submit" class="btn-primary" style="white-space:nowrap;">Get Instant Access →</button>
     </form>
+    <div id="form-message" style="margin-top: 12px; font-size: 0.9rem; text-align: center;"></div>
     <p style="font-size:0.8rem; color:var(--slate-light); margin-top:12px;">No credit card required. Access is free through March 31, 2026.</p>
   </div>
 </section>
@@ -1936,7 +1932,6 @@ async function handleBetaSubmit(e) {
   const messageEl = document.getElementById('form-message');
   const originalBtnText = btn.textContent;
 
-  const fullName = form.querySelector('#full-name').value.trim();
   const email    = form.querySelector('#email').value.trim().toLowerCase();
 
   btn.disabled = true;
@@ -1949,7 +1944,7 @@ async function handleBetaSubmit(e) {
     const res = await fetch('/.netlify/functions/notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emailType: 'magic_link', userEmail: email, fullName })
+      body: JSON.stringify({ emailType: 'magic_link', userEmail: email })
     });
     const result = await res.json();
     if (!result.success) sendErr = result.error || 'Send failed';
@@ -1961,7 +1956,7 @@ async function handleBetaSubmit(e) {
 
   // 2. Record signup silently
   try {
-    await supabaseClient.from('beta_signups').insert([{ full_name: fullName, email }]);
+    await supabaseClient.from('beta_signups').insert([{ email }]);
   } catch (e) {}
 
   // 3. Show result — succeed regardless (link either sent or will retry)

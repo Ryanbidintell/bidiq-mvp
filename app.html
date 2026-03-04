@@ -1101,19 +1101,15 @@
                     <div class="form-group" style="margin-bottom:10px;">
                         <input type="email" class="form-input" id="authEmail" placeholder="you@company.com" required autocomplete="email" style="font-size:15px;padding:12px 14px;">
                     </div>
-                    <div id="passwordRow" style="display:none;margin-bottom:10px;position:relative;">
-                        <input type="password" class="form-input" id="authPassword" placeholder="Password" autocomplete="current-password" style="font-size:15px;padding:12px 14px;padding-right:56px;">
+                    <div id="passwordRow" style="margin-bottom:10px;position:relative;">
+                        <input type="password" class="form-input" id="authPassword" placeholder="Password (optional)" autocomplete="current-password" oninput="updateAuthBtn()" style="font-size:15px;padding:12px 14px;padding-right:56px;">
                         <button type="button" onclick="toggleAuthPassword()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;padding:4px 8px;" id="showPwBtn">Show</button>
                     </div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">No password? Leave blank — we'll email you a link.</div>
                     <button type="submit" class="btn btn-primary" id="continueBtn" style="width:100%;padding:13px;font-size:15px;font-weight:600;">
                         Continue &rarr;
                     </button>
                 </form>
-                <div style="text-align:center;margin-top:10px;">
-                    <button type="button" id="togglePwMode" onclick="togglePasswordMode()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;text-decoration:underline;padding:4px;">
-                        Have a password? Sign in with it
-                    </button>
-                </div>
 
                 <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:12px;line-height:1.5;">
                     By continuing you agree to our <a href="/legal#terms" target="_blank" style="color:var(--text-muted);text-decoration:underline;">Terms</a> and <a href="/legal#privacy" target="_blank" style="color:var(--text-muted);text-decoration:underline;">Privacy Policy</a>
@@ -2657,13 +2653,9 @@
             document.getElementById('authSuccess').style.display = 'none';
         }
 
-        let _pwMode = false;
-        function togglePasswordMode() {
-            _pwMode = !_pwMode;
-            document.getElementById('passwordRow').style.display = _pwMode ? 'block' : 'none';
-            document.getElementById('togglePwMode').textContent = _pwMode ? 'Send me a login link instead' : 'Have a password? Sign in with it';
-            document.getElementById('continueBtn').textContent = _pwMode ? 'Sign In' : 'Continue →';
-            document.getElementById('authError').style.display = 'none';
+        function updateAuthBtn() {
+            const pw = document.getElementById('authPassword').value;
+            document.getElementById('continueBtn').textContent = pw ? 'Sign In' : 'Continue →';
         }
 
         function toggleAuthPassword() {
@@ -2697,11 +2689,10 @@
             const email = document.getElementById('authEmail').value.trim().toLowerCase();
             if (!email) { showAuthError('Please enter your email address.'); return; }
             const btn = document.getElementById('continueBtn');
+            const password = document.getElementById('authPassword').value;
 
-            // Password mode
-            if (_pwMode) {
-                const password = document.getElementById('authPassword').value;
-                if (!password) { showAuthError('Please enter your password.'); return; }
+            // Password mode — if they typed a password, try sign in
+            if (password) {
                 if (!supabaseClient) { showAuthError('Database not connected. Please refresh.'); return; }
                 btn.disabled = true;
                 btn.textContent = 'Signing in...';
@@ -2718,7 +2709,7 @@
                 return;
             }
 
-            // Magic link mode
+            // Magic link mode — no password entered
             btn.disabled = true;
             btn.textContent = 'Sending link...';
             document.getElementById('authError').style.display = 'none';
