@@ -129,27 +129,25 @@
     </div>
 
     <script>
-        // Check for token on load — but DO NOT auto-redirect
+        // Check for link on load — but DO NOT auto-redirect
         // This is intentional: prevents Microsoft SafeLinks from consuming the token
         const params = new URLSearchParams(window.location.search);
-        const token = params.get('token');
-        const type = params.get('type') || 'magiclink';
+        const link = params.get('link');
 
-        if (!token) {
+        if (!link) {
             document.getElementById('readyState').style.display = 'none';
             document.getElementById('errorState').style.display = 'block';
         }
 
         function openApp() {
-            if (!token) return;
+            if (!link) return;
 
             const btn = document.getElementById('openBtn');
             btn.disabled = true;
             btn.textContent = 'Opening...';
 
-            const supabaseUrl = 'https://szifhqmrddmdkgschkkw.supabase.co';
-            const redirectTo = encodeURIComponent('https://bidintell.ai/app');
-            window.location.href = `${supabaseUrl}/auth/v1/verify?token=${encodeURIComponent(token)}&type=${encodeURIComponent(type)}&redirect_to=${redirectTo}`;
+            // Redirect to the full Supabase verify URL exactly as generated
+            window.location.href = link;
         }
     </script>
 </body>

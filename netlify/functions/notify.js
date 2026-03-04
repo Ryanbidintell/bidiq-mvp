@@ -319,11 +319,11 @@ exports.handler = async function(event, context) {
             const action_link = linkData.action_link || linkData.properties?.action_link;
             if (!action_link) throw new Error(`No action_link in response: ${JSON.stringify(linkData)}`);
 
-            // Extract OTP token and build SafeLinks-resistant intermediate URL
-            const actionUrl = new URL(action_link);
-            const otpToken = actionUrl.searchParams.get('token');
-            const otpType = actionUrl.searchParams.get('type') || 'magiclink';
-            const safeLoginUrl = `https://bidintell.ai/auth?token=${encodeURIComponent(otpToken)}&type=${encodeURIComponent(otpType)}`;
+            // Pass the full action_link to our /auth intermediate page.
+            // We don't rebuild the URL ourselves — Supabase may use token or token_hash
+            // depending on project version. SafeLinks protection is still intact because
+            // /auth shows a button and never auto-redirects.
+            const safeLoginUrl = `https://bidintell.ai/auth?link=${encodeURIComponent(action_link)}`;
 
             // Send login email + internal notification in parallel
             await Promise.all([
