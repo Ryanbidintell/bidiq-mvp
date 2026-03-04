@@ -12485,16 +12485,9 @@ Respond now:`;
             const tradesContainer = document.getElementById('tradesCheckboxes');
 
             if (s.companyType === 'subcontractor') {
-                // CSI Divisions - SORTED
-                tradesContainer.innerHTML = CSI_DIVISIONS.map(([code, name]) =>
-                    `<label class="checkbox-item ${s.trades.includes(code) ? 'selected' : ''}"><input type="checkbox" value="${code}" ${s.trades.includes(code) ? 'checked' : ''}><span class="check"></span>${code}: ${name}</label>`
-                ).join('');
-
-                tradesContainer.querySelectorAll('.checkbox-item').forEach(el => {
-                    const cb = el.querySelector('input');
-                    cb.addEventListener('change', () => {
-                        el.classList.toggle('selected', cb.checked);
-                    });
+                settingsCSISections = s.preferred_csi_sections || [];
+                renderCSIPicker('tradesCheckboxes', settingsCSISections, (newSections) => {
+                    settingsCSISections = newSections;
                 });
             } else {
                 // Product Lines for Distributors/Mfg Reps
@@ -12542,7 +12535,7 @@ Respond now:`;
 
                 if (s.companyType === 'subcontractor') {
                     titleEl.textContent = '🔧 Your Trades';
-                    descEl.textContent = 'Select the CSI divisions you work in. BidIntell searches bid docs for these divisions to calculate your Trade Match score.';
+                    descEl.textContent = 'Click any division to expand it, then check the specific sections you bid. BidIntell uses these to calculate your Trade Match score.';
                 } else if (s.companyType === 'distributor') {
                     titleEl.textContent = '📦 Your Product Lines';
                     descEl.textContent = 'Add the brands and product lines you distribute. BidIntell will detect when these products are specified in bid documents.';
@@ -12774,9 +12767,10 @@ Respond now:`;
 
             // Add trades or product lines based on company type
             if (currentSettings.companyType === 'subcontractor') {
-                const selectedTrades = Array.from(document.querySelectorAll('#tradesCheckboxes input:checked')).map(cb => cb.value);
-                console.log('Selected trades:', selectedTrades);
-                s.trades = selectedTrades;
+                s.preferred_csi_sections = settingsCSISections;
+                // Derive division-level codes from sections for backward-compatible scoring
+                s.trades = [...new Set(settingsCSISections.map(sec => sec.substring(0, 2)))];
+                console.log('Selected sections:', settingsCSISections, '→ trades:', s.trades);
                 s.product_lines = [];
                 s.product_categories = [];
             } else {
