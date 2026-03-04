@@ -5203,8 +5203,11 @@ ${fullText.substring(0, 40000)}`;
                             input.parentNode.replaceChild(placeAutocomplete, input);
 
                             placeAutocomplete.addEventListener('gmp-placeselect', async ({ place }) => {
-                                await place.fetchFields({ fields: ['addressComponents', 'formattedAddress', 'location'] });
-                                if (!place.location) return;
+                                try {
+                                    await place.fetchFields({ fields: ['addressComponents', 'formattedAddress', 'location'] });
+                                } catch (e) {
+                                    console.error('fetchFields error:', e);
+                                }
 
                                 let street = '', city = '', state = '', zip = '';
                                 for (const component of (place.addressComponents || [])) {
@@ -5213,8 +5216,8 @@ ${fullText.substring(0, 40000)}`;
                                         street = component.longText;
                                     } else if (types.includes('route')) {
                                         street += (street ? ' ' : '') + component.shortText;
-                                    } else if (types.includes('locality')) {
-                                        city = component.longText;
+                                    } else if (types.includes('locality') || types.includes('sublocality_level_1') || types.includes('administrative_area_level_3')) {
+                                        if (!city) city = component.longText;
                                     } else if (types.includes('administrative_area_level_1')) {
                                         state = component.shortText;
                                     } else if (types.includes('postal_code')) {
@@ -5222,15 +5225,26 @@ ${fullText.substring(0, 40000)}`;
                                     }
                                 }
 
-                                onboardingData.fullAddress = place.formattedAddress;
+                                const formattedAddress = place.formattedAddress || placeAutocomplete.value || '';
+
+                                // Fallback: parse city/state from formattedAddress if components didn't populate them
+                                if (formattedAddress && (!city || !state)) {
+                                    const parts = formattedAddress.split(',').map(p => p.trim());
+                                    if (parts.length >= 3 && !city) city = parts[parts.length - 3] || '';
+                                    if (!state) state = (parts[parts.length - 2] || '').split(' ')[0] || '';
+                                }
+
+                                onboardingData.fullAddress = formattedAddress;
                                 onboardingData.street = street.trim();
                                 onboardingData.city = city;
                                 onboardingData.state = state;
                                 onboardingData.zip = zip;
-                                onboardingData.officeLocation = {
-                                    lat: place.location.lat(),
-                                    lng: place.location.lng()
-                                };
+                                if (place.location) {
+                                    onboardingData.officeLocation = {
+                                        lat: place.location.lat(),
+                                        lng: place.location.lng()
+                                    };
+                                }
 
                                 console.log('📍 Address selected:', onboardingData);
                                 renderOnboardingStep(2);
@@ -5586,7 +5600,7 @@ ${fullText.substring(0, 40000)}`;
                 // Step 1: Company type - always valid, one is selected by default
             } else if (onboardingStep === 2) {
                 // Check if address was selected via Google Places
-                if (!onboardingData.city || !onboardingData.state) {
+                if (!onboardingData.fullAddress) {
                     alert('Please select your office address from the dropdown. Start typing and choose from the suggestions.');
                     return;
                 }
