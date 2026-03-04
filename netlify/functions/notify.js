@@ -305,20 +305,21 @@ exports.handler = async function(event, context) {
             let linkRes = await generateLink('magiclink');
             let isNewUser = false;
             if (!linkRes.ok) {
-                const errBody = await linkRes.json().catch(() => ({}));
-                const errMsg = (errBody.message || errBody.msg || '').toLowerCase();
-                if (errMsg.includes('not found') || errMsg.includes('no user') || linkRes.status === 422 || linkRes.status === 404) {
-                    linkRes = await generateLink('signup');
-                    isNewUser = true;
-                }
+                // magiclink failed — always try signup fallback (handles new users)
+                const firstErr = await linkRes.json().catch(() => ({}));
+                console.log('magiclink failed, trying signup fallback. Error:', JSON.stringify(firstErr));
+                linkRes = await generateLink('signup');
+                isNewUser = true;
                 if (!linkRes.ok) {
                     const err2 = await linkRes.json().catch(() => ({}));
-                    throw new Error(`generate_link failed: ${err2.message || linkRes.status}`);
+                    throw new Error(`generate_link failed (magiclink: ${firstErr.message || firstErr.msg || '?'}, signup: ${err2.message || err2.msg || linkRes.status})`);
                 }
             }
 
             const linkData = await linkRes.json();
-            const { action_link } = linkData;
+            console.log('generate_link response keys:', Object.keys(linkData));
+            const action_link = linkData.action_link || linkData.properties?.action_link;
+            if (!action_link) throw new Error(`No action_link in response: ${JSON.stringify(linkData)}`);
 
             // Extract the OTP token and build a SafeLinks-resistant intermediate URL.
             // Microsoft SafeLinks pre-clicks every link in corporate emails, which burns

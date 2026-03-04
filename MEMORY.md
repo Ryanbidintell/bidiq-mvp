@@ -21,7 +21,30 @@
 - **Priority:** Get beta testers actively using it, monitor funnel events
 - **Paid Launch:** April 1, 2026
 
-## Latest Session (Mar 3, 2026) — Session 6
+## Latest Session (Mar 3, 2026) — Session 7
+### Unified Auth Screen + LinkedIn OAuth
+
+**New unified auth screen:**
+- Removed Sign In / Sign Up tabs + all password fields
+- Single screen: Google / Microsoft / LinkedIn buttons → divider → email input → "Continue →"
+- Email sends magic link (works for new AND existing users)
+- notify.js: try `type: 'magiclink'` first, fall back to `type: 'signup'` for new users
+- "Check your inbox 📬" success state with 30s resend countdown + "Use different email" back button
+- GA4 sign_up event fires on SIGNED_IN if account <60s old
+- ToS as small-print at bottom (much less friction)
+
+**LinkedIn OAuth — WORKING ✅**
+- Provider: `linkedin_oidc` (OpenID Connect Standard Tier)
+- LinkedIn App Client ID: 86rj2nnzcro7qa (secret in Supabase dashboard)
+- Scopes: openid, profile, email
+- Callback: https://szifhqmrddmdkgschkkw.supabase.co/auth/v1/callback
+- Configured in Supabase → Auth → Providers → LinkedIn (OIDC)
+
+**All 3 OAuth providers LIVE:** Google ✅ Microsoft ✅ LinkedIn ✅
+
+---
+
+## Previous Session (Mar 3, 2026) — Session 6
 ### Auth, Dashboard Fixes, OAuth
 
 **Dashboard stat fixes:**
