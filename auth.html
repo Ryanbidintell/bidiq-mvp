@@ -120,44 +120,78 @@
 
         <div id="errorState" style="display:none;">
             <div class="icon">⚠️</div>
-            <h1>Link not found</h1>
-            <p>This login link is missing or invalid. Go back to the app and request a new one.</p>
+            <h1>Link expired or already used</h1>
+            <p>This login link is invalid or has already been used. Go back to the app and request a new one.</p>
             <a class="btn" href="https://bidintell.ai/app">Go to Sign In →</a>
         </div>
 
         <div class="error-msg" id="errorMsg"></div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Check for link on load — but DO NOT auto-redirect
-        // This is intentional: prevents Microsoft SafeLinks from consuming the token
-        const params = new URLSearchParams(window.location.search);
+        const SUPABASE_URL = 'https://szifhqmrddmdkgschkkw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6aWZocW1yZGRtZGtnc2Noa2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwOTkyMDUsImV4cCI6MjA4NDY3NTIwNX0.XSStBZABbfJRMkGqwG-uh2X6nco7GqtiIxUg_0HHlZE';
 
-        // Support both ?link= (new) and legacy ?token= format
-        let link = params.get('link');
-        if (!link) {
-            const token = params.get('token');
-            const type = params.get('type') || 'magiclink';
-            if (token) {
-                const supabaseUrl = 'https://szifhqmrddmdkgschkkw.supabase.co';
-                link = `${supabaseUrl}/auth/v1/verify?token=${encodeURIComponent(token)}&type=${encodeURIComponent(type)}&redirect_to=${encodeURIComponent('https://bidintell.ai/app')}`;
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Parse the incoming link params — DO NOT auto-redirect (prevents SafeLinks consuming token)
+        const params = new URLSearchParams(window.location.search);
+        const rawLink = params.get('link');
+
+        // Extract token_hash and type from the full Supabase verify URL
+        let token_hash = null;
+        let verifyType = 'magiclink';
+
+        if (rawLink) {
+            try {
+                const linkUrl = new URL(rawLink);
+                token_hash = linkUrl.searchParams.get('token_hash');
+                verifyType = linkUrl.searchParams.get('type') || 'magiclink';
+            } catch(e) {}
+        }
+
+        // Legacy fallback: ?token= format (older emails)
+        if (!token_hash) {
+            const legacyToken = params.get('token');
+            if (legacyToken) {
+                token_hash = legacyToken;
+                verifyType = params.get('type') || 'magiclink';
             }
         }
 
-        if (!link) {
+        if (!token_hash && !rawLink) {
             document.getElementById('readyState').style.display = 'none';
             document.getElementById('errorState').style.display = 'block';
         }
 
-        function openApp() {
-            if (!link) return;
-
+        async function openApp() {
             const btn = document.getElementById('openBtn');
             btn.disabled = true;
-            btn.textContent = 'Opening...';
+            btn.textContent = 'Signing in...';
 
-            // Redirect to the full Supabase verify URL exactly as generated
-            window.location.href = link;
+            if (token_hash) {
+                // Use verifyOtp to establish session in localStorage before redirecting.
+                // This bypasses the PKCE code-exchange problem entirely — session is ready
+                // when app.html loads and getSession() fires immediately.
+                try {
+                    const { error } = await supabaseClient.auth.verifyOtp({
+                        token_hash,
+                        type: verifyType
+                    });
+                    if (error) throw error;
+                    window.location.href = 'https://bidintell.ai/app';
+                } catch (err) {
+                    const errEl = document.getElementById('errorMsg');
+                    errEl.textContent = err.message || 'Sign-in failed. The link may have expired — request a new one.';
+                    errEl.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Open BidIntell →';
+                }
+            } else if (rawLink) {
+                // Last resort: direct redirect (legacy path)
+                window.location.href = rawLink;
+            }
         }
     </script>
 </body>
