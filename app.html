@@ -414,25 +414,29 @@
         /* Checkbox group improved */
         .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
         .checkbox-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; font-size: 13px; transition: all 0.2s; }
-        .csi-picker { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: 8px; }
-        .csi-division-row { display: flex; align-items: center; gap: 8px; padding: 10px 14px; cursor: pointer; background: var(--bg-secondary); border-bottom: 1px solid var(--border); user-select: none; font-weight: 500; font-size: 14px; }
+        .csi-picker-wrap { display: block; width: 100%; }
+        .csi-picker { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: 8px; max-height: 420px; overflow-y: auto; }
+        .csi-picker-summary { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+        .csi-picker-summary strong { color: var(--accent); }
+        .csi-division-row { display: flex; align-items: center; gap: 8px; padding: 10px 14px; cursor: pointer; background: var(--bg-secondary); border-bottom: 1px solid var(--border); user-select: none; font-weight: 500; font-size: 14px; min-width: 0; }
         .csi-division-row:hover { background: var(--bg-hover, var(--bg-input)); }
         .csi-division-chevron { transition: transform 0.2s; font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
         .csi-division-row.open .csi-division-chevron { transform: rotate(90deg); }
-        .csi-division-label { flex: 1; }
+        .csi-division-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
         .csi-division-num { color: var(--text-muted); font-size: 12px; margin-right: 4px; }
-        .csi-division-count { font-size: 12px; color: var(--accent); font-weight: 600; white-space: nowrap; }
-        .csi-division-count.zero { color: var(--text-muted); font-weight: 400; }
+        .csi-division-count { font-size: 11px; color: var(--accent); font-weight: 600; white-space: nowrap; flex-shrink: 0; background: rgba(79,70,229,.12); padding: 2px 8px; border-radius: 10px; }
+        .csi-division-count.zero { color: var(--text-muted); font-weight: 400; background: transparent; }
         .csi-sections-panel { display: none; background: var(--bg-primary); border-bottom: 1px solid var(--border); }
         .csi-sections-panel.open { display: block; }
-        .csi-section-actions { display: flex; gap: 16px; padding: 8px 40px 4px; font-size: 12px; }
+        .csi-section-actions { display: flex; gap: 16px; padding: 8px 16px 4px 44px; font-size: 12px; }
         .csi-section-action-link { cursor: pointer; color: var(--accent); text-decoration: underline; }
         .csi-section-action-link:hover { opacity: 0.75; }
-        .csi-section-item { display: flex; align-items: center; padding: 4px 16px 4px 40px; font-size: 13px; color: var(--text-primary); }
+        .csi-section-item { display: flex; align-items: center; padding: 5px 16px 5px 44px; font-size: 13px; color: var(--text-primary); }
         .csi-section-item:hover { background: var(--bg-secondary); }
-        .csi-section-item label { cursor: pointer; display: flex; align-items: center; gap: 10px; width: 100%; }
-        .csi-section-code { color: var(--text-muted); font-family: monospace; font-size: 11px; min-width: 64px; flex-shrink: 0; }
-        .csi-picker-search { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; margin-bottom: 8px; background: var(--bg-input); color: var(--text-primary); box-sizing: border-box; }
+        .csi-section-item label { cursor: pointer; display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; }
+        .csi-section-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+        .csi-section-code { color: var(--text-muted); font-family: monospace; font-size: 11px; width: 64px; flex-shrink: 0; }
+        .csi-picker-search { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; margin-bottom: 6px; background: var(--bg-input); color: var(--text-primary); box-sizing: border-box; }
         .checkbox-item:hover { border-color: var(--border-light); background: var(--bg-hover); }
         .checkbox-item.selected { background: var(--accent-dim); border-color: var(--accent); }
         .checkbox-item input { display: none; }
@@ -12616,13 +12620,16 @@ Respond now:`;
         function renderCSIPicker(containerId, selectedSections, onChange) {
             const container = document.getElementById(containerId);
             if (!container) return;
+            // Remove grid class that would crush children into narrow columns
+            container.classList.remove('checkbox-grid');
+            container.style.cssText = 'display:block;width:100%;';
             const selected = new Set(selectedSections || []);
 
             function updateCount(divEl, divData) {
                 const count = divData.sections.filter(s => selected.has(s.code)).length;
                 const countEl = divEl.querySelector('.csi-division-count');
                 if (countEl) {
-                    countEl.textContent = count > 0 ? `${count} of ${divData.sections.length} selected` : `${divData.sections.length} sections`;
+                    countEl.textContent = count > 0 ? `${count} / ${divData.sections.length}` : `${divData.sections.length}`;
                     countEl.classList.toggle('zero', count === 0);
                 }
             }
@@ -12639,8 +12646,8 @@ Respond now:`;
                     return `
                         <div class="csi-division-row${isOpen ? ' open' : ''}" data-div="${div.div}" role="button">
                             <span class="csi-division-chevron">▶</span>
-                            <span class="csi-division-label"><span class="csi-division-num">${div.div}</span>${div.label}</span>
-                            <span class="csi-division-count${count === 0 ? ' zero' : ''}">${count > 0 ? `${count} of ${div.sections.length} selected` : `${div.sections.length} sections`}</span>
+                            <span class="csi-division-label"><span class="csi-division-num">${div.div}</span> ${div.label}</span>
+                            <span class="csi-division-count${count === 0 ? ' zero' : ''}">${count > 0 ? `${count} / ${div.sections.length}` : `${div.sections.length}`}</span>
                         </div>
                         <div class="csi-sections-panel${isOpen ? ' open' : ''}" data-div-panel="${div.div}">
                             <div class="csi-section-actions">
@@ -12652,7 +12659,7 @@ Respond now:`;
                                     <label>
                                         <input type="checkbox" data-code="${s.code}" ${selected.has(s.code) ? 'checked' : ''}>
                                         <span class="csi-section-code">${s.code}</span>
-                                        ${s.label}
+                                        <span class="csi-section-label">${s.label}</span>
                                     </label>
                                 </div>
                             `).join('')}
@@ -12662,8 +12669,14 @@ Respond now:`;
             }
 
             function render(filter) {
+                const totalSelected = selected.size;
+                const divCount = CSI_DIVISIONS.filter(d => d.sections.some(s => selected.has(s.code))).length;
+                const summaryText = totalSelected > 0
+                    ? `<strong>${totalSelected}</strong> section${totalSelected !== 1 ? 's' : ''} selected across ${divCount} division${divCount !== 1 ? 's' : ''}`
+                    : 'No sections selected — choose the specific work you perform';
                 container.innerHTML = `
-                    <input type="text" class="csi-picker-search" placeholder="Filter divisions or sections..." value="${filter || ''}">
+                    <div class="csi-picker-summary">${summaryText}</div>
+                    <input type="text" class="csi-picker-search" placeholder="Search divisions or sections..." value="${filter || ''}">
                     <div class="csi-picker" id="${containerId}-list">${buildHTML(filter)}</div>
                 `;
 
@@ -12693,7 +12706,7 @@ Respond now:`;
                             div.sections.forEach(s => selected.delete(s.code));
                         }
                         onChange([...selected]);
-                        // Re-render checkboxes in this panel without full re-render
+                        // Update checkboxes + count badge without full re-render
                         const panel = container.querySelector(`[data-div-panel="${div.div}"]`);
                         if (panel) {
                             panel.querySelectorAll('input[type=checkbox]').forEach(cb => {
@@ -12702,6 +12715,11 @@ Respond now:`;
                         }
                         const row = container.querySelector(`[data-div="${div.div}"]`);
                         if (row) updateCount(row, div);
+                        // Update summary
+                        const totalSel = selected.size;
+                        const dc = CSI_DIVISIONS.filter(d => d.sections.some(s => selected.has(s.code))).length;
+                        const summaryEl = container.querySelector('.csi-picker-summary');
+                        if (summaryEl) summaryEl.innerHTML = totalSel > 0 ? `<strong>${totalSel}</strong> section${totalSel !== 1 ? 's' : ''} selected across ${dc} division${dc !== 1 ? 's' : ''}` : 'No sections selected — choose the specific work you perform';
                     });
                 });
 
@@ -12712,7 +12730,6 @@ Respond now:`;
                         else selected.delete(cb.dataset.code);
                         onChange([...selected]);
                         // Update count badge
-                        const row = container.querySelector(`[data-div="${cb.closest('[data-div-panel]')?.dataset.divPanel || cb.closest('.csi-sections-panel')?.dataset.divPanel}"]`);
                         const divPanel = cb.closest('.csi-sections-panel');
                         if (divPanel) {
                             const divCode = divPanel.dataset.divPanel;
@@ -12720,6 +12737,11 @@ Respond now:`;
                             const headerRow = container.querySelector(`.csi-division-row[data-div="${divCode}"]`);
                             if (divData && headerRow) updateCount(headerRow, divData);
                         }
+                        // Update summary
+                        const totalSel = selected.size;
+                        const dc = CSI_DIVISIONS.filter(d => d.sections.some(s => selected.has(s.code))).length;
+                        const summaryEl = container.querySelector('.csi-picker-summary');
+                        if (summaryEl) summaryEl.innerHTML = totalSel > 0 ? `<strong>${totalSel}</strong> section${totalSel !== 1 ? 's' : ''} selected across ${dc} division${dc !== 1 ? 's' : ''}` : 'No sections selected — choose the specific work you perform';
                     });
                 });
             }
