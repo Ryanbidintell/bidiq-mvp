@@ -7936,6 +7936,17 @@ ${truncatedText}`;
                 const tradeDetection = detectTradesMultiSignal(allPages, settings.trades, foundCSIDivisions);
                 const tradesFound = tradeDetection.matches.map(m => m.division);
 
+                // Section-level detection (when user has configured preferred_csi_sections)
+                const foundSections = [];
+                if (settings.preferred_csi_sections && settings.preferred_csi_sections.length > 0) {
+                    const allText = allPages.map(p => p.text).join(' ');
+                    for (const secCode of settings.preferred_csi_sections) {
+                        const pattern = new RegExp(secCode.replace(/\s+/g, '\\s*'), 'i');
+                        if (pattern.test(allText)) foundSections.push(secCode);
+                    }
+                    console.log('📐 Section-level detection:', { checked: settings.preferred_csi_sections.length, found: foundSections });
+                }
+
                 console.log('📊 Trade Detection Results:', {
                     divisions_found: tradesFound,
                     signals_used: tradeDetection.signals_used,
@@ -7952,7 +7963,7 @@ ${truncatedText}`;
 
                 const bidRisk = calculateBidRisk(extracted);
                 const gcNames = selectedGCs.map(g => g.name);
-                const scores = await calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks, tradeDetection, gcNames);
+                const scores = await calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks, tradeDetection, gcNames, foundSections);
 
                 updateProgress(90, 'Running Intelligence Engine...');
 
@@ -8159,7 +8170,7 @@ ${truncatedText}`;
             return match ? match[1].trim() : null;
         }
 
-        async function calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks = null, tradeDetection = null, gcNames = []) {
+        async function calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks = null, tradeDetection = null, gcNames = [], foundSections = []) {
             const components = {};
             let weights = { ...settings.weights };
 
@@ -8427,15 +8438,27 @@ ${truncatedText}`;
 
             // Trade/Product Match
             if (settings.companyType === 'subcontractor') {
-                // Multi-signal trade match for subcontractors
-                const tradeScore = settings.trades.length > 0 ? Math.round((tradesFound.length / settings.trades.length) * 100) : 50;
+                const hasSections = settings.preferred_csi_sections && settings.preferred_csi_sections.length > 0;
+                let tradeScore, reason;
 
-                // Generate reason text with signal information
-                let reason = `Found ${tradesFound.length} of your ${settings.trades.length} trade divisions`;
-                if (tradeDetection && tradeDetection.signals_used.length > 0) {
-                    reason += ` using ${tradeDetection.signals_used.join(', ')}`;
+                if (hasSections) {
+                    // Section-level scoring: more precise, fixes false positives
+                    const sectionCount = settings.preferred_csi_sections.length;
+                    const foundSectionCount = foundSections.length;
+                    tradeScore = sectionCount > 0 ? Math.round((foundSectionCount / sectionCount) * 100) : 50;
+                    reason = `Found ${foundSectionCount} of your ${sectionCount} spec sections`;
+                    if (tradeDetection && tradeDetection.signals_used.length > 0) {
+                        reason += ` (+ ${tradeDetection.signals_used.join(', ')})`;
+                    }
                 } else {
-                    reason += ' in specs';
+                    // Division-level scoring: fallback for users who haven't set sections yet
+                    tradeScore = settings.trades.length > 0 ? Math.round((tradesFound.length / settings.trades.length) * 100) : 50;
+                    reason = `Found ${tradesFound.length} of your ${settings.trades.length} trade divisions`;
+                    if (tradeDetection && tradeDetection.signals_used.length > 0) {
+                        reason += ` using ${tradeDetection.signals_used.join(', ')}`;
+                    } else {
+                        reason += ' in specs';
+                    }
                 }
 
                 components.trade = {
@@ -8444,6 +8467,9 @@ ${truncatedText}`;
                     reason: reason,
                     details: {
                         found: tradesFound,
+                        scoring_mode: hasSections ? 'section' : 'division',
+                        foundSections: hasSections ? foundSections : null,
+                        allSections: hasSections ? settings.preferred_csi_sections : null,
                         signals: tradeDetection?.signals_used || [],
                         confidence: tradeDetection?.highest_confidence || 0,
                         matches: tradeDetection?.matches || []
@@ -8969,8 +8995,19 @@ ${truncatedText}`;
             
             // Trade Match details (for subcontractors)
             if (title === 'Trade Match' && comp.details?.found) {
-                const foundNames = comp.details.found.map(code => { const div = CSI_DIVISIONS_FLAT.find(d => d[0] === code); return div ? `Div ${code} (${div[1]})` : `Div ${code}`; });
-                details = `<div class="score-component-details"><strong>Found:</strong> ${foundNames.length > 0 ? foundNames.join(', ') : 'None of your divisions found in specs - verify this project includes your trade'}</div>`;
+                if (comp.details.scoring_mode === 'section' && comp.details.allSections) {
+                    const found = comp.details.foundSections || [];
+                    const notFound = comp.details.allSections.filter(s => !found.includes(s));
+                    let html = `<div class="score-component-details">`;
+                    if (found.length > 0) html += `<strong>Sections found:</strong> ${found.join(', ')}<br>`;
+                    if (notFound.length > 0) html += `<span style="color:var(--text-muted);font-size:12px;">Not in spec: ${notFound.join(', ')}</span>`;
+                    if (found.length === 0) html += `<span style="color:var(--warning)">None of your specific sections appear in this spec — likely not your scope of work</span>`;
+                    html += `</div>`;
+                    details = html;
+                } else {
+                    const foundNames = comp.details.found.map(code => { const div = CSI_DIVISIONS_FLAT.find(d => d[0] === code); return div ? `Div ${code} (${div[1]})` : `Div ${code}`; });
+                    details = `<div class="score-component-details"><strong>Found:</strong> ${foundNames.length > 0 ? foundNames.join(', ') : 'None of your divisions found in specs - verify this project includes your trade'}</div>`;
+                }
             }
 
             // Product Match details (for distributors/mfg reps)
