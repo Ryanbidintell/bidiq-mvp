@@ -314,6 +314,10 @@ exports.handler = async function(event, context) {
             const action_link = linkData.action_link || linkData.properties?.action_link;
             if (!action_link) throw new Error(`No action_link in response: ${JSON.stringify(linkData)}`);
 
+            // Extract first name from Supabase user_metadata (populated by OAuth providers)
+            const rawName = linkData.user_metadata?.full_name || linkData.user_metadata?.name || linkData.user_metadata?.first_name || '';
+            const firstName = rawName.split(' ')[0] || '';
+
             // Pass the full action_link to our /auth intermediate page.
             // We don't rebuild the URL ourselves — Supabase may use token or token_hash
             // depending on project version. SafeLinks protection is still intact because
@@ -323,14 +327,14 @@ exports.handler = async function(event, context) {
             // Send login link email to user — this MUST succeed
             await sendEmail({
                 to: userEmail,
-                subject: `Your BidIntell login link`,
+                subject: firstName ? `Your BidIntell login link, ${firstName}` : `Your BidIntell login link`,
                 htmlBody: `
                     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; color: #111;">
                         <div style="padding: 32px 0 16px; text-align: center;">
                             <span style="display: inline-block; background: #F26522; color: white; font-weight: 800; font-size: 15px; letter-spacing: -0.02em; padding: 8px 14px; border-radius: 6px;">BidIntell</span>
                         </div>
                         <div style="padding: 8px 32px 40px;">
-                            <h2 style="font-size: 22px; font-weight: 700; color: #111; margin: 0 0 12px;">Here's your login link</h2>
+                            <h2 style="font-size: 22px; font-weight: 700; color: #111; margin: 0 0 12px;">${firstName ? `Hey ${firstName} — here's your login link` : `Here's your login link`}</h2>
                             <p style="color: #555; font-size: 15px; line-height: 1.6; margin: 0 0 28px;">Click the button below to sign in to BidIntell. This link expires in 24 hours and can only be used once.</p>
                             <div style="text-align: center; margin: 0 0 32px;">
                                 <a href="${safeLoginUrl}" style="display: inline-block; background: #F26522; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 16px; padding: 14px 36px; border-radius: 6px;">Sign in to BidIntell &rarr;</a>
