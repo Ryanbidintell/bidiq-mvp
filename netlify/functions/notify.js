@@ -324,38 +324,38 @@ exports.handler = async function(event, context) {
             // /auth shows a button and never auto-redirects.
             const safeLoginUrl = `https://bidintell.ai/auth?link=${encodeURIComponent(action_link)}`;
 
-            // Send login email + internal notification in parallel
-            await Promise.all([
-                sendEmail({
-                    to: userEmail,
-                    subject: `Your BidIntell login link`,
-                    htmlBody: `
-                        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; color: #111;">
-                            <div style="padding: 32px 0 16px; text-align: center;">
-                                <span style="display: inline-block; background: #F26522; color: white; font-weight: 800; font-size: 15px; letter-spacing: -0.02em; padding: 8px 14px; border-radius: 6px;">BidIntell</span>
-                            </div>
-                            <div style="padding: 8px 32px 40px;">
-                                <h2 style="font-size: 22px; font-weight: 700; color: #111; margin: 0 0 12px;">Here's your login link</h2>
-                                <p style="color: #555; font-size: 15px; line-height: 1.6; margin: 0 0 28px;">Click the button below to sign in to BidIntell. This link expires in 24 hours and can only be used once.</p>
-                                <div style="text-align: center; margin: 0 0 32px;">
-                                    <a href="${safeLoginUrl}" style="display: inline-block; background: #F26522; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 16px; padding: 14px 36px; border-radius: 6px;">Sign in to BidIntell →</a>
-                                </div>
-                                <p style="color: #888; font-size: 13px; line-height: 1.5; margin: 0;">If you didn't request this link, you can safely ignore this email.<br>Questions? Reply to this email — we read every one.</p>
-                            </div>
-                            <div style="border-top: 1px solid #eee; padding: 16px 32px; text-align: center;">
-                                <p style="font-size: 12px; color: #aaa; margin: 0;">BidIntell · <a href="https://bidintell.ai" style="color: #aaa;">bidintell.ai</a> · <a href="https://bidintell.ai/legal" style="color: #aaa;">Privacy &amp; Terms</a></p>
-                            </div>
+            // Send login link email to user — this MUST succeed
+            await sendEmail({
+                to: userEmail,
+                subject: `Your BidIntell login link`,
+                htmlBody: `
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; color: #111;">
+                        <div style="padding: 32px 0 16px; text-align: center;">
+                            <span style="display: inline-block; background: #F26522; color: white; font-weight: 800; font-size: 15px; letter-spacing: -0.02em; padding: 8px 14px; border-radius: 6px;">BidIntell</span>
                         </div>
-                    `
-                }),
-                sendEmail({
-                    to: 'ryan@bidintell.ai',
-                    subject: isNewUser ? `🎉 New signup: ${userEmail}` : `🔑 Login link sent: ${userEmail}`,
-                    htmlBody: isNewUser
-                        ? `<p>New user — magic link sent.</p><p><strong>Email:</strong> ${userEmail}</p>`
-                        : `<p>Login link sent to existing user.</p><p><strong>Email:</strong> ${userEmail}</p>`
-                })
-            ]);
+                        <div style="padding: 8px 32px 40px;">
+                            <h2 style="font-size: 22px; font-weight: 700; color: #111; margin: 0 0 12px;">Here's your login link</h2>
+                            <p style="color: #555; font-size: 15px; line-height: 1.6; margin: 0 0 28px;">Click the button below to sign in to BidIntell. This link expires in 24 hours and can only be used once.</p>
+                            <div style="text-align: center; margin: 0 0 32px;">
+                                <a href="${safeLoginUrl}" style="display: inline-block; background: #F26522; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 16px; padding: 14px 36px; border-radius: 6px;">Sign in to BidIntell &rarr;</a>
+                            </div>
+                            <p style="color: #888; font-size: 13px; line-height: 1.5; margin: 0;">If you didn't request this link, you can safely ignore this email.<br>Questions? Reply to this email — we read every one.</p>
+                        </div>
+                        <div style="border-top: 1px solid #eee; padding: 16px 32px; text-align: center;">
+                            <p style="font-size: 12px; color: #aaa; margin: 0;">BidIntell · <a href="https://bidintell.ai" style="color: #aaa;">bidintell.ai</a> · <a href="https://bidintell.ai/legal" style="color: #aaa;">Privacy &amp; Terms</a></p>
+                        </div>
+                    </div>
+                `
+            });
+
+            // Internal notification — fire and forget, never block user on this
+            sendEmail({
+                to: 'ryan@bidintell.ai',
+                subject: isNewUser ? `New signup: ${userEmail}` : `Login link sent: ${userEmail}`,
+                htmlBody: isNewUser
+                    ? `<p>New user — magic link sent.</p><p><strong>Email:</strong> ${userEmail}</p>`
+                    : `<p>Login link sent to existing user.</p><p><strong>Email:</strong> ${userEmail}</p>`
+            }).catch(e => console.log('Notification email failed (non-blocking):', e.message));
 
             return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
         }

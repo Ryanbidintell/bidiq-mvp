@@ -1095,15 +1095,24 @@
                 </div>
 
                 <form onsubmit="handleEmailContinue(event)">
-                    <div class="form-group" style="margin-bottom:12px;">
+                    <div class="form-group" style="margin-bottom:10px;">
                         <input type="email" class="form-input" id="authEmail" placeholder="you@company.com" required autocomplete="email" style="font-size:15px;padding:12px 14px;">
+                    </div>
+                    <div id="passwordRow" style="display:none;margin-bottom:10px;position:relative;">
+                        <input type="password" class="form-input" id="authPassword" placeholder="Password" autocomplete="current-password" style="font-size:15px;padding:12px 14px;padding-right:56px;">
+                        <button type="button" onclick="toggleAuthPassword()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;padding:4px 8px;" id="showPwBtn">Show</button>
                     </div>
                     <button type="submit" class="btn btn-primary" id="continueBtn" style="width:100%;padding:13px;font-size:15px;font-weight:600;">
                         Continue &rarr;
                     </button>
                 </form>
+                <div style="text-align:center;margin-top:10px;">
+                    <button type="button" id="togglePwMode" onclick="togglePasswordMode()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;text-decoration:underline;padding:4px;">
+                        Have a password? Sign in with it
+                    </button>
+                </div>
 
-                <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:14px;line-height:1.5;">
+                <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:12px;line-height:1.5;">
                     By continuing you agree to our <a href="/legal#terms" target="_blank" style="color:var(--text-muted);text-decoration:underline;">Terms</a> and <a href="/legal#privacy" target="_blank" style="color:var(--text-muted);text-decoration:underline;">Privacy Policy</a>
                 </p>
             </div>
@@ -2645,6 +2654,22 @@
             document.getElementById('authSuccess').style.display = 'none';
         }
 
+        let _pwMode = false;
+        function togglePasswordMode() {
+            _pwMode = !_pwMode;
+            document.getElementById('passwordRow').style.display = _pwMode ? 'block' : 'none';
+            document.getElementById('togglePwMode').textContent = _pwMode ? 'Send me a login link instead' : 'Have a password? Sign in with it';
+            document.getElementById('continueBtn').textContent = _pwMode ? 'Sign In' : 'Continue →';
+            document.getElementById('authError').style.display = 'none';
+        }
+
+        function toggleAuthPassword() {
+            const inp = document.getElementById('authPassword');
+            const btn = document.getElementById('showPwBtn');
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+            btn.textContent = inp.type === 'password' ? 'Show' : 'Hide';
+        }
+
         let _resendTimer = null;
         function startResendCountdown() {
             const btn = document.getElementById('resendBtn');
@@ -2669,6 +2694,28 @@
             const email = document.getElementById('authEmail').value.trim().toLowerCase();
             if (!email) { showAuthError('Please enter your email address.'); return; }
             const btn = document.getElementById('continueBtn');
+
+            // Password mode
+            if (_pwMode) {
+                const password = document.getElementById('authPassword').value;
+                if (!password) { showAuthError('Please enter your password.'); return; }
+                if (!supabaseClient) { showAuthError('Database not connected. Please refresh.'); return; }
+                btn.disabled = true;
+                btn.textContent = 'Signing in...';
+                try {
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    currentUser = data.user;
+                    showApp();
+                } catch (err) {
+                    showAuthError(err.message || 'Sign in failed. Check your password.');
+                    btn.disabled = false;
+                    btn.textContent = 'Sign In';
+                }
+                return;
+            }
+
+            // Magic link mode
             btn.disabled = true;
             btn.textContent = 'Sending link...';
             document.getElementById('authError').style.display = 'none';
@@ -2682,7 +2729,6 @@
                     const errData = await res.json().catch(() => ({}));
                     throw new Error(errData.error || `Server error ${res.status}`);
                 }
-                // Show the success panel
                 document.getElementById('authMain').style.display = 'none';
                 document.getElementById('authSent').style.display = 'block';
                 document.getElementById('authSentEmail').textContent = email;
