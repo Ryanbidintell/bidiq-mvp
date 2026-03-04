@@ -280,8 +280,7 @@ exports.handler = async function(event, context) {
 
         // ── Magic link (bypass Supabase email, send via Postmark) ────────────
         if (emailType === 'magic_link') {
-            const { userEmail, fullName } = body;
-            const firstName = (fullName || 'there').split(' ')[0];
+            const { userEmail } = body;
             const serviceRoleKey = process.env.SUPABASE_SERVICE_KEY;
             const supabaseUrl = 'https://szifhqmrddmdkgschkkw.supabase.co';
 
@@ -305,7 +304,6 @@ exports.handler = async function(event, context) {
             let linkRes = await generateLink('magiclink');
             let isNewUser = false;
             if (!linkRes.ok) {
-                // magiclink failed — always try signup fallback (handles new users)
                 const firstErr = await linkRes.json().catch(() => ({}));
                 console.log('magiclink failed, trying signup fallback. Error:', JSON.stringify(firstErr));
                 linkRes = await generateLink('signup');
@@ -321,47 +319,44 @@ exports.handler = async function(event, context) {
             const action_link = linkData.action_link || linkData.properties?.action_link;
             if (!action_link) throw new Error(`No action_link in response: ${JSON.stringify(linkData)}`);
 
-            // Extract the OTP token and build a SafeLinks-resistant intermediate URL.
-            // Microsoft SafeLinks pre-clicks every link in corporate emails, which burns
-            // one-time Supabase tokens before the user sees them. By linking to our own
-            // /auth page (which shows a button), SafeLinks scans a harmless HTML page
-            // and the token is only consumed when the real user clicks the button.
+            // Extract OTP token and build SafeLinks-resistant intermediate URL
             const actionUrl = new URL(action_link);
             const otpToken = actionUrl.searchParams.get('token');
             const otpType = actionUrl.searchParams.get('type') || 'magiclink';
             const safeLoginUrl = `https://bidintell.ai/auth?token=${encodeURIComponent(otpToken)}&type=${encodeURIComponent(otpType)}`;
 
-            // Send branded welcome email with the safe intermediate link
-            await sendEmail({
-                to: userEmail,
-                subject: `Your BidIntell login link, ${firstName}!`,
-                htmlBody: `
-                    <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #1a1a2e;">
-                        <div style="background: #0B0F14; padding: 24px; border-radius: 8px 8px 0 0; border-bottom: 2px solid #F26522;">
-                            <div style="font-weight: 700; font-size: 20px; color: #F8FAFC;">BidIntell</div>
-                        </div>
-                        <div style="padding: 32px 24px; background: #141A23; border-radius: 0 0 8px 8px;">
-                            <h2 style="color: #F8FAFC; margin-bottom: 16px;">You're in, ${firstName}!</h2>
-                            <p style="color: #CBD5E1; line-height: 1.7;">Click the button below to log in and start your first analysis. The link expires in 24 hours.</p>
-                            <div style="text-align: center; margin: 32px 0;">
-                                <a href="${safeLoginUrl}" style="background: #F26522; color: white; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block;">Open BidIntell →</a>
+            // Send login email + internal notification in parallel
+            await Promise.all([
+                sendEmail({
+                    to: userEmail,
+                    subject: `Your BidIntell login link`,
+                    htmlBody: `
+                        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; color: #111;">
+                            <div style="padding: 32px 0 16px; text-align: center;">
+                                <span style="display: inline-block; background: #F26522; color: white; font-weight: 800; font-size: 15px; letter-spacing: -0.02em; padding: 8px 14px; border-radius: 6px;">BidIntell</span>
                             </div>
-                            <p style="color: #94A3B8; font-size: 13px; line-height: 1.6;">Access is free through March 31, 2026. Every bid you analyze and outcome you record makes the system smarter for you.</p>
-                            <p style="color: #5A6A7E; margin-top: 24px; font-size: 13px;">— Ryan<br><em>Founder, BidIntell</em></p>
+                            <div style="padding: 8px 32px 40px;">
+                                <h2 style="font-size: 22px; font-weight: 700; color: #111; margin: 0 0 12px;">Here's your login link</h2>
+                                <p style="color: #555; font-size: 15px; line-height: 1.6; margin: 0 0 28px;">Click the button below to sign in to BidIntell. This link expires in 24 hours and can only be used once.</p>
+                                <div style="text-align: center; margin: 0 0 32px;">
+                                    <a href="${safeLoginUrl}" style="display: inline-block; background: #F26522; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 16px; padding: 14px 36px; border-radius: 6px;">Sign in to BidIntell →</a>
+                                </div>
+                                <p style="color: #888; font-size: 13px; line-height: 1.5; margin: 0;">If you didn't request this link, you can safely ignore this email.<br>Questions? Reply to this email — we read every one.</p>
+                            </div>
+                            <div style="border-top: 1px solid #eee; padding: 16px 32px; text-align: center;">
+                                <p style="font-size: 12px; color: #aaa; margin: 0;">BidIntell · <a href="https://bidintell.ai" style="color: #aaa;">bidintell.ai</a> · <a href="https://bidintell.ai/legal" style="color: #aaa;">Privacy &amp; Terms</a></p>
+                            </div>
                         </div>
-                        <p style="font-size: 11px; color: #5A6A7E; text-align: center; margin-top: 16px;">BidIntell · <a href="https://bidintell.ai" style="color: #5A6A7E;">bidintell.ai</a> · <a href="https://bidintell.ai/legal" style="color: #5A6A7E;">Privacy &amp; Terms</a></p>
-                    </div>
-                `
-            });
-
-            // Notify Ryan (always goes to ryan@bidintell.ai regardless of who logged in)
-            await sendEmail({
-                to: 'ryan@bidintell.ai',
-                subject: isNewUser ? `🎉 New BidIntell signup: ${userEmail}` : `🔑 Login link sent: ${userEmail}`,
-                htmlBody: isNewUser
-                    ? `<p>New user signup — magic link sent via Postmark.</p><p><strong>Email:</strong> ${userEmail}</p>`
-                    : `<p>Existing user requested a login link.</p><p><strong>Email:</strong> ${userEmail}</p>`
-            });
+                    `
+                }),
+                sendEmail({
+                    to: 'ryan@bidintell.ai',
+                    subject: isNewUser ? `🎉 New signup: ${userEmail}` : `🔑 Login link sent: ${userEmail}`,
+                    htmlBody: isNewUser
+                        ? `<p>New user — magic link sent.</p><p><strong>Email:</strong> ${userEmail}</p>`
+                        : `<p>Login link sent to existing user.</p><p><strong>Email:</strong> ${userEmail}</p>`
+                })
+            ]);
 
             return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
         }
