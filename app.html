@@ -3682,7 +3682,7 @@ ${fullText.substring(0, 40000)}`;
                     .from('user_settings')
                     .select('*')
                     .eq('user_id', currentUser.id)
-                    .single();
+                    .maybeSingle();
 
                 if (error || !data) {
                     console.log('📝 Creating default settings for new user');
