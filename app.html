@@ -2760,7 +2760,10 @@
             if (!supabaseClient) { showAuthError('Database not connected. Please refresh.'); return; }
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: provider,
-                options: { redirectTo: 'https://bidintell.ai/app' }
+                options: {
+                    redirectTo: 'https://bidintell.ai/app',
+                    queryParams: provider === 'azure' ? { prompt: 'select_account' } : undefined
+                }
             });
             if (error) showAuthError(error.message);
         }
