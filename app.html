@@ -771,6 +771,20 @@
             }
         }
 
+        /* Setup completion banner */
+        .setup-banner { display:flex; align-items:center; gap:12px; background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.35); border-radius:var(--radius); padding:12px 16px; margin-bottom:20px; font-size:13px; color:var(--text-primary); }
+        .setup-banner-icon { font-size:18px; flex-shrink:0; }
+        .setup-banner-text { flex:1; line-height:1.5; }
+        .setup-banner-link { color:var(--accent); font-weight:600; cursor:pointer; text-decoration:underline; }
+
+        /* AI Advisor pulse ring — draws attention when never clicked */
+        @keyframes pulse-ring { 0%{box-shadow:0 0 0 0 rgba(79,70,229,.6)} 70%{box-shadow:0 0 0 14px rgba(79,70,229,0)} 100%{box-shadow:0 0 0 0 rgba(79,70,229,0)} }
+        .ai-pulse { animation: pulse-ring 2.2s ease-out infinite; }
+
+        /* Post-analysis AI insights flash */
+        @keyframes flash-highlight { 0%{background:var(--bg-tertiary)} 25%{background:rgba(79,70,229,.15)} 100%{background:var(--bg-tertiary)} }
+        .ai-insights-flash { animation: flash-highlight 2s ease-out forwards; }
+
         /* AI Advisor Chat */
         .ai-chat-button {
             position: fixed;
@@ -1280,6 +1294,7 @@
             <div class="tab-content active" id="tab-dashboard">
                 <header class="page-header"><h2 class="page-title">Dashboard</h2><p class="page-subtitle">Your bid intelligence at a glance</p></header>
                 <div class="page-content">
+                    <div id="setupBanner"></div>
                     <div class="stats-grid">
                         <div class="stat-card accent">
                             <div class="stat-label">Total Bids Analyzed</div>
@@ -2835,10 +2850,11 @@
             document.getElementById('mainApp').style.display = 'flex';
             if (currentUser) document.getElementById('userEmail').textContent = currentUser.email;
 
-            // Show AI Advisor chat button
+            // Show AI Advisor chat button — pulse if never clicked this session
             const chatButton = document.getElementById('aiChatButton');
             if (chatButton) {
                 chatButton.style.display = 'flex';
+                if (!sessionStorage.getItem('aiAdvisorClicked')) chatButton.classList.add('ai-pulse');
             }
 
             // Update AI Advisor name in chat header
@@ -8838,6 +8854,17 @@ ${truncatedText}`;
                 const loc = document.querySelector('.score-component');
                 if (loc) loc.innerHTML += `<div class="address-prompt"><div class="address-prompt-title">📍 Enter project address for accurate distance</div><div class="address-prompt-row"><input type="text" class="form-input" id="manualAddress" placeholder="123 Main St, City, State"><button class="btn btn-primary btn-sm" onclick="recalcAddress()">Calculate</button></div></div>`;
             }
+
+            // Post-analysis AI nudge — flash insights section and add chat prompt if AI Advisor never used
+            if (!sessionStorage.getItem('aiAdvisorClicked')) {
+                setTimeout(() => {
+                    const insights = document.getElementById('aiInsightsSection');
+                    if (insights) {
+                        insights.classList.add('ai-insights-flash');
+                        insights.innerHTML += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);">Want a deeper take? <span style="color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline;" onclick="toggleAIChat()">Chat with your AI Advisor →</span></div>`;
+                    }
+                }, 800);
+            }
         }
 
         function renderExtractedDataSection(extracted, gcs) {
@@ -9100,7 +9127,7 @@ ${truncatedText}`;
             const aiSummary = summaryParts.join(' ');
 
             return `
-                <div style="margin-top:0;padding:14px 16px;background:var(--bg-tertiary);border-radius:var(--radius);border-left:3px solid var(--accent);">
+                <div id="aiInsightsSection" style="margin-top:0;padding:14px 16px;background:var(--bg-tertiary);border-radius:var(--radius);border-left:3px solid var(--accent);">
                     <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--accent);font-weight:700;margin-bottom:8px;">AI Analysis Summary</div>
                     <p style="margin:0;font-size:13px;line-height:1.65;color:var(--cloud);">${aiSummary}</p>
                 </div>
@@ -9845,9 +9872,28 @@ ${truncatedText}`;
             }, 16);
         }
 
+        function renderSetupBanner(settings) {
+            const banner = document.getElementById('setupBanner');
+            if (!banner) return;
+            const missing = [];
+            if (!settings.city || !settings.state) missing.push('your office location');
+            if (settings.companyType === 'subcontractor' && (!settings.preferred_csi_sections || settings.preferred_csi_sections.length === 0)) missing.push('your trade sections');
+            else if (settings.companyType !== 'subcontractor' && (!settings.productLines || settings.productLines.length === 0)) missing.push('your product lines');
+            if (missing.length === 0) { banner.innerHTML = ''; return; }
+            banner.innerHTML = `
+                <div class="setup-banner">
+                    <span class="setup-banner-icon">⚠️</span>
+                    <span class="setup-banner-text">
+                        Your profile is incomplete — scores may be inaccurate. Still need: <strong>${missing.join(' and ')}</strong>.
+                        <span class="setup-banner-link" onclick="switchTab('settings')"> Complete setup →</span>
+                    </span>
+                </div>`;
+        }
+
         async function loadDashboard() {
             const projects = await getProjects();
             const settings = await getSettings();
+            renderSetupBanner(settings);
 
             // Total bids analyzed
             animateValue('statBids', 0, projects.length);
@@ -14574,6 +14620,10 @@ Respond now:`;
             const panel = document.getElementById('aiChatPanel');
             const button = document.getElementById('aiChatButton');
             const feedbackBtn = document.getElementById('feedbackButton');
+
+            // Mark as clicked — stops pulse, won't show again this session
+            sessionStorage.setItem('aiAdvisorClicked', '1');
+            if (button) button.classList.remove('ai-pulse');
 
             aiChatOpen = !aiChatOpen;
 
