@@ -6,158 +6,183 @@
   <title>Schedule a Demo — BidIntell</title>
   <meta name="description" content="See BidIntell score a real bid in your trade in 20 minutes.">
   <link rel="icon" href="/favicon.png">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    /* ── Scheduler URL — update this when Pipedrive Scheduler link is ready ── */
-    /* See PIPEDRIVE_SCHEDULER_URL constant in the script block below         */
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
 
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XGYJLV0E6G"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XGYJLV0E6G');
+  </script>
+
+  <style>
     :root {
-      --blue: #3b82f6;
-      --blue-dark: #2563eb;
-      --blue-dim: rgba(59,130,246,0.08);
-      --orange: #E87722;
-      --gray-50: #f9fafb;
-      --gray-100: #f3f4f6;
-      --gray-200: #e5e7eb;
-      --gray-300: #d1d5db;
-      --gray-400: #9ca3af;
-      --gray-500: #6b7280;
-      --gray-600: #4b5563;
-      --gray-700: #374151;
-      --gray-900: #111827;
-      --red: #ef4444;
-      --red-bg: #fef2f2;
-      --red-border: #fecaca;
-      --green: #22c55e;
-      --green-bg: #f0fdf4;
+      --ink:          #0B0F14;
+      --ink-light:    #141A23;
+      --ink-mid:      #1C2533;
+      --slate:        #384254;
+      --slate-light:  #5A6A7E;
+      --fog:          #94A3B8;
+      --cloud:        #CBD5E1;
+      --white:        #F8FAFC;
+      --accent:       #F26522;
+      --accent-dark:  #D4551A;
+      --green:        #22C55E;
+      --green-muted:  rgba(34,197,94,0.12);
+      --red:          #EF4444;
+      --red-muted:    rgba(239,68,68,0.10);
+      --border:       rgba(255,255,255,0.07);
+      --radius:       6px;
+      --radius-lg:    10px;
+      --font:         'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --mono:         'Space Mono', monospace;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html { font-size: 16px; }
+
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: var(--gray-50);
-      color: var(--gray-900);
+      font-family: var(--font);
+      background: var(--ink);
+      color: var(--cloud);
       min-height: 100vh;
-      padding: 0 16px 80px;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Top nav ── */
-    .top-nav {
-      max-width: 560px;
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Nav ── */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(11,15,20,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1160px;
       margin: 0 auto;
-      padding: 20px 0 24px;
+      padding: 0 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      height: 64px;
     }
     .nav-logo {
       display: flex;
       align-items: center;
-      gap: 8px;
-      text-decoration: none;
-      color: var(--gray-900);
-      font-weight: 800;
-      font-size: 17px;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: var(--white);
+      letter-spacing: -0.02em;
     }
-    .logo-icon {
-      width: 30px;
-      height: 30px;
-      background: var(--blue);
-      border-radius: 7px;
+    .nav-logo .logo-mark {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: var(--radius);
       display: flex;
       align-items: center;
       justify-content: center;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 700;
       color: #fff;
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.04em;
     }
     .nav-back {
-      font-size: 13px;
-      color: var(--gray-500);
-      text-decoration: none;
+      font-size: 0.85rem;
+      color: var(--fog);
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       transition: color 0.15s;
     }
-    .nav-back:hover { color: var(--gray-700); }
-    .nav-back i { width: 14px; height: 14px; }
+    .nav-back:hover { color: var(--white); }
+    .nav-back svg { width: 14px; height: 14px; }
 
-    /* ── Card ── */
-    .card {
-      background: #fff;
-      border-radius: 14px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
-      max-width: 560px;
-      margin: 0 auto;
-      padding: 44px 44px 40px;
+    /* ── Page layout ── */
+    .page {
+      padding: 104px 16px 80px;
+      display: flex;
+      justify-content: center;
     }
 
-    /* ── Header ── */
-    .card-header {
+    .container {
+      width: 100%;
+      max-width: 560px;
+    }
+
+    /* ── Page header ── */
+    .page-header {
       margin-bottom: 32px;
     }
-    .card-header h1 {
-      font-size: 26px;
-      font-weight: 800;
+    .page-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.03em;
       line-height: 1.2;
-      color: var(--gray-900);
       margin-bottom: 10px;
     }
-    .card-header p {
-      font-size: 15px;
-      color: var(--gray-600);
+    .page-header h1 span { color: var(--accent); }
+    .page-header p {
+      font-size: 1rem;
+      color: var(--fog);
       line-height: 1.65;
     }
 
-    /* ── Section divider ── */
-    .section-divider {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 28px 0 22px;
+    /* ── Card ── */
+    .card {
+      background: var(--ink-light);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 36px;
     }
-    .section-divider::before,
-    .section-divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--gray-200);
-    }
+
+    /* ── Section labels ── */
     .section-label {
       font-size: 11px;
       font-weight: 700;
-      letter-spacing: 0.09em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--gray-400);
-      white-space: nowrap;
+      color: var(--slate-light);
+      margin-bottom: 18px;
+    }
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 28px 0 24px;
     }
 
-    /* ── Form layout ── */
+    /* ── Form ── */
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      gap: 14px;
     }
-
     .form-group {
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
     .form-group:last-of-type { margin-bottom: 0; }
 
     label {
       display: block;
-      font-size: 13.5px;
+      font-size: 13px;
       font-weight: 600;
-      color: var(--gray-700);
+      color: var(--cloud);
       margin-bottom: 6px;
     }
     label .opt {
       font-weight: 400;
-      color: var(--gray-400);
+      color: var(--slate-light);
       font-size: 12px;
       margin-left: 4px;
     }
@@ -169,59 +194,45 @@
     textarea {
       width: 100%;
       padding: 10px 14px;
-      border: 1.5px solid var(--gray-200);
-      border-radius: 8px;
-      font-family: inherit;
+      background: var(--ink-mid);
+      border: 1px solid var(--slate);
+      border-radius: var(--radius);
+      font-family: var(--font);
       font-size: 15px;
-      color: var(--gray-900);
-      background: #fff;
+      color: var(--white);
       transition: border-color 0.15s, box-shadow 0.15s;
       appearance: none;
       -webkit-appearance: none;
     }
-    textarea {
-      resize: vertical;
-      min-height: 80px;
-      line-height: 1.5;
-    }
-    input::placeholder,
-    textarea::placeholder { color: var(--gray-400); }
+    textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+    input::placeholder, textarea::placeholder { color: var(--slate-light); }
+    select option { background: var(--ink-mid); color: var(--white); }
 
-    input:focus,
-    select:focus,
-    textarea:focus {
+    input:focus, select:focus, textarea:focus {
       outline: none;
-      border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(242,101,34,0.15);
     }
-
-    input.invalid,
-    select.invalid,
-    textarea.invalid {
+    input.invalid, select.invalid, textarea.invalid {
       border-color: var(--red);
     }
-    input.invalid:focus,
-    select.invalid:focus,
-    textarea.invalid:focus {
-      box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+    input.invalid:focus, select.invalid:focus, textarea.invalid:focus {
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.15);
     }
 
     /* Select arrow */
-    .select-wrap {
-      position: relative;
-    }
-    .select-wrap i {
+    .select-wrap { position: relative; }
+    .select-wrap svg {
       position: absolute;
       right: 12px;
       top: 50%;
       transform: translateY(-50%);
-      color: var(--gray-400);
+      color: var(--slate-light);
       pointer-events: none;
-      width: 16px;
-      height: 16px;
+      width: 16px; height: 16px;
     }
 
-    /* Inline field error */
+    /* Field error */
     .field-error {
       font-size: 12px;
       color: var(--red);
@@ -234,11 +245,11 @@
     .btn-submit {
       width: 100%;
       padding: 13px;
-      background: var(--blue);
+      background: var(--accent);
       color: #fff;
       border: none;
-      border-radius: 8px;
-      font-family: inherit;
+      border-radius: var(--radius);
+      font-family: var(--font);
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
@@ -249,13 +260,12 @@
       gap: 10px;
       margin-top: 24px;
     }
-    .btn-submit:hover:not(:disabled) { background: var(--blue-dark); }
-    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-submit:hover:not(:disabled) { background: var(--accent-dark); }
+    .btn-submit:disabled { opacity: 0.55; cursor: not-allowed; }
 
     .spinner {
-      width: 18px;
-      height: 18px;
-      border: 2px solid rgba(255,255,255,0.35);
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
       border-top-color: #fff;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
@@ -265,53 +275,53 @@
     .btn-submit.loading .btn-text { display: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── API error banner ── */
+    /* ── API error ── */
     .api-error {
-      background: var(--red-bg);
-      border: 1px solid var(--red-border);
-      border-radius: 8px;
+      background: var(--red-muted);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: var(--radius);
       padding: 12px 16px;
       font-size: 14px;
-      color: #b91c1c;
+      color: #fca5a5;
       margin-top: 16px;
       display: none;
       line-height: 1.5;
     }
     .api-error.show { display: block; }
-    .api-error a { color: #b91c1c; font-weight: 600; }
+    .api-error a { color: #fca5a5; font-weight: 600; text-decoration: underline; }
 
     /* ── Success state ── */
     .success-state {
       display: none;
       text-align: center;
-      padding: 12px 0 4px;
+      padding: 16px 0 8px;
     }
     .success-state.show { display: block; }
 
     .success-icon {
-      width: 60px;
-      height: 60px;
-      background: var(--green-bg);
+      width: 60px; height: 60px;
+      background: var(--green-muted);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto 20px;
     }
-    .success-icon i { color: var(--green); width: 28px; height: 28px; }
+    .success-icon svg { color: var(--green); width: 28px; height: 28px; }
 
     .success-state h2 {
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--gray-900);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.02em;
       margin-bottom: 10px;
     }
     .success-state p {
       font-size: 15px;
-      color: var(--gray-600);
+      color: var(--fog);
       line-height: 1.65;
       margin-bottom: 28px;
-      max-width: 400px;
+      max-width: 380px;
       margin-left: auto;
       margin-right: auto;
     }
@@ -321,201 +331,201 @@
       align-items: center;
       gap: 8px;
       padding: 14px 28px;
-      background: var(--orange);
+      background: var(--accent);
       color: #fff;
-      border-radius: 8px;
-      font-family: inherit;
+      border-radius: var(--radius);
+      font-family: var(--font);
       font-size: 16px;
       font-weight: 700;
-      text-decoration: none;
-      transition: opacity 0.15s;
+      transition: background 0.15s;
     }
-    .btn-book:hover { opacity: 0.9; }
-    .btn-book i { width: 18px; height: 18px; }
+    .btn-book:hover { background: var(--accent-dark); }
+    .btn-book svg { width: 18px; height: 18px; }
 
     /* ── Mobile ── */
     @media (max-width: 500px) {
-      .card { padding: 28px 20px 28px; }
+      .card { padding: 24px 20px; }
       .form-row { grid-template-columns: 1fr; gap: 0; }
-      .card-header h1 { font-size: 22px; }
+      .page-header h1 { font-size: 1.6rem; }
     }
   </style>
 </head>
 <body>
 
-  <nav class="top-nav">
-    <a href="/app.html" class="nav-logo">
-      <div class="logo-icon">BI</div>
-      BidIntell
-    </a>
-    <a href="/app.html" class="nav-back">
-      <i data-lucide="arrow-left"></i>
-      Back to app
-    </a>
-  </nav>
-
-  <div class="card">
-
-    <!-- Header -->
-    <div class="card-header">
-      <h1>See BidIntell in 20 Minutes</h1>
-      <p>Tell us a little about your shop and we'll show you how BidIntell scores bids for your trade and your GC relationships.</p>
-    </div>
-
-    <!-- Success state (hidden until form submits) -->
-    <div class="success-state" id="successState">
-      <div class="success-icon">
-        <i data-lucide="check"></i>
-      </div>
-      <h2>You're on the list.</h2>
-      <p>Pick a time that works for you and I'll walk you through a live bid in your trade.</p>
-      <a href="#" class="btn-book" id="bookBtn" target="_blank" rel="noopener">
-        Book Your Demo
-        <i data-lucide="calendar"></i>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <div class="logo-mark">BI</div>
+        BidIntell
+      </a>
+      <a href="/" class="nav-back">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to site
       </a>
     </div>
+  </nav>
 
-    <!-- Form -->
-    <form id="demoForm" novalidate>
+  <div class="page">
+    <div class="container">
 
-      <div class="section-label" style="font-size:11px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:var(--gray-400);">Contact Info</div>
+      <div class="page-header">
+        <h1>See BidIntell<br><span>in 20 Minutes</span></h1>
+        <p>Tell us a little about your shop and we'll score a real bid in your trade — live, on the call.</p>
+      </div>
 
-      <div class="form-row" style="margin-top:14px;">
-        <div class="form-group">
-          <label for="firstName">First Name</label>
-          <input type="text" id="firstName" name="firstName" autocomplete="given-name" required>
-          <div class="field-error" id="err-firstName">First name is required.</div>
+      <div class="card">
+
+        <!-- Success state -->
+        <div class="success-state" id="successState">
+          <div class="success-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+          <h2>You're on the list.</h2>
+          <p>Pick a time that works and I'll walk you through a live bid score in your trade.</p>
+          <a href="#" class="btn-book" id="bookBtn" target="_blank" rel="noopener">
+            Book Your Demo
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </a>
         </div>
-        <div class="form-group">
-          <label for="lastName">Last Name</label>
-          <input type="text" id="lastName" name="lastName" autocomplete="family-name" required>
-          <div class="field-error" id="err-lastName">Last name is required.</div>
-        </div>
+
+        <!-- Form -->
+        <form id="demoForm" novalidate>
+
+          <div class="section-label">Contact Info</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">First Name</label>
+              <input type="text" id="firstName" name="firstName" autocomplete="given-name" required>
+              <div class="field-error" id="err-firstName">Required.</div>
+            </div>
+            <div class="form-group">
+              <label for="lastName">Last Name</label>
+              <input type="text" id="lastName" name="lastName" autocomplete="family-name" required>
+              <div class="field-error" id="err-lastName">Required.</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Work Email</label>
+            <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@yourcompany.com">
+            <div class="field-error" id="err-email">A valid email is required.</div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="phone">Phone <span class="opt">optional</span></label>
+              <input type="tel" id="phone" name="phone" autocomplete="tel" placeholder="(816) 555-0100">
+            </div>
+            <div class="form-group">
+              <label for="company">Company Name</label>
+              <input type="text" id="company" name="company" autocomplete="organization" required>
+              <div class="field-error" id="err-company">Required.</div>
+            </div>
+          </div>
+
+          <hr class="section-divider">
+          <div class="section-label">About Your Shop</div>
+
+          <div class="form-group">
+            <label for="trade">What trade do you primarily estimate for?</label>
+            <div class="select-wrap">
+              <select id="trade" name="trade" required>
+                <option value="" disabled selected>Select your trade</option>
+                <option value="Electrical">Electrical</option>
+                <option value="Mechanical & HVAC">Mechanical &amp; HVAC</option>
+                <option value="Plumbing">Plumbing</option>
+                <option value="Flooring & Finishes">Flooring &amp; Finishes</option>
+                <option value="Drywall & Framing">Drywall &amp; Framing</option>
+                <option value="Concrete">Concrete</option>
+                <option value="Roofing">Roofing</option>
+                <option value="General Trades">General Trades</option>
+                <option value="Other">Other</option>
+              </select>
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+            <div class="field-error" id="err-trade">Please select your trade.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="bidsPerMonth">How many bid invites does your team look at per month?</label>
+            <div class="select-wrap">
+              <select id="bidsPerMonth" name="bidsPerMonth" required>
+                <option value="" disabled selected>Select a range</option>
+                <option value="Fewer than 10">Fewer than 10</option>
+                <option value="10–25">10–25</option>
+                <option value="25–50">25–50</option>
+                <option value="50+">50+</option>
+              </select>
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+            <div class="field-error" id="err-bidsPerMonth">Please select a range.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="currentProcess">How do you currently decide which bids to pursue?</label>
+            <input type="text" id="currentProcess" name="currentProcess" required
+              placeholder="e.g. gut feel, spreadsheet, senior estimator's call">
+            <div class="field-error" id="err-currentProcess">Required.</div>
+          </div>
+
+          <div class="form-group">
+            <label for="frustration">
+              Biggest frustration with your current process?
+              <span class="opt">optional</span>
+            </label>
+            <textarea id="frustration" name="frustration"
+              placeholder="e.g. chasing bids we never win, takes too long to evaluate"></textarea>
+          </div>
+
+          <button type="submit" class="btn-submit" id="submitBtn">
+            <div class="spinner"></div>
+            <span class="btn-text">Request a Demo</span>
+          </button>
+
+          <div class="api-error" id="apiError">
+            Something went wrong —
+            <a href="mailto:ryan@bidintell.ai">email ryan@bidintell.ai</a>
+            and I'll get you set up.
+          </div>
+
+        </form>
       </div>
-
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@yourcompany.com">
-        <div class="field-error" id="err-email">A valid email is required.</div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="phone">Phone <span class="opt">optional</span></label>
-          <input type="tel" id="phone" name="phone" autocomplete="tel" placeholder="(816) 555-0100">
-        </div>
-        <div class="form-group">
-          <label for="company">Company Name</label>
-          <input type="text" id="company" name="company" autocomplete="organization" required>
-          <div class="field-error" id="err-company">Company name is required.</div>
-        </div>
-      </div>
-
-      <div class="section-divider">
-        <span class="section-label">About Your Shop</span>
-      </div>
-
-      <div class="form-group">
-        <label for="trade">What trade do you primarily estimate for?</label>
-        <div class="select-wrap">
-          <select id="trade" name="trade" required>
-            <option value="" disabled selected>Select your trade</option>
-            <option value="Electrical">Electrical</option>
-            <option value="Mechanical & HVAC">Mechanical &amp; HVAC</option>
-            <option value="Plumbing">Plumbing</option>
-            <option value="Flooring & Finishes">Flooring &amp; Finishes</option>
-            <option value="Drywall & Framing">Drywall &amp; Framing</option>
-            <option value="Concrete">Concrete</option>
-            <option value="Roofing">Roofing</option>
-            <option value="General Trades">General Trades</option>
-            <option value="Other">Other</option>
-          </select>
-          <i data-lucide="chevron-down"></i>
-        </div>
-        <div class="field-error" id="err-trade">Please select your trade.</div>
-      </div>
-
-      <div class="form-group">
-        <label for="bidsPerMonth">How many bid invites does your team look at in a typical month?</label>
-        <div class="select-wrap">
-          <select id="bidsPerMonth" name="bidsPerMonth" required>
-            <option value="" disabled selected>Select a range</option>
-            <option value="Fewer than 10">Fewer than 10</option>
-            <option value="10–25">10–25</option>
-            <option value="25–50">25–50</option>
-            <option value="50+">50+</option>
-          </select>
-          <i data-lucide="chevron-down"></i>
-        </div>
-        <div class="field-error" id="err-bidsPerMonth">Please select a range.</div>
-      </div>
-
-      <div class="form-group">
-        <label for="currentProcess">How do you currently decide which bids are worth pursuing?</label>
-        <input type="text" id="currentProcess" name="currentProcess" required
-          placeholder="e.g. gut feel, spreadsheet, senior estimator's call">
-        <div class="field-error" id="err-currentProcess">This field is required.</div>
-      </div>
-
-      <div class="form-group">
-        <label for="frustration">
-          What's your biggest frustration with your current bidding process?
-          <span class="opt">optional</span>
-        </label>
-        <textarea id="frustration" name="frustration"
-          placeholder="e.g. chasing bids we don't win, takes too long to evaluate"></textarea>
-      </div>
-
-      <button type="submit" class="btn-submit" id="submitBtn">
-        <div class="spinner"></div>
-        <span class="btn-text">Request a Demo</span>
-      </button>
-
-      <div class="api-error" id="apiError">
-        Something went wrong on our end —
-        <a href="mailto:ryan@bidintell.ai">email me directly at ryan@bidintell.ai</a>
-        and I'll get you set up.
-      </div>
-
-    </form>
+    </div>
   </div>
 
   <script>
-    // ── UPDATE THIS when Pipedrive Scheduler link is ready ──────────────────
     const PIPEDRIVE_SCHEDULER_URL = 'https://facilitysystemsinc.pipedrive.com/scheduler/bEBqoMhZ/bidintell-demo';
-    // ────────────────────────────────────────────────────────────────────────
 
-    lucide.createIcons();
-
-    // Wire up scheduler button
     document.getElementById('bookBtn').href = PIPEDRIVE_SCHEDULER_URL;
 
-    // ── Validation helpers ────────────────────────────────────────────────
     const REQUIRED_FIELDS = ['firstName', 'lastName', 'email', 'company', 'trade', 'bidsPerMonth', 'currentProcess'];
 
-    function isValidEmail(val) {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
-    }
+    function isValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); }
 
     function validateField(id) {
       const el = document.getElementById(id);
       const errEl = document.getElementById('err-' + id);
       const val = el.value.trim();
-
-      let valid = true;
-      if (!val || val === '') valid = false;
+      let valid = !!val;
       if (id === 'email' && val && !isValidEmail(val)) valid = false;
-
       el.classList.toggle('invalid', !valid);
       if (errEl) errEl.classList.toggle('show', !valid);
       return valid;
     }
 
-    function validateAll() {
-      return REQUIRED_FIELDS.map(validateField).every(Boolean);
-    }
+    function validateAll() { return REQUIRED_FIELDS.map(validateField).every(Boolean); }
 
-    // Clear error on input
     REQUIRED_FIELDS.forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -526,10 +536,8 @@
       });
     });
 
-    // ── Form submission ───────────────────────────────────────────────────
     document.getElementById('demoForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-
       if (!validateAll()) return;
 
       const btn = document.getElementById('submitBtn');
@@ -540,15 +548,15 @@
       apiError.classList.remove('show');
 
       const payload = {
-        firstName: document.getElementById('firstName').value.trim(),
-        lastName:  document.getElementById('lastName').value.trim(),
-        email:     document.getElementById('email').value.trim(),
-        phone:     document.getElementById('phone').value.trim(),
-        company:   document.getElementById('company').value.trim(),
-        trade:         document.getElementById('trade').value,
-        bidsPerMonth:  document.getElementById('bidsPerMonth').value,
+        firstName:      document.getElementById('firstName').value.trim(),
+        lastName:       document.getElementById('lastName').value.trim(),
+        email:          document.getElementById('email').value.trim(),
+        phone:          document.getElementById('phone').value.trim(),
+        company:        document.getElementById('company').value.trim(),
+        trade:          document.getElementById('trade').value,
+        bidsPerMonth:   document.getElementById('bidsPerMonth').value,
         currentProcess: document.getElementById('currentProcess').value.trim(),
-        frustration:   document.getElementById('frustration').value.trim(),
+        frustration:    document.getElementById('frustration').value.trim(),
       };
 
       try {
@@ -557,20 +565,11 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-
         const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Unknown error');
 
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || 'Unknown error');
-        }
-
-        // Success — hide form, show confirmation
         document.getElementById('demoForm').style.display = 'none';
-        const success = document.getElementById('successState');
-        success.classList.add('show');
-        // Re-run lucide in case icons weren't rendered in hidden state
-        lucide.createIcons();
-
+        document.getElementById('successState').classList.add('show');
       } catch (err) {
         console.error('Demo form error:', err);
         apiError.classList.add('show');
