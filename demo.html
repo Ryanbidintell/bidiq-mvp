@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule a Demo — BidIntell</title>
+  <meta name="description" content="See BidIntell score a real bid in your trade in 20 minutes.">
+  <link rel="icon" href="/favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* ── Scheduler URL — update this when Pipedrive Scheduler link is ready ── */
+    /* See PIPEDRIVE_SCHEDULER_URL constant in the script block below         */
+
+    :root {
+      --blue: #3b82f6;
+      --blue-dark: #2563eb;
+      --blue-dim: rgba(59,130,246,0.08);
+      --orange: #E87722;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --red: #ef4444;
+      --red-bg: #fef2f2;
+      --red-border: #fecaca;
+      --green: #22c55e;
+      --green-bg: #f0fdf4;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      min-height: 100vh;
+      padding: 0 16px 80px;
+    }
+
+    /* ── Top nav ── */
+    .top-nav {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 20px 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--gray-900);
+      font-weight: 800;
+      font-size: 17px;
+    }
+    .logo-icon {
+      width: 30px;
+      height: 30px;
+      background: var(--blue);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .nav-back {
+      font-size: 13px;
+      color: var(--gray-500);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: color 0.15s;
+    }
+    .nav-back:hover { color: var(--gray-700); }
+    .nav-back i { width: 14px; height: 14px; }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 44px 44px 40px;
+    }
+
+    /* ── Header ── */
+    .card-header {
+      margin-bottom: 32px;
+    }
+    .card-header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1.2;
+      color: var(--gray-900);
+      margin-bottom: 10px;
+    }
+    .card-header p {
+      font-size: 15px;
+      color: var(--gray-600);
+      line-height: 1.65;
+    }
+
+    /* ── Section divider ── */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 28px 0 22px;
+    }
+    .section-divider::before,
+    .section-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gray-200);
+    }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      white-space: nowrap;
+    }
+
+    /* ── Form layout ── */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group:last-of-type { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+    label .opt {
+      font-weight: 400;
+      color: var(--gray-400);
+      font-size: 12px;
+      margin-left: 4px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--gray-900);
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.5;
+    }
+    input::placeholder,
+    textarea::placeholder { color: var(--gray-400); }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+
+    input.invalid,
+    select.invalid,
+    textarea.invalid {
+      border-color: var(--red);
+    }
+    input.invalid:focus,
+    select.invalid:focus,
+    textarea.invalid:focus {
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+    }
+
+    /* Select arrow */
+    .select-wrap {
+      position: relative;
+    }
+    .select-wrap i {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+      pointer-events: none;
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Inline field error */
+    .field-error {
+      font-size: 12px;
+      color: var(--red);
+      margin-top: 5px;
+      display: none;
+    }
+    .field-error.show { display: block; }
+
+    /* ── Submit button ── */
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 24px;
+    }
+    .btn-submit:hover:not(:disabled) { background: var(--blue-dark); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .btn-submit.loading .spinner { display: block; }
+    .btn-submit.loading .btn-text { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── API error banner ── */
+    .api-error {
+      background: var(--red-bg);
+      border: 1px solid var(--red-border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #b91c1c;
+      margin-top: 16px;
+      display: none;
+      line-height: 1.5;
+    }
+    .api-error.show { display: block; }
+    .api-error a { color: #b91c1c; font-weight: 600; }
+
+    /* ── Success state ── */
+    .success-state {
+      display: none;
+      text-align: center;
+      padding: 12px 0 4px;
+    }
+    .success-state.show { display: block; }
+
+    .success-icon {
+      width: 60px;
+      height: 60px;
+      background: var(--green-bg);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .success-icon i { color: var(--green); width: 28px; height: 28px; }
+
+    .success-state h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--gray-900);
+      margin-bottom: 10px;
+    }
+    .success-state p {
+      font-size: 15px;
+      color: var(--gray-600);
+      line-height: 1.65;
+      margin-bottom: 28px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .btn-book {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      background: var(--orange);
+      color: #fff;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .btn-book:hover { opacity: 0.9; }
+    .btn-book i { width: 18px; height: 18px; }
+
+    /* ── Mobile ── */
+    @media (max-width: 500px) {
+      .card { padding: 28px 20px 28px; }
+      .form-row { grid-template-columns: 1fr; gap: 0; }
+      .card-header h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a href="/app.html" class="nav-logo">
+      <div class="logo-icon">BI</div>
+      BidIntell
+    </a>
+    <a href="/app.html" class="nav-back">
+      <i data-lucide="arrow-left"></i>
+      Back to app
+    </a>
+  </nav>
+
+  <div class="card">
+
+    <!-- Header -->
+    <div class="card-header">
+      <h1>See BidIntell in 20 Minutes</h1>
+      <p>Tell us a little about your shop and we'll show you how BidIntell scores bids for your trade and your GC relationships.</p>
+    </div>
+
+    <!-- Success state (hidden until form submits) -->
+    <div class="success-state" id="successState">
+      <div class="success-icon">
+        <i data-lucide="check"></i>
+      </div>
+      <h2>You're on the list.</h2>
+      <p>Pick a time that works for you and I'll walk you through a live bid in your trade.</p>
+      <a href="#" class="btn-book" id="bookBtn" target="_blank" rel="noopener">
+        Book Your Demo
+        <i data-lucide="calendar"></i>
+      </a>
+    </div>
+
+    <!-- Form -->
+    <form id="demoForm" novalidate>
+
+      <div class="section-label" style="font-size:11px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:var(--gray-400);">Contact Info</div>
+
+      <div class="form-row" style="margin-top:14px;">
+        <div class="form-group">
+          <label for="firstName">First Name</label>
+          <input type="text" id="firstName" name="firstName" autocomplete="given-name" required>
+          <div class="field-error" id="err-firstName">First name is required.</div>
+        </div>
+        <div class="form-group">
+          <label for="lastName">Last Name</label>
+          <input type="text" id="lastName" name="lastName" autocomplete="family-name" required>
+          <div class="field-error" id="err-lastName">Last name is required.</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@yourcompany.com">
+        <div class="field-error" id="err-email">A valid email is required.</div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="phone">Phone <span class="opt">optional</span></label>
+          <input type="tel" id="phone" name="phone" autocomplete="tel" placeholder="(816) 555-0100">
+        </div>
+        <div class="form-group">
+          <label for="company">Company Name</label>
+          <input type="text" id="company" name="company" autocomplete="organization" required>
+          <div class="field-error" id="err-company">Company name is required.</div>
+        </div>
+      </div>
+
+      <div class="section-divider">
+        <span class="section-label">About Your Shop</span>
+      </div>
+
+      <div class="form-group">
+        <label for="trade">What trade do you primarily estimate for?</label>
+        <div class="select-wrap">
+          <select id="trade" name="trade" required>
+            <option value="" disabled selected>Select your trade</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Mechanical & HVAC">Mechanical &amp; HVAC</option>
+            <option value="Plumbing">Plumbing</option>
+            <option value="Flooring & Finishes">Flooring &amp; Finishes</option>
+            <option value="Drywall & Framing">Drywall &amp; Framing</option>
+            <option value="Concrete">Concrete</option>
+            <option value="Roofing">Roofing</option>
+            <option value="General Trades">General Trades</option>
+            <option value="Other">Other</option>
+          </select>
+          <i data-lucide="chevron-down"></i>
+        </div>
+        <div class="field-error" id="err-trade">Please select your trade.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="bidsPerMonth">How many bid invites does your team look at in a typical month?</label>
+        <div class="select-wrap">
+          <select id="bidsPerMonth" name="bidsPerMonth" required>
+            <option value="" disabled selected>Select a range</option>
+            <option value="Fewer than 10">Fewer than 10</option>
+            <option value="10–25">10–25</option>
+            <option value="25–50">25–50</option>
+            <option value="50+">50+</option>
+          </select>
+          <i data-lucide="chevron-down"></i>
+        </div>
+        <div class="field-error" id="err-bidsPerMonth">Please select a range.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="currentProcess">How do you currently decide which bids are worth pursuing?</label>
+        <input type="text" id="currentProcess" name="currentProcess" required
+          placeholder="e.g. gut feel, spreadsheet, senior estimator's call">
+        <div class="field-error" id="err-currentProcess">This field is required.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="frustration">
+          What's your biggest frustration with your current bidding process?
+          <span class="opt">optional</span>
+        </label>
+        <textarea id="frustration" name="frustration"
+          placeholder="e.g. chasing bids we don't win, takes too long to evaluate"></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">
+        <div class="spinner"></div>
+        <span class="btn-text">Request a Demo</span>
+      </button>
+
+      <div class="api-error" id="apiError">
+        Something went wrong on our end —
+        <a href="mailto:ryan@bidintell.ai">email me directly at ryan@bidintell.ai</a>
+        and I'll get you set up.
+      </div>
+
+    </form>
+  </div>
+
+  <script>
+    // ── UPDATE THIS when Pipedrive Scheduler link is ready ──────────────────
+    const PIPEDRIVE_SCHEDULER_URL = 'https://calendly.com/bidintell'; // placeholder
+    // ────────────────────────────────────────────────────────────────────────
+
+    lucide.createIcons();
+
+    // Wire up scheduler button
+    document.getElementById('bookBtn').href = PIPEDRIVE_SCHEDULER_URL;
+
+    // ── Validation helpers ────────────────────────────────────────────────
+    const REQUIRED_FIELDS = ['firstName', 'lastName', 'email', 'company', 'trade', 'bidsPerMonth', 'currentProcess'];
+
+    function isValidEmail(val) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
+    }
+
+    function validateField(id) {
+      const el = document.getElementById(id);
+      const errEl = document.getElementById('err-' + id);
+      const val = el.value.trim();
+
+      let valid = true;
+      if (!val || val === '') valid = false;
+      if (id === 'email' && val && !isValidEmail(val)) valid = false;
+
+      el.classList.toggle('invalid', !valid);
+      if (errEl) errEl.classList.toggle('show', !valid);
+      return valid;
+    }
+
+    function validateAll() {
+      return REQUIRED_FIELDS.map(validateField).every(Boolean);
+    }
+
+    // Clear error on input
+    REQUIRED_FIELDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', () => {
+        el.classList.remove('invalid');
+        const errEl = document.getElementById('err-' + id);
+        if (errEl) errEl.classList.remove('show');
+      });
+    });
+
+    // ── Form submission ───────────────────────────────────────────────────
+    document.getElementById('demoForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!validateAll()) return;
+
+      const btn = document.getElementById('submitBtn');
+      const apiError = document.getElementById('apiError');
+
+      btn.disabled = true;
+      btn.classList.add('loading');
+      apiError.classList.remove('show');
+
+      const payload = {
+        firstName: document.getElementById('firstName').value.trim(),
+        lastName:  document.getElementById('lastName').value.trim(),
+        email:     document.getElementById('email').value.trim(),
+        phone:     document.getElementById('phone').value.trim(),
+        company:   document.getElementById('company').value.trim(),
+        trade:         document.getElementById('trade').value,
+        bidsPerMonth:  document.getElementById('bidsPerMonth').value,
+        currentProcess: document.getElementById('currentProcess').value.trim(),
+        frustration:   document.getElementById('frustration').value.trim(),
+      };
+
+      try {
+        const res = await fetch('/.netlify/functions/pipedrive-lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Unknown error');
+        }
+
+        // Success — hide form, show confirmation
+        document.getElementById('demoForm').style.display = 'none';
+        const success = document.getElementById('successState');
+        success.classList.add('show');
+        // Re-run lucide in case icons weren't rendered in hidden state
+        lucide.createIcons();
+
+      } catch (err) {
+        console.error('Demo form error:', err);
+        apiError.classList.add('show');
+        btn.disabled = false;
+        btn.classList.remove('loading');
+      }
+    });
+  </script>
+</body>
+</html>
