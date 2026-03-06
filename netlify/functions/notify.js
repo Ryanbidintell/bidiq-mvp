@@ -210,58 +210,101 @@ exports.handler = async function(event, context) {
             await sendEmail({
                 to: userEmail,
                 subject: `Your BidIntell ROI breakdown`,
-                htmlBody: `
-                    <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #1a1a2e;">
-                        <div style="background: #0B0F14; padding: 24px; border-radius: 8px 8px 0 0; border-bottom: 2px solid #F26522;">
-                            <div style="font-weight: 700; font-size: 20px; color: #F8FAFC;">BidIntell</div>
-                        </div>
-                        <div style="padding: 32px 24px; background: #141A23; border-radius: 0 0 8px 8px;">
-                            <h2 style="color: #F8FAFC; margin-bottom: 8px;">Your bid economics snapshot</h2>
-                            <p style="color: #94A3B8; margin-bottom: 24px; font-size: 14px;">Based on the numbers you entered in the calculator.</p>
+                htmlBody: `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f4f5;padding:32px 0;">
+  <tr><td align="center">
+    <table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;">
 
-                            <div style="background: #1C2533; border-radius: 6px; padding: 20px; margin-bottom: 24px;">
-                                <div style="font-size: 13px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Potential additional margin / year</div>
-                                <div style="font-size: 2.5rem; font-weight: 700; color: #22C55E; font-family: monospace; line-height: 1;">${fmt(addlMargin)}</div>
-                            </div>
+      <!-- Header -->
+      <tr>
+        <td style="background:#0B0F14;padding:20px 28px;border-radius:8px 8px 0 0;border-bottom:3px solid #F26522;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td>
+              <table cellpadding="0" cellspacing="0" border="0"><tr>
+                <td style="background:#F26522;border-radius:5px;width:28px;height:28px;text-align:center;vertical-align:middle;font-family:monospace;font-weight:700;font-size:11px;color:#ffffff;letter-spacing:-1px;">BI</td>
+                <td style="padding-left:10px;font-weight:700;font-size:18px;color:#F8FAFC;">BidIntell</td>
+              </tr></table>
+            </td>
+          </tr></table>
+        </td>
+      </tr>
 
-                            <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
-                                <tr style="border-bottom:1px solid #384254;">
-                                    <td style="padding:10px 0; color:#94A3B8;">Bids reviewed / year</td>
-                                    <td style="padding:10px 0; color:#F8FAFC; text-align:right; font-family:monospace;">${bids}</td>
-                                </tr>
-                                <tr style="border-bottom:1px solid #384254;">
-                                    <td style="padding:10px 0; color:#94A3B8;">Hours per bid evaluation</td>
-                                    <td style="padding:10px 0; color:#F8FAFC; text-align:right; font-family:monospace;">${hours} hrs</td>
-                                </tr>
-                                <tr style="border-bottom:1px solid #384254;">
-                                    <td style="padding:10px 0; color:#94A3B8;">Current win rate</td>
-                                    <td style="padding:10px 0; color:#F8FAFC; text-align:right; font-family:monospace;">${winRate}%</td>
-                                </tr>
-                                <tr style="border-bottom:1px solid #384254;">
-                                    <td style="padding:10px 0; color:#94A3B8;">Average project value</td>
-                                    <td style="padding:10px 0; color:#F8FAFC; text-align:right; font-family:monospace;">${fmt(avgValue)}</td>
-                                </tr>
-                                <tr style="border-bottom:1px solid #384254;">
-                                    <td style="padding:10px 0; color:#94A3B8;">Net margin</td>
-                                    <td style="padding:10px 0; color:#F8FAFC; text-align:right; font-family:monospace;">${margin}%</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding:10px 0; color:#94A3B8;">Estimating hours saved / year</td>
-                                    <td style="padding:10px 0; color:#22C55E; text-align:right; font-family:monospace;">−${hoursSaved} hrs</td>
-                                </tr>
-                            </table>
+      <!-- Hero stat -->
+      <tr>
+        <td style="background:#141A23;padding:28px 28px 0;">
+          <p style="margin:0 0 6px;font-size:22px;font-weight:700;color:#F8FAFC;">Your bid economics snapshot</p>
+          <p style="margin:0 0 24px;font-size:14px;color:#94A3B8;">Based on the numbers you entered in the calculator.</p>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="background:#1C2533;border-radius:6px;padding:20px;">
+                <p style="margin:0 0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94A3B8;">Potential additional margin / year</p>
+                <p style="margin:0;font-size:40px;font-weight:700;color:#22C55E;font-family:monospace;line-height:1;">${fmt(addlMargin)}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
 
-                            <div style="text-align:center; margin-bottom:24px;">
-                                <a href="https://bidintell.ai/#apply" style="background:#F26522;color:white;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:700;display:inline-block;">Get Started Free →</a>
-                            </div>
+      <!-- Stats table -->
+      <tr>
+        <td style="background:#141A23;padding:20px 28px;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px;">
+            <tr>
+              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#94A3B8;">Bids reviewed / year</td>
+              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#F8FAFC;text-align:right;font-family:monospace;font-weight:600;">${bids}</td>
+            </tr>
+            <tr>
+              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#94A3B8;">Hours per bid evaluation</td>
+              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#F8FAFC;text-align:right;font-family:monospace;font-weight:600;">${hours} hrs</td>
+            </tr>
+            <tr>
+              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#94A3B8;">Current win rate</td>
+              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#F8FAFC;text-align:right;font-family:monospace;font-weight:600;">${winRate}%</td>
+            </tr>
+            <tr>
+              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#94A3B8;">Average project value</td>
+              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#F8FAFC;text-align:right;font-family:monospace;font-weight:600;">${fmt(avgValue)}</td>
+            </tr>
+            <tr>
+              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#94A3B8;">Net margin</td>
+              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#F8FAFC;text-align:right;font-family:monospace;font-weight:600;">${margin}%</td>
+            </tr>
+            <tr>
+              <td style="padding:11px 0;color:#94A3B8;">Estimating hours saved / year</td>
+              <td style="padding:11px 0;color:#22C55E;text-align:right;font-family:monospace;font-weight:600;">−${hoursSaved} hrs</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
 
-                            <p style="color:#94A3B8; font-size:13px; line-height:1.6;">These numbers are based on industry averages and your inputs. Actual results will vary — and get more accurate the more you use BidIntell to track real outcomes.</p>
+      <!-- CTA -->
+      <tr>
+        <td style="background:#141A23;padding:0 28px 28px;text-align:center;">
+          <a href="https://bidintell.ai/#apply" style="display:inline-block;background:#F26522;color:#ffffff;padding:13px 32px;border-radius:6px;text-decoration:none;font-weight:700;font-size:15px;">Get Started Free →</a>
+        </td>
+      </tr>
 
-                            <p style="color:#5A6A7E; margin-top:24px; font-size:13px;">— Ryan<br><em>Founder, BidIntell</em></p>
-                        </div>
-                        <p style="font-size:11px; color:#5A6A7E; text-align:center; margin-top:16px;">BidIntell · <a href="https://bidintell.ai" style="color:#5A6A7E;">bidintell.ai</a> · <a href="https://bidintell.ai/legal" style="color:#5A6A7E;">Privacy &amp; Terms</a></p>
-                    </div>
-                `
+      <!-- Footer text -->
+      <tr>
+        <td style="background:#0B0F14;padding:20px 28px;border-radius:0 0 8px 8px;">
+          <p style="margin:0 0 16px;font-size:13px;color:#5A6A7E;line-height:1.6;">These numbers are based on industry averages and your inputs. Actual results will vary — and get more accurate the more you use BidIntell to track real outcomes.</p>
+          <p style="margin:0;font-size:13px;color:#5A6A7E;">— Ryan<br><em>Founder, BidIntell</em></p>
+        </td>
+      </tr>
+
+      <!-- Legal -->
+      <tr>
+        <td style="padding:16px;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#94A3B8;">BidIntell &middot; <a href="https://bidintell.ai" style="color:#94A3B8;text-decoration:none;">bidintell.ai</a> &middot; <a href="https://bidintell.ai/legal" style="color:#94A3B8;text-decoration:none;">Privacy &amp; Terms</a></p>
+        </td>
+      </tr>
+
+    </table>
+  </td></tr>
+</table>
+</body></html>`
             });
 
             // Internal notification
