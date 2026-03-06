@@ -1,6 +1,6 @@
 # 🤖 Claude Code Instructions for BidIQ Project
 
-**Last Updated:** March 5, 2026
+**Last Updated:** March 6, 2026
 
 This file contains mandatory rules Claude Code must follow when working on this project.
 
@@ -114,8 +114,9 @@ git commit -m "Before [change description]"
 
 ### Important Files:
 - `app.html` - Main application (~15K lines, handle with care)
-- `auth.html` - Authentication / magic link flow
-- `admin.html` - Admin dashboard (metrics, API costs, beta feedback)
+- `auth.html` - Authentication / magic link flow (logo links back to bidintell.ai)
+- `admin.html` - Founder dashboard (metrics, ROI leads, current users, phase gates, email tool)
+- `demo.html` - Schedule a Demo intake form → Pipedrive Lead via pipedrive-lead.js
 - `index.html` - Landing page (separate from app.html)
 - `BidIntell_Product_Bible_v1_9.md` - Product roadmap and requirements (v1.9 is current)
 - `DATA_SAFETY_PROTOCOL.md` - Data handling rules
@@ -132,11 +133,12 @@ git commit -m "Before [change description]"
 
 ### Backend (netlify/functions/):
 - `analyze.js` - AI API calls (Claude/OpenAI), tracks usage via api_usage table
-- `notify.js` - Email notifications via Postmark
+- `notify.js` - Email notifications via Postmark; also logs `roi_lead` events to admin_events
 - `stripe-webhook.js` - Stripe subscription webhooks (writes to user_revenue)
 - `stripe-create-checkout.js` - Creates Stripe checkout session
 - `stripe-create-portal.js` - Opens Stripe billing portal
 - `daily-snapshot.js` - Scheduled daily metrics aggregation → admin_metrics_snapshots
+- `pipedrive-lead.js` - Demo request form handler → creates Pipedrive Person + Lead + Note
 
 ### Documentation:
 - `STRIPE_WEBHOOK_SETUP.md` - Complete Stripe webhook setup guide
@@ -439,6 +441,35 @@ const additionalRevenue = additionalWins * avgProjectSize;
 **Read:** Use `.single()` not `.maybeSingle()` (after initial creation is guaranteed).
 
 **Lesson:** Check SCHEMA.md before writing any query — old docs said `keywords` (multi-row), actual table is `user_keywords` (single-row arrays).
+
+### Demo Form + Pipedrive Integration (Mar 2026)
+
+**Files:** `demo.html` (intake form) + `netlify/functions/pipedrive-lead.js` (API handler)
+**Flow:** Form submits → pipedrive-lead.js: search person by email → create if new → create Lead → add Note
+**Scheduler:** Calendly (replacing Pipedrive Scheduler — Pipedrive doesn't support URL pre-fill)
+**Pending:** Calendly link not yet wired; success state shows "I'll reach out to schedule" until link is ready
+**Env var required:** `PIPEDRIVE_API_TOKEN` in Netlify
+
+### HTML Email Template Pattern (Mar 2026)
+
+**Problem:** Dark-themed emails break in Outlook — text color `#F8FAFC` (near-white) on white background = invisible values
+**Solution:** Always use table-based HTML with explicit `background-color` on every dark cell. Never rely on inherited backgrounds in email clients.
+**Rule:** Test every email in Outlook before shipping. Dark backgrounds must be set on individual `<td>` elements, not parent `<div>` containers.
+**File:** `netlify/functions/notify.js` — `roi_breakdown` email type
+
+### BidIntell Brand Colors (Mar 2026)
+
+**Landing page / demo.html:** DM Sans font, `--ink: #0B0F14` background, `--accent: #F26522` orange
+**app.html:** Plus Jakarta Sans, indigo `#4F46E5` primary, same orange accent
+**Do NOT use:** `#3b82f6` blue as primary (old/wrong), Tailwind, React, emojis in UI
+
+### Admin Dashboard — ROI Leads + Users (Mar 2026)
+
+**ROI leads** stored in `admin_events` with `event_type: 'roi_lead'`, `user_id: null`, data in `event_data` jsonb
+**Written by:** `notify.js` fire-and-forget via Supabase REST API (no SDK — uses native fetch with service role key)
+**Read by:** `admin.html` — already loads all `admin_events`; `renderROILeads(events)` filters by type
+**Current users** rendered by `renderCurrentUsers(users, projects)` — joins project count per user
+**Known issue:** admin.html uses anon key → RLS may limit user_settings to only admin's own row. If users list shows only 1 row, need to add admin-bypass RLS policy.
 
 ---
 
