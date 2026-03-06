@@ -235,7 +235,48 @@
                 <div class="stat-grid" id="revenue-stats"></div>
             </div>
 
-            <!-- SECTION D: Phase Gate Checklist -->
+            <!-- SECTION D: ROI Calculator Leads -->
+            <div class="section">
+                <h2 class="section-title">🧮 ROI Calculator Leads</h2>
+                <p style="color:#666;font-size:13px;margin-bottom:16px;">Anonymous visitors who entered their numbers and requested a breakdown email.</p>
+                <table id="roi-leads-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Email</th>
+                            <th>Bids/yr</th>
+                            <th>Win Rate</th>
+                            <th>Avg Value</th>
+                            <th>Margin</th>
+                            <th>Potential Margin/yr</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- SECTION E: Current Users -->
+            <div class="section">
+                <h2 class="section-title">👤 Current Users</h2>
+                <p style="color:#666;font-size:13px;margin-bottom:16px;">All registered accounts.</p>
+                <table id="users-table">
+                    <thead>
+                        <tr>
+                            <th>Joined</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Company</th>
+                            <th>Trade(s)</th>
+                            <th>Tier</th>
+                            <th>Bids</th>
+                            <th>Onboarded</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- SECTION F: Phase Gate Checklist -->
             <div class="section" id="email-tool-section">
                 <h2 class="section-title">📧 Beta-to-Paid Transition Emails</h2>
                 <p style="color:#666;margin-bottom:16px;font-size:14px;">Send the billing start warning email to users before April 1. User data loads from <code>user_settings</code>. Click "Preview" to see who will receive it, then "Send All" to fire.</p>
@@ -329,6 +370,8 @@
                 renderChurnAnalysis(users, events, snapshots);
                 renderOverrideStats(projects, events);
                 renderRevenueDetail(users, metrics);
+                renderROILeads(events);
+                renderCurrentUsers(users, projects);
                 renderPhaseGates(users, projects, events);
 
                 document.getElementById('loading').style.display = 'none';
@@ -671,6 +714,68 @@
 
             renderGates(phase0Gates, 'phase0-gates');
             renderGates(phase1Gates, 'phase1-gates');
+        }
+
+        function renderROILeads(events) {
+            const leads = events
+                .filter(e => e.event_type === 'roi_lead')
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            const fmt = (n) => {
+                if (!n && n !== 0) return '—';
+                n = parseFloat(n);
+                if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
+                if (n >= 10000)   return '$' + Math.round(n / 1000) + 'K';
+                return '$' + Math.round(n).toLocaleString();
+            };
+
+            if (!leads.length) {
+                document.querySelector('#roi-leads-table tbody').innerHTML = '<tr><td colspan="7" style="color:#999;font-style:italic;">No leads yet.</td></tr>';
+                return;
+            }
+
+            document.querySelector('#roi-leads-table tbody').innerHTML = leads.map(e => {
+                const d = e.event_data || {};
+                const date = new Date(e.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                return `<tr>
+                    <td style="white-space:nowrap;">${date}</td>
+                    <td>${d.email || '—'}</td>
+                    <td>${d.bids || '—'}</td>
+                    <td>${d.winRate != null ? d.winRate + '%' : '—'}</td>
+                    <td>${fmt(d.avgValue)}</td>
+                    <td>${d.margin != null ? d.margin + '%' : '—'}</td>
+                    <td style="color:#27AE60;font-weight:600;">${fmt(d.addlMargin)}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function renderCurrentUsers(users, projects) {
+            const sorted = [...users].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+            if (!sorted.length) {
+                document.querySelector('#users-table tbody').innerHTML = '<tr><td colspan="8" style="color:#999;font-style:italic;">No users.</td></tr>';
+                return;
+            }
+
+            document.querySelector('#users-table tbody').innerHTML = sorted.map(u => {
+                const joined = u.created_at
+                    ? new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    : '—';
+                const bidCount = projects.filter(p => p.user_id === u.user_id).length;
+                const tier = u.subscription_tier || 'beta';
+                const tierColor = tier === 'professional' ? '#4F46E5' : tier === 'starter' ? '#2563eb' : '#666';
+                const trades = Array.isArray(u.trades) && u.trades.length ? u.trades.join(', ') : '—';
+                return `<tr>
+                    <td style="white-space:nowrap;">${joined}</td>
+                    <td>${u.user_name || '—'}</td>
+                    <td>${u.user_email || '—'}</td>
+                    <td>${u.company_name || '—'}</td>
+                    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${trades}</td>
+                    <td style="color:${tierColor};font-weight:600;text-transform:capitalize;">${tier}</td>
+                    <td style="text-align:right;">${bidCount}</td>
+                    <td style="text-align:center;">${u.onboarding_completed ? '✅' : '—'}</td>
+                </tr>`;
+            }).join('');
         }
 
         // ── Beta-to-paid email tool ──────────────────────────────────────────

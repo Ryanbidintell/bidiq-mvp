@@ -314,6 +314,26 @@ exports.handler = async function(event, context) {
                 htmlBody: `<p>New ROI calculator lead captured.</p><p><strong>Email:</strong> ${userEmail}</p><p><strong>Numbers:</strong> ${bids} bids/yr, ${hours} hrs/bid, ${winRate}% win rate, ${fmt(avgValue)} avg value, ${margin}% margin</p><p><strong>Projected additional margin:</strong> ${fmt(addlMargin)}/yr</p>`
             });
 
+            // Log to admin_events for founder dashboard (fire-and-forget)
+            const sbUrl = process.env.SUPABASE_URL || 'https://szifhqmrddmdkgschkkw.supabase.co';
+            const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+            if (sbKey) {
+                fetch(`${sbUrl}/rest/v1/admin_events`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': sbKey,
+                        'Authorization': `Bearer ${sbKey}`,
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({
+                        event_type: 'roi_lead',
+                        user_id: null,
+                        event_data: { email: userEmail, bids, hours, winRate, avgValue, margin, hoursSaved, addlMargin }
+                    })
+                }).catch(err => console.warn('roi_lead event log failed:', err));
+            }
+
             return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
         }
 
