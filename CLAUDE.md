@@ -1,6 +1,6 @@
 # 🤖 Claude Code Instructions for BidIQ Project
 
-**Last Updated:** February 11, 2026
+**Last Updated:** March 5, 2026
 
 This file contains mandatory rules Claude Code must follow when working on this project.
 
@@ -113,27 +113,34 @@ git commit -m "Before [change description]"
 ## 📁 PROJECT STRUCTURE
 
 ### Important Files:
-- `app.html` - Main application (11K lines, handle with care)
-- `BidIntell_Product_Bible_v1_8.md` - Product roadmap and requirements
+- `app.html` - Main application (~15K lines, handle with care)
+- `auth.html` - Authentication / magic link flow
+- `admin.html` - Admin dashboard (metrics, API costs, beta feedback)
+- `index.html` - Landing page (separate from app.html)
+- `BidIntell_Product_Bible_v1_9.md` - Product roadmap and requirements (v1.9 is current)
 - `DATA_SAFETY_PROTOCOL.md` - Data handling rules
 - `KNOWN_BUGS.md` - Active bug list
-- `MEMORY.md` - Session memory (auto-loads)
+- `SCHEMA.md` - Database schema (10 tables, keep current)
+- `contract_risk_detection_guide.md` - Contract risk clause patterns and prompts
 - `restore-test-data.sql` - Test data restore script
+- Memory is at `C:\Users\RyanElder\.claude\projects\C--Users-RyanElder\memory\MEMORY.md` (auto-loads)
 
 ### Don't Touch:
 - `OLD/` folder - Archive only, don't modify
 - PDF files in `report printouts to review/` - Reference only
 - `.git/` - Git internals
 
-### Backend:
-- `netlify/functions/analyze.js` - AI API calls (Claude/OpenAI)
-- `netlify/functions/notify.js` - Email notifications
-- `netlify/functions/stripe-webhook.js` - Stripe subscription webhooks (auto-syncs revenue)
+### Backend (netlify/functions/):
+- `analyze.js` - AI API calls (Claude/OpenAI), tracks usage via api_usage table
+- `notify.js` - Email notifications via Postmark
+- `stripe-webhook.js` - Stripe subscription webhooks (writes to user_revenue)
+- `stripe-create-checkout.js` - Creates Stripe checkout session
+- `stripe-create-portal.js` - Opens Stripe billing portal
+- `daily-snapshot.js` - Scheduled daily metrics aggregation → admin_metrics_snapshots
 
 ### Documentation:
 - `STRIPE_WEBHOOK_SETUP.md` - Complete Stripe webhook setup guide
 - `FRONTEND_DESIGN.md` - Design system tokens and brand guidelines
-- `index.html` - Landing page (separate from app.html)
 
 ---
 
@@ -264,7 +271,7 @@ git commit -m "Before [change description]"
 **Problem:** Back button was always returning to dashboard instead of previous tab
 **Root Cause:** Checking `style.display !== 'none'` when tabs use `classList.contains('active')`
 **Solution:** Always check for CSS classes, not inline styles, when detecting active elements
-**Code Location:** app.html:8379-8387 (viewReport function)
+**Code Location:** `viewReport()` function
 
 ```javascript
 // ❌ WRONG - checks inline styles
@@ -280,7 +287,7 @@ if (tabElement && tabElement.classList.contains('active')) {
 
 **Problem:** `new Date(invalidString)` doesn't throw errors, returns Invalid Date object
 **Solution:** Use `isNaN(date.getTime())` to validate dates after construction
-**Code Location:** app.html:8232-8237 (renderProjectsTable function)
+**Code Location:** `renderProjectsTable()` function
 
 ```javascript
 // ❌ WRONG - try/catch doesn't work for invalid dates
@@ -302,23 +309,13 @@ return d.toLocaleDateString();
 ### Multi-Client Type Architecture (Feb 11, 2026)
 
 **Change:** Expanded from GC-only to 7 client types:
-- 🏗️ General Contractors
-- 🔧 Subcontractors
-- 👤 End Users
-- 🏢 Building Owners
-- 🏛️ Municipalities
-- 📦 Distributors
-- 🏭 Manufacturer Reps
+- General Contractors, Subcontractors, End Users, Building Owners, Municipalities, Distributors, Manufacturer Reps
 
-**Database:** `clients` table with `client_type` column (migrated from `general_contractors`)
-**UI:** Step 2 now includes client type selector with visual filtering
-**Code Locations:**
-- app.html:1178-1197 (Step 2 UI with client type checkboxes)
-- app.html:3394-3420 (getClients function - accepts clientType param)
-- app.html:5285-5328 (renderGCSelector - filters by selected types)
-- app.html:5330-5348 (filterClientsByType - updates UI on selection)
+**Database:** `clients` table with `client_type` column (migrated FROM `general_contractors` — old name is gone)
+**UI:** Step 2 includes client type selector with visual filtering
+**Key functions:** `getClients(clientType)`, `saveClient(client)`, `renderGCSelector()`
 
-**Legacy Functions:** `getGCs()` still exists, wraps `getClients('general_contractor')` for backwards compatibility
+**Legacy Functions:** `getGCs()` wraps `getClients('general_contractor')` for backwards compatibility. `saveGC()` wraps `saveClient()`.
 
 **Lesson:** When expanding scope, maintain backwards compatibility with wrapper functions
 
@@ -332,7 +329,7 @@ return d.toLocaleDateString();
 
 **Reasoning:** Real feedback like "GC said we won because of better healthcare experience" is more valuable for AI training than checkbox data
 
-**Code Location:** app.html:9489-9596 (outcome form modals), app.html:9680-9715 (saveOutcome function)
+**Code Location:** outcome form modals + `saveOutcome()` function
 
 **Lesson:** For AI/ML features, qualitative text data often beats quantitative structured data
 
@@ -364,21 +361,14 @@ return d.toLocaleDateString();
 - Grid layout: 2fr (description) 1fr (amount) 1fr (margin) auto (remove button)
 - Saves as JSON array to database
 
-**Code Locations:**
-- app.html:9600-9604 (form HTML with alternatesList container)
-- app.html:9786-9835 (renderAlternates, addAlternateRow, removeAlternateRow functions)
-- app.html:9850 (saveOutcome saves outcomeAlternates array)
+**Key functions:** `renderAlternates()`, `addAlternateRow()`, `removeAlternateRow()`, `saveOutcome()`
 
 **Lesson:** When users need to track multiple items, provide dynamic add/remove UI instead of single field
 
 #### Landing Page Brand Consistency
 **Problem:** Landing page used #3b82f6 (light blue), dashboard used #4F46E5 (indigo), plus emoji in header
 **Solution:** Synchronized all brand colors and removed emoji for professional look
-**Changes:**
-- index.html:40 - Changed --brand-primary from #3b82f6 to #4F46E5
-- index.html:42 - Updated gradient to match
-- index.html:63 - Changed --border-focus
-- index.html:884 - Removed 🎯 emoji from logo (professional design)
+**Changes:** `--brand-primary` unified to `#4F46E5` (indigo) across index.html + app.html. Emoji removed from logo.
 
 **Lesson:** Brand consistency across landing page and app builds trust - colors should match exactly
 
@@ -394,9 +384,7 @@ return d.toLocaleDateString();
 - Calculate **Additional Revenue** from improved win rate: (new wins - old wins) × avg project size
 - Results show: Time Saved Annually, Additional Revenue, New Win Rate
 
-**Code Locations:**
-- index.html:1154-1198 (redesigned calculator HTML)
-- index.html:1318-1380 (updated calculateROI JavaScript)
+**Code Location:** `calculateROI()` in index.html
 
 **Key Changes:**
 ```javascript
@@ -415,10 +403,7 @@ const additionalRevenue = additionalWins * avgProjectSize;
 #### User-Facing Language
 **Problem:** "Data Moat Health" is internal business terminology users don't understand or care about
 **Solution:** Changed to "AI Learning Progress" with emphasis on training the AI
-**Changes:**
-- app.html:1143 - Dashboard stat card label changed
-- app.html:1145 - Subtitle: "outcomes tracked • Trains AI" (benefit-focused)
-- app.html:8140 - Updated code comment to reflect user-facing purpose
+**Changes:** Dashboard stat card relabeled "AI Learning Progress" with subtitle "outcomes tracked • Trains AI"
 
 **Lesson:** Internal metrics shown to users should describe the benefit to THEM, not the business value to YOU
 
@@ -432,10 +417,28 @@ const additionalRevenue = additionalWins * avgProjectSize;
 
 #### Google Analytics Integration
 **Implementation:** Added GA4 tracking code to both index.html and app.html
-**Code:** Standard gtag.js snippet in <head> with placeholder G-XXXXXXXXXX
+**Code:** Standard gtag.js snippet in `<head>` with placeholder G-XXXXXXXXXX
 **Next Step:** User needs to replace placeholder with actual Measurement ID from their GA4 property
 
 **Lesson:** Analytics should be added early - track user behavior from day one of beta
+
+### CSI MasterFormat Picker Pattern (Mar 2026)
+
+**Problem:** Division-level trade scoring caused false positives (flooring sub scored GO on ceramic tile job because Division 09 matched)
+**Solution:** Section-level scoring — when `preferred_csi_sections` is populated, scan for exact 6-digit section codes (e.g. "09 65 00") instead of 2-digit division codes
+**Key functions:** `renderCSIPicker()`, `loadSettings()` (wires picker), `saveSettings()` (derives `trades[]` from sections), `calculateScores()` (branches on `hasSections`)
+**Data:** `preferred_csi_sections TEXT[]` in user_settings. `trades[]` is derived for backward compat.
+**CSS gotcha:** `#tradesCheckboxes` had class `checkbox-grid` (display:grid). `renderCSIPicker()` must call `container.classList.remove('checkbox-grid')` at the top or the picker renders as 140px grid cells.
+
+**Lesson:** When a container that will be dynamically replaced has a layout class, remove it in the render function — don't rely on the HTML being clean.
+
+### user_keywords Is Single-Row (Mar 2026)
+
+**Pattern:** `user_keywords` table has ONE row per user with `good_keywords TEXT[]` and `bad_keywords TEXT[]` array columns. NOT multiple rows.
+**Upsert:** `onConflict: 'user_id'` — always upsert, never insert blindly.
+**Read:** Use `.single()` not `.maybeSingle()` (after initial creation is guaranteed).
+
+**Lesson:** Check SCHEMA.md before writing any query — old docs said `keywords` (multi-row), actual table is `user_keywords` (single-row arrays).
 
 ---
 
@@ -494,11 +497,11 @@ const additionalRevenue = additionalWins * avgProjectSize;
 ## 📚 KEY DOCUMENTS TO REFERENCE
 
 **Before making decisions:**
-1. Check `BidIntell_Product_Bible_v1_8.md` - Is this in scope?
+1. Check `BidIntell_Product_Bible_v1_9.md` - Is this in scope?
 2. Check `DATA_SAFETY_PROTOCOL.md` - Does this affect data?
 3. Check `KNOWN_BUGS.md` - Is this already tracked?
-4. Check `MEMORY.md` - Any recent context?
-5. ## Before ANY code change, read and follow BIDIQ_SKILL.md
+4. Check memory file (auto-loads) - Any recent context?
+5. Before ANY code change, read and follow BIDIQ_SKILL.md
 
 **When user is frustrated:**
 1. Check `MEMORY.md` - What happened recently?

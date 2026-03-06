@@ -1,20 +1,16 @@
 # BidIQ Architecture Documentation
 
-**Last Updated:** February 9, 2026
-**Version:** 1.5 (Beta Testing Phase)
+**Last Updated:** March 5, 2026
+**Version:** 2.0 (full audit — line numbers removed, function names used)
 
 ---
 
 ## 🏗️ Overview
 
-BidIQ is a **single-page application (SPA)** built with vanilla JavaScript, HTML, and CSS. It uses Supabase for the database and Netlify Functions for serverless backend API calls.
+BidIQ is a **single-page application (SPA)** built with vanilla JavaScript, HTML, and CSS. No build tools. No frameworks. Hosted on Netlify with Supabase for the database and Netlify Functions for serverless backend.
 
-**Key Files:**
-- `app.html` (11,000+ lines) - Main application (frontend + logic)
-- `netlify/functions/analyze.js` - Backend AI API calls (Claude/OpenAI)
-- `netlify/functions/notify.js` - Email notifications (Postmark)
-- `netlify.toml` - Netlify configuration
-- `.env` - API keys (gitignored for security)
+**Live:** bidintell.ai
+**Phase:** 1.5 Beta — Paid launch April 1, 2026
 
 ---
 
@@ -22,497 +18,424 @@ BidIQ is a **single-page application (SPA)** built with vanilla JavaScript, HTML
 
 ```
 bidiq-mvp/
-├── app.html                    # Main application (everything in one file)
-├── index_professional.html     # Landing page
-├── test.html                   # Diagnostic page
-├── netlify/
-│   └── functions/
-│       ├── analyze.js         # AI extraction backend
-│       └── notify.js          # Email notifications
-├── netlify.toml               # Netlify config
-├── .env                       # API keys (NOT in git)
-├── CLAUDE.md                  # Rules for AI assistant
-├── MEMORY.md                  # Session context
-├── DATA_SAFETY_PROTOCOL.md    # Database safety rules
-├── ARCHITECTURE.md            # This file
-├── SCHEMA.md                  # Database schema
-├── TESTING_CHECKLIST.md       # Testing guide
-└── BidIntell_Product_Bible_v1_8.md  # Product requirements
+├── app.html                          # Main application (~15K lines)
+├── auth.html                         # Magic link authentication flow
+├── admin.html                        # Admin dashboard (metrics, costs, feedback)
+├── index.html                        # Public landing page
+├── contact.html                      # Contact page
+├── legal.html                        # Terms / privacy
+│
+├── netlify/functions/
+│   ├── analyze.js                    # AI API proxy (Claude/OpenAI)
+│   ├── notify.js                     # Email notifications (Postmark)
+│   ├── stripe-webhook.js             # Stripe event handler → user_revenue
+│   ├── stripe-create-checkout.js     # Create Stripe checkout session
+│   ├── stripe-create-portal.js       # Open Stripe billing portal
+│   └── daily-snapshot.js            # Scheduled daily metrics → admin_metrics_snapshots
+│
+├── netlify.toml                      # Netlify config + scheduled function settings
+├── .env                              # API keys (NOT in git)
+│
+├── CLAUDE.md                         # Rules for AI assistant
+├── ARCHITECTURE.md                   # This file
+├── SCHEMA.md                         # Database schema (10 tables, v2.0)
+├── KNOWN_BUGS.md                     # Active bug list
+├── DATA_SAFETY_PROTOCOL.md           # Database safety rules
+├── contract_risk_detection_guide.md  # Contract risk clause patterns + prompts
+├── BidIntell_Product_Bible_v1_9.md   # Product requirements (v1.9 is current)
+│
+├── supabase_schema_complete.sql      # Original schema (Jan 29, 2026 — baseline)
+├── migrations/                       # SQL migration files (alter tables, etc.)
+└── restore-test-data.sql            # Test data restore script
 ```
 
 ---
 
 ## 🎨 Frontend Architecture (app.html)
 
-The app is a **single-page application** with tab-based navigation. All code lives in one HTML file for simplicity.
+Single-page application with tab-based navigation. All UI, logic, and CSS live in one file.
 
-### Major Sections (Line Numbers)
+### Tabs
 
-**HTML Structure (~1-1700)**
-- Dashboard tab
-- Analyze tab (upload & analyze)
-- Projects tab (project management)
-- Report view (full screen report)
-- Settings tab
-- Onboarding flow
-- Modals (outcome, GC rating, etc.)
+| Tab | ID | Purpose |
+|-----|----|---------|
+| Dashboard | `tab-dashboard` | Stats, recent bids, setup banner, AI pulse |
+| Analyze | `tab-analyze` | PDF upload, analysis flow, results |
+| Projects | `tab-projects` | Bid history table, filtering, outcome tracking |
+| Report | `tab-report` | Full-screen report view (not a nav tab — shown programmatically) |
+| GC Manager | `tab-gcs` | Client database (all 7 client types) |
+| Settings | `tab-settings` | Profile, CSI picker, scoring weights |
+| Feedback | `tab-feedback` | Beta feedback form |
 
-**CSS (~100-800)**
-- Variables (colors, spacing)
-- Layout (cards, tables, forms)
-- Components (buttons, badges, modals)
-- Responsive design
+> **Tab detection:** Always use `classList.contains('active')` — NOT `style.display`. Tabs are shown/hidden via CSS class, not inline styles.
 
-**JavaScript (~1800-11000)**
+### Major JS Sections (by function, not line number)
 
-| Section | Lines | Purpose |
-|---------|-------|---------|
-| **Initialization** | 1800-2300 | Supabase client, auth, Google Maps |
-| **Database Functions** | 2300-3500 | CRUD operations (projects, GCs, keywords, settings) |
-| **AI Extraction** | 5400-5900 | PDF parsing, Claude/OpenAI API calls, data extraction |
-| **Scoring Engine** | 6000-6400 | BidIndex™ score calculation (location, keywords, GC, trade) |
-| **Intelligence Engine** | 5800-6000 | AI validation and recommendations |
-| **Dashboard** | 7400-7600 | Recent activity, stats, capacity indicator |
-| **Projects Table** | 7600-7800 | Project list, filtering, sorting |
-| **Report View** | 7800-8300 | Full report display, editing, saving |
-| **Settings** | 8900-9300 | User preferences, onboarding |
-| **Utilities** | 9300-10000 | Geocoding, distance calc, helpers |
+**Initialization**
+- Supabase client setup, `onAuthStateChange`, Google Maps Places loader
+- `DEFAULT_SETTINGS` constant — fallback values for all settings
+
+**Data / CRUD Layer**
+- `getSettings()` / `saveSettingsStorage()` — user_settings table
+- `getKeywords()` / `saveKeywordsStorage()` — user_keywords table (single-row arrays)
+- `getClients(clientType)` / `saveClient(client)` — clients table
+- `getProjects()` / `saveProject(data)` / `updateProject()` — projects table
+- `trackAPIUsage()` — api_usage table (fire-and-forget)
+- `dataCache` object — in-memory cache for all tables; invalidated on writes
+
+**AI Extraction Layer**
+- `analyzeBid()` — top-level orchestrator, called on file upload
+- `extractTextFromPDF(file)` — PDF.js text extraction
+- `callAI(action, text, prompt)` — POST to `/api/analyze` Netlify function
+- `extractWithClaude(text)` — full project detail extraction
+- `extractBuildingType(text)` — building type classification
+- `detectContractRisks(text)` — two-layer risk detection (see contract_risk_detection_guide.md)
+- `autoAddExtractedGCs(gcNames)` — auto-adds GCs found in bid to clients table
+
+**Scoring Engine**
+- `calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks, tradeDetection, gcNames, foundSections)` — main entry point
+- Returns `{ final, recommendation, components: { location, keywords, gc, trade } }`
+- Weights are user-configurable (stored as `weights` jsonb in user_settings)
+- Default weights: Location 25% / Keywords 30% / GC 25% / Trade 20%
+
+**Intelligence Engine (Layer 0)**
+- `runIntelligenceEngine(extracted)` — validates completeness, adds intelligence tags
+- `buildAIAdvisorPrompt(...)` — constructs context-aware AI advisor prompt
+- `renderAIInsights(analysis)` — renders the AI advisor panel
+
+**UI Rendering**
+- `loadDashboard()` — loads stats, renders setup banner
+- `renderSetupBanner(settings)` — amber banner if profile incomplete
+- `renderProjectsTable(projects)` — project list with sort/filter
+- `renderResult(analysis)` — post-analysis result card
+- `showFullReport(projectId)` — full report view
+- `renderCSIPicker(containerId, selectedSections, onChange)` — reusable CSI section picker
+- `renderGCSelector()` — GC autocomplete with client type filtering
+
+**Outcome Tracking**
+- `saveOutcome(id, type, outcomeData, bidderCount, updatedDate)` — saves win/loss/ghost
+- Saves `outcome_data` jsonb + `bid_divisions_submitted` + `gc_competition_density` record
+
+**Admin (admin.html)**
+- Separate file — admin-only metrics dashboard
+- Reads `user_settings`, `projects`, `admin_events`, `admin_metrics_snapshots`, `api_usage`, `user_revenue`
 
 ---
 
 ## 🔄 Data Flow
 
-### 1. User Uploads Bid → Analysis Flow
+### Bid Analysis Flow
 
 ```
-1. User drops PDF in upload zone (analyzeBid function)
-   ↓
-2. PDF parsed with PDF.js (extractTextFromPDF)
-   ↓
-3. Text sent to backend function (/api/analyze)
-   ↓
-4. Backend calls Claude API (extractWithClaude)
-   ↓
-5. AI extracts project details, building type, contract risks
-   ↓
-6. Frontend receives extracted data
-   ↓
-7. Scoring Engine calculates BidIndex score (calculateScore)
-   ↓
-8. Intelligence Engine validates data (intelligenceEngine)
-   ↓
-9. Project saved to Supabase (saveProject)
-   ↓
-10. Report displayed (showFullReport)
+User drops PDF in upload zone
+    ↓
+extractTextFromPDF(file)         — PDF.js, worker thread
+    ↓
+callAI('extract_project_details') — POST /api/analyze → Claude API
+    ↓
+extractBuildingType(text)        — parallel classification
+detectContractRisks(text)        — two-layer: keyword patterns + Claude
+    ↓
+Received: extracted_data object
+    ↓
+calculateScores(...)             — location + keywords + gc + trade
+    ↓
+runIntelligenceEngine(extracted) — validation + intelligence tags
+    ↓
+autoAddExtractedGCs(gcNames)     — add found GCs to clients table
+    ↓
+saveProject(analysis)            — write to projects table
+    ↓
+renderResult(analysis)           — show result card
+    ↓ (800ms delay)
+Post-analysis nudge: "Chat with AI Advisor →" (if not yet clicked)
 ```
 
-### 2. Score Calculation Flow
+### Score Calculation Flow
 
 ```
-calculateScore(extracted, userSettings, selectedGCs)
-   ↓
-1. Location Score (0-100 points)
-   - Geocode user office and project location
-   - Calculate distance
-   - Score based on service area preference
-   ↓
-2. Keywords Score (0-100 points)
-   - Search for good keywords (user's trade terms)
-   - Search for bad keywords (contract risks)
-   - Weight: good keywords boost, bad keywords reduce
-   ↓
-3. GC Score (0-100 points)
-   - Check GC ratings (1-5 stars)
-   - Check win history
-   - Multiple GCs = more competition = lower score
-   ↓
-4. Trade/Product Match (0-100 points)
-   - Check if CSI divisions in bid match user's divisions
-   - Multi-signal detection (keywords, division numbers, context)
-   ↓
-5. Final Score = Weighted Average
-   - Location: 30%
-   - Keywords: 25%
-   - GC: 25%
-   - Trade: 20%
-   ↓
-6. Recommendation = GO (80+) / REVIEW (60-79) / PASS (<60)
+calculateScores(extracted, settings, ...)
+    ↓
+1. Location Score
+   geocodeAddress(projectAddress) → lat/lng
+   calculateDistance(userLat, userLng, projLat, projLng)  — Haversine
+   dist ≤ search_radius → 100pts; scales down beyond radius
+   location_matters === false → score = 100 (ignored)
+
+2. Keywords Score
+   scan bid text for good_keywords[] → good_score
+   scan bid text for bad_keywords[] → bad_penalty
+   contract risk penalty applied separately
+
+3. GC Score
+   avg star rating of selected GCs
+   competition density penalty (Module 4) if gc_competition_density data exists
+   unknown GC → default_stars (user-configurable)
+
+4. Trade/Section Score
+   IF preferred_csi_sections configured:
+     scan bid text for each section code (e.g. /09\s*65\s*00/i)
+     score = foundSections.length / totalSections * 100
+     scoring_mode = 'section'
+   ELSE:
+     scan for CSI division codes in bid text
+     score = foundDivisions / userDivisions * 100
+     scoring_mode = 'division'
+
+5. Contract Risk Penalty
+   risk_score_penalty (0-30) from detectContractRisks()
+   scaled by user's risk_tolerance: low=1.0x, medium=0.6x, high=0.3x
+
+6. Final = weighted sum - risk penalty
+   GO ≥ 80 / REVIEW 60-79 / PASS < 60
 ```
 
 ---
 
 ## 🔌 Backend Functions (Netlify)
 
-### `/api/analyze` (analyze.js)
+### `analyze.js` → `/api/analyze`
 
-**Purpose:** Proxy AI API calls to keep keys secure
+Proxy for AI API calls. Keeps keys server-side.
 
-**Endpoints:**
-- `extract_project_details` - Full project extraction with Claude
-- `extract_building_type` - Building type classification
-- `detect_contract_risks` - Contract risk analysis
+**Actions:**
+- `extract_project_details` — Full project extraction (Claude, long text)
+- `extract_building_type` — Building type classification
+- `detect_contract_risks` — Contract risk analysis (see contract_risk_detection_guide.md)
 
-**Request Format:**
-```javascript
-POST /api/analyze
-{
-  "action": "extract_project_details",
-  "text": "bid document text...",
-  "prompt": "AI prompt..."
-}
-```
+**Tracks:** Every call writes to `api_usage` table via Supabase service-role client.
 
-**Response:**
-```javascript
-{
-  "success": true,
-  "content": "AI response text or JSON"
-}
-```
+### `notify.js` → `/api/notify`
 
-**Error Handling:**
-- 401: Invalid API key
-- 500: AI API error
-- Returns error details in response
+Sends email via Postmark. Used for error alerts to ryan@fsikc.com.
 
-### `/api/notify` (notify.js)
+**From:** hello@bidintell.ai
+**DNS:** SPF ✅ DKIM ✅ DMARC ✅ (p=none monitoring)
+**Corporate IT note:** Some recipients (Microsoft 365 tenants) quarantine magic links — IT must whitelist bidintell.ai.
 
-**Purpose:** Send email notifications via Postmark
+### `stripe-webhook.js` → `/api/stripe-webhook`
 
-**Used for:**
-- Error alerts (API failures, extraction errors)
-- User notifications (optional future feature)
+Handles Stripe events → writes to `user_revenue` table.
+
+**Events handled:** `customer.subscription.created/updated/deleted`, `invoice.payment_succeeded`
+**Security:** Stripe signature verification (STRIPE_WEBHOOK_SECRET env var)
+
+### `stripe-create-checkout.js` / `stripe-create-portal.js`
+
+Create Stripe sessions for checkout and billing portal management.
+
+### `daily-snapshot.js`
+
+Scheduled (cron via netlify.toml). Aggregates daily metrics → `admin_metrics_snapshots`.
 
 ---
 
 ## 🗄️ Database (Supabase)
 
-**Tables:**
-- `users` - Supabase auth users
-- `user_settings` - User preferences (location, keywords, etc.)
-- `projects` - Analyzed bids and scores
-- `keywords` - User's good/bad search terms
-- `general_contractors` - GC database with ratings
+10 tables. See **SCHEMA.md** for full column details.
 
-**See SCHEMA.md for detailed table structure**
+**User data tables (RLS enforced):**
+- `user_settings` — profile, preferences, weights, CSI sections (1:1 per user)
+- `user_keywords` — good/bad keyword arrays, single row per user
+- `clients` — all client types (GCs, subs, owners, etc.) — formerly `general_contractors`
+- `projects` — analyzed bids with scores, outcomes, AI output
+- `gc_competition_density` — bidder count per GC per outcome (Module 4)
 
-**Security:**
-- Row Level Security (RLS) enabled
-- Users can only see their own data
-- Policies enforce user_id matching
+**System tables:**
+- `user_revenue` — Stripe subscription data (written by webhook only)
+- `api_usage` — per-call AI cost tracking
+- `beta_feedback` — in-app feedback submissions
+- `admin_events` — behavioral event log (fire-and-forget)
+- `admin_metrics_snapshots` — daily aggregated metrics
 
----
-
-## 🧩 Key Functions Reference
-
-### Database Operations
-
-| Function | Purpose | Location |
-|----------|---------|----------|
-| `getProjects()` | Load all projects for current user | ~3100 |
-| `saveProject(data)` | Save/update project | ~3185 |
-| `getGCs()` | Load all GCs for current user | ~3350 |
-| `getKeywords()` | Load user's keywords | ~3450 |
-| `getSettings()` | Load user settings | ~2900 |
-| `updateSettings(data)` | Save settings | ~3000 |
-
-### AI Extraction
-
-| Function | Purpose | Location |
-|----------|---------|----------|
-| `callAI(action, text, prompt)` | Call backend AI function | ~5380 |
-| `extractWithClaude(text)` | Extract all project data | ~5450 |
-| `extractBuildingType(text)` | Classify building type | ~2593 |
-| `detectContractRisks(text)` | Find contract risks | ~2634 |
-
-### Scoring
-
-| Function | Purpose | Location |
-|----------|---------|----------|
-| `calculateScore(...)` | Main scoring engine | ~6000 |
-| `geocodeAddress(address)` | Convert address to coordinates | ~5047 |
-| `calculateDistance(lat1, lon1, lat2, lon2)` | Haversine distance | ~6158 |
-
-### UI Rendering
-
-| Function | Purpose | Location |
-|----------|---------|----------|
-| `renderDashboard()` | Render dashboard tab | ~7400 |
-| `renderProjectsTable(projects)` | Render projects list | ~7650 |
-| `showFullReport(projectId)` | Show full report view | ~7800 |
-| `renderGCSelector()` | Render GC autocomplete | ~4783 |
+> ⚠️ **Critical name corrections:** Table is `clients` (NOT `general_contractors`). Table is `user_keywords` (NOT `keywords`). `user_keywords` is single-row with array columns.
 
 ---
 
 ## 🔐 Authentication Flow
 
+**Method:** Magic link only. No passwords. Supabase Auth sends email via Postmark.
+
 ```
-1. User visits app
-   ↓
-2. Supabase checks for session (onAuthStateChange)
-   ↓
-3. If no session → show onboarding
-   ↓
-4. User signs up/logs in
-   ↓
-5. Session created, user_id stored
-   ↓
-6. App loads user data (settings, projects, GCs, keywords)
-   ↓
-7. Dashboard displayed
+User enters email on auth.html
+    ↓
+Supabase sends magic link → hello@bidintell.ai via Postmark
+    ↓
+User clicks link → redirected to app.html?token=...
+    ↓
+auth.html verifyOtp() exchanges token for session
+    ↓
+Redirect to app.html
+    ↓
+onAuthStateChange fires → currentUser set
+    ↓
+getSettings() — creates default row if first login
+getKeywords() — creates default row if first login
+    ↓
+loadDashboard() → app ready
 ```
 
-**Session Management:**
-- Supabase handles tokens automatically
-- Session persists across page refreshes
-- Auto-refresh on token expiry
+**Session:** Supabase manages tokens. Auto-refreshes. Persists across page refreshes.
 
 ---
 
-## 📱 Tab Navigation
+## 🗂️ State Management
 
-The app uses a simple tab system:
-
-```javascript
-function switchTab(tabName) {
-  // Hide all tabs
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  // Show selected tab
-  document.getElementById('tab-' + tabName).classList.add('active');
-  // Update nav
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-}
-```
-
-**Available Tabs:**
-- `dashboard` - Home screen with recent activity
-- `analyze` - Upload and analyze bids
-- `projects` - Project management table
-- `settings` - User preferences
-
----
-
-## 🎯 Scoring Algorithm Details
-
-### Location Score (30% weight)
+Global variables (no state library):
 
 ```javascript
-// Based on distance from user's office
-distance <= preferred_radius → 100 points
-distance <= max_radius → 70-99 points (linear scale)
-distance > max_radius → 50-69 points (diminishing returns)
-```
-
-### Keywords Score (25% weight)
-
-```javascript
-// Good keywords (user's trade terms)
-keywords_found = search bid text for user's keywords
-good_score = (keywords_found / total_keywords) * 100
-
-// Bad keywords (contract risks)
-risks_found = detect pay-if-paid, liquidated damages, etc.
-risk_penalty = risks_found * -10 points
-
-final_keywords_score = good_score - risk_penalty
-```
-
-### GC Score (25% weight)
-
-```javascript
-// Based on GC ratings (1-5 stars)
-avg_rating = average of all selected GCs' ratings
-rating_score = (avg_rating / 5) * 100
-
-// Competition adjustment
-if (gc_count > 1) {
-  competition_penalty = (gc_count - 1) * 5 points
-  rating_score -= competition_penalty
-}
-```
-
-### Trade Match Score (20% weight)
-
-```javascript
-// Multi-signal detection
-signals = [
-  user_divisions match CSI divisions found,
-  user_keywords found in bid,
-  building_type matches user_building_types
-]
-
-confidence = average(signals)
-trade_score = confidence * 100
-```
-
----
-
-## 🔄 State Management
-
-**Global Variables:**
-```javascript
-let currentUser = null;              // Supabase user object
-let currentAnalysis = null;          // Latest analysis result
-let currentReportProject = null;     // Project being viewed in report
+let currentUser = null;              // Supabase auth user
+let currentAnalysis = null;          // Most recent analysis result
+let currentReportProject = null;     // Project shown in report view
 let selectedGCs = [];                // GCs selected for current analysis
 let uploadedFiles = [];              // Files in upload queue
-let allProjectsCache = [];           // Cached projects for filtering
+let allProjectsCache = [];           // Projects cache (for filtering/sorting)
+let settingsCSISections = [];        // CSI picker selections (Settings tab state)
+const dataCache = {                  // Per-table cache
+  settings: null,
+  keywords: null,
+  clients: null,
+  gcs: null,  // legacy alias for clients
+};
 ```
 
-**No state management library** - uses simple global variables and re-rendering functions.
+Cache is invalidated on every write. Tables are re-fetched on next access.
 
 ---
 
-## 🐛 Error Handling
+## 🎯 Scoring Weights
 
-### Backend Errors
-- API call failures logged to console
-- User sees friendly error message
-- Founder receives email alert (via /api/notify)
+Weights are **user-configurable** per user, stored as `weights` jsonb in `user_settings`.
 
-### Frontend Errors
-- Try-catch blocks around critical operations
-- Fallback to "Unknown" or empty values
-- Error banners shown to user
+**Defaults:**
+| Component | Default Weight |
+|-----------|---------------|
+| Location | 25% |
+| Keywords | 30% |
+| GC/Client | 25% |
+| Trade/Section | 20% |
 
-### Common Error Patterns
-```javascript
-try {
-  const result = await riskyOperation();
-  return result;
-} catch (error) {
-  console.error('Operation failed:', error);
-  showErrorBanner('User-friendly message');
-  sendErrorEmail('Error Type', error.message);
-  return fallbackValue;
-}
-```
+Weights must sum to 100. Users can adjust in Settings. Applied in `calculateScores()`.
 
 ---
 
-## 🚀 Performance Considerations
+## 🧩 Key Functions Reference
 
-### Caching
-- Projects cached after first load (`allProjectsCache`)
-- GCs cached after first load
-- Keywords cached after first load
-- Only re-fetch when data changes
+### Data Layer
 
-### Lazy Loading
-- Dashboard loads first (fastest)
-- Other tabs load data when clicked
-- Report view loads project on-demand
+| Function | Table | Notes |
+|----------|-------|-------|
+| `getSettings()` | user_settings | Cached; creates defaults for new users |
+| `saveSettingsStorage(s)` | user_settings | Upsert on user_id |
+| `getKeywords()` | user_keywords | Single row per user; creates defaults |
+| `saveKeywordsStorage(k)` | user_keywords | Upsert on user_id |
+| `getClients(clientType)` | clients | Optional type filter |
+| `saveClient(client)` | clients | Upsert on id |
+| `getGCs()` | clients | Legacy wrapper → getClients('general_contractor') |
+| `getProjects()` | projects | Full list for current user |
+| `saveProject(data)` | projects | Insert new; returns saved project with id |
+| `updateProject(id, data)` | projects | Partial update |
+| `saveOutcome(...)` | projects + gc_competition_density | Also saves bid_divisions_submitted |
+| `trackAPIUsage(...)` | api_usage | Fire-and-forget, failures swallowed |
 
-### PDF Processing
-- Large PDFs truncated to 100,000 characters for AI
-- Worker thread for PDF.js (doesn't block UI)
+### Analysis
 
----
+| Function | Purpose |
+|----------|---------|
+| `analyzeBid()` | Top-level orchestrator |
+| `extractTextFromPDF(file)` | PDF.js extraction + OCR fallback check |
+| `callAI(action, text, prompt)` | POST to /api/analyze |
+| `extractWithClaude(text)` | Full project extraction |
+| `detectContractRisks(text)` | Keyword pre-filter + Claude semantic analysis |
+| `calculateScores(...)` | BidIndex scoring (9 params including foundSections) |
+| `autoAddExtractedGCs(gcNames)` | Auto-add GC names to clients table |
 
-## 🔧 Development Workflow
+### UI
 
-### Local Development
-```bash
-# Start Netlify Dev (includes backend functions)
-netlify dev
-
-# App runs at http://localhost:8888
-```
-
-### Making Changes
-1. **Read CLAUDE.md first** - Safety rules
-2. **Commit before changes** - `git commit -m "Before: [description]"`
-3. Make changes to app.html
-4. Test locally
-5. Commit after changes - `git commit -m "Fixed: [description]"`
-6. Deploy to Netlify (if ready)
-
-### Testing
-- See **TESTING_CHECKLIST.md** for manual tests
-- No automated tests currently
+| Function | Purpose |
+|----------|---------|
+| `loadDashboard()` | Renders dashboard + setup banner |
+| `renderSetupBanner(settings)` | Amber "complete your profile" banner |
+| `renderProjectsTable(projects)` | Projects list with sort/filter |
+| `renderResult(analysis)` | Post-analysis result card |
+| `showFullReport(projectId)` | Full report view |
+| `renderCSIPicker(containerId, selected, onChange)` | CSI MasterFormat section picker |
+| `renderGCSelector()` | GC autocomplete with client type tabs |
+| `renderAIInsights(analysis)` | AI advisor panel (id="aiInsightsSection") |
+| `toggleAIChat()` | Opens AI chat; clears pulse animation |
 
 ---
 
 ## 📦 Dependencies
 
-### Frontend
-- **PDF.js** - PDF parsing (CDN: Mozilla)
-- **Supabase JS** - Database client (CDN)
-- **Google Maps Places API** - Address autocomplete
+### Frontend (CDN, no npm)
+- **PDF.js** — PDF parsing (Mozilla CDN)
+- **Supabase JS** — Database client
+- **Google Maps Places API** — Address autocomplete
 
-### Backend (Netlify Functions)
-- **@anthropic-ai/sdk** - Claude API
-- **openai** - OpenAI API (backup)
-- **postmark** - Email notifications
-- **@supabase/supabase-js** - Database access
+### Backend (npm, in netlify/functions/)
+- **@anthropic-ai/sdk** — Claude API
+- **openai** — OpenAI fallback
+- **postmark** — Email
+- **@supabase/supabase-js** — DB access from functions
+- **stripe** — Stripe SDK
 
-### Environment Variables (.env)
+### Environment Variables
 ```
-CLAUDE_API_KEY=sk-ant-YOUR_KEY_HERE
-OPENAI_API_KEY=sk-proj-YOUR_KEY_HERE
-POSTMARK_API_KEY=YOUR_KEY_HERE
-SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-SUPABASE_ANON_KEY=YOUR_KEY_HERE
+CLAUDE_API_KEY
+OPENAI_API_KEY
+POSTMARK_API_KEY
+SUPABASE_URL
+SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY   ← service role for webhook + admin reads
+STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET
+GOOGLE_MAPS_API_KEY
 ```
 
 ---
 
-## 🎓 Learning Resources
+## 🚀 Development Workflow
 
-### Understanding the Codebase
-1. Start with **BidIntell_Product_Bible_v1_8.md** - Product vision
-2. Read **SCHEMA.md** - Database structure
-3. Read this file (ARCHITECTURE.md) - Code organization
-4. Search app.html for specific functions using line numbers above
+```bash
+# Start local dev with Netlify functions
+netlify dev
+# App at http://localhost:8888
+```
 
-### Key Concepts
-- **BidIndex™ Score** - Weighted scoring algorithm (lines 6000-6400)
-- **Intelligence Engine** - AI validation layer (lines 5800-6000)
-- **RLS (Row Level Security)** - Supabase security model
-- **Serverless Functions** - Netlify Functions for backend
+1. `git add -A && git commit -m "Before: [description]"` — always commit first
+2. Make changes
+3. Test locally
+4. `git commit -m "Fixed/Added: [description]"`
+5. Deploy via Netlify (auto-deploy on push, or manual in dashboard)
 
 ---
 
-## 🔮 Future Improvements
+## 🐛 Error Handling Conventions
 
-### Code Organization
-- [ ] Split app.html into modules (auth.js, scoring.js, ui.js, etc.)
-- [ ] Use a build tool (Vite, Webpack) for bundling
-- [ ] Add TypeScript for type safety
-
-### Testing
-- [ ] Add automated tests (Jest, Playwright)
-- [ ] Add integration tests for scoring
-- [ ] Add E2E tests for critical flows
-
-### Performance
-- [ ] Implement virtual scrolling for large project lists
-- [ ] Add service worker for offline support
-- [ ] Optimize PDF parsing (stream processing)
-
-### Architecture
-- [ ] Consider React/Vue for better state management
-- [ ] Add WebSocket for real-time updates
-- [ ] Implement proper routing (React Router, Vue Router)
+- **Data reads:** `maybeSingle()` for optional records, `single()` only after guaranteed creation
+- **Fire-and-forget:** `admin_events`, `trackAPIUsage()` — failures are console.warn'd, never thrown
+- **Critical path errors:** thrown and caught by `analyzeBid()`, shown to user
+- **Date validation:** Always `isNaN(date.getTime())` — `new Date(invalid)` doesn't throw
 
 ---
 
 ## 📞 Getting Help
 
-**When stuck:**
-1. Search this file for the function/feature
-2. Check **CLAUDE.md** for rules and gotchas
-3. Check **MEMORY.md** for recent issues and solutions
-4. Read the Product Bible for product context
+1. Check **SCHEMA.md** — table structure and column names
+2. Check **CLAUDE.md** — rules, gotchas, and recent patterns
+3. Check **KNOWN_BUGS.md** — active issues
+4. Check **BidIntell_Product_Bible_v1_9.md** — product scope
+5. Search app.html for function name (Ctrl+F) — no line numbers needed
 
-**Common Questions:**
-- "Where is the scoring logic?" → Lines 6000-6400
-- "How do I add a new table column?" → See SCHEMA.md, update RLS policies
-- "Why isn't data saving?" → Check console, verify RLS policies, check MEMORY.md
-- "How do I deploy?" → See Netlify dashboard or ask Claude
+**Common Q&A:**
+- "Where's the scoring logic?" → `calculateScores()` function
+- "Why isn't data saving?" → Check console → verify RLS policies → check `dataCache` invalidation
+- "How do I add a table column?" → SCHEMA.md migration guide → run in Supabase SQL editor → update SCHEMA.md
+- "Which table stores GCs?" → `clients` (NOT general_contractors)
+- "How do keywords work?" → `user_keywords` table, single row, `good_keywords[]` / `bad_keywords[]` arrays
 
 ---
 
-**Last Updated:** February 9, 2026 by Claude Code
-**Version:** 1.0
+**Last Updated:** March 5, 2026 by Claude Code
+**Version:** 2.0

@@ -14,14 +14,37 @@
 
 ---
 
-## Current Status (Mar 3, 2026)
+## Current Status (Mar 5, 2026)
 - **Phase:** 1.5 (Beta Testing)
 - **Location:** C:\Users\RyanElder\OneDrive - Facility Systems\bidiq-mvp
-- **Status:** 🎉 LIVE at bidintell.ai — billing live, GA4 live, all 3 OAuth providers live
-- **Priority:** Get beta testers actively using it, monitor funnel events
+- **Status:** LIVE at bidintell.ai — billing live, GA4 live, all 3 OAuth providers live
+- **Priority:** Beta users actively using — Chris (FDC) logged in Mar 5
 - **Paid Launch:** April 1, 2026
 
-## Latest Session (Mar 3, 2026) — Session 8
+## Latest Session (Mar 5, 2026) — Session 10
+### Doc Audit + Email/DNS Fix + Chris Onboarded
+
+**Doc audit complete (all 4 docs updated):**
+- SCHEMA.md → v2.0: 10 tables documented (was 5-6), corrected general_contractors→clients, keywords→user_keywords, added user_revenue/api_usage/beta_feedback/admin_events/admin_metrics_snapshots
+- ARCHITECTURE.md → v2.0: all line numbers removed, function names only, current file structure, all features documented
+- CLAUDE.md → Mar 5: file structure, Netlify functions, v1.9 product bible, new patterns (CSI picker, user_keywords single-row)
+- MEMORY.md (auto) → current
+
+**CSI Section Picker (from Session 9, Mar 4):**
+- renderCSIPicker() wired into Settings tab
+- Saves preferred_csi_sections[] to user_settings; derives trades[] for backward compat
+- Section-level scoring: calculateScores() scans for exact codes (e.g. "09 65 00") when sections configured
+- Fixes false positive: flooring sub no longer scores GO on ceramic tile (09 30 00 ≠ 09 65 00)
+- CSS gotcha: container had class checkbox-grid — must remove at start of renderCSIPicker()
+
+**Email/DNS diagnosis:**
+- DNS is correctly configured: SPF ✅ DKIM ✅ (two Postmark keys) DMARC ✅ (p=none, rua→ryan@fsikc.com)
+- Chris's issue was Microsoft 365 tenant-level quarantine (not DNS) — IT whitelisted bidintell.ai
+- Chris is now logged in ✅
+- TODO: Register JMRP + SNDS at sendersupport.olc.protection.outlook.com
+- TODO: Upgrade DMARC to p=quarantine after confirming mail flow
+
+## Previous Session (Mar 3, 2026) — Session 8 (formerly "Latest")
 ### Auth Polish + Microsoft OAuth Fix
 
 **Auth screen improvements:**
@@ -263,12 +286,16 @@
 - Customer Portal: `netlify/functions/stripe-create-portal.js`
 
 ## Important Files
-- Main app: bidiq-mvp/app.html (~13,000 lines)
+- Main app: bidiq-mvp/app.html (~15,000 lines)
+- Auth: bidiq-mvp/auth.html
 - Landing page: bidiq-mvp/index.html
 - Admin panel: bidiq-mvp/admin.html
 - Data protocol: DATA_SAFETY_PROTOCOL.md
 - Restore script: restore-test-data.sql
-- Product Bible: BidIntell_Product_Bible_v1_8.md
+- Product Bible: BidIntell_Product_Bible_v1_9.md (v1.9 is current — v1.8 is superseded)
+- Schema: SCHEMA.md (v2.0 — 10 tables)
+- Architecture: ARCHITECTURE.md (v2.0)
+- Contract risk patterns: contract_risk_detection_guide.md
 - Launch readiness: LAUNCH_READINESS_REPORT.md (Feb 16, 82% ready)
 - 6-month playbook: BidIntell_6Month_Growth_Playbook.docx
 
