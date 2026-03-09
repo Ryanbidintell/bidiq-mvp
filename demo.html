@@ -368,8 +368,9 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
             </svg>
           </div>
-          <h2>You're on the list.</h2>
-          <p>I'll reach out shortly to schedule a time and walk you through a live bid score in your trade.</p>
+          <h2>You're all set — let's talk!</h2>
+          <p>Pick a time that works for you and we'll walk you through BidIntell live.</p>
+          <a id="calendlyBtn" href="https://calendly.com/ryanelder77/new-meeting" target="_blank" rel="noopener" style="display:inline-block;margin-top:20px;padding:14px 28px;background:var(--accent);color:#fff;font-weight:700;font-size:15px;border-radius:8px;text-decoration:none;letter-spacing:0.01em;">Schedule Your Demo &rarr;</a>
         </div>
 
         <!-- Form -->
@@ -483,8 +484,6 @@
   </div>
 
   <script>
-    // TODO: wire up Calendly pre-fill URL here when link is ready
-
     const REQUIRED_FIELDS = ['firstName', 'lastName', 'email', 'company', 'trade', 'bidsPerMonth', 'currentProcess'];
 
     function isValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); }
@@ -543,6 +542,12 @@
         });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.error || 'Unknown error');
+
+        // Pre-fill Calendly with name + email
+        const fullName = encodeURIComponent(`${payload.firstName} ${payload.lastName}`.trim());
+        const email = encodeURIComponent(payload.email);
+        document.getElementById('calendlyBtn').href =
+          `https://calendly.com/ryanelder77/new-meeting?name=${fullName}&email=${email}`;
 
         document.getElementById('demoForm').style.display = 'none';
         document.getElementById('successState').classList.add('show');
