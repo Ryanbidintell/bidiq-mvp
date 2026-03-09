@@ -2931,6 +2931,7 @@
             city: '',
             state: '',
             trades: [],
+            preferred_csi_sections: [],
             clientTypes: ['gcs'], // Types of clients the user works for
             locationImportance: 50,
             riskTolerance: 'medium',
@@ -5619,24 +5620,22 @@ ${fullText.substring(0, 40000)}`;
                 `;
             } else if (step === 4) {
                 if (onboardingData.companyType === 'subcontractor') {
-                    // Show CSI divisions for subcontractors
+                    // Show CSI section-level picker for subcontractors
                     body.innerHTML = `
-                        <div style="text-align: center; padding: 20px 0;">
-                            <div style="font-size: 64px; margin-bottom: 16px;">🔧</div>
-                            <h3 style="color: var(--text-primary); margin-bottom: 12px;">What trades do you perform?</h3>
-                            <p style="color: var(--text-muted); margin-bottom: 32px;">Select all divisions your company works in (choose at least one)</p>
-                            <div style="max-width: 500px; margin: 0 auto; text-align: left;">
-                                <div id="onboarding_trades" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 400px; overflow-y: auto; padding: 12px; background: var(--bg-secondary); border-radius: var(--radius);">
-                                    ${CSI_DIVISIONS_FLAT.map(([code, name]) => `
-                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; background: var(--bg-tertiary); border-radius: var(--radius); border: 2px solid ${onboardingData.trades.includes(code) ? 'var(--accent)' : 'transparent'};">
-                                            <input type="checkbox" value="${code}" ${onboardingData.trades.includes(code) ? 'checked' : ''} onchange="updateOnboardingTrade(this)" style="accent-color: var(--accent);">
-                                            <span style="font-size: 13px;"><strong>${code}</strong> ${name}</span>
-                                        </label>
-                                    `).join('')}
-                                </div>
+                        <div style="padding: 4px 0 0;">
+                            <div style="text-align: center; margin-bottom: 16px;">
+                                <h3 style="color: var(--text-primary); margin-bottom: 8px;">What trades do you perform?</h3>
+                                <p style="color: var(--text-muted); font-size: 13px;">Select the exact CSI sections you work in — this gives you precise Trade Match scoring (not just division-level)</p>
                             </div>
+                            <div id="onboarding_csi_picker"></div>
                         </div>
                     `;
+                    // Render the section-level picker after body.innerHTML is set
+                    renderCSIPicker('onboarding_csi_picker', onboardingData.preferred_csi_sections, (newSections) => {
+                        onboardingData.preferred_csi_sections = newSections;
+                        // Derive division-level trades array for backward compat
+                        onboardingData.trades = [...new Set(newSections.map(c => c.split(' ')[0]))];
+                    });
                 } else {
                     // Show product lines for distributors and manufacturer reps
                     body.innerHTML = `
@@ -5939,10 +5938,12 @@ ${fullText.substring(0, 40000)}`;
                 }
                 // Address already saved in place_changed listener
             } else if (onboardingStep === 3) {
-                // Step 3: Trades or Product Lines (conditional)
+                // Step 3: Acquisition source — no validation needed
+            } else if (onboardingStep === 4) {
+                // Step 4: CSI sections (subcontractor) or product lines (distributor/mfg rep)
                 if (onboardingData.companyType === 'subcontractor') {
-                    if (onboardingData.trades.length === 0) {
-                        alert('Please select at least one trade division');
+                    if (onboardingData.preferred_csi_sections.length === 0) {
+                        alert('Please select at least one CSI section');
                         return;
                     }
                 } else {
@@ -5952,7 +5953,7 @@ ${fullText.substring(0, 40000)}`;
                         onboardingData.productCategories = Array.from(categories.selectedOptions).map(opt => opt.value);
                     }
                 }
-            } else if (onboardingStep === 4) {
+            } else if (onboardingStep === 5) {
                 onboardingData.locationImportance = parseInt(document.getElementById('onboarding_locationImportance')?.value || 50);
             } else if (onboardingStep === 7) {
                 // Step 7: AI Advisor - capture selections
@@ -6115,6 +6116,7 @@ ${fullText.substring(0, 40000)}`;
                 search_radius: 100,
                 location_matters: onboardingData.locationImportance > 0,
                 trades: onboardingData.trades,
+                preferred_csi_sections: onboardingData.preferred_csi_sections,
                 client_types: onboardingData.clientTypes,
                 risk_tolerance: onboardingData.riskTolerance,
                 capacity: onboardingData.capacity,
