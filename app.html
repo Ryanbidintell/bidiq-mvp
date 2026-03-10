@@ -4445,7 +4445,7 @@ ${fullText.substring(0, 40000)}`;
                     aiAdvisorOutput: p.ai_advisor_output || null,
                     scoreExplanation: p.score_explanation || null,
                     // Layer 0 data
-                    contractRisks: p.contract_risks || [],
+                    contractRisks: p.contract_risks || null,
                     marketMetroArea: p.market_metro_area || null,
                     buildingType: p.building_type ? { type: p.building_type } : null,
                     // Module 1: Division tracking
@@ -10573,6 +10573,9 @@ ${truncatedText}`;
                     const risksDisplay = formatContractRisksForDisplay(p.contractRisks);
                     if (risksDisplay.hasRisks) {
                         contractRisksHtml = risksDisplay.html;
+                        if (p.contractRisks._fromPreviousAnalysis) {
+                            contractRisksHtml += '<div style="font-size:11px;color:var(--text-muted);text-align:right;margin-top:4px;padding-right:4px;opacity:0.7;">From previous analysis</div>';
+                        }
                     }
                 }
 
@@ -10981,6 +10984,26 @@ ${truncatedText}`;
                     console.warn('   To get updated extraction, please upload the documents again.');
                 }
 
+                // Re-run contract risk detection if full text is available
+                let contractRisks = project.contractRisks || null;
+                let contractRisksCached = false;
+                if (project.full_text && project.full_text.length > 100) {
+                    try {
+                        console.log('🔄 Re-running contract risk detection...');
+                        const freshRisks = await detectContractRisks(project.full_text);
+                        if (freshRisks && freshRisks.hasContractLanguage) {
+                            contractRisks = freshRisks;
+                            console.log('✅ Fresh contract risks detected');
+                        } else if (contractRisks) {
+                            contractRisksCached = true;
+                            console.log('ℹ️ No contract language in re-analysis, keeping previous results');
+                        }
+                    } catch (riskError) {
+                        console.warn('⚠️ Contract risk re-detection failed, keeping previous results:', riskError);
+                        if (contractRisks) contractRisksCached = true;
+                    }
+                }
+
                 // Re-run scoring with (possibly updated) extracted data
                 const scores = await calculateScores(
                     extracted,
@@ -10988,7 +11011,7 @@ ${truncatedText}`;
                     project.goodFound || [],
                     project.badFound || [],
                     project.tradesFound || [],
-                    project.contractRisks || [],
+                    contractRisks || [],
                     null // tradeDetection - will be recalculated
                 );
 
@@ -11015,14 +11038,19 @@ ${truncatedText}`;
                 });
 
                 // Update in database with new extracted data
-                const { error } = await supabaseClient.from('projects').update({
+                const updatePayload = {
                     extracted_data: extracted,
                     scores: scores,
                     validation_status: validationStatus,
                     ai_advisor_output: aiAdvisorOutput,
                     intelligence_tags: intelligenceTags,
                     updated_at: new Date().toISOString()
-                }).eq('id', project.id);
+                };
+                // Only save fresh contract risks — never overwrite with empty
+                if (contractRisks && !contractRisksCached) {
+                    updatePayload.contract_risks = contractRisks;
+                }
+                const { error } = await supabaseClient.from('projects').update(updatePayload).eq('id', project.id);
 
                 if (error) throw error;
 
@@ -11036,7 +11064,8 @@ ${truncatedText}`;
                         distance: scores.distance,
                         validation_status: validationStatus,
                         ai_advisor_output: aiAdvisorOutput,
-                        intelligence_tags: intelligenceTags
+                        intelligence_tags: intelligenceTags,
+                        contractRisks: contractRisks ? { ...contractRisks, _fromPreviousAnalysis: contractRisksCached } : null
                     };
                     console.log('✅ Updated window.currentReportProject with new scores:', window.currentReportProject.scores);
                 }
