@@ -8612,21 +8612,55 @@ ${truncatedText}`;
                 let tradeScore, reason;
 
                 if (hasSections) {
-                    // Section-level scoring: more precise, fixes false positives
+                    // Section-level scoring: presence-floor model
+                    // Finding ANY matching section means real work exists — floor at 65
                     const sectionCount = settings.preferred_csi_sections.length;
                     const foundSectionCount = foundSections.length;
-                    tradeScore = sectionCount > 0 ? Math.round((foundSectionCount / sectionCount) * 100) : 50;
-                    reason = `Found ${foundSectionCount} of your ${sectionCount} spec sections`;
+
+                    if (foundSectionCount === 0) {
+                        tradeScore = 0;
+                    } else {
+                        const bonus = (foundSectionCount - 1) * 5;
+                        tradeScore = Math.min(65 + bonus, 100);
+                    }
+
+                    if (foundSectionCount === 0) {
+                        reason = `None of your ${sectionCount} spec section${sectionCount !== 1 ? 's' : ''} found in this bid`;
+                    } else if (foundSectionCount === sectionCount) {
+                        reason = `All ${sectionCount} section${sectionCount !== 1 ? 's' : ''} found — strong scope match`;
+                    } else {
+                        reason = `${foundSectionCount} of your ${sectionCount} spec section${sectionCount !== 1 ? 's' : ''} found — work exists`;
+                    }
                     if (tradeDetection && tradeDetection.signals_used.length > 0) {
                         reason += ` (+ ${tradeDetection.signals_used.join(', ')})`;
                     }
                 } else {
-                    // Division-level scoring: fallback for users who haven't set sections yet
-                    tradeScore = settings.trades.length > 0 ? Math.round((tradesFound.length / settings.trades.length) * 100) : 50;
-                    reason = `Found ${tradesFound.length} of your ${settings.trades.length} trade divisions`;
+                    // Division-level scoring: presence-floor model
+                    // Finding ANY matching division means real work exists — floor at 65
+                    const totalTrades = settings.trades.length;
+                    const foundCount = tradesFound.length;
+
+                    if (totalTrades === 0) {
+                        tradeScore = 50;
+                    } else if (foundCount === 0) {
+                        tradeScore = 0;
+                    } else {
+                        const bonus = (foundCount - 1) * 5;
+                        tradeScore = Math.min(65 + bonus, 100);
+                    }
+
+                    if (totalTrades === 0) {
+                        reason = 'No trades configured — set your trades in Settings';
+                    } else if (foundCount === 0) {
+                        reason = `None of your ${totalTrades} trade division${totalTrades !== 1 ? 's' : ''} found in specs`;
+                    } else if (foundCount === totalTrades) {
+                        reason = `All ${totalTrades} trade type${totalTrades !== 1 ? 's' : ''} found — strong scope match`;
+                    } else {
+                        reason = `${foundCount} of your ${totalTrades} trade type${totalTrades !== 1 ? 's' : ''} found — work exists`;
+                    }
                     if (tradeDetection && tradeDetection.signals_used.length > 0) {
                         reason += ` using ${tradeDetection.signals_used.join(', ')}`;
-                    } else {
+                    } else if (foundCount > 0) {
                         reason += ' in specs';
                     }
                 }
@@ -9175,19 +9209,33 @@ ${truncatedText}`;
             }
             
             // Trade Match details (for subcontractors)
-            if (title === 'Trade Match' && comp.details?.found) {
+            if (title === 'Trade Match' && comp.details?.found !== undefined) {
                 if (comp.details.scoring_mode === 'section' && comp.details.allSections) {
                     const found = comp.details.foundSections || [];
                     const notFound = comp.details.allSections.filter(s => !found.includes(s));
+                    const total = comp.details.allSections.length;
                     let html = `<div class="score-component-details">`;
-                    if (found.length > 0) html += `<strong>Sections found:</strong> ${found.join(', ')}<br>`;
-                    if (notFound.length > 0) html += `<span style="color:var(--text-muted);font-size:12px;">Not in spec: ${notFound.join(', ')}</span>`;
-                    if (found.length === 0) html += `<span style="color:var(--warning)">None of your specific sections appear in this spec — likely not your scope of work</span>`;
+                    if (found.length === 0) {
+                        html += `<span style="color:var(--warning)">⚠️ None of your ${total} section${total !== 1 ? 's' : ''} appear in this spec — likely not your scope of work</span>`;
+                    } else if (found.length === total) {
+                        html += `<span style="color:var(--success)">✅ All ${total} section${total !== 1 ? 's' : ''} found — strong scope match</span><br>`;
+                        html += `<span style="font-size:12px;">${found.join(', ')}</span>`;
+                    } else {
+                        html += `<span style="color:var(--success)">✅ ${found.length} of ${total} sections found — work exists for your trade</span><br>`;
+                        html += `<strong style="font-size:12px;">Matched:</strong> <span style="font-size:12px;">${found.join(', ')}</span><br>`;
+                        if (notFound.length > 0) html += `<span style="color:var(--text-muted);font-size:12px;">Not in spec: ${notFound.join(', ')}</span>`;
+                    }
                     html += `</div>`;
                     details = html;
                 } else {
-                    const foundNames = comp.details.found.map(code => { const div = CSI_DIVISIONS_FLAT.find(d => d[0] === code); return div ? `Div ${code} (${div[1]})` : `Div ${code}`; });
-                    details = `<div class="score-component-details"><strong>Found:</strong> ${foundNames.length > 0 ? foundNames.join(', ') : 'None of your divisions found in specs - verify this project includes your trade'}</div>`;
+                    const found = comp.details.found || [];
+                    const foundNames = found.map(code => { const div = CSI_DIVISIONS_FLAT.find(d => d[0] === code); return div ? `Div ${code} (${div[1]})` : `Div ${code}`; });
+                    // We don't store total trade count in details, derive from reason string or just show found
+                    if (foundNames.length === 0) {
+                        details = `<div class="score-component-details"><span style="color:var(--warning)">⚠️ None of your divisions found in specs — verify this project includes your trade</span></div>`;
+                    } else {
+                        details = `<div class="score-component-details"><span style="color:var(--success)">✅ Work found for your trade</span><br><strong>Matched:</strong> ${foundNames.join(', ')}</div>`;
+                    }
                 }
             }
 
@@ -9321,11 +9369,11 @@ ${truncatedText}`;
             }
             
             // Trade/Product Match tips
-            if (c.trade.score < 70) {
-                if (c.trade.details?.found !== undefined) {
-                    // Subcontractor trade match
-                    tips.push('🔧 <strong>Trade Match:</strong> Not all your divisions were found in specs. Verify your scope is actually included before bidding.');
-                } else if (c.trade.details?.status === 'not_configured') {
+            if (c.trade.score === 0 && c.trade.details?.found !== undefined) {
+                // Zero match — no relevant work found
+                tips.push('🔧 <strong>Trade Match:</strong> None of your trade types were found in this spec set. Confirm the scope includes your work before investing time on a takeoff.');
+            } else if (c.trade.score < 70) {
+                if (c.trade.details?.status === 'not_configured') {
                     // Product lines not configured
                     tips.push('📦 <strong>Product Match:</strong> Add your product lines in Settings to track when your brands are specified.');
                 } else {
