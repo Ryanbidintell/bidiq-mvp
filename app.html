@@ -5652,8 +5652,15 @@ ${fullText.substring(0, 40000)}`;
                             });
                             placeAutocomplete.style.width = '100%';
                             placeAutocomplete.style.display = 'block';
+                            // Insert before the original input and hide it (kept as fallback)
+                            input.parentNode.insertBefore(placeAutocomplete, input);
+                            input.style.display = 'none';
                             if (input.value) placeAutocomplete.value = input.value;
-                            input.parentNode.replaceChild(placeAutocomplete, input);
+
+                            // Sync typed text back to hidden input so fallback validation can read it
+                            placeAutocomplete.addEventListener('input', () => {
+                                input.value = placeAutocomplete.value || '';
+                            });
 
                             placeAutocomplete.addEventListener('gmp-placeselect', async ({ place }) => {
                                 try {
@@ -5704,6 +5711,8 @@ ${fullText.substring(0, 40000)}`;
                             });
                         } catch (e) {
                             console.error('❌ Error initializing onboarding autocomplete:', e);
+                            // On PAC init failure, show the original input so user can type manually
+                            input.style.display = '';
                         }
                     }
                 }, 100);
@@ -6052,10 +6061,25 @@ ${fullText.substring(0, 40000)}`;
             } else if (onboardingStep === 2) {
                 // Check if address was selected via Google Places
                 if (!onboardingData.fullAddress) {
-                    alert('Please select your office address from the dropdown. Start typing and choose from the suggestions.');
-                    return;
+                    // Fall back to whatever the user typed (PAC syncs to hidden input on each keystroke)
+                    const fallbackInput = document.getElementById('onboarding_address');
+                    const typed = (fallbackInput ? fallbackInput.value : '').trim();
+                    if (typed) {
+                        onboardingData.fullAddress = typed;
+                        // Best-effort parse of city/state from free-text (e.g. "123 Main St, Kansas City, MO")
+                        if (!onboardingData.city || !onboardingData.state) {
+                            const parts = typed.split(',').map(p => p.trim()).filter(Boolean);
+                            if (parts.length >= 3 && !onboardingData.city) onboardingData.city = parts[parts.length - 3];
+                            if (parts.length >= 2 && !onboardingData.city) onboardingData.city = parts[parts.length - 2];
+                            if (parts.length >= 2 && !onboardingData.state) onboardingData.state = (parts[parts.length - 1] || '').split(' ')[0];
+                        }
+                        // completeOnboarding has a fallback geocoder that will resolve lat/lng from city+state
+                        console.log('📍 Address fallback from typed value:', onboardingData.fullAddress);
+                    } else {
+                        alert('Please enter your office address to continue. At minimum, type your city and state.');
+                        return;
+                    }
                 }
-                // Address already saved in place_changed listener
             } else if (onboardingStep === 3) {
                 // Step 3: Acquisition source — no validation needed
             } else if (onboardingStep === 4) {
