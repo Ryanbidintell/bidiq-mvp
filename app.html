@@ -777,6 +777,10 @@
         .setup-banner-icon { font-size:18px; flex-shrink:0; }
         .setup-banner-text { flex:1; line-height:1.5; }
         .setup-banner-link { color:var(--accent); font-weight:600; cursor:pointer; text-decoration:underline; }
+        .profile-progress-bar { height:4px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; margin-top:8px; width:100%; }
+        .profile-progress-fill { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--accent),#f59e0b); transition:width 0.4s ease; }
+        .profile-incomplete-callout { margin:12px 0 0; padding:11px 14px; background:rgba(242,101,34,0.07); border-left:3px solid var(--accent); border-radius:0 var(--radius) var(--radius) 0; font-size:13px; color:var(--text-secondary); line-height:1.5; }
+        .profile-incomplete-callout .link { color:var(--accent); font-weight:600; cursor:pointer; text-decoration:underline; }
 
         /* AI Advisor pulse ring — draws attention when never clicked */
         @keyframes pulse-ring { 0%{box-shadow:0 0 0 0 rgba(79,70,229,.6)} 70%{box-shadow:0 0 0 14px rgba(79,70,229,0)} 100%{box-shadow:0 0 0 0 rgba(79,70,229,0)} }
@@ -8969,10 +8973,12 @@ ${truncatedText}`;
                         ${gcRiskHtml}
                         ${analysis.bidRisk ? renderBidRiskCard(analysis.bidRisk) : ''}
                     </div>
+                    ${await renderProfileWarningHtml(settings)}
                     ${renderComponent('📍', 'Location Fit', analysis.scores.components.location)}
                     ${renderComponent('🔑', 'Keywords & Contract', analysis.scores.components.keywords)}
                     ${renderComponent('🏢', 'GC Relationship', analysis.scores.components.gc)}
                     ${renderComponent(settings.companyType === 'subcontractor' ? '🔧' : '📦', settings.companyType === 'subcontractor' ? 'Trade Match' : 'Product Match', analysis.scores.components.trade)}
+                    ${(analysis.scores.components.trade?.score < 50 && !((settings.preferred_csi_sections||[]).length > 0) && !((settings.trades||[]).length > 0)) ? `<div class="profile-incomplete-callout" style="margin:0 0 2px;">No trade types configured — this score is a rough estimate. <span class="link" onclick="switchTab('settings')">Set your trade types →</span></div>` : ''}
                     ${analysis.scores.components.competitive?.weight > 0 ? renderComponent('⚔️', 'Competitive Pressure', analysis.scores.components.competitive) : ''}
 
                     ${renderExtractedDataSection(analysis.extracted, analysis.gcs)}
@@ -10070,28 +10076,60 @@ ${truncatedText}`;
             }, 16);
         }
 
-        function renderSetupBanner(settings) {
+        async function renderProfileCompleteness() {
             const banner = document.getElementById('setupBanner');
             if (!banner) return;
-            const missing = [];
-            if (!settings.city || !settings.state) missing.push('your office location');
-            if (settings.companyType === 'subcontractor' && (!settings.preferred_csi_sections || settings.preferred_csi_sections.length === 0)) missing.push('your trade sections');
-            else if (settings.companyType !== 'subcontractor' && (!settings.productLines || settings.productLines.length === 0)) missing.push('your product lines');
-            if (missing.length === 0) { banner.innerHTML = ''; return; }
+            if (localStorage.getItem('bidintell_profile_complete')) { banner.innerHTML = ''; return; }
+            const settings = await getSettings();
+            const keywords = await getKeywords();
+            const gcs = await getGCs();
+            let score = 0;
+            if (settings.city && settings.state) score += 25;
+            if ((settings.preferred_csi_sections || []).length > 0 || (settings.trades || []).length > 0) score += 35;
+            if ((keywords.good || []).length > 0) score += 25;
+            if ((gcs || []).length > 0) score += 15;
+            if (score >= 100) {
+                localStorage.setItem('bidintell_profile_complete', '1');
+                banner.innerHTML = '';
+                return;
+            }
             banner.innerHTML = `
-                <div class="setup-banner">
-                    <span class="setup-banner-icon">⚠️</span>
-                    <span class="setup-banner-text">
-                        Your profile is incomplete — scores may be inaccurate. Still need: <strong>${missing.join(' and ')}</strong>.
-                        <span class="setup-banner-link" onclick="switchTab('settings')"> Complete setup →</span>
-                    </span>
+                <div class="setup-banner" style="flex-direction:column;align-items:flex-start;gap:6px;">
+                    <div style="display:flex;align-items:center;gap:10px;width:100%;">
+                        <span class="setup-banner-icon">⚡</span>
+                        <span class="setup-banner-text" style="flex:1;">
+                            Your profile is <strong>${score}% complete</strong> — scores are less accurate until finished.
+                            <span class="setup-banner-link" onclick="switchTab('settings')"> Complete setup →</span>
+                        </span>
+                    </div>
+                    <div class="profile-progress-bar">
+                        <div class="profile-progress-fill" style="width:${score}%;"></div>
+                    </div>
                 </div>`;
+        }
+
+        async function renderProfileWarningHtml(settings) {
+            if (sessionStorage.getItem('bidintell_report_warning_shown')) return '';
+            const keywords = await getKeywords();
+            const gcs = await getGCs();
+            let score = 0;
+            if (settings.city && settings.state) score += 25;
+            if ((settings.preferred_csi_sections || []).length > 0 || (settings.trades || []).length > 0) score += 35;
+            if ((keywords.good || []).length > 0) score += 25;
+            if ((gcs || []).length > 0) score += 15;
+            if (score >= 75) return '';
+            sessionStorage.setItem('bidintell_report_warning_shown', '1');
+            return `<div class="profile-incomplete-callout">
+                <strong>⚡ This score is based on default settings</strong><br>
+                Add your trade types, location, and keywords to get a personalized score.
+                <span class="link" onclick="switchTab('settings')"> Complete your profile →</span>
+            </div>`;
         }
 
         async function loadDashboard() {
             const projects = await getProjects();
             const settings = await getSettings();
-            renderSetupBanner(settings);
+            renderProfileCompleteness();
 
             // Total bids analyzed
             animateValue('statBids', 0, projects.length);
@@ -10582,6 +10620,12 @@ ${truncatedText}`;
                 // Recalculate Bid Risk from saved extracted data
                 const bidRisk = calculateBidRisk(p.extracted);
 
+                // Pre-compute profile completeness prompts
+                const profileWarningHtml = await renderProfileWarningHtml(settings);
+                const _tradeScoreSaved = p.scores?.components?.trade?.score ?? 100;
+                const _hasSections = (settings.preferred_csi_sections || []).length > 0 || (settings.trades || []).length > 0;
+                const tradeNudgeHtml = (_tradeScoreSaved < 50 && !_hasSections) ? `<div class="profile-incomplete-callout" style="margin:0 0 2px;">No trade types configured — this score is a rough estimate. <span class="link" onclick="switchTab('settings')">Set your trade types →</span></div>` : '';
+
                 // Populate score content
                 const recClassSaved = p.scores.recommendation.toLowerCase();
                 const recTextSaved = { GO: 'Strong fit', REVIEW: 'Review carefully', PASS: 'Poor fit' }[p.scores.recommendation] || '';
@@ -10600,10 +10644,12 @@ ${truncatedText}`;
                             ${bidRisk ? renderBidRiskCard(bidRisk) : ''}
                             ${p.bid_divisions_submitted && p.bid_divisions_submitted.length > 0 ? `<div style="margin-top:12px;padding:10px 14px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);font-size:13px;"><span style="font-weight:600;color:var(--text-primary);">📋 Submitted:</span> <span style="color:var(--text-secondary);">${p.bid_divisions_submitted.map(d => 'Div ' + d).join(', ')}</span></div>` : ''}
                         </div>
+                        ${profileWarningHtml}
                         ${renderComponent('📍', 'Location Fit', p.scores.components.location)}
                         ${renderComponent('🔑', 'Keywords & Contract', p.scores.components.keywords)}
                         ${renderComponent('🏢', 'GC Relationship', p.scores.components.gc)}
                         ${renderComponent(tradeIcon, tradeLabel, p.scores.components.trade)}
+                        ${tradeNudgeHtml}
                         ${p.scores.components.competitive?.weight > 0 ? renderComponent('⚔️', 'Competitive Pressure', p.scores.components.competitive) : ''}
                     </div>
 
