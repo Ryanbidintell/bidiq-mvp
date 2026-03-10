@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- Primary Meta Tags -->
-<title>BidIntell — AI-Powered Bid Intelligence for Subcontractors</title>
-<meta name="title" content="BidIntell — AI-Powered Bid Intelligence for Subcontractors">
-<meta name="description" content="Stop wasting time on bids you won't win. BidIntell's personalized BidIndex Score tells you which projects are worth your time — in seconds, not hours.">
+<title>BidIntell – Bid Scoring for Construction Subcontractors | Know Which Bids to Chase</title>
+<meta name="title" content="BidIntell – Bid Scoring for Construction Subcontractors | Know Which Bids to Chase">
+<meta name="description" content="Stop wasting 80% of estimating time on unwinnable bids. BidIntell scores every opportunity 0-100 with our BidIndex algorithm — personalized to YOUR business. Built for subs. Starting at $49/mo.">
 <meta name="keywords" content="construction bid software, subcontractor bidding, AI construction software, bid analysis tool, construction estimating, GC tracking, contract risk detection">
 <link rel="canonical" href="https://bidintell.ai/">
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://bidintell.ai/">
-<meta property="og:title" content="BidIntell — AI-Powered Bid Intelligence for Subcontractors">
-<meta property="og:description" content="Stop wasting time on bids you won't win. Get a clear GO/REVIEW/PASS decision in about a minute.">
+<meta property="og:url" content="https://bidintell.ai">
+<meta property="og:title" content="BidIntell – AI Bid Scoring for Construction Subcontractors">
+<meta property="og:description" content="Score every bid opportunity 0-100 with BidIndex. Personalized to your trade, region, and GC history. Plans from $49/mo.">
 <meta property="og:image" content="https://bidintell.ai/og-image.png">
 
 <!-- Twitter -->
@@ -35,6 +35,90 @@
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
   gtag('config', 'G-XGYJLV0E6G');
+</script>
+
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "CLARITY_PROJECT_ID");
+</script>
+
+<!-- Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "BidIntell",
+      "url": "https://bidintell.ai",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "description": "AI-powered bid scoring platform for construction subcontractors. BidIndex scores bid opportunities 0-100 based on location, trade match, GC relationship, and keywords.",
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Starter",
+          "price": "49.00",
+          "priceCurrency": "USD",
+          "billingIncrement": "P1M"
+        },
+        {
+          "@type": "Offer",
+          "name": "Professional",
+          "price": "99.00",
+          "priceCurrency": "USD",
+          "billingIncrement": "P1M"
+        }
+      ]
+    },
+    {
+      "@type": "Organization",
+      "name": "BidIntell",
+      "url": "https://bidintell.ai"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is BidIntell easy to use if I'm not great with technology?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Setup takes about 5 minutes — enter your trade, service area, and the GCs you work with. After that, upload a bid and get a score. No training required."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is my data kept private?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Your bid data is private to your account and never shared with other users, GCs, or third parties."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What if BidIntell doesn't work for my trade?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "BidIntell supports all commercial subcontractor trades via CSI MasterFormat. If it's not a fit, cancel anytime — no contracts."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How long does setup take?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "About 5 minutes. Enter your trade, service area, and preferred GCs. Then upload your first bid and see your BidIndex score."
+          }
+        }
+      ]
+    }
+  ]
+}
 </script>
 
 <!-- Google Fonts -->
@@ -1099,6 +1183,59 @@ img { max-width: 100%; display: block; }
   .roi-inputs, .roi-results { padding: 28px 24px; }
   .roi-email-row { flex-direction: column; }
 }
+
+/* ===== FAQ ===== */
+.faq-section {
+  padding: 80px 0;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+.faq-section .section-header { text-align: center; margin-left: auto; margin-right: auto; }
+.faq-list { max-width: 720px; margin: 0 auto; display: grid; gap: 8px; }
+.faq-item {
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+.faq-item.open { border-color: rgba(242,101,34,0.25); }
+.faq-question {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: none;
+  border: none;
+  color: var(--white);
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.faq-question:hover { color: var(--accent); }
+.faq-chevron {
+  flex-shrink: 0;
+  width: 20px; height: 20px;
+  color: var(--fog);
+  transition: transform 0.3s, color 0.3s;
+}
+.faq-item.open .faq-chevron { transform: rotate(180deg); color: var(--accent); }
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease-out;
+}
+.faq-answer-inner {
+  padding: 0 24px 20px;
+  font-size: 0.95rem;
+  color: var(--fog);
+  line-height: 1.7;
+}
+.faq-item.open .faq-answer { max-height: 400px; }
 </style>
 </head>
 <body>
@@ -1118,7 +1255,7 @@ img { max-width: 100%; display: block; }
       <li><a href="#calculator">Calculator</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li><a href="/contact">Contact</a></li>
-      <li><a href="/app" style="color: var(--cloud);">Sign In</a></li>
+      <li><a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=nav-cta" style="color: var(--cloud);">Sign In</a></li>
       <li><a href="/demo" class="nav-cta">Schedule a Demo →</a></li>
     </ul>
     <button class="mobile-menu-btn" aria-label="Menu">
@@ -1138,12 +1275,13 @@ img { max-width: 100%; display: block; }
           <span class="dot"></span>
           Founding pricing through March 31
         </div>
-        <h1>Your AI bidding advisor that gets <span>smarter with every bid.</span></h1>
-        <p class="hero-sub">BidIntell reads your bid documents, scores every opportunity against your business, and tracks every outcome — so the system learns what wins for you. Fewer wasted estimating hours. Better bid/no-bid decisions. Smarter pricing over time.</p>
+        <h1>Stop Wasting Time on Bids <span>You Won't Win</span></h1>
+        <p class="hero-sub">BidIntell scores every bid opportunity 0-100 so your estimators focus on work worth pursuing.</p>
         <div class="hero-actions">
-          <a href="#apply" class="btn-primary">Request Beta Access →</a>
+          <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=hero-cta" class="btn-primary">Score Your First Bid Free →</a>
           <a href="#how" class="btn-secondary">See How It Works</a>
         </div>
+        <p style="margin-top:14px; font-size:0.8rem; color:var(--slate-light);">Free during beta &nbsp;•&nbsp; No credit card required &nbsp;•&nbsp; Setup takes 5 minutes</p>
       </div>
       <div class="hero-visual">
         <div class="score-card">
@@ -1215,25 +1353,21 @@ img { max-width: 100%; display: block; }
   <div class="container">
     <div class="proof-bar-inner">
       <div class="proof-stat">
-        <span class="num">90% faster</span>
-        <span class="label">Bid document review — minutes, not hours</span>
+        <span class="num">1 in 5</span>
+        <span class="label">Average bids a sub wins</span>
       </div>
       <div class="proof-divider"></div>
       <div class="proof-stat">
-        <span class="num">0–100</span>
-        <span class="label">Personalized BidIndex Score per bid</span>
+        <span class="num">80%</span>
+        <span class="label">Of estimating time spent on unwinnable work</span>
       </div>
       <div class="proof-divider"></div>
       <div class="proof-stat">
-        <span class="num">&lt; 1 min</span>
-        <span class="label">From PDF upload to GO/REVIEW/PASS decision</span>
-      </div>
-      <div class="proof-divider"></div>
-      <div class="proof-stat">
-        <span class="num">First.</span>
-        <span class="label">Platform built specifically for subcontractor bid intelligence</span>
+        <span class="num">$2,250+</span>
+        <span class="label">Average cost of a losing bid (at $75/hr estimating cost)</span>
       </div>
     </div>
+    <p style="text-align:center; margin-top:24px; font-size:0.85rem; color:var(--fog);">BidIntell helps you filter out the 80% before your estimators invest a single hour.</p>
   </div>
 </section>
 
@@ -1674,6 +1808,7 @@ img { max-width: 100%; display: block; }
       <h2>Built for the industry. Priced to make sense.</h2>
       <p>No enterprise sales calls. No per-seat nonsense. Just straightforward plans that pay for themselves after one good bid decision.</p>
     </div>
+    <p style="text-align:center; max-width:640px; margin:0 auto 48px; font-size:1rem; color:var(--fog); line-height:1.7;">The average losing bid costs your firm $2,250+ in estimating time. At $49/month, BidIntell pays for itself the moment it helps you skip one bad job.</p>
     <div class="pricing-grid">
       <div class="pricing-card">
         <h3>Starter</h3>
@@ -1688,7 +1823,7 @@ img { max-width: 100%; display: block; }
           <li>Outcome tracking dashboard</li>
           <li>Contract risk flagging</li>
         </ul>
-        <a href="#apply" class="btn-secondary btn-full">Get Started Free →</a>
+        <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=pricing-starter-cta" class="btn-secondary btn-full">Get Started Free →</a>
       </div>
       <div class="pricing-card featured">
         <div class="popular-tag">Most Popular</div>
@@ -1704,7 +1839,54 @@ img { max-width: 100%; display: block; }
           <li>Email forwarding — auto-analyze (coming soon)</li>
           <li>Priority support</li>
         </ul>
-        <a href="#apply" class="btn-primary btn-full">Get Started Free →</a>
+        <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=pricing-pro-cta" class="btn-primary btn-full">Get Started Free →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Common questions</span>
+      <h2>Frequently asked questions</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          Is BidIntell easy to use if I'm not great with technology?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">Yes. Setup takes about 5 minutes — enter your trade, service area, and the GCs you work with. After that, upload a bid and get a score. No training required.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          How is my data kept private?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">Your bid data is private to your account and never shared with other users, GCs, or third parties.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          What if BidIntell doesn't work for my trade?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">BidIntell supports all commercial subcontractor trades via CSI MasterFormat. If it's not a fit, cancel anytime — no contracts.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          How long does setup take?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">About 5 minutes. Enter your trade, service area, and preferred GCs. Then upload your first bid and see your BidIndex score.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          Will BidIntell replace my estimating software?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">No — and it's not trying to. BidIntell helps you decide which bids to pursue before your estimators invest time on takeoffs. Think of it as the filter before the funnel.</div></div>
       </div>
     </div>
   </div>
@@ -1973,6 +2155,21 @@ async function handleBetaSubmit(e) {
     messageEl.innerHTML = '';
   }, 6000);
 }
+
+// FAQ accordion
+document.querySelectorAll('.faq-question').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) {
+      item.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+    } else {
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+});
 
 // Mobile menu
 document.querySelector('.mobile-menu-btn')?.addEventListener('click', () => {
