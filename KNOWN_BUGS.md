@@ -48,6 +48,8 @@
 - [x] Geolocation bug — fixed (prior session)
 
 ### P1 - High (Hurts Accuracy)
+- [x] Trade Match false-low scores — FIXED Mar 10 (presence-floor model: any match = 65+, +5 per add'l trade)
+- [x] Onboarding step 2 address stuck — FIXED Mar 10 (gmp-placeselect fallback to typed value)
 - [ ] BidIndex scores - need real-world validation
 - [ ] Trade detection accuracy
 - [ ] Location scoring (distance calculations)
