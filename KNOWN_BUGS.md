@@ -1,6 +1,6 @@
 # Known Bugs & Fixes
 
-**Last Updated:** February 7, 2026, 8:45 PM
+**Last Updated:** March 10, 2026
 
 ---
 
@@ -50,6 +50,7 @@
 ### P1 - High (Hurts Accuracy)
 - [x] Trade Match false-low scores — FIXED Mar 10 (presence-floor model: any match = 65+, +5 per add'l trade)
 - [x] Onboarding step 2 address stuck — FIXED Mar 10 (gmp-placeselect fallback to typed value)
+- [x] Contract terms disappear on re-analysis — FIXED Mar 10 (re-runs detectContractRisks on re-analyze; getProjects maps null not []; never overwrites cached risks with empty)
 - [ ] BidIndex scores - need real-world validation
 - [ ] Trade detection accuracy
 - [ ] Location scoring (distance calculations)
