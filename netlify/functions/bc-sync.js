@@ -565,6 +565,11 @@ exports.handler = async function(event) {
             }
 
             const body = await res.json();
+            // Temporary: log first opportunity to inspect all available fields
+            if (page === 0) {
+                const sample = Array.isArray(body) ? body[0] : (body.results || body.data || [])[0];
+                if (sample) console.log('BC_OPPORTUNITY_SAMPLE:', JSON.stringify(sample));
+            }
             // BC API may nest results under 'results' or 'data'
             const results = Array.isArray(body) ? body : (body.results || body.data || []);
             opportunities.push(...results);
