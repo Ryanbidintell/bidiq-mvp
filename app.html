@@ -13288,7 +13288,12 @@ Respond now:`;
                     }
                 });
 
-                const result = await res.json();
+                let result;
+                try {
+                    result = await res.json();
+                } catch (_) {
+                    throw new Error('Sync timed out. Try again — fewer bids will be geocoded on subsequent syncs.');
+                }
 
                 if (!res.ok) {
                     throw new Error(result.error || 'Sync failed');

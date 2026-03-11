@@ -3,6 +3,9 @@
   publish = "."
   functions = "netlify/functions"
 
+[functions."bc-sync"]
+  timeout = 26
+
 [build.environment]
   NODE_VERSION = "18"
   SECRETS_SCAN_ENABLED = "false"  # Disabled - secrets in old git history, already removed and rotated
