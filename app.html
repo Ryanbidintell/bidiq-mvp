@@ -14479,8 +14479,14 @@ Respond now:`;
 
                 console.log('✅ loadAll() completed successfully');
 
-                // Load BC connection status into Settings tab
-                loadBCConnection();
+                // Load BC connection status into Settings tab (beta only)
+                const BC_BETA_EMAILS = ['ryan@fsikc.com'];
+                const integrationsCard = document.getElementById('integrationsCard');
+                if (BC_BETA_EMAILS.includes(currentUser?.email)) {
+                    loadBCConnection();
+                } else {
+                    if (integrationsCard) integrationsCard.style.display = 'none';
+                }
 
                 // Handle OAuth return params (bc_connected, bc_error)
                 const urlParams = new URLSearchParams(window.location.search);
