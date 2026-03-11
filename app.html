@@ -1966,6 +1966,32 @@
                         </div>
                     </div>
 
+                    <!-- Integrations -->
+                    <div class="settings-card" id="integrationsCard">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">🔌 Integrations</div>
+                            <div class="settings-card-description">Connect your plan rooms and bid management tools</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <!-- BuildingConnected -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 1px solid var(--border-color);">
+                                <div style="display: flex; align-items: center; gap: 14px;">
+                                    <div style="width: 40px; height: 40px; background: #0066CC; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 600; font-size: 14px; color: var(--text-primary);">BuildingConnected</div>
+                                        <div style="font-size: 12px; color: var(--text-muted);" id="bcConnectionSubtext">Connect to import bid invitations automatically</div>
+                                    </div>
+                                </div>
+                                <div id="bcConnectionStatus" style="flex-shrink: 0; margin-left: 16px;">
+                                    <!-- Populated by loadBCConnection() -->
+                                    <span style="font-size: 13px; color: var(--text-muted);">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <button class="btn btn-primary" onclick="saveSettings()" style="width: 100%; padding: 14px; font-size: 15px;">💾 Save All Settings</button>
                 </div>
             </div>
@@ -13174,6 +13200,100 @@ Respond now:`;
             });
         });
 
+        // ============================================
+        // BUILDINGCONNECTED OAUTH INTEGRATION
+        // ============================================
+
+        /**
+         * Load BC connection status and render the correct UI state in Settings.
+         * Called at the end of loadAll() and after connect/disconnect.
+         */
+        async function loadBCConnection() {
+            const statusEl  = document.getElementById('bcConnectionStatus');
+            const subtextEl = document.getElementById('bcConnectionSubtext');
+            if (!statusEl || !currentUser || !supabaseClient) return;
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('oauth_connections')
+                    .select('status, connected_at')
+                    .eq('user_id', currentUser.id)
+                    .eq('provider', 'buildingconnected')
+                    .maybeSingle();
+
+                if (error) throw error;
+
+                if (data && data.status === 'active') {
+                    // Connected state
+                    const connectedDate = data.connected_at
+                        ? new Date(data.connected_at).toLocaleDateString()
+                        : '';
+                    if (subtextEl) subtextEl.textContent = `Connected${connectedDate ? ' on ' + connectedDate : ''}`;
+                    statusEl.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--success);">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                Connected
+                            </span>
+                            <button onclick="disconnectBC()" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">Disconnect</button>
+                        </div>
+                    `;
+                } else {
+                    // Not connected state
+                    if (subtextEl) subtextEl.textContent = 'Connect to import bid invitations automatically';
+                    statusEl.innerHTML = `
+                        <button onclick="connectBC()" class="btn btn-primary" style="padding: 8px 16px; font-size: 13px;">
+                            Connect
+                        </button>
+                    `;
+                }
+            } catch (e) {
+                console.warn('loadBCConnection error:', e.message);
+                if (statusEl) statusEl.innerHTML = `<span style="font-size: 12px; color: var(--text-muted);">Unable to load</span>`;
+            }
+        }
+
+        /**
+         * Initiate BuildingConnected OAuth flow.
+         * Gets the user's current Supabase session token and navigates to bc-oauth-start.
+         */
+        async function connectBC() {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session?.access_token) {
+                    showNotification('Please sign in before connecting BuildingConnected.', 'error');
+                    return;
+                }
+                const startUrl = `/.netlify/functions/bc-oauth-start?user_token=${encodeURIComponent(session.access_token)}`;
+                window.location.href = startUrl;
+            } catch (e) {
+                console.error('connectBC error:', e.message);
+                showNotification('Could not start BuildingConnected connection. Please try again.', 'error');
+            }
+        }
+
+        /**
+         * Revoke the BuildingConnected connection (soft delete — sets status='revoked').
+         */
+        async function disconnectBC() {
+            if (!confirm('Disconnect your BuildingConnected account? You can reconnect at any time.')) return;
+            try {
+                const { error } = await supabaseClient
+                    .from('oauth_connections')
+                    .update({ status: 'revoked' })
+                    .eq('user_id', currentUser.id)
+                    .eq('provider', 'buildingconnected');
+
+                if (error) throw error;
+
+                showNotification('BuildingConnected disconnected.', 'success');
+                await loadBCConnection();
+            } catch (e) {
+                console.error('disconnectBC error:', e.message);
+                showNotification('Failed to disconnect. Please try again.', 'error');
+            }
+        }
+
         async function saveSettings() {
             const currentSettings = await getSettings();
 
@@ -14294,6 +14414,28 @@ Respond now:`;
                 await renderAnalytics();
 
                 console.log('✅ loadAll() completed successfully');
+
+                // Load BC connection status into Settings tab
+                loadBCConnection();
+
+                // Handle OAuth return params (bc_connected, bc_error)
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('bc_connected') === 'true') {
+                    showNotification('BuildingConnected account linked successfully!', 'success');
+                    // Clean up URL without triggering a page reload
+                    window.history.replaceState({}, '', window.location.pathname);
+                } else if (urlParams.get('bc_error')) {
+                    const errorMap = {
+                        denied:        'Authorization cancelled.',
+                        auth_failed:   'Authentication failed. Please sign in and try again.',
+                        state_invalid: 'Session expired. Please try connecting again.',
+                        token_exchange:'Could not complete authorization. Please try again.',
+                        db_save:       'Connected but failed to save. Please try again.',
+                    };
+                    const msg = errorMap[urlParams.get('bc_error')] || 'BuildingConnected connection failed.';
+                    showNotification(msg, 'error');
+                    window.history.replaceState({}, '', window.location.pathname);
+                }
 
                 // Show admin tabs for founders only
                 if (isAdmin()) {
