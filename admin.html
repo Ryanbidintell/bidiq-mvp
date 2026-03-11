@@ -750,7 +750,9 @@
         }
 
         function renderCurrentUsers(users, projects) {
-            const sorted = [...users].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+            const sorted = [...users]
+                .filter(u => u.user_email)
+                .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
             if (!sorted.length) {
                 document.querySelector('#users-table tbody').innerHTML = '<tr><td colspan="8" style="color:#999;font-style:italic;">No users.</td></tr>';
