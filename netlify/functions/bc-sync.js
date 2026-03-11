@@ -533,9 +533,17 @@ exports.handler = async function(event) {
             url.searchParams.set('limit', '100');
             if (cursorState) url.searchParams.set('cursorState', cursorState);
 
-            const res = await fetch(url.toString(), {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+            let res;
+            try {
+                res = await fetch(url.toString(), {
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                    signal: controller.signal
+                });
+            } finally {
+                clearTimeout(timeout);
+            }
 
             if (!res.ok) {
                 if (res.status === 401) {
