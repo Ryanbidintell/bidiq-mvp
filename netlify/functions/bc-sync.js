@@ -415,9 +415,9 @@ async function computeScores(opp, settings, userKeywords, clients, geocodeCache)
     // Score each component (settings passed with adjusted weights)
     const settingsAdj = { ...settings, weights };
 
-    const [locComp, kwComp, gcComp, trComp] = await Promise.all([
-        // Location needs geocoding — sequential due to rate limiting; run async but only geocode once
-        locationScore(opp, settingsAdj, geocodeCache),
+    // Skip geocoding during sync to avoid Netlify timeout — location scored as neutral
+    const locComp = { score: 50, weight: weights.location, reason: 'Location pending — open bid for full score' };
+    const [kwComp, gcComp, trComp] = await Promise.all([
         Promise.resolve(keywordsScore(opp, settingsAdj, userKeywords)),
         Promise.resolve(gcScore(opp, settingsAdj, clients)),
         Promise.resolve(tradeScore(opp, settingsAdj))
