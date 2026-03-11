@@ -13216,7 +13216,7 @@ Respond now:`;
             try {
                 const { data, error } = await supabaseClient
                     .from('oauth_connections')
-                    .select('status, connected_at')
+                    .select('status, connected_at, last_sync_at')
                     .eq('user_id', currentUser.id)
                     .eq('provider', 'buildingconnected')
                     .maybeSingle();
@@ -13224,32 +13224,80 @@ Respond now:`;
                 if (error) throw error;
 
                 if (data && data.status === 'active') {
-                    // Connected state
-                    const connectedDate = data.connected_at
-                        ? new Date(data.connected_at).toLocaleDateString()
-                        : '';
-                    if (subtextEl) subtextEl.textContent = `Connected${connectedDate ? ' on ' + connectedDate : ''}`;
+                    const lastSync = data.last_sync_at
+                        ? 'Last synced ' + new Date(data.last_sync_at).toLocaleDateString()
+                        : 'Never synced';
+                    if (subtextEl) subtextEl.textContent = lastSync;
                     statusEl.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--success);">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                            <span style="display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: var(--success);">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                                 Connected
                             </span>
+                            <button id="bcSyncBtn" onclick="syncBC()" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;">Sync Now</button>
                             <button onclick="disconnectBC()" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">Disconnect</button>
                         </div>
                     `;
                 } else {
-                    // Not connected state
                     if (subtextEl) subtextEl.textContent = 'Connect to import bid invitations automatically';
                     statusEl.innerHTML = `
-                        <button onclick="connectBC()" class="btn btn-primary" style="padding: 8px 16px; font-size: 13px;">
-                            Connect
-                        </button>
+                        <button onclick="connectBC()" class="btn btn-primary" style="padding: 8px 16px; font-size: 13px;">Connect</button>
                     `;
                 }
             } catch (e) {
                 console.warn('loadBCConnection error:', e.message);
                 if (statusEl) statusEl.innerHTML = `<span style="font-size: 12px; color: var(--text-muted);">Unable to load</span>`;
+            }
+        }
+
+        /**
+         * Call bc-sync Netlify function with user's session token.
+         * Imports new BC opportunities into the Projects table.
+         */
+        async function syncBC() {
+            const syncBtn   = document.getElementById('bcSyncBtn');
+            const subtextEl = document.getElementById('bcConnectionSubtext');
+
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session?.access_token) {
+                    showNotification('Please sign in before syncing.', 'error');
+                    return;
+                }
+
+                // Loading state
+                if (syncBtn) { syncBtn.disabled = true; syncBtn.textContent = 'Syncing…'; }
+                if (subtextEl) subtextEl.textContent = 'Syncing with BuildingConnected…';
+
+                const res = await fetch('/.netlify/functions/bc-sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type':  'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    }
+                });
+
+                const result = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(result.error || 'Sync failed');
+                }
+
+                showNotification(result.message, 'success');
+
+                // Reload connection status (updates last_sync_at display)
+                await loadBCConnection();
+
+                // Reload projects table so imported bids appear immediately
+                if (result.imported > 0) {
+                    await loadProjects();
+                    await loadDashboard();
+                }
+
+            } catch (e) {
+                console.error('syncBC error:', e.message);
+                showNotification(e.message || 'Sync failed. Please try again.', 'error');
+                if (syncBtn) { syncBtn.disabled = false; syncBtn.textContent = 'Sync Now'; }
             }
         }
 
