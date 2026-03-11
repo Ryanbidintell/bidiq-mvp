@@ -13292,7 +13292,7 @@ Respond now:`;
                 try {
                     result = await res.json();
                 } catch (_) {
-                    throw new Error('Sync timed out. Try again — fewer bids will be geocoded on subsequent syncs.');
+                    throw new Error('Sync timed out. BuildingConnected is taking too long to respond — please try again.');
                 }
 
                 if (!res.ok) {

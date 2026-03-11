@@ -530,11 +530,11 @@ exports.handler = async function(event) {
     try {
         do {
             const url = new URL(`${BC_API_BASE}/opportunities`);
-            url.searchParams.set('limit', '100');
+            url.searchParams.set('limit', '25');
             if (cursorState) url.searchParams.set('cursorState', cursorState);
 
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 15000);
+            const timeout = setTimeout(() => controller.abort(), 22000);
             let res;
             try {
                 res = await fetch(url.toString(), {
