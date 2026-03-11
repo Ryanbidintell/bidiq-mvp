@@ -88,6 +88,7 @@ USING (user_id = auth.uid());
 | `target_margin` | integer | NO | 15 | Target profit margin % |
 | `baseline_win_rate` | numeric | YES | null | Historical win rate % (for ROI calc) |
 | `onboarding_completed` | boolean | NO | false | Has user finished onboarding wizard? |
+| `plan_rooms` | text[] | YES | {} | Plan rooms used to receive bid invitations |
 
 **`company_type` values:** `subcontractor`, `supplier`, `gc`, `owner`, `consultant`
 
@@ -536,6 +537,7 @@ SELECT
 | Feb 9, 2026 | 1.2 | Added street/zip to user_settings, fixed decision_time type |
 | Feb 27, 2026 | 1.3 | Added bid_divisions_submitted to projects; added gc_competition_density table |
 | Mar 5, 2026 | 2.0 | Full audit and rewrite. Corrected: general_contractors→clients, keywords→user_keywords, added 5 missing tables (user_revenue, api_usage, beta_feedback, admin_events, admin_metrics_snapshots), updated user_settings to 30 columns, updated projects to 24 columns |
+| Mar 11, 2026 | 2.1 | Added plan_rooms text[] to user_settings — migration pending (ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS plan_rooms text[] DEFAULT '{}') |
 
 ---
 
