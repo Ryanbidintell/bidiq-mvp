@@ -550,8 +550,10 @@ exports.handler = async function(event) {
                         body: JSON.stringify({ error: 'BuildingConnected rejected the token. Please reconnect in Settings.' })
                     };
                 }
-                console.error('BC API error status:', res.status);
-                throw new Error(`BuildingConnected API returned ${res.status}`);
+                let errBody = '';
+                try { errBody = await res.text(); } catch (_) {}
+                console.error('BC API error status:', res.status, 'body:', errBody);
+                throw new Error(`BuildingConnected API returned ${res.status}: ${errBody}`);
             }
 
             const body = await res.json();
