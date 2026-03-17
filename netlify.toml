@@ -9,6 +9,15 @@
 [functions."weekly-health-check"]
   schedule = "0 9 * * 1"
 
+[functions."daily-digest"]
+  schedule = "0 8 * * *"
+
+[functions."activation-check"]
+  schedule = "0 10 * * *"
+
+[functions."conversion-sequence"]
+  schedule = "0 11 * * *"
+
 [build.environment]
   NODE_VERSION = "18"
   SECRETS_SCAN_ENABLED = "false"  # Disabled - secrets in old git history, already removed and rotated
