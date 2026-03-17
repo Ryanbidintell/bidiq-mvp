@@ -18,6 +18,9 @@
 [functions."conversion-sequence"]
   schedule = "0 11 * * *"
 
+[functions."outcome-reminder"]
+  schedule = "0 12 * * *"
+
 [build.environment]
   NODE_VERSION = "18"
   SECRETS_SCAN_ENABLED = "false"  # Disabled - secrets in old git history, already removed and rotated
