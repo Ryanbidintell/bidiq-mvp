@@ -5450,36 +5450,30 @@ ${fullText.substring(0, 40000)}`;
                 cutoffDate.setDate(cutoffDate.getDate() - thresholdDays);
                 const cutoffISO = cutoffDate.toISOString();
 
-                // Find pending projects older than threshold
+                // Find pending projects older than threshold (exclude BC-imported projects)
                 const { data: staleProjects, error } = await supabaseClient
                     .from('projects')
-                    .select('id, extracted_data, created_at')
+                    .select('id, created_at')
                     .eq('user_id', currentUser.id)
                     .eq('outcome', 'pending')
-                    .lt('created_at', cutoffISO);
+                    .lt('created_at', cutoffISO)
+                    .neq('extracted_data->>bc_source', 'buildingconnected')
+                    .limit(50);
 
                 if (error) throw error;
 
                 if (staleProjects && staleProjects.length > 0) {
                     console.log(`🕰️ Found ${staleProjects.length} stale projects to auto-ghost`);
 
-                    // Auto-ghost each one
-                    for (const project of staleProjects) {
-                        const daysAgo = Math.round((Date.now() - new Date(project.created_at).getTime()) / (1000 * 60 * 60 * 24));
-
-                        await supabaseClient
-                            .from('projects')
-                            .update({
-                                outcome: 'ghost',
-                                outcome_data: {
-                                    auto_ghosted: true,
-                                    days_elapsed: daysAgo,
-                                    reason: `Automatically marked as ghosted after ${daysAgo} days with no response`
-                                },
-                                updated_at: new Date().toISOString()
-                            })
-                            .eq('id', project.id);
-                    }
+                    // Batch update all stale projects at once
+                    const staleIds = staleProjects.map(p => p.id);
+                    await supabaseClient
+                        .from('projects')
+                        .update({
+                            outcome: 'ghost',
+                            updated_at: new Date().toISOString()
+                        })
+                        .in('id', staleIds);
 
                     console.log(`✅ Auto-ghosted ${staleProjects.length} projects`);
                     dataCache.projects = null; // Invalidate cache
