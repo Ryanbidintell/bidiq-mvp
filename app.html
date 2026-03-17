@@ -8217,7 +8217,7 @@ ${truncatedText}`;
                 if (settings.preferred_csi_sections && settings.preferred_csi_sections.length > 0) {
                     const allText = allPages.map(p => p.text).join(' ');
                     for (const secCode of settings.preferred_csi_sections) {
-                        const pattern = new RegExp(secCode.replace(/\s+/g, '\\s*'), 'i');
+                        const pattern = buildSectionRegex(secCode);
                         if (pattern.test(allText)) foundSections.push(secCode);
                     }
                     console.log('📐 Section-level detection:', { checked: settings.preferred_csi_sections.length, found: foundSections });
@@ -8444,6 +8444,16 @@ ${truncatedText}`;
         function extractField(text, pattern) {
             const match = text.match(pattern);
             return match ? match[1].trim() : null;
+        }
+
+        function buildSectionRegex(code) {
+            // Normalize stored code to digits only e.g. "09 65 00" → "096500"
+            const digits = code.replace(/[\s\-\.]/g, '');
+            // Rebuild as regex that matches any separator between the three groups
+            const d1 = digits.slice(0, 2);
+            const d2 = digits.slice(2, 4);
+            const d3 = digits.slice(4, 6);
+            return new RegExp(`${d1}[-\\s.]*${d2}[-\\s.]*${d3}`, 'i');
         }
 
         async function calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks = null, tradeDetection = null, gcNames = [], foundSections = []) {
