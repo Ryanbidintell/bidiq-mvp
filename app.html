@@ -5466,11 +5466,17 @@ ${fullText.substring(0, 40000)}`;
                     console.log(`🕰️ Found ${staleProjects.length} stale projects to auto-ghost`);
 
                     // Batch update all stale projects at once
+                    // outcome_data.days_since_submission is required by check_outcome_data_structure constraint
                     const staleIds = staleProjects.map(p => p.id);
                     await supabaseClient
                         .from('projects')
                         .update({
                             outcome: 'ghost',
+                            outcome_data: {
+                                auto_ghosted: true,
+                                days_since_submission: thresholdDays,
+                                reason: `Automatically marked as ghosted after ${thresholdDays}+ days with no response`
+                            },
                             updated_at: new Date().toISOString()
                         })
                         .in('id', staleIds);
