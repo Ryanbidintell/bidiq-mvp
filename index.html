@@ -2150,40 +2150,84 @@ img { max-width: 100%; display: block; }
   </div>
 </section>
 
-<!-- LEARNING LOOP -->
-<section class="learning-section">
+<!-- FAQ -->
+<section class="faq-section">
   <div class="container">
-    <div class="section-header fade-up">
-      <span class="section-tag">How it improves</span>
-      <h2>The more you use it, the smarter it gets</h2>
+    <div class="section-header">
+      <span class="section-tag">Common questions</span>
+      <h2>Frequently asked questions</h2>
     </div>
-    <p class="section-sub fade-up">Every bid you analyze and every outcome you record gives BidIntell more to work with. This isn't hype — it's the practical result of better inputs producing better outputs over time.</p>
-
-    <div class="learning-cards fade-up">
-      <div class="learning-card">
-        <div class="lc-icon">📋</div>
-        <div class="lc-title">Your bids train your score</div>
-        <div class="lc-desc">Every bid you analyze adds a data point. Over time, BidIntell builds a clearer picture of which projects actually fit your business — not just in theory, but based on what you've seen in the field.</div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          Is BidIntell easy to use if I'm not great with technology?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">Yes. Setup takes about 5 minutes — enter your trade, service area, and the GCs you work with. After that, upload a bid and get a score. No training required.</div></div>
       </div>
-      <div class="learning-card">
-        <div class="lc-icon">✓</div>
-        <div class="lc-title">Your outcomes sharpen the AI</div>
-        <div class="lc-desc">When you record a win, loss, or ghosted bid, that feedback makes BidIntell more accurate on future bids. A client you rated 3 stars who ghosts you twice should become a 1-star. Recording outcomes makes that happen.</div>
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          What if BidIntell doesn't work for my trade?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">BidIntell supports all commercial subcontractor trades via CSI MasterFormat. If it's not a fit, cancel anytime — no contracts.</div></div>
       </div>
-      <div class="learning-card">
-        <div class="lc-icon">◎</div>
-        <div class="lc-title">Every user adds signal</div>
-        <div class="lc-desc">Aggregate patterns — not individual bids — help improve how the platform detects scope, contract risk, and trade matches across all users. Your specific bids, clients, and win rates are never shared or visible to other users.</div>
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          How long does setup take?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">About 5 minutes. Enter your trade, service area, and preferred GCs. Then upload your first bid and see your BidIndex score.</div></div>
       </div>
-      <div class="learning-card">
-        <div class="lc-icon">↑</div>
-        <div class="lc-title">Your win rates compound</div>
-        <div class="lc-desc">The longer you track outcomes, the more precise your scoring gets. A client you've bid 12 times scores differently than one you've never worked with — and that gap widens every quarter you're in the system.</div>
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          Will BidIntell replace my estimating software?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">No — and it's not trying to. BidIntell helps you decide which bids to pursue before your estimators invest time on takeoffs. Think of it as the filter before the funnel.</div></div>
       </div>
-    </div>
-
-    <div class="learning-callout fade-up">
-      <p><strong>Early users have an advantage.</strong> The companies signing up now are building months of bid history, client ratings, and outcome data before the platform reaches scale. That history is yours — it doesn't reset, and it doesn't transfer to a competitor who joins later.</p>
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          How does the BidIndex Score work?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">The BidIndex Score is a 0–100 fit score — not a win probability. It measures how well a bid matches your business across four factors: location, scope &amp; contract terms, client relationship, and trade match. Each factor is weighted and personalized to your settings. <a href="#bidindex-score">See the full breakdown →</a></div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          Can my competitors see what bids I'm analyzing?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">No. Your data is completely private to your account. We use row-level security — meaning the database itself enforces that no other user can ever access your projects, client relationships, or bid history. Not even us.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          Can BidIntell see my bid documents?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">Your bid PDFs are processed to extract project details and then scored. We don't read them, share them, or use them to train any models. Your documents are yours.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          Do you sell my data or share it with GCs?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">Never. We don't sell data, share it with GCs, or let anyone outside your account see your activity. Your client ratings, win rates, and bid decisions stay private.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          How is my data kept private?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">Your bid data is private to your account and never shared with other users, GCs, or third parties. We use magic link login — no passwords to steal or forget.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          What happens to my data if I cancel?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">Your data stays in your account for 90 days after cancellation. You can export it anytime. After 90 days it's permanently deleted.</div></div>
+      </div>
     </div>
   </div>
 </section>
