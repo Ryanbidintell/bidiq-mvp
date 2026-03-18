@@ -565,11 +565,6 @@ exports.handler = async function(event) {
             }
 
             const body = await res.json();
-            // Temporary: log first opportunity to inspect all available fields
-            if (page === 0) {
-                const sample = Array.isArray(body) ? body[0] : (body.results || body.data || [])[0];
-                if (sample) console.log('BC_OPPORTUNITY_SAMPLE:', JSON.stringify(sample));
-            }
             // BC API may nest results under 'results' or 'data'
             const results = Array.isArray(body) ? body : (body.results || body.data || []);
             opportunities.push(...results);
@@ -640,13 +635,18 @@ exports.handler = async function(event) {
         if (!opp.id) { errors++; continue; }
 
         try {
-            // Dedup check: look for an existing project with this bc_opportunity_id
-            const { data: existing } = await getSupabase()
+            // Dedup check: look for an existing project with this bc_opportunity_id.
+            // Use .limit(1) not .maybeSingle() — if duplicates already exist, maybeSingle()
+            // throws and returns null, causing the code to treat the project as new and
+            // insert yet another duplicate on every sync.
+            const { data: existingRows } = await getSupabase()
                 .from('projects')
                 .select('id, outcome')
                 .eq('user_id', userId)
                 .eq('extracted_data->>bc_opportunity_id', opp.id)
-                .maybeSingle();
+                .limit(1);
+
+            const existing = existingRows?.[0] || null;
 
             if (existing) {
                 // Update outcome if BC now has a definitive result (won/lost)
