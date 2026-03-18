@@ -1236,6 +1236,113 @@ img { max-width: 100%; display: block; }
   line-height: 1.7;
 }
 .faq-item.open .faq-answer { max-height: 400px; }
+.faq-answer-inner a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.faq-answer-inner a:hover { color: var(--accent-dark); }
+
+/* ===== BIDINDEX SCORE EXPLAINER ===== */
+.bidindex-section { padding: 100px 0; border-top: 1px solid rgba(255,255,255,0.04); }
+.bidindex-section .section-header { text-align: center; margin-left: auto; margin-right: auto; }
+.section-sub {
+  font-size: 1rem; color: var(--fog); line-height: 1.7;
+  max-width: 580px; margin: 0 auto 52px; text-align: center;
+}
+.version-tag {
+  display: inline-block; font-family: var(--mono); font-size: 0.65rem;
+  color: var(--slate-light); background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 4px;
+  padding: 2px 8px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+}
+.score-components { max-width: 720px; margin: 0 auto 48px; display: grid; gap: 8px; }
+.score-component {
+  background: var(--ink-light); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg); overflow: hidden; transition: border-color 0.3s;
+}
+.score-component.open { border-color: rgba(242,101,34,0.25); }
+.score-component-btn {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  gap: 16px; padding: 20px 24px; background: none; border: none; color: var(--white);
+  font-family: var(--font); font-size: 1rem; font-weight: 600; text-align: left;
+  cursor: pointer; transition: color 0.2s;
+}
+.score-component-btn:hover { color: var(--accent); }
+.sc-btn-left { display: flex; align-items: center; gap: 12px; }
+.sc-weight {
+  font-family: var(--mono); font-size: 0.7rem; font-weight: 700; color: var(--accent);
+  background: var(--accent-glow); border: 1px solid rgba(242,101,34,0.25);
+  padding: 3px 10px; border-radius: 100px; flex-shrink: 0;
+}
+.sc-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease-out; }
+.sc-body-inner { padding: 0 24px 24px; font-size: 0.925rem; color: var(--fog); line-height: 1.75; }
+.score-component.open .sc-body { max-height: 600px; }
+.score-component.open .sc-chevron { transform: rotate(180deg); color: var(--accent); }
+.sc-chevron {
+  flex-shrink: 0; width: 20px; height: 20px; color: var(--fog);
+  transition: transform 0.3s, color 0.3s;
+}
+.sc-signals { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+.sc-signal {
+  font-size: 0.75rem; font-family: var(--mono); padding: 3px 10px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px; color: var(--cloud);
+}
+
+.score-legend { max-width: 720px; margin: 0 auto 48px; }
+.score-legend-label { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--fog); margin-bottom: 14px; text-align: center; }
+.score-legend-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.legend-card {
+  background: var(--ink-light); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg); padding: 20px;
+}
+.legend-range { font-family: var(--mono); font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
+.legend-range.green { color: var(--green); }
+.legend-range.yellow { color: var(--yellow); }
+.legend-range.red { color: var(--red); }
+.legend-verdict { font-weight: 700; color: var(--white); font-size: 0.875rem; margin-bottom: 4px; }
+.legend-desc { font-size: 0.8rem; color: var(--fog); line-height: 1.5; }
+
+.score-callout {
+  max-width: 720px; margin: 0 auto 60px;
+  background: var(--ink-light); border: 1px solid rgba(255,255,255,0.06);
+  border-left: 3px solid var(--accent); border-radius: var(--radius-lg); padding: 24px 28px;
+}
+.score-callout h4 { font-size: 0.95rem; font-weight: 700; color: var(--white); margin-bottom: 8px; }
+.score-callout p { font-size: 0.9rem; color: var(--fog); line-height: 1.7; margin: 0; }
+
+.score-faq { max-width: 720px; margin: 0 auto; }
+.score-faq-label { font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--fog); margin-bottom: 14px; }
+
+/* Learning loop */
+.learning-section {
+  padding: 80px 0; border-top: 1px solid rgba(255,255,255,0.04);
+  background: var(--ink-light);
+}
+.learning-section .section-header { text-align: center; margin-left: auto; margin-right: auto; }
+.learning-cards {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+  max-width: 800px; margin: 0 auto 32px;
+}
+.learning-card {
+  background: var(--ink); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg); padding: 24px; transition: border-color 0.3s;
+}
+.learning-card:hover { border-color: rgba(242,101,34,0.2); }
+.lc-icon { font-size: 1.4rem; margin-bottom: 12px; line-height: 1; }
+.lc-title { font-weight: 700; color: var(--white); font-size: 0.95rem; margin-bottom: 8px; }
+.lc-desc { font-size: 0.875rem; color: var(--fog); line-height: 1.6; }
+.learning-callout {
+  max-width: 600px; margin: 0 auto; text-align: center;
+  background: var(--ink); border: 1px solid rgba(242,101,34,0.2);
+  border-radius: var(--radius-lg); padding: 28px 32px;
+}
+.learning-callout strong { color: var(--white); }
+.learning-callout p { font-size: 0.9rem; color: var(--fog); line-height: 1.7; margin: 0; }
+
+@media (max-width: 640px) {
+  .score-legend-grid { grid-template-columns: 1fr; }
+  .learning-cards { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
@@ -1888,6 +1995,13 @@ img { max-width: 100%; display: block; }
         </button>
         <div class="faq-answer"><div class="faq-answer-inner">No — and it's not trying to. BidIntell helps you decide which bids to pursue before your estimators invest time on takeoffs. Think of it as the filter before the funnel.</div></div>
       </div>
+      <div class="faq-item">
+        <button class="faq-question" aria-expanded="false">
+          How does the BidIndex Score work?
+          <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer"><div class="faq-answer-inner">The BidIndex Score is a 0–100 fit score — not a win probability. It measures how well a bid matches your business across four factors: location, scope &amp; contract terms, client relationship, and trade match. Each factor is weighted and personalized to your settings. <a href="#bidindex-score">See the full breakdown →</a></div></div>
+      </div>
     </div>
   </div>
 </section>
@@ -1935,6 +2049,231 @@ img { max-width: 100%; display: block; }
         </button>
         <div class="faq-answer"><div class="faq-answer-inner">Your data stays in your account for 90 days after cancellation. You can export it anytime. After 90 days it's permanently deleted.</div></div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- BIDINDEX SCORE EXPLAINER -->
+<section class="bidindex-section" id="bidindex-score">
+  <div class="container">
+
+    <!-- Part 1: Score Explainer -->
+    <div class="section-header fade-up">
+      <div class="version-tag">BidIndex Score · v1.9</div>
+      <span class="section-tag">How scoring works</span>
+      <h2>What the BidIndex Score actually measures</h2>
+    </div>
+    <p class="section-sub fade-up">The BidIndex Score is a fit score — not a win probability. It tells you how well a bid matches your specific business based on four factors you control. Think of it as a triage tool: it helps you spend time on bids worth chasing and skip the ones that aren't.</p>
+
+    <!-- 4 Score Components -->
+    <div class="score-components fade-up">
+
+      <div class="score-component">
+        <button class="score-component-btn" onclick="toggleScoreComponent(this)" aria-expanded="false">
+          <span class="sc-btn-left">
+            <span class="sc-weight">30%</span>
+            Location Fit
+          </span>
+          <svg class="sc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="sc-body">
+          <div class="sc-body-inner">
+            <p>Measures the distance from your office to the project site and compares it against the service radius you set in Settings. Closer projects score higher — not because distant work is impossible, but because your crew mobilization costs, supervision time, and day-to-day logistics favor work near your base.</p>
+            <p style="margin-top:10px;">If you've told BidIntell that location doesn't matter for your business (common for specialty subs who travel), this factor's weight is redistributed to the other three automatically.</p>
+            <div class="sc-signals">
+              <span class="sc-signal">Project city &amp; state</span>
+              <span class="sc-signal">Drive distance (miles)</span>
+              <span class="sc-signal">Your service radius</span>
+              <span class="sc-signal">Location matters toggle</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="score-component">
+        <button class="score-component-btn" onclick="toggleScoreComponent(this)" aria-expanded="false">
+          <span class="sc-btn-left">
+            <span class="sc-weight">25%</span>
+            Contract Terms &amp; Scope
+          </span>
+          <svg class="sc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="sc-body">
+          <div class="sc-body-inner">
+            <p>Matches the bid's scope language against the good and bad keywords you've configured. Good keywords are terms that signal the kind of work you do well — your trade specialties, preferred building types, or project characteristics you've had success with. Bad keywords flag scope that's outside your wheelhouse, risky project types, or terms your team has learned to avoid.</p>
+            <p style="margin-top:10px;">This factor also includes BidIntell's contract risk detection. Clause patterns like pay-if-paid conditions, unlimited lien waiver requirements, and compressed schedule language are identified from the bid documents and can apply a risk penalty based on your risk tolerance setting.</p>
+            <div class="sc-signals">
+              <span class="sc-signal">Good keywords</span>
+              <span class="sc-signal">Bad / risk keywords</span>
+              <span class="sc-signal">Scope description text</span>
+              <span class="sc-signal">Contract clause detection</span>
+              <span class="sc-signal">Your risk tolerance</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="score-component">
+        <button class="score-component-btn" onclick="toggleScoreComponent(this)" aria-expanded="false">
+          <span class="sc-btn-left">
+            <span class="sc-weight">25%</span>
+            Client Relationship
+          </span>
+          <svg class="sc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="sc-body">
+          <div class="sc-body-inner">
+            <p>Looks up the GC, owner, or client named in the bid against your Clients list. If you've worked with them before, this factor uses your actual win rate with that client. If you've only rated them by stars, it uses that rating. If they're new to you, it falls back to your default rating for unknown clients.</p>
+            <p style="margin-top:10px;">BidIntell supports all client types — general contractors, building owners, municipalities, distributors, manufacturer reps, and more. Your ratings and win/loss history are private to your account and never shared with or visible to other users.</p>
+            <div class="sc-signals">
+              <span class="sc-signal">GC / client name match</span>
+              <span class="sc-signal">Your star rating (1–5)</span>
+              <span class="sc-signal">Win rate (if tracked)</span>
+              <span class="sc-signal">Default rating for unknowns</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="score-component">
+        <button class="score-component-btn" onclick="toggleScoreComponent(this)" aria-expanded="false">
+          <span class="sc-btn-left">
+            <span class="sc-weight">20%</span>
+            Trade Match
+          </span>
+          <svg class="sc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="sc-body">
+          <div class="sc-body-inner">
+            <p>Checks whether the scope of work in the bid actually includes your trade. BidIntell reads several signals to detect this — not just a trade name match.</p>
+            <p style="margin-top:10px;">You configure your trade using CSI MasterFormat section codes (e.g., 09 65 00 for resilient flooring, 23 05 00 for common mechanical work). BidIntell then looks for those codes in spec section headers, drawing sheet prefixes (M- for mechanical, P- for plumbing, E- for electrical, FP- for fire protection), material keywords in the scope description, and scope language in the invitation letter.</p>
+            <p style="margin-top:10px;">Section-level matching is more precise than division-level. A division 09 match would flag any finishing scope — drywall, painting, flooring, tile. A section-level 09 65 00 match only flags resilient flooring, which is what you actually bid.</p>
+            <div class="sc-signals">
+              <span class="sc-signal">CSI MasterFormat section codes</span>
+              <span class="sc-signal">Spec section headers</span>
+              <span class="sc-signal">Drawing sheet prefixes (M- P- E- FP-)</span>
+              <span class="sc-signal">Material keywords</span>
+              <span class="sc-signal">Invitation letter scope language</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Score Range Legend -->
+    <div class="score-legend fade-up">
+      <p class="score-legend-label">Score ranges</p>
+      <div class="score-legend-grid">
+        <div class="legend-card">
+          <div class="legend-range green">75 – 100</div>
+          <div class="legend-verdict">Strong fit — GO</div>
+          <div class="legend-desc">This bid matches well across most factors. Worth the time to price it seriously.</div>
+        </div>
+        <div class="legend-card">
+          <div class="legend-range yellow">50 – 74</div>
+          <div class="legend-verdict">Mixed signals — REVIEW</div>
+          <div class="legend-desc">Something scores well, something doesn't. Open the bid and decide if the tradeoff is worth it.</div>
+        </div>
+        <div class="legend-card">
+          <div class="legend-range red">Below 50</div>
+          <div class="legend-verdict">Poor fit — PASS</div>
+          <div class="legend-desc">Multiple factors are weak. Not the right bid for your business right now.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Why same bid scores differently -->
+    <div class="score-callout fade-up">
+      <h4>Why the same bid scores differently for two companies</h4>
+      <p>The BidIndex Score is not a universal rating — it's personalized. Two subs looking at the same project will see different scores because the inputs are different: their office location, their history with that GC, their trade specialties, the keywords they've flagged as good or bad. A score of 82 for a Denver mechanical sub might be a 34 for a flooring company in Nashville bidding the same job. That's by design.</p>
+    </div>
+
+    <!-- Part 1 FAQ -->
+    <div class="score-faq fade-up">
+      <p class="score-faq-label">More questions</p>
+      <div class="faq-list" style="margin-top:0;">
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Is the BidIndex Score a win probability?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">No. The BidIndex Score is a fit score, not a prediction of whether you'll win. A 90 means this bid is a strong match for your business — your trade, your area, a client you know, scope that fits. It doesn't account for competitor pricing, owner relationships, or timing. Use it as a triage tool, not a guarantee.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            What's the fastest way to improve my scores?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">Complete your profile in Settings. Set your service area, add your CSI trade sections, enter a few good and bad keywords, and rate the GCs you work with most. Each of those inputs directly feeds one of the four score factors. Incomplete profiles produce neutral 50-point scores on most factors — which tells you nothing.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Can I adjust the factor weights?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">Yes. In Settings → Scoring, you can shift weight between the four factors to match how your business actually evaluates bids. If client relationship is everything for you, push more weight there. If you travel and location is irrelevant, reduce it or turn it off entirely. Weights must add up to 100.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            What if I disagree with a score?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">Good — that's useful information. On any bid report, you can flag whether you agree or disagree with the score and leave a note. That feedback helps build a clearer picture of where your settings don't reflect reality. The most common fix is updating your keyword list or adjusting a client's rating after you've seen how a job actually played out.</div></div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Does the score account for how busy we already are?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">Yes, through the Capacity setting. When you're in "aggressive" mode, BidIntell is more inclusive — borderline bids lean toward REVIEW rather than PASS. When you're "steady" or "slow," the threshold tightens. This isn't a score adjustment — it affects how the GO / REVIEW / PASS recommendation is applied on top of the score.</div></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- LEARNING LOOP -->
+<section class="learning-section">
+  <div class="container">
+    <div class="section-header fade-up">
+      <span class="section-tag">How it improves</span>
+      <h2>The more you use it, the smarter it gets</h2>
+    </div>
+    <p class="section-sub fade-up">Every bid you analyze and every outcome you record gives BidIntell more to work with. This isn't hype — it's the practical result of better inputs producing better outputs over time.</p>
+
+    <div class="learning-cards fade-up">
+      <div class="learning-card">
+        <div class="lc-icon">📋</div>
+        <div class="lc-title">Your bids train your score</div>
+        <div class="lc-desc">Every bid you analyze adds a data point. Over time, BidIntell builds a clearer picture of which projects actually fit your business — not just in theory, but based on what you've seen in the field.</div>
+      </div>
+      <div class="learning-card">
+        <div class="lc-icon">✓</div>
+        <div class="lc-title">Your outcomes sharpen the AI</div>
+        <div class="lc-desc">When you record a win, loss, or ghosted bid, that feedback makes BidIntell more accurate on future bids. A client you rated 3 stars who ghosts you twice should become a 1-star. Recording outcomes makes that happen.</div>
+      </div>
+      <div class="learning-card">
+        <div class="lc-icon">◎</div>
+        <div class="lc-title">Every user adds signal</div>
+        <div class="lc-desc">Aggregate patterns — not individual bids — help improve how the platform detects scope, contract risk, and trade matches across all users. Your specific bids, clients, and win rates are never shared or visible to other users.</div>
+      </div>
+      <div class="learning-card">
+        <div class="lc-icon">🔒</div>
+        <div class="lc-title">Your data stays yours</div>
+        <div class="lc-desc">Your account data is private by design. Row-level security means no other user, GC, owner, or third party can access your projects, ratings, or bid history. Not us, not them.</div>
+      </div>
+    </div>
+
+    <div class="learning-callout fade-up">
+      <p><strong>Early users have an advantage.</strong> The companies signing up now are building months of bid history, client ratings, and outcome data before the platform reaches scale. That history is yours — it doesn't reset, and it doesn't transfer to a competitor who joins later.</p>
     </div>
   </div>
 </section>
@@ -2217,6 +2556,20 @@ document.querySelectorAll('.faq-question').forEach(btn => {
     }
   });
 });
+
+// Score component accordions
+function toggleScoreComponent(btn) {
+  const component = btn.closest('.score-component');
+  const isOpen = component.classList.contains('open');
+  document.querySelectorAll('.score-component').forEach(c => {
+    c.classList.remove('open');
+    c.querySelector('.score-component-btn').setAttribute('aria-expanded', 'false');
+  });
+  if (!isOpen) {
+    component.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+  }
+}
 
 // Mobile menu
 document.querySelector('.mobile-menu-btn')?.addEventListener('click', () => {
