@@ -14834,7 +14834,7 @@ Respond now:`;
             try {
                 const [usersData, projectsData, eventsData, snapshotsData] = await Promise.all([
                     supabaseClient.from('user_settings').select('*'),
-                    supabaseClient.from('projects').select('user_id,outcome,scores,created_at'),
+                    supabaseClient.from('projects').select('user_id,outcome,scores,created_at').then(r => { if (r.error) console.warn('projects query error (RLS may restrict to own rows):', r.error.message); return r; }),
                     supabaseClient.from('admin_events').select('*').then(r => { if (r.error) console.warn('admin_events:', r.error.message); return r; }),
                     supabaseClient.from('admin_metrics_snapshots').select('*').order('snapshot_date', { ascending: false }).limit(30).then(r => { if (r.error) console.warn('admin_metrics_snapshots:', r.error.message); return r; })
                 ]);
@@ -14965,9 +14965,9 @@ Respond now:`;
                 <div class="settings-card-body">${content}</div>
             </div>`;
 
-            // Beta user table — per-user breakdown
+            // Beta user table — per-user breakdown (filter ghost users with no email)
             const d30 = new Date(Date.now() - 30*24*60*60*1000);
-            const userRows = users.map(u => {
+            const userRows = users.filter(u => u.user_email).map(u => {
                 const userProjects = projects.filter(p => p.user_id === u.user_id);
                 const lastProject = userProjects.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
                 const lastActive = lastProject ? new Date(lastProject.created_at) : null;
@@ -14975,9 +14975,12 @@ Respond now:`;
                 const outcomes = userProjects.filter(p => p.outcome && p.outcome !== 'pending').length;
                 const tier = u.subscription_tier || 'beta';
                 const tierColor = tier === 'professional' ? 'var(--accent)' : tier === 'starter' ? 'var(--success)' : 'var(--text-muted)';
+                const companyDisplay = u.company_name
+                    ? u.company_name
+                    : `<span style="color:var(--text-muted);font-style:italic;">no company set</span>`;
                 return `<tr style="border-bottom:1px solid var(--border-color);">
-                    <td style="padding:10px 8px;font-size:13px;">${u.company_name || '—'}</td>
-                    <td style="padding:10px 8px;font-size:12px;color:var(--text-muted);">${u.user_email || '—'}</td>
+                    <td style="padding:10px 8px;font-size:13px;">${companyDisplay}</td>
+                    <td style="padding:10px 8px;font-size:12px;color:var(--text-muted);">${u.user_email}</td>
                     <td style="padding:10px 8px;font-size:13px;text-align:center;">${userProjects.length}</td>
                     <td style="padding:10px 8px;font-size:13px;text-align:center;">${outcomes}</td>
                     <td style="padding:10px 8px;font-size:12px;color:${isActive30 ? 'var(--success)' : 'var(--text-muted)'};">${lastActive ? lastActive.toLocaleDateString() : 'Never'}</td>
