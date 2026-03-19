@@ -57,7 +57,7 @@ function daysUntilDeadline() {
 }
 
 function emailForDaysLeft(daysLeft, name) {
-    if (daysLeft === 7) {
+    if (daysLeft <= 7 && daysLeft > 3) {
         return {
             eventType: 'conversion_email_7day',
             subject: `Founding pricing locks in 7 days`,
@@ -87,7 +87,7 @@ function emailForDaysLeft(daysLeft, name) {
         };
     }
 
-    if (daysLeft === 3) {
+    if (daysLeft <= 3 && daysLeft > 1) {
         return {
             eventType: 'conversion_email_3day',
             subject: `3 days left at founding price`,
@@ -112,7 +112,7 @@ function emailForDaysLeft(daysLeft, name) {
         };
     }
 
-    if (daysLeft === 1) {
+    if (daysLeft <= 1 && daysLeft >= 0) {
         return {
             eventType: 'conversion_email_1day',
             subject: `Last chance — founding price ends tomorrow`,
