@@ -370,7 +370,7 @@
           </div>
           <h2>You're all set — pick a time!</h2>
           <p>Choose a time below and we'll walk you through BidIntell live.</p>
-          <div id="calendlyWidget" class="calendly-inline-widget" data-url="https://calendly.com/ryanelder77/new-meeting" style="min-width:320px;height:700px;margin-top:16px;"></div>
+          <div id="calendlyWidget" class="calendly-inline-widget" data-url="https://calendly.com/ryan-bidintell/30min" style="min-width:320px;height:700px;margin-top:16px;"></div>
         </div>
 
         <!-- Form -->
@@ -547,7 +547,7 @@
         const fullName = encodeURIComponent(`${payload.firstName} ${payload.lastName}`.trim());
         const email = encodeURIComponent(payload.email);
         document.getElementById('calendlyWidget').dataset.url =
-          `https://calendly.com/ryanelder77/new-meeting?name=${fullName}&email=${email}`;
+          `https://calendly.com/ryan-bidintell/30min?name=${fullName}&email=${email}`;
 
         document.getElementById('demoForm').style.display = 'none';
         document.getElementById('successState').classList.add('show');
