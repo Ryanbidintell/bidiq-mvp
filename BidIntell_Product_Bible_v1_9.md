@@ -263,6 +263,28 @@ gc_relationship_profiles (
 
 ---
 
+## PHASE 2: TEAM ACCOUNTS (Post-Launch)
+
+**Trigger:** First paying customer requests team access, OR 10+ paying subscribers.
+**Goal:** Support estimating teams — shared projects, shared GC intelligence, role-based access.
+
+### What this requires:
+- `organizations` table — company account as the root entity
+- `org_members` table — user → org mapping with role (`admin` | `member`)
+- All `projects`, `clients`, `user_keywords`, `user_settings` re-scoped from `user_id` → `org_id`
+- Invite-by-email flow (admin sends invite → magic link → member joins org)
+- RLS rewrite — data visible to all org members, not just owner
+- Stripe: seat-based billing or per-org flat rate (decide at build time)
+
+### Pricing implication:
+- Starter: 1 seat (current)
+- Pro: up to 3 seats
+- Team tier (new): 5–10 seats, ~$199/mo
+
+### DO NOT build before April 1 launch. Build only when a paying customer asks.
+
+---
+
 ## DECISION FRAMEWORK (Unchanged)
 
 Before building any feature, ask:
