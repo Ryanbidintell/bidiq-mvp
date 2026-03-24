@@ -4228,7 +4228,9 @@ ${fullText.substring(0, 40000)}`;
                     decisionTime: data.decision_time || 45,  // INTEGER minutes instead of 'normal'
                     defaultStars: data.default_stars || 3,
                     target_margin: data.target_margin || 15,
-                    onboarding_completed: data.onboarding_completed === true  // Explicit boolean check
+                    onboarding_completed: data.onboarding_completed === true,  // Explicit boolean check
+                    plan_rooms: data.plan_rooms || [],
+                    baseline_win_rate: data.baseline_win_rate || null
                 };
                 return dataCache.settings;
             } catch (e) {
@@ -4284,6 +4286,7 @@ ${fullText.substring(0, 40000)}`;
                     target_margin: s.target_margin || 15,
                     onboarding_completed: s.onboarding_completed !== undefined ? s.onboarding_completed : false,
                     baseline_win_rate: s.baseline_win_rate || null,
+                    plan_rooms: s.plan_rooms || [],
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'user_id' });
 
@@ -4310,8 +4313,8 @@ ${fullText.substring(0, 40000)}`;
                     .from('user_keywords')
                     .select('*')
                     .eq('user_id', currentUser.id)
-                    .single();
-                
+                    .maybeSingle();
+
                 if (error || !data) {
                     // Create default keywords for new user
                     await supabaseClient.from('user_keywords').insert({
@@ -4982,6 +4985,9 @@ ${fullText.substring(0, 40000)}`;
                 await loadMetricsTab();
             } else if (id === 'admin') {
                 await loadSystemStats();
+            } else if (id === 'settings') {
+                dataCache.settings = null; // Force fresh read so post-onboarding data appears
+                await loadSettings();
             }
         }
         document.querySelectorAll('.nav-item[data-tab]').forEach(i => i.addEventListener('click', async () => await switchTab(i.dataset.tab)));
@@ -6198,8 +6204,8 @@ ${fullText.substring(0, 40000)}`;
                 }
             } else if (onboardingStep === 6) {
                 onboardingData.locationImportance = parseInt(document.getElementById('onboarding_locationImportance')?.value || 50);
-            } else if (onboardingStep === 8) {
-                // Step 8: AI Advisor - capture selections
+            } else if (onboardingStep === 9) {
+                // Step 9: AI Advisor - capture selections (step 9 renders onboarding_aiAdvisorName)
                 const advisorSelect = document.getElementById('onboarding_aiAdvisorName')?.value;
                 if (advisorSelect === 'Custom') {
                     const customName = document.getElementById('onboarding_customAdvisorName')?.value.trim();
@@ -6208,25 +6214,25 @@ ${fullText.substring(0, 40000)}`;
                         return;
                     }
                     onboardingData.aiAdvisorName = customName;
-                } else {
+                } else if (advisorSelect) {
                     onboardingData.aiAdvisorName = advisorSelect;
                 }
                 // aiAdvisorTone is already updated via radio buttons
-            } else if (onboardingStep === 9) {
-                // Step 9: Client Types - ensure at least one is selected
+            } else if (onboardingStep === 10) {
+                // Step 10: Client Types - ensure at least one is selected
                 if (onboardingData.clientTypes.length === 0) {
                     alert('Please select at least one client type');
                     return;
                 }
-            } else if (onboardingStep === 10) {
-                // Step 10: Client Addition (optional)
+            } else if (onboardingStep === 11) {
+                // Step 11: Client Addition (optional)
                 const clientName = document.getElementById('onboarding_gcName')?.value.trim();
-                const clientType = document.getElementById('onboarding_clientType')?.value || 'gc';
+                const clientType = document.getElementById('onboarding_clientType')?.value || 'general_contractor';
                 if (clientName) {
-                    // Add the client with type
+                    // Add the client with type — use clientType (camelCase) to match saveClient()
                     const newClient = {
                         name: clientName,
-                        client_type: clientType,
+                        clientType: clientType,
                         rating: onboardingData.gcRating || 3,
                         bids: 0,
                         wins: 0
@@ -6236,8 +6242,8 @@ ${fullText.substring(0, 40000)}`;
                 }
             }
 
-            // Move to next step or complete
-            if (onboardingStep === 11) {
+            // Move to next step or complete (step 12 is the summary/confirm screen)
+            if (onboardingStep === 12) {
                 await completeOnboarding();
             } else {
                 renderOnboardingStep(onboardingStep + 1);
