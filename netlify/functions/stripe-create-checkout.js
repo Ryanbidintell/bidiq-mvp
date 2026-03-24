@@ -102,9 +102,12 @@ exports.handler = async function(event, context) {
         // Get or create Stripe customer
         const customerId = await getOrCreateCustomer(userId, email, name, companyName);
 
+        // Founding member period ends 2026-04-01T00:00:00Z
+        const isFoundingPeriod = new Date() < new Date('2026-04-01T00:00:00Z');
+
         // Create checkout session
         const stripe = getStripe();
-        const session = await stripe.checkout.sessions.create({
+        const sessionParams = {
             customer: customerId,
             mode: 'subscription',
             payment_method_types: ['card'],
@@ -126,7 +129,16 @@ exports.handler = async function(event, context) {
                     plan_name: planName || 'Unknown'
                 }
             }
-        });
+        };
+
+        // Stripe does not allow allow_promotion_codes and discounts simultaneously.
+        // During founding period: apply FOUNDING25 coupon automatically.
+        // After founding period: no discount.
+        if (isFoundingPeriod) {
+            sessionParams.discounts = [{ coupon: 'FOUNDING25' }];
+        }
+
+        const session = await stripe.checkout.sessions.create(sessionParams);
 
         return {
             statusCode: 200,
