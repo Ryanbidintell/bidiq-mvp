@@ -9312,17 +9312,21 @@ ${truncatedText}`;
                 details = '<div class="score-component-details">';
                 if (good.length) {
                     details += '<div style="margin-bottom:6px;"><strong style="color:var(--success)">✓ Good terms found:</strong></div>';
+                    details += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;">';
                     details += good.map(d => {
                         const loc = formatLocations(d);
                         return `<span class="keyword-tag good">${d.keyword} (${d.effect}) ${loc}</span>`;
                     }).join('');
+                    details += '</div>';
                 }
                 if (bad.length) {
                     details += '<div style="margin:8px 0 6px;"><strong style="color:var(--danger)">⚠ Risk terms found:</strong></div>';
+                    details += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;">';
                     details += bad.map(d => {
                         const loc = formatLocations(d);
                         return `<span class="keyword-tag bad">${d.keyword} (${d.effect}) ${loc}</span>`;
                     }).join('');
+                    details += '</div>';
                 }
                 if (!comp.hasContract) details += '<p style="margin-top:10px;font-size:11px;color:var(--text-muted);">ℹ️ No contract language detected - risk terms not penalized</p>';
                 details += '</div>';
