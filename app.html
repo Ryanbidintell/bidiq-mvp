@@ -11919,8 +11919,8 @@ Respond now:`;
                 }).join('');
 
             const modal = `
-                <div class="modal-backdrop" id="addClientModal" onclick="if(event.target===this) closeAddClientModal()">
-                    <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;" onclick="event.stopPropagation()">
+                <div class="modal-overlay active" id="addClientModal" onclick="if(event.target===this) closeAddClientModal()">
+                    <div class="modal" style="max-width: 600px;" onclick="event.stopPropagation()">
                         <div class="modal-header">
                             <h3 class="modal-title">Add Clients to Project</h3>
                             <button class="modal-close" onclick="closeAddClientModal()">×</button>
