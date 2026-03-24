@@ -7475,7 +7475,7 @@ ${truncatedText}`;
             const dphEl = document.getElementById('bidEconDollarPerHour');
             const dphValEl = document.getElementById('bidEconDph');
             if (!expectedEl) return;
-            if (!v || v <= 0 || !winRate) {
+            if (!v || v <= 0 || winRate < 0) {
                 expectedEl.innerHTML = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">EXPECTED VALUE</div><div style="font-size:18px;font-weight:700;color:var(--text-muted);">—</div><div style="font-size:10px;color:var(--text-muted);">enter scope value</div>`;
                 if (dphEl) dphEl.style.display = 'none';
                 return;
@@ -7501,7 +7501,7 @@ ${truncatedText}`;
             const winRateNote = winRate === null
                 ? 'track a won or lost outcome'
                 : `${withOutcomes.length} outcome${withOutcomes.length !== 1 ? 's' : ''}${withOutcomes.length < 3 ? ' — early estimate' : ''}`;
-            const winRateJs = winRate !== null ? winRate : 0;
+            const winRateJs = winRate !== null ? winRate : -1; // -1 = no outcome data yet
 
             // Pre-populate from tracked outcome data
             const savedAmount = parseFloat(savedOutcome?.amount || savedOutcome?.final_amount || '') || '';
@@ -10638,6 +10638,8 @@ ${truncatedText}`;
 
         async function viewReport(id) {
             const projects = await getProjects();
+            // Ensure allProjectsCache is populated so renderBidEconomicsCard() has win rate data
+            if (allProjectsCache.length === 0) allProjectsCache = projects;
             const settings = await getSettings();
             const p = projects.find(x => x.id === id);
             if (!p) {
