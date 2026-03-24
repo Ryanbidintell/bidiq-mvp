@@ -4974,10 +4974,10 @@ ${fullText.substring(0, 40000)}`;
             } else if (id === 'projects') {
                 // Refresh projects list when switching to projects tab
                 dataCache.projects = null; // Clear cache to get fresh data
-                const projects = await getProjects();
-                applyProjectFilters();
+                await loadProjects(); // loadProjects sets allProjectsCache; applyProjectFilters() needs it
             } else if (id === 'dashboard') {
-                // Refresh dashboard
+                // Refresh dashboard with fresh data
+                dataCache.projects = null; // Clear cache so loadDashboard gets current data
                 await loadDashboard();
             } else if (id === 'analytics') {
                 await renderAnalytics();
@@ -12509,7 +12509,7 @@ Respond now:`;
 
                 // If we're on the report page, reload it
                 const reportTab = document.getElementById('tab-report');
-                if (reportTab && reportTab.style.display !== 'none') {
+                if (reportTab && reportTab.classList.contains('active')) {
                     await viewReport(id);
                 }
 
