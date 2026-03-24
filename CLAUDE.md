@@ -285,6 +285,8 @@ if (tabElement && tabElement.classList.contains('active')) {
 
 **Lesson:** When debugging UI state, verify what mechanism controls visibility (classes vs inline styles)
 
+**⚠️ Recurring Bug (Mar 24, 2026):** `saveOutcome()` had this exact same `style.display` bug for the report tab reload check — confirmed this pattern reappears. Any new tab visibility check must use `classList.contains('active')`. Search for `style.display` when reviewing tab-related code.
+
 ### Date Validation Pattern (Feb 9, 2026)
 
 **Problem:** `new Date(invalidString)` doesn't throw errors, returns Invalid Date object
