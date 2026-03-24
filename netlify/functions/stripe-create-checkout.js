@@ -132,10 +132,10 @@ exports.handler = async function(event, context) {
         };
 
         // Stripe does not allow allow_promotion_codes and discounts simultaneously.
-        // During founding period: apply FOUNDING25 coupon automatically.
+        // During founding period: apply FOUNDING30 coupon automatically.
         // After founding period: no discount.
         if (isFoundingPeriod) {
-            sessionParams.discounts = [{ coupon: 'FOUNDING25' }];
+            sessionParams.discounts = [{ coupon: 'FOUNDING30' }];
         }
 
         const session = await stripe.checkout.sessions.create(sessionParams);
