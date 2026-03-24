@@ -10759,8 +10759,8 @@ ${truncatedText}`;
                 const tradeNudgeHtml = (_tradeScoreSaved < 50 && !_hasSections) ? `<div class="profile-incomplete-callout" style="margin:0 0 2px;">No trade types configured — this score is a rough estimate. <span class="link" onclick="switchTab('settings')">Set your trade types →</span></div>` : '';
 
                 // Populate score content
-                const recClassSaved = p.scores.recommendation.toLowerCase();
-                const recTextSaved = { GO: 'Strong fit', REVIEW: 'Review carefully', PASS: 'Poor fit' }[p.scores.recommendation] || '';
+                const recClassSaved = (p.scores?.recommendation || 'pass').toLowerCase();
+                const recTextSaved = { GO: 'Strong fit', REVIEW: 'Review carefully', PASS: 'Poor fit' }[p.scores?.recommendation] || '';
                 const locStrSaved = [p.extracted?.project_city, p.extracted?.project_state].filter(Boolean).join(', ');
                 const btSaved = (typeof p.extracted?.building_type === 'string' ? p.extracted.building_type : p.extracted?.building_type?.type) || '';
                 const scoreHTML = `
@@ -10777,12 +10777,12 @@ ${truncatedText}`;
                             ${p.bid_divisions_submitted && p.bid_divisions_submitted.length > 0 ? `<div style="margin-top:12px;padding:10px 14px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);font-size:13px;"><span style="font-weight:600;color:var(--text-primary);">📋 Submitted:</span> <span style="color:var(--text-secondary);">${p.bid_divisions_submitted.map(d => 'Div ' + d).join(', ')}</span></div>` : ''}
                         </div>
                         ${profileWarningHtml}
-                        ${renderComponent('📍', 'Location Fit', p.scores.components.location)}
-                        ${renderComponent('🔑', 'Keywords & Contract', p.scores.components.keywords)}
-                        ${renderComponent('🏢', 'GC Relationship', p.scores.components.gc)}
-                        ${renderComponent(tradeIcon, tradeLabel, p.scores.components.trade)}
+                        ${p.scores?.components?.location ? renderComponent('📍', 'Location Fit', p.scores.components.location) : ''}
+                        ${p.scores?.components?.keywords ? renderComponent('🔑', 'Keywords & Contract', p.scores.components.keywords) : ''}
+                        ${p.scores?.components?.gc ? renderComponent('🏢', 'GC Relationship', p.scores.components.gc) : ''}
+                        ${p.scores?.components?.trade ? renderComponent(tradeIcon, tradeLabel, p.scores.components.trade) : ''}
                         ${tradeNudgeHtml}
-                        ${p.scores.components.competitive?.weight > 0 ? renderComponent('⚔️', 'Competitive Pressure', p.scores.components.competitive) : ''}
+                        ${p.scores?.components?.competitive?.weight > 0 ? renderComponent('⚔️', 'Competitive Pressure', p.scores.components.competitive) : ''}
                     </div>
 
                     <div class="manual-override" style="margin-top:20px;padding:16px;background:var(--bg-tertiary);border-radius:var(--radius);border:1px solid var(--border-color);">
@@ -10941,10 +10941,10 @@ ${truncatedText}`;
                 // AI Analysis Summary (plain English)
                 const buildingTypeLabel = (typeof p.extracted.building_type === 'object' ? p.extracted.building_type?.type : p.extracted.building_type) || 'Not specified';
                 const summaryParts = [];
-                summaryParts.push(`This ${buildingTypeLabel.toLowerCase()} project is located ${p.scores.components.location.details?.dist || 'an unknown distance'} miles from your office.`);
-                if (p.scores.components.location.score >= 80) {
+                summaryParts.push(`This ${buildingTypeLabel.toLowerCase()} project is located ${p.scores?.components?.location?.details?.dist || 'an unknown distance'} miles from your office.`);
+                if ((p.scores?.components?.location?.score ?? 0) >= 80) {
                     summaryParts.push('The location is within your preferred service area.');
-                } else if (p.scores.components.location.score >= 60) {
+                } else if ((p.scores?.components?.location?.score ?? 0) >= 60) {
                     summaryParts.push('The location is at the edge of your service area.');
                 } else {
                     summaryParts.push('The location may be outside your typical service area.');
@@ -10973,19 +10973,19 @@ ${truncatedText}`;
 
                 // How to Improve Your Chances
                 const improvements = [];
-                if (p.scores.components.location.score < 80) {
+                if ((p.scores?.components?.location?.score ?? 100) < 80) {
                     improvements.push('Consider factoring in travel time and logistics costs for this location.');
                 }
-                if (p.scores.components.gc.score < 70) {
+                if ((p.scores?.components?.gc?.score ?? 100) < 70) {
                     improvements.push('Reach out to the GCs early to build rapport and clarify scope questions.');
                 }
                 if (riskKeywords > 0) {
                     improvements.push('Have your attorney review the contract terms, especially the identified risk clauses.');
                 }
-                if (p.scores.components.keywords.score < 70) {
+                if ((p.scores?.components?.keywords?.score ?? 100) < 70) {
                     improvements.push('Request clarification on any ambiguous scope items before submitting your bid.');
                 }
-                if (p.scores.components.trade.score < 80) {
+                if ((p.scores?.components?.trade?.score ?? 100) < 80) {
                     improvements.push('Highlight your relevant experience in similar projects to strengthen your bid.');
                 }
                 if (improvements.length === 0) {
@@ -11058,14 +11058,14 @@ ${truncatedText}`;
 
                 // Format square footage with commas
                 const formatSF = (sf) => {
-                    if (!sf) return 'Not found';
+                    if (!sf) return '—';
                     const num = parseInt(sf);
-                    if (isNaN(num)) return 'Not found';
+                    if (isNaN(num)) return '—';
                     return num.toLocaleString() + ' SF';
                 };
 
                 // Get GC names from various possible field names
-                let gcDisplay = 'Not found';
+                let gcDisplay = '—';
                 if (p.extracted.gc_names && Array.isArray(p.extracted.gc_names) && p.extracted.gc_names.length > 0) {
                     gcDisplay = p.extracted.gc_names.join(', ');
                 } else if (p.extracted.general_contractor) {
@@ -11075,24 +11075,24 @@ ${truncatedText}`;
                 }
 
                 // Clean up architect name - filter out taglines/service lists
-                let architectDisplay = p.extracted.architect_name || 'Not found';
-                if (architectDisplay && architectDisplay !== 'Not found') {
+                let architectDisplay = p.extracted.architect_name || '—';
+                if (architectDisplay && architectDisplay !== '—') {
                     // If it contains 3+ commas, it's likely a service list, not a firm name
                     const commaCount = (architectDisplay.match(/,/g) || []).length;
                     if (commaCount >= 3) {
-                        architectDisplay = 'Not found';
+                        architectDisplay = '—';
                     }
                 }
 
                 // Reuse city and state variables already declared above
-                const locationValue = [city, state].filter(Boolean).join(', ') || 'Not found';
+                const locationValue = [city, state].filter(Boolean).join(', ') || '—';
 
                 const extractedFields = [
                     { label: 'Project Name', value: p.extracted.project_name },
                     { label: 'Building Type', value: (typeof p.extracted.building_type === 'object' ? p.extracted.building_type?.type : p.extracted.building_type) },
                     { label: 'Location', value: locationValue },
                     { label: 'Building Size', value: formatSF(p.extracted.project_size_sf) },
-                    { label: 'Owner', value: p.extracted.owner_name || p.extracted.owner || 'Not found' },
+                    { label: 'Owner', value: p.extracted.owner_name || p.extracted.owner || '—' },
                     { label: 'Architect', value: architectDisplay }
                 ];
 
@@ -11100,7 +11100,7 @@ ${truncatedText}`;
                     extractedHTML += `
                         <div style="padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
                             <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">${field.label}</div>
-                            <div style="font-weight: 500;">${field.value || 'Not found'}</div>
+                            <div style="font-weight: 500;">${field.value || '—'}</div>
                         </div>
                     `;
                 });
