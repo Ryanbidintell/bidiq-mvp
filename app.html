@@ -1719,6 +1719,17 @@
                         </div>
                     </div>
 
+                    <!-- Forwarding Address -->
+                    <div class="settings-card" id="emailAliasCard">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">📧 Your Forwarding Address</div>
+                            <div class="settings-card-description">Forward bid documents here and BidIntell will auto-score them and reply with results</div>
+                        </div>
+                        <div class="settings-card-body" id="emailAliasCardBody">
+                            <div style="color: var(--text-muted); font-size: 13px;">Loading...</div>
+                        </div>
+                    </div>
+
                     <!-- Subscription & Billing -->
                     <div class="settings-card" id="billingCard">
                         <div class="settings-card-header">
@@ -13114,12 +13125,194 @@ Respond now:`;
             }
         }
 
+        // ── Email Alias Settings Card ────────────────────────────────────────
+
+        let aliasEditTimer = null;
+
+        function renderEmailAliasCard(settings) {
+            const body = document.getElementById('emailAliasCardBody');
+            if (!body) return;
+            const alias = settings.email_alias;
+
+            if (alias) {
+                const fullAddress = alias + '@bids.bidintell.ai';
+                body.innerHTML = `
+                    <div id="emailAliasDisplay">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <div style="flex: 1; padding: 10px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); font-family: monospace; font-size: 14px; color: var(--text-primary);">${fullAddress}</div>
+                            <button class="btn btn-secondary btn-sm" id="aliasCopyBtn" onclick="copyEmailAlias('${fullAddress}')">Copy</button>
+                        </div>
+                        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px;">
+                            Forward bid documents to this address — scope sheets, specs, and ITBs.
+                            Max 10MB per file, 3 attachments per email.
+                            BidIntell will score them and reply with results.
+                        </p>
+                        <a href="#" onclick="showAliasEditMode(); return false;" style="font-size: 13px; color: var(--accent); text-decoration: underline; cursor: pointer;">Change address</a>
+                    </div>
+                    <div id="emailAliasEdit" style="display: none;">
+                        <div style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.35); border-radius: var(--radius); padding: 10px 14px; font-size: 12px; color: var(--text-primary); margin-bottom: 12px;" id="aliasChangeWarning" style="display: none;">
+                            ⚠️ You'll need to update any forwarding rules in Gmail or Outlook to your new address.
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">New Forwarding Address</label>
+                            <div style="display: flex; align-items: center; gap: 0;">
+                                <input type="text" class="form-input" id="settingAliasInput"
+                                    value="${alias}"
+                                    maxlength="30"
+                                    style="border-radius: var(--radius) 0 0 var(--radius); flex: 1;"
+                                    oninput="settingsAliasChanged(this.value)">
+                                <span style="padding: 10px 14px; background: var(--bg-secondary); border: 1px solid var(--border); border-left: none; border-radius: 0 var(--radius) var(--radius) 0; color: var(--text-muted); font-size: 13px; white-space: nowrap;">@bids.bidintell.ai</span>
+                            </div>
+                            <div id="settingAliasStatus" style="margin-top: 8px; font-size: 13px; color: var(--text-muted);"></div>
+                            <div id="settingAliasError" style="margin-top: 6px; font-size: 12px; color: var(--error); display: none;"></div>
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-top: 12px; align-items: center;">
+                            <button class="btn btn-primary btn-sm" id="aliasSaveBtn" onclick="saveAliasFromSettings()" disabled style="opacity: 0.45;">Save</button>
+                            <a href="#" onclick="hideAliasEditMode(); return false;" style="font-size: 13px; color: var(--text-muted); text-decoration: underline; cursor: pointer;">Cancel</a>
+                        </div>
+                    </div>
+                `;
+            } else {
+                body.innerHTML = `
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                        Set up your forwarding address to start receiving auto-scored bids.
+                    </p>
+                    <div class="form-group">
+                        <label class="form-label">Choose Your Address</label>
+                        <div style="display: flex; align-items: center; gap: 0;">
+                            <input type="text" class="form-input" id="settingAliasInput"
+                                placeholder="acme-electric"
+                                maxlength="30"
+                                style="border-radius: var(--radius) 0 0 var(--radius); flex: 1;"
+                                oninput="settingsAliasChanged(this.value)">
+                            <span style="padding: 10px 14px; background: var(--bg-secondary); border: 1px solid var(--border); border-left: none; border-radius: 0 var(--radius) var(--radius) 0; color: var(--text-muted); font-size: 13px; white-space: nowrap;">@bids.bidintell.ai</span>
+                        </div>
+                        <div id="settingAliasStatus" style="margin-top: 8px; font-size: 13px; color: var(--text-muted);">Enter your forwarding address above</div>
+                        <div id="settingAliasError" style="margin-top: 6px; font-size: 12px; color: var(--error); display: none;"></div>
+                    </div>
+                    <div style="margin-top: 12px;">
+                        <button class="btn btn-primary btn-sm" id="aliasSaveBtn" onclick="saveAliasFromSettings()" disabled style="opacity: 0.45;">Save Address</button>
+                    </div>
+                `;
+                // Pre-populate from company name
+                setTimeout(() => {
+                    const input = document.getElementById('settingAliasInput');
+                    const slug = generateAliasSlug(settings.company_name || settings.companyName || '');
+                    if (input && slug) {
+                        input.value = slug;
+                        settingsAliasChanged(slug);
+                    }
+                }, 100);
+            }
+        }
+
+        function showAliasEditMode() {
+            document.getElementById('emailAliasDisplay').style.display = 'none';
+            document.getElementById('emailAliasEdit').style.display = 'block';
+        }
+
+        function hideAliasEditMode() {
+            document.getElementById('emailAliasDisplay').style.display = 'block';
+            document.getElementById('emailAliasEdit').style.display = 'none';
+        }
+
+        function copyEmailAlias(address) {
+            navigator.clipboard.writeText(address).then(() => {
+                const btn = document.getElementById('aliasCopyBtn');
+                if (btn) {
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+                }
+            });
+        }
+
+        function settingsAliasChanged(rawValue) {
+            const statusEl = document.getElementById('settingAliasStatus');
+            const errorEl  = document.getElementById('settingAliasError');
+            const saveBtn  = document.getElementById('aliasSaveBtn');
+            const warningEl = document.getElementById('aliasChangeWarning');
+            if (!statusEl || !errorEl || !saveBtn) return;
+
+            if (warningEl) warningEl.style.display = 'block';
+
+            const slug = (rawValue || '').toLowerCase().trim();
+
+            if (!slug) {
+                errorEl.style.display = 'none';
+                statusEl.textContent = 'Enter your forwarding address above';
+                statusEl.style.color = 'var(--text-muted)';
+                saveBtn.disabled = true;
+                saveBtn.style.opacity = '0.45';
+                return;
+            }
+
+            if (slug.length < 3) {
+                errorEl.textContent = 'Must be at least 3 characters';
+                errorEl.style.display = 'block';
+                statusEl.textContent = '';
+                saveBtn.disabled = true;
+                saveBtn.style.opacity = '0.45';
+                return;
+            }
+
+            if (!/^[a-z0-9-]+$/.test(slug) || slug.startsWith('-') || slug.endsWith('-')) {
+                errorEl.textContent = 'Only lowercase letters, numbers, and dashes. No leading or trailing dashes.';
+                errorEl.style.display = 'block';
+                statusEl.textContent = '';
+                saveBtn.disabled = true;
+                saveBtn.style.opacity = '0.45';
+                return;
+            }
+
+            errorEl.style.display = 'none';
+            statusEl.textContent = 'Checking...';
+            statusEl.style.color = 'var(--text-muted)';
+            saveBtn.disabled = true;
+            saveBtn.style.opacity = '0.45';
+
+            clearTimeout(aliasEditTimer);
+            aliasEditTimer = setTimeout(async () => {
+                const result = await checkAliasAvailability(slug, currentUser?.id);
+                const statusEl2 = document.getElementById('settingAliasStatus');
+                const saveBtn2  = document.getElementById('aliasSaveBtn');
+                if (!statusEl2 || !saveBtn2) return;
+                if (result.available) {
+                    statusEl2.textContent = '\u2705 ' + slug + ' is available';
+                    statusEl2.style.color = 'var(--success)';
+                    saveBtn2.disabled = false;
+                    saveBtn2.style.opacity = '';
+                } else {
+                    const suggestion = slug + '-' + (currentUser?.id || '').slice(-4);
+                    statusEl2.textContent = '\u274C ' + slug + ' is taken \u2014 try ' + suggestion;
+                    statusEl2.style.color = 'var(--error)';
+                    saveBtn2.disabled = true;
+                    saveBtn2.style.opacity = '0.45';
+                }
+            }, 500);
+        }
+
+        async function saveAliasFromSettings() {
+            const input = document.getElementById('settingAliasInput');
+            const alias = input?.value.trim();
+            if (!alias) return;
+            try {
+                await saveEmailAlias(alias);
+                dataCache.settings = null;
+                await loadSettings();
+            } catch (e) {
+                alert('Could not save address: ' + (e.message || 'Try a different alias — this one may be taken.'));
+            }
+        }
+
         // Settings
         async function loadSettings() {
             const s = await getSettings();
 
             // Initialize product lines for settings management
             settingsProductLines = s.productLines || [];
+
+            // Render email alias card (independent of main save button)
+            renderEmailAliasCard(s);
 
             // Load user profile fields
             if (document.getElementById('settingCompanyName')) document.getElementById('settingCompanyName').value = s.company_name || s.companyName || '';
