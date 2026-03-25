@@ -6,6 +6,9 @@
 [functions."bc-sync"]
   timeout = 26
 
+[functions."inbound-email"]
+  timeout = 26
+
 [functions."weekly-health-check"]
   schedule = "0 9 * * 1"
 
