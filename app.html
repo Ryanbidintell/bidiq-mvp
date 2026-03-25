@@ -6350,6 +6350,43 @@ ${fullText.substring(0, 40000)}`;
             await supabaseClient.from('user_settings').update({ baseline_win_rate: rate }).eq('user_id', currentUser.id);
         }
 
+        // ── Email Alias Utilities ────────────────────────────────────────────
+
+        function generateAliasSlug(companyName) {
+            return (companyName || '')
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, '')
+                .substring(0, 30);
+        }
+
+        // NOTE: RLS limits user_settings SELECT to the authenticated user's own row.
+        // If another user owns the slug, this returns null (RLS hides it) — the
+        // query below appears available but the DB UNIQUE constraint will reject the
+        // save. saveEmailAlias() handles that constraint error.
+        async function checkAliasAvailability(slug, currentUserId) {
+            if (!supabaseClient || !slug) return { available: false };
+            const { data } = await supabaseClient
+                .from('user_settings')
+                .select('user_id')
+                .eq('email_alias', slug)
+                .maybeSingle();
+            if (!data) return { available: true };              // not found (or hidden by RLS)
+            if (data.user_id === currentUserId) return { available: true };  // they already own it
+            return { available: false };
+        }
+
+        async function saveEmailAlias(alias) {
+            if (!supabaseClient || !currentUser) return;
+            const { error } = await supabaseClient
+                .from('user_settings')
+                .update({ email_alias: alias })
+                .eq('user_id', currentUser.id);
+            if (error) throw error;
+            dataCache.settings = null;
+        }
+
         async function completeOnboarding() {
             // Default weights based on company type
             const defaultWeights = {
