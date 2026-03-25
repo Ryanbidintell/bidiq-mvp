@@ -1318,6 +1318,7 @@
                 <header class="page-header"><h2 class="page-title">Dashboard</h2><p class="page-subtitle">Your bid intelligence at a glance</p></header>
                 <div class="page-content">
                     <div id="setupBanner"></div>
+                    <div id="emailAliasBanner"></div>
                     <div class="stats-grid">
                         <div class="stat-card accent">
                             <div class="stat-label">Total Bids Analyzed</div>
@@ -2393,7 +2394,7 @@
             <!-- Progress Bar -->
             <div style="padding: 16px 24px 0; background: var(--bg-secondary);">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="font-size: 12px; color: var(--text-muted);">Step <span id="onboardingCurrentStep">1</span> of 12</span>
+                    <span style="font-size: 12px; color: var(--text-muted);">Step <span id="onboardingCurrentStep">1</span> of 13</span>
                     <span style="font-size: 12px; color: var(--text-muted);"><span id="onboardingProgress">8</span>% complete</span>
                 </div>
                 <div style="height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden;">
@@ -4230,7 +4231,8 @@ ${fullText.substring(0, 40000)}`;
                     target_margin: data.target_margin || 15,
                     onboarding_completed: data.onboarding_completed === true,  // Explicit boolean check
                     plan_rooms: data.plan_rooms || [],
-                    baseline_win_rate: data.baseline_win_rate || null
+                    baseline_win_rate: data.baseline_win_rate || null,
+                    email_alias: data.email_alias || null
                 };
                 return dataCache.settings;
             } catch (e) {
@@ -5642,15 +5644,15 @@ ${fullText.substring(0, 40000)}`;
             const skipBtn = document.getElementById('onboardingSkipBtn');
 
             // Update progress
-            const progress = Math.round((step / 12) * 100);
+            const progress = Math.round((step / 13) * 100);
             document.getElementById('onboardingCurrentStep').textContent = step;
             document.getElementById('onboardingProgress').textContent = progress;
             document.getElementById('onboardingProgressBar').style.width = progress + '%';
 
             // Show/hide back button
             backBtn.style.display = step === 1 ? 'none' : 'inline-flex';
-            skipBtn.style.display = step === 12 ? 'none' : 'inline-block';
-            nextBtn.textContent = step === 12 ? 'Complete Setup 🎉' : 'Next →';
+            skipBtn.style.display = step === 13 ? 'none' : 'inline-block';
+            nextBtn.textContent = step === 13 ? 'Complete Setup 🎉' : 'Next →';
             // Re-enable next button by default (step 2 plan rooms may override this below)
             nextBtn.disabled = false;
             nextBtn.style.opacity = '';
@@ -6099,6 +6101,61 @@ ${fullText.substring(0, 40000)}`;
                     </div>
                 `;
             } else if (step === 12) {
+                // Step 12: Set Forwarding Address
+                nextBtn.disabled = true;
+                nextBtn.style.opacity = '0.45';
+
+                // Pre-populate slug from company name (already in cache by this point)
+                const cachedS = dataCache.settings;
+                const companyNameForSlug = cachedS
+                    ? (cachedS.company_name || cachedS.companyName || '')
+                    : '';
+                const initialSlug = generateAliasSlug(companyNameForSlug)
+                    || generateAliasSlug((currentUser?.email || '').split('@')[0]);
+
+                body.innerHTML = `
+                    <div style="text-align: center; padding: 20px 0;">
+                        <div style="margin-bottom: 20px; display: flex; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                            </svg>
+                        </div>
+                        <h3 style="color: var(--text-primary); margin-bottom: 8px;">Set Your Forwarding Address</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 28px; font-size: 14px; max-width: 480px; margin-left: auto; margin-right: auto;">
+                            Forward bid documents here — scope sheets, specs, and ITBs — and
+                            BidIntell will automatically score them. Max 10MB per file.
+                        </p>
+                        <div style="max-width: 500px; margin: 0 auto; text-align: left;">
+                            <div class="form-group">
+                                <label class="form-label">Your Forwarding Address</label>
+                                <div style="display: flex; align-items: center; gap: 0;">
+                                    <input type="text" class="form-input" id="onboarding_aliasInput"
+                                        placeholder="acme-electric"
+                                        maxlength="30"
+                                        style="border-radius: var(--radius) 0 0 var(--radius); flex: 1;"
+                                        oninput="onboardingAliasChanged(this.value)">
+                                    <span style="padding: 10px 14px; background: var(--bg-secondary); border: 1px solid var(--border); border-left: none; border-radius: 0 var(--radius) var(--radius) 0; color: var(--text-muted); font-size: 13px; white-space: nowrap;">@bids.bidintell.ai</span>
+                                </div>
+                                <div id="onboarding_aliasStatus" style="margin-top: 8px; font-size: 13px; color: var(--text-muted);">Enter your forwarding address above</div>
+                                <div id="onboarding_aliasError" style="margin-top: 6px; font-size: 12px; color: var(--error); display: none;"></div>
+                            </div>
+                            <div style="margin-top: 20px; text-align: center;">
+                                <a href="#" onclick="skipEmailAliasStep(); return false;" style="font-size: 13px; color: var(--text-muted); text-decoration: underline; cursor: pointer;">Skip for now</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Pre-fill and trigger check after DOM renders
+                setTimeout(() => {
+                    const aliasInput = document.getElementById('onboarding_aliasInput');
+                    if (aliasInput && initialSlug) {
+                        aliasInput.value = initialSlug;
+                        onboardingAliasChanged(initialSlug);
+                    }
+                }, 100);
+
+            } else if (step === 13) {
                 const companyTypeLabel = onboardingData.companyType === 'subcontractor' ? 'Subcontractor' :
                                         onboardingData.companyType === 'distributor' ? 'Distributor' : 'Manufacturer Rep';
                 const tradesOrProducts = onboardingData.companyType === 'subcontractor' ?
@@ -6242,8 +6299,21 @@ ${fullText.substring(0, 40000)}`;
                 }
             }
 
-            // Move to next step or complete (step 12 is the summary/confirm screen)
+            // Step 12: save email alias if user entered one
             if (onboardingStep === 12) {
+                const alias = document.getElementById('onboarding_aliasInput')?.value.trim();
+                if (alias) {
+                    try {
+                        await saveEmailAlias(alias);
+                    } catch (e) {
+                        // Unique constraint means alias was just taken — inform but still advance
+                        console.warn('Email alias save failed (likely taken):', e.message);
+                    }
+                }
+            }
+
+            // Move to next step or complete (step 13 is the summary/confirm screen)
+            if (onboardingStep === 13) {
                 await completeOnboarding();
             } else {
                 renderOnboardingStep(onboardingStep + 1);
@@ -6254,6 +6324,78 @@ ${fullText.substring(0, 40000)}`;
             if (onboardingStep > 1) {
                 renderOnboardingStep(onboardingStep - 1);
             }
+        }
+
+        // Debounce timer for alias availability check
+        let aliasCheckTimer = null;
+
+        function onboardingAliasChanged(rawValue) {
+            const statusEl = document.getElementById('onboarding_aliasStatus');
+            const errorEl  = document.getElementById('onboarding_aliasError');
+            const nextBtn  = document.getElementById('onboardingNextBtn');
+            if (!statusEl || !errorEl || !nextBtn) return;
+
+            // Validate format first
+            const slug = (rawValue || '').toLowerCase().trim();
+            const validPattern = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$|^[a-z0-9]{3,30}$/;
+
+            if (!slug) {
+                errorEl.style.display = 'none';
+                statusEl.textContent = 'Enter your forwarding address above';
+                statusEl.style.color = 'var(--text-muted)';
+                nextBtn.disabled = true;
+                nextBtn.style.opacity = '0.45';
+                return;
+            }
+
+            if (slug.length < 3) {
+                errorEl.textContent = 'Must be at least 3 characters';
+                errorEl.style.display = 'block';
+                statusEl.textContent = '';
+                nextBtn.disabled = true;
+                nextBtn.style.opacity = '0.45';
+                return;
+            }
+
+            if (!/^[a-z0-9-]+$/.test(slug) || slug.startsWith('-') || slug.endsWith('-')) {
+                errorEl.textContent = 'Only lowercase letters, numbers, and dashes. No leading or trailing dashes.';
+                errorEl.style.display = 'block';
+                statusEl.textContent = '';
+                nextBtn.disabled = true;
+                nextBtn.style.opacity = '0.45';
+                return;
+            }
+
+            errorEl.style.display = 'none';
+            statusEl.textContent = 'Checking...';
+            statusEl.style.color = 'var(--text-muted)';
+            nextBtn.disabled = true;
+            nextBtn.style.opacity = '0.45';
+
+            clearTimeout(aliasCheckTimer);
+            aliasCheckTimer = setTimeout(async () => {
+                const result = await checkAliasAvailability(slug, currentUser?.id);
+                const statusEl2 = document.getElementById('onboarding_aliasStatus');
+                const nextBtn2  = document.getElementById('onboardingNextBtn');
+                if (!statusEl2 || !nextBtn2) return;
+                if (result.available) {
+                    statusEl2.textContent = '\u2705 ' + slug + ' is available';
+                    statusEl2.style.color = 'var(--success)';
+                    nextBtn2.disabled = false;
+                    nextBtn2.style.opacity = '';
+                } else {
+                    const suggestion = slug + '-' + (currentUser?.id || '').slice(-4);
+                    statusEl2.textContent = '\u274C ' + slug + ' is taken \u2014 try ' + suggestion;
+                    statusEl2.style.color = 'var(--error)';
+                    nextBtn2.disabled = true;
+                    nextBtn2.style.opacity = '0.45';
+                }
+            }, 500);
+        }
+
+        function skipEmailAliasStep() {
+            // Advance to summary without saving alias
+            renderOnboardingStep(13);
         }
 
         function updateOnboardingTrade(checkbox) {
@@ -10287,6 +10429,22 @@ ${truncatedText}`;
                 </div>`;
         }
 
+        function renderEmailAliasBanner(settings) {
+            const banner = document.getElementById('emailAliasBanner');
+            if (!banner) return;
+            if (settings.email_alias) { banner.innerHTML = ''; return; }
+            // Only show if onboarding is complete (don't stack nudges during onboarding)
+            if (!settings.onboarding_completed) { banner.innerHTML = ''; return; }
+            banner.innerHTML = `
+                <div class="setup-banner" style="margin-bottom:12px;">
+                    <span class="setup-banner-icon">📧</span>
+                    <span class="setup-banner-text">
+                        Set up your forwarding address to start receiving auto-scored bids.
+                        <span class="setup-banner-link" onclick="switchTab('settings')"> Set it up →</span>
+                    </span>
+                </div>`;
+        }
+
         async function renderProfileWarningHtml(settings) {
             if (sessionStorage.getItem('bidintell_report_warning_shown')) return '';
             const keywords = await getKeywords();
@@ -10309,6 +10467,7 @@ ${truncatedText}`;
             const projects = await getProjects();
             const settings = await getSettings();
             renderProfileCompleteness();
+            renderEmailAliasBanner(settings);
 
             // Total bids analyzed
             animateValue('statBids', 0, projects.length);
