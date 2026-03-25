@@ -264,6 +264,7 @@
         .form-input, .form-select { width: 100%; padding: 10px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 13px; font-family: inherit; }
         .form-input:focus, .form-select:focus { outline: none; border-color: var(--accent); background: var(--bg-secondary); }
         .form-input::placeholder { color: var(--text-muted); }
+        input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active { -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset !important; -webkit-text-fill-color: var(--text-primary) !important; caret-color: var(--text-primary); }
         .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
         .form-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
         
