@@ -1,11 +1,11 @@
-// netlify/functions/inbound-email.js
-// Postmark inbound webhook handler — receives forwarded bid documents,
-// extracts project data via Claude, scores the bid, saves a project record,
-// and replies to the user with the score summary.
+// netlify/functions/inbound-email-background.js
+// Postmark inbound webhook handler (Background Function — returns 202 immediately,
+// processes up to 15 minutes). Receives forwarded bid documents, extracts project
+// data via Claude, scores the bid, saves a project record, and replies with score.
 //
 // SETUP REQUIRED (do not deploy without completing these):
 // 1. Postmark Dashboard → Servers → [your server] → Settings → Inbound
-//    Set webhook URL to: https://bidintell.ai/.netlify/functions/inbound-email
+//    Set webhook URL to: https://bidintell.ai/.netlify/functions/inbound-email-background
 // 2. Namecheap DNS: Add MX record
 //    Host: bids  |  Value: inbound.postmarkapp.com  |  Priority: 10
 // 3. POSTMARK_API_KEY already in Netlify env — confirm inbound is enabled on the server
@@ -133,12 +133,10 @@ async function scoreLocation(city, state, settings, geocodeCache) {
     if (!city && !state) return { score: 50, weight, reason: 'Project location not found in email' };
 
     const userKey = `${settings.city}, ${settings.state}`;
-    if (!geocodeCache.has(userKey)) await sleep(1100);
     const userCoords = await nominatimGeocode(userKey, geocodeCache);
     if (!userCoords) return { score: 50, weight, reason: 'Could not geocode your office address' };
 
     const projKey = state ? `${city}, ${state}` : city;
-    if (!geocodeCache.has(projKey)) await sleep(1100);
     const projCoords = await nominatimGeocode(projKey, geocodeCache);
 
     if (!projCoords) {

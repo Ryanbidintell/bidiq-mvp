@@ -6,7 +6,7 @@
 [functions."bc-sync"]
   timeout = 26
 
-[functions."inbound-email"]
+[functions."inbound-email-background"]
   timeout = 26
 
 [functions."weekly-health-check"]
