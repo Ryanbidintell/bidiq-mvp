@@ -11547,14 +11547,14 @@ ${truncatedText}`;
             dropZone.style.borderColor = 'var(--border-color)';
             dropZone.style.background = 'var(--bg-secondary)';
 
-            const files = Array.from(event.dataTransfer.files).filter(f => f.type === 'application/pdf');
-            handleReuploadFiles(files);
+            handleReuploadFiles(event.dataTransfer.files);
         }
 
         function handleReuploadFiles(files) {
             if (!files || files.length === 0) return;
 
-            const fileArray = Array.from(files).filter(f => f.type === 'application/pdf');
+            const isPDF = f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
+            const fileArray = Array.from(files).filter(isPDF);
 
             if (fileArray.length === 0) {
                 showBanner('❌ Please upload PDF files only', 'error');
