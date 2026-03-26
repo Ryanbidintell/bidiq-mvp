@@ -131,6 +131,9 @@ exports.handler = async function(event, context) {
             }
         };
 
+        // 7-day free trial for all new subscribers
+        sessionParams.subscription_data.trial_period_days = 7;
+
         // Stripe does not allow allow_promotion_codes and discounts simultaneously.
         // During founding period: apply FOUNDING30 coupon automatically.
         // After founding period: no discount.

@@ -4,6 +4,7 @@
 const POSTMARK_API_KEY = process.env.POSTMARK_API_KEY;
 
 async function sendEmail({ to, subject, htmlBody }) {
+    const isInternalOnly = to === 'ryan@fsikc.com';
     const response = await fetch('https://api.postmarkapp.com/email', {
         method: 'POST',
         headers: {
@@ -13,8 +14,10 @@ async function sendEmail({ to, subject, htmlBody }) {
         body: JSON.stringify({
             From: 'hello@bidintell.ai',
             To: to,
+            ...(isInternalOnly ? {} : { Bcc: 'ryan@bidintell.ai' }),
             Subject: subject,
-            HtmlBody: htmlBody
+            HtmlBody: htmlBody,
+            MessageStream: 'outbound'
         })
     });
     if (!response.ok) throw new Error(`Postmark API error: ${response.status}`);

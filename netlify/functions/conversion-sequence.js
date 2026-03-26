@@ -140,57 +140,167 @@ function emailForDaysLeft(daysLeft, name) {
     return null;
 }
 
+// ── Welcome sequence (post-signup) ───────────────────────────────────────────
+
+function welcomeStep2Html(name) {
+    return `
+<div style="background:#ffffff; font-family:'Helvetica Neue',sans-serif; max-width:560px; margin:0 auto; padding:40px 32px; color:#0B0F14;">
+    <div style="margin-bottom:28px;">
+        <span style="font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#F26522;">BIDINTELL</span>
+    </div>
+    <h2 style="font-size:22px; font-weight:700; margin:0 0 16px;">3 settings that make BidIntell more accurate, ${name}.</h2>
+    <p style="font-size:15px; line-height:1.6; color:#374151; margin:0 0 24px;">If you haven't done these yet, they make a real difference in your scores:</p>
+    <div style="margin-bottom:20px;">
+        <p style="font-size:15px; font-weight:700; margin:0 0 6px; color:#0B0F14;">1. Set your CSI spec sections <span style="font-weight:400; color:#6b7280;">(Settings → Your Trades)</span></p>
+        <p style="font-size:14px; line-height:1.6; color:#374151; margin:0;">Instead of division-level guessing, BidIntell finds the exact sections you bid — flooring, ceilings, framing, whatever your trade is.</p>
+    </div>
+    <div style="margin-bottom:20px;">
+        <p style="font-size:15px; font-weight:700; margin:0 0 6px; color:#0B0F14;">2. Add and rate your GCs <span style="font-weight:400; color:#6b7280;">(GC Manager tab)</span></p>
+        <p style="font-size:14px; line-height:1.6; color:#374151; margin:0;">Your win rate with each GC factors directly into your score. The more history you track, the smarter the scoring gets.</p>
+    </div>
+    <div style="margin-bottom:24px;">
+        <p style="font-size:15px; font-weight:700; margin:0 0 6px; color:#0B0F14;">3. Upload specs AND drawings together</p>
+        <p style="font-size:14px; line-height:1.6; color:#374151; margin:0;">Got both? Drop them in at the same time. BidIntell combines them for a more complete picture of the scope.</p>
+    </div>
+    <a href="https://bidintell.ai/app" style="display:inline-block; background:#F26522; color:#ffffff; font-weight:700; font-size:15px; padding:14px 28px; border-radius:6px; text-decoration:none; margin-bottom:28px;">
+        Open BidIntell →
+    </a>
+    <hr style="border:none; border-top:1px solid #e5e7eb; margin:28px 0;">
+    <p style="font-size:14px; color:#6b7280; margin:0;">— Ryan<br><span style="color:#9ca3af;">Founder, BidIntell</span></p>
+</div>`;
+}
+
+function welcomeStep3Html(name) {
+    return `
+<div style="background:#ffffff; font-family:'Helvetica Neue',sans-serif; max-width:560px; margin:0 auto; padding:40px 32px; color:#0B0F14;">
+    <div style="margin-bottom:28px;">
+        <span style="font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#F26522;">BIDINTELL</span>
+    </div>
+    <h2 style="font-size:22px; font-weight:700; margin:0 0 16px;">Your free trial ends today, ${name}.</h2>
+    <p style="font-size:15px; line-height:1.6; color:#374151; margin:0 0 16px;">
+        Your card will be charged today for your BidIntell subscription. Nothing you need to do if you want to keep going.
+    </p>
+    <p style="font-size:15px; line-height:1.6; color:#374151; margin:0 0 24px;">
+        If BidIntell hasn't clicked yet — reply to this email and tell me what's not working. I read every response and I'd rather fix it than lose you.
+    </p>
+    <p style="font-size:15px; line-height:1.6; color:#374151; margin:0 0 24px;">
+        To cancel or change your plan: Settings → Subscription &amp; Billing → Manage Billing.
+    </p>
+    <a href="https://bidintell.ai/app" style="display:inline-block; background:#F26522; color:#ffffff; font-weight:700; font-size:15px; padding:14px 28px; border-radius:6px; text-decoration:none; margin-bottom:28px;">
+        Open BidIntell →
+    </a>
+    <hr style="border:none; border-top:1px solid #e5e7eb; margin:28px 0;">
+    <p style="font-size:14px; color:#6b7280; margin:0;">— Ryan<br><span style="color:#9ca3af;">Founder, BidIntell · Reply any time</span></p>
+</div>`;
+}
+
+async function sendWelcomeSequence() {
+    const now = new Date();
+
+    // Find subscription_created events that are 2 or 7 days old (±12h window)
+    const day2Min = new Date(now - (2.5 * 24 * 60 * 60 * 1000)).toISOString();
+    const day2Max = new Date(now - (1.5 * 24 * 60 * 60 * 1000)).toISOString();
+    const day7Min = new Date(now - (7.5 * 24 * 60 * 60 * 1000)).toISOString();
+    const day7Max = new Date(now - (6.5 * 24 * 60 * 60 * 1000)).toISOString();
+
+    const steps = [
+        { minAge: day2Min, maxAge: day2Max, eventType: 'welcome_email_step_2', label: 'Day-2 tips' },
+        { minAge: day7Min, maxAge: day7Max, eventType: 'welcome_email_step_3', label: 'Day-7 trial-end' }
+    ];
+
+    let totalSent = 0;
+
+    for (const step of steps) {
+        const { data: subscriptions } = await supabase
+            .from('admin_events')
+            .select('user_id, event_data')
+            .eq('event_type', 'subscription_created')
+            .gte('created_at', step.maxAge)
+            .lte('created_at', step.minAge);
+
+        if (!subscriptions || subscriptions.length === 0) continue;
+
+        for (const sub of subscriptions) {
+            const userId = sub.user_id;
+            if (!userId) continue;
+            if (await alreadySent(userId, step.eventType)) continue;
+
+            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+            const userEmail = authUser?.user?.email;
+            if (!userEmail) continue;
+
+            const firstName = userEmail.split('@')[0].split('.')[0];
+            const name = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+            const isStep2 = step.eventType === 'welcome_email_step_2';
+            const subject = isStep2
+                ? '3 settings that make BidIntell more accurate'
+                : 'Your free trial ends today';
+            const htmlBody = isStep2 ? welcomeStep2Html(name) : welcomeStep3Html(name);
+
+            try {
+                await sendEmail({ to: userEmail, subject, htmlBody });
+                await logEvent(userId, step.eventType, { email: userEmail, sent_at: new Date().toISOString() });
+                totalSent++;
+                console.log(`✅ ${step.label} sent to ${userEmail}`);
+            } catch (err) {
+                console.error(`❌ ${step.label} failed for ${userEmail}:`, err.message);
+            }
+        }
+    }
+
+    return totalSent;
+}
+
+// ── Main handler ──────────────────────────────────────────────────────────────
+
 exports.handler = async () => {
     const daysLeft = daysUntilDeadline();
     console.log(`📅 Conversion sequence: ${daysLeft} days until deadline`);
 
-    // Only fire on the three target days
-    const email = emailForDaysLeft(daysLeft, 'there');
-    if (!email) {
-        console.log('Not a send day — skipping');
-        return { statusCode: 200, body: JSON.stringify({ success: true, message: 'Not a send day' }) };
-    }
-
-    // Get all beta users who are not yet paying
-    const { data: users, error } = await supabase
-        .from('user_settings')
-        .select('user_id')
-        .not('subscription_status', 'eq', 'active');
-
-    if (error) {
-        console.error('Error fetching users:', error);
-        return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
-    }
-
-    console.log(`Found ${(users || []).length} non-paying users`);
-
     let sent = 0;
     let skipped = 0;
 
-    for (const user of (users || [])) {
-        if (await alreadySent(user.user_id, email.eventType)) {
-            skipped++;
-            continue;
+    // Part 1: Beta-to-paid conversion emails (fires on days 7, 3, 1 before April 1)
+    const email = emailForDaysLeft(daysLeft, 'there');
+    if (email) {
+        const { data: users, error } = await supabase
+            .from('user_settings')
+            .select('user_id')
+            .not('subscription_status', 'eq', 'active');
+
+        if (error) {
+            console.error('Error fetching users:', error);
+            return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
         }
 
-        const { data: authUser } = await supabase.auth.admin.getUserById(user.user_id);
-        const userEmail = authUser?.user?.email;
-        if (!userEmail) { skipped++; continue; }
+        console.log(`Found ${(users || []).length} non-paying users`);
 
-        const firstName = userEmail.split('@')[0].split('.')[0];
-        const name = firstName.charAt(0).toUpperCase() + firstName.slice(1);
-        const personalizedEmail = emailForDaysLeft(daysLeft, name);
+        for (const user of (users || [])) {
+            if (await alreadySent(user.user_id, email.eventType)) { skipped++; continue; }
 
-        try {
-            await sendEmail({ to: userEmail, subject: personalizedEmail.subject, htmlBody: personalizedEmail.html });
-            await logEvent(user.user_id, email.eventType, { email: userEmail, days_left: daysLeft, sent_at: new Date().toISOString() });
-            sent++;
-            console.log(`✅ Conversion email sent to ${userEmail}`);
-        } catch (err) {
-            console.error(`❌ Failed to send to ${userEmail}:`, err.message);
+            const { data: authUser } = await supabase.auth.admin.getUserById(user.user_id);
+            const userEmail = authUser?.user?.email;
+            if (!userEmail) { skipped++; continue; }
+
+            const firstName = userEmail.split('@')[0].split('.')[0];
+            const name = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+            const personalizedEmail = emailForDaysLeft(daysLeft, name);
+
+            try {
+                await sendEmail({ to: userEmail, subject: personalizedEmail.subject, htmlBody: personalizedEmail.html });
+                await logEvent(user.user_id, email.eventType, { email: userEmail, days_left: daysLeft, sent_at: new Date().toISOString() });
+                sent++;
+                console.log(`✅ Conversion email sent to ${userEmail}`);
+            } catch (err) {
+                console.error(`❌ Failed to send to ${userEmail}:`, err.message);
+            }
         }
     }
 
-    console.log(`✅ Conversion sequence done. Sent: ${sent}, Skipped: ${skipped}`);
+    // Part 2: Welcome sequence for new paid subscribers (day 2 tips + day 7 trial-end)
+    const welcomeSent = await sendWelcomeSequence();
+    sent += welcomeSent;
+
+    console.log(`✅ Sequence done. Sent: ${sent}, Skipped: ${skipped}`);
     return { statusCode: 200, body: JSON.stringify({ success: true, sent, skipped, daysLeft }) };
 };
