@@ -8872,6 +8872,8 @@ ${truncatedText}`;
                 });
             }
 
+            const keywordsGoodScore = kwScore; // raw good score before bad-keyword/risk penalties
+
             // Subtract points for bad keywords found
             const penalty = settings.riskTolerance === 'low' ? 15 : settings.riskTolerance === 'medium' ? 10 : 5;
             if (extracted.has_contract_language) {
@@ -8942,7 +8944,8 @@ ${truncatedText}`;
             // Trade/Product Match
             if (settings.companyType === 'subcontractor') {
                 const hasSections = settings.preferred_csi_sections && settings.preferred_csi_sections.length > 0;
-                let tradeScore, reason;
+                let tradeScore, reason, tradeAnalysisNote = null;
+                let scoringMode = hasSections ? 'section' : 'division';
 
                 if (hasSections) {
                     // Section-level scoring: presence-floor model
@@ -8951,14 +8954,22 @@ ${truncatedText}`;
                     const foundSectionCount = foundSections.length;
 
                     if (foundSectionCount === 0) {
-                        tradeScore = 0;
+                        if (foundSections.length === 0 && tradesFound.length === 0) {
+                            tradeScore = keywordsGoodScore;
+                            scoringMode = 'keyword_fallback';
+                            tradeAnalysisNote = 'No spec sections detected — trade relevance estimated from keyword matches. Upload spec book for section-level scoring.';
+                        } else {
+                            tradeScore = 0;
+                        }
                     } else {
                         const bonus = (foundSectionCount - 1) * 5;
                         tradeScore = Math.min(65 + bonus, 100);
                     }
 
                     if (foundSectionCount === 0) {
-                        reason = `None of your ${sectionCount} spec section${sectionCount !== 1 ? 's' : ''} found in this bid`;
+                        reason = scoringMode === 'keyword_fallback'
+                            ? 'No spec sections detected — trade relevance estimated from keyword matches'
+                            : `None of your ${sectionCount} spec section${sectionCount !== 1 ? 's' : ''} found in this bid`;
                     } else if (foundSectionCount === sectionCount) {
                         reason = `All ${sectionCount} section${sectionCount !== 1 ? 's' : ''} found — strong scope match`;
                     } else {
@@ -8976,7 +8987,13 @@ ${truncatedText}`;
                     if (totalTrades === 0) {
                         tradeScore = 50;
                     } else if (foundCount === 0) {
-                        tradeScore = 0;
+                        if (foundSections.length === 0 && tradesFound.length === 0) {
+                            tradeScore = keywordsGoodScore;
+                            scoringMode = 'keyword_fallback';
+                            tradeAnalysisNote = 'No spec sections detected — trade relevance estimated from keyword matches. Upload spec book for section-level scoring.';
+                        } else {
+                            tradeScore = 0;
+                        }
                     } else {
                         const bonus = (foundCount - 1) * 5;
                         tradeScore = Math.min(65 + bonus, 100);
@@ -8985,7 +9002,9 @@ ${truncatedText}`;
                     if (totalTrades === 0) {
                         reason = 'No trades configured — set your trades in Settings';
                     } else if (foundCount === 0) {
-                        reason = `None of your ${totalTrades} trade division${totalTrades !== 1 ? 's' : ''} found in specs`;
+                        reason = scoringMode === 'keyword_fallback'
+                            ? 'No division codes detected — trade relevance estimated from keyword matches'
+                            : `None of your ${totalTrades} trade division${totalTrades !== 1 ? 's' : ''} found in specs`;
                     } else if (foundCount === totalTrades) {
                         reason = `All ${totalTrades} trade type${totalTrades !== 1 ? 's' : ''} found — strong scope match`;
                     } else {
@@ -9004,7 +9023,8 @@ ${truncatedText}`;
                     reason: reason,
                     details: {
                         found: tradesFound,
-                        scoring_mode: hasSections ? 'section' : 'division',
+                        scoring_mode: scoringMode,
+                        tradeAnalysisNote: tradeAnalysisNote,
                         foundSections: hasSections ? foundSections : null,
                         allSections: hasSections ? settings.preferred_csi_sections : null,
                         signals: tradeDetection?.signals_used || [],
@@ -9549,7 +9569,9 @@ ${truncatedText}`;
             
             // Trade Match details (for subcontractors)
             if (title === 'Trade Match' && comp.details?.found !== undefined) {
-                if (comp.details.scoring_mode === 'section' && comp.details.allSections) {
+                if (comp.details.scoring_mode === 'keyword_fallback') {
+                    details = `<div class="score-component-details"><span style="color:var(--text-muted)">No spec sections or CSI division codes found — score estimated from keyword matches.</span></div>`;
+                } else if (comp.details.scoring_mode === 'section' && comp.details.allSections) {
                     const found = comp.details.foundSections || [];
                     const notFound = comp.details.allSections.filter(s => !found.includes(s));
                     const total = comp.details.allSections.length;
@@ -9575,6 +9597,9 @@ ${truncatedText}`;
                     } else {
                         details = `<div class="score-component-details"><span style="color:var(--success)">✅ Work found for your trade</span><br><strong>Matched:</strong> ${foundNames.join(', ')}</div>`;
                     }
+                }
+                if (comp.details.tradeAnalysisNote) {
+                    details += `<p style="font-size:11px;color:#888;font-style:italic;margin-top:4px;">⚠ ${comp.details.tradeAnalysisNote}</p>`;
                 }
             }
 
