@@ -1821,14 +1821,14 @@ img { max-width: 100%; display: block; }
             <span>Bids you review per year</span>
             <span class="roi-input-value" id="lbl-bids">40 bids</span>
           </div>
-          <input type="range" class="roi-slider" id="sl-bids" min="10" max="150" step="5" value="40" oninput="calcROI()">
+          <input type="range" class="roi-slider" id="sl-bids" min="0" max="100" step="1" value="10" oninput="calcROI()">
         </div>
         <div class="roi-input-group">
           <div class="roi-input-label">
             <span>Hours to evaluate each bid</span>
             <span class="roi-input-value" id="lbl-hours">6 hrs</span>
           </div>
-          <input type="range" class="roi-slider" id="sl-hours" min="2" max="24" step="1" value="6" oninput="calcROI()">
+          <input type="range" class="roi-slider" id="sl-hours" min="0" max="100" step="1" value="68" oninput="calcROI()">
         </div>
         <div class="roi-input-group">
           <div class="roi-input-label">
@@ -1842,14 +1842,21 @@ img { max-width: 100%; display: block; }
             <span>Average project value</span>
             <span class="roi-input-value" id="lbl-value">$250K</span>
           </div>
-          <input type="range" class="roi-slider" id="sl-value" min="50000" max="2000000" step="25000" value="250000" oninput="calcROI()">
+          <input type="range" class="roi-slider" id="sl-value" min="0" max="100" step="1" value="50" oninput="calcROI()">
         </div>
-        <div class="roi-input-group" style="margin-bottom:0;">
+        <div class="roi-input-group">
           <div class="roi-input-label">
             <span>Net margin on won work</span>
             <span class="roi-input-value" id="lbl-margin">12%</span>
           </div>
-          <input type="range" class="roi-slider" id="sl-margin" min="5" max="30" step="1" value="12" oninput="calcROI()">
+          <input type="range" class="roi-slider" id="sl-margin" min="5" max="50" step="1" value="12" oninput="calcROI()">
+        </div>
+        <div class="roi-input-group" style="margin-bottom:0;">
+          <div class="roi-input-label">
+            <span>Estimator hourly cost</span>
+            <span class="roi-input-value" id="lbl-hourlyrate">$65/hr</span>
+          </div>
+          <input type="range" class="roi-slider" id="sl-hourlyrate" min="25" max="150" step="5" value="65" oninput="calcROI()">
         </div>
       </div>
       <!-- RESULTS -->
@@ -1872,6 +1879,13 @@ img { max-width: 100%; display: block; }
             <div class="roi-stat-before" id="stat-hours-before">240 hrs</div>
             <div class="roi-stat-after" id="stat-hours-after">144 hrs</div>
             <div class="roi-stat-delta" id="stat-hours-delta">−96 hrs saved</div>
+          </div>
+        </div>
+        <div class="roi-stat-row">
+          <div class="roi-stat-label">Est. value of time recaptured <span style="font-size:0.7rem;opacity:0.6;">(est.)</span></div>
+          <div class="roi-stat-nums">
+            <div class="roi-stat-after" id="stat-timevalue-after">$6,240</div>
+            <div class="roi-stat-delta" id="stat-timevalue-delta">hrs saved × $65/hr</div>
           </div>
         </div>
         <div class="roi-stat-row">
@@ -2289,6 +2303,29 @@ document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
 // ── ROI Calculator ─────────────────────────────────────────────────────────
 let roiState = {};
 
+// Non-linear slider mapping: interpolates between [sliderPos, outputValue] breakpoints
+function sliderToValue(position, map) {
+  for (let i = 0; i < map.length - 1; i++) {
+    const [p1, v1] = map[i];
+    const [p2, v2] = map[i + 1];
+    if (position <= p2) {
+      const t = (position - p1) / (p2 - p1);
+      return v1 + t * (v2 - v1);
+    }
+  }
+  return map[map.length - 1][1];
+}
+
+const BIDS_MAP  = [[0,10],[30,100],[60,300],[80,600],[90,1000],[100,2000]];
+const HOURS_MAP = [[0,0.25],[20,1],[35,2],[50,3],[65,5],[80,10],[90,20],[100,40]];
+const VALUE_MAP = [[0,5000],[15,25000],[30,75000],[50,250000],[70,500000],[85,1000000],[100,2000000]];
+
+function fmtHours(val) {
+  if (val < 1) return Math.round(val * 60) + ' min';
+  const h = val < 2 ? (Math.round(val * 4) / 4) : Math.round(val);
+  return h + (h === 1 ? ' hr' : ' hrs');
+}
+
 function fmtDollars(n) {
   if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
   if (n >= 10000) return '$' + Math.round(n / 1000) + 'K';
@@ -2311,21 +2348,29 @@ function toggleROIMethod() {
 }
 
 function calcROI() {
-  const bids      = parseInt(document.getElementById('sl-bids').value);
-  const hours     = parseInt(document.getElementById('sl-hours').value);
+  // Non-linear sliders: read position (0-100) and map to real value
+  const bidsPos   = parseInt(document.getElementById('sl-bids').value);
+  const hoursPos  = parseInt(document.getElementById('sl-hours').value);
+  const valuePos  = parseInt(document.getElementById('sl-value').value);
+  const bids      = Math.round(sliderToValue(bidsPos, BIDS_MAP));
+  const hours     = sliderToValue(hoursPos, HOURS_MAP);
+  const avgValue  = Math.round(sliderToValue(valuePos, VALUE_MAP));
+
+  // Linear sliders: read value directly
   const winPct    = parseInt(document.getElementById('sl-winrate').value);
-  const avgValue  = parseInt(document.getElementById('sl-value').value);
   const marginPct = parseInt(document.getElementById('sl-margin').value);
+  const hourlyRate = parseInt(document.getElementById('sl-hourlyrate').value);
 
   const winRate = winPct / 100;
   const margin  = marginPct / 100;
 
   // Labels
-  document.getElementById('lbl-bids').textContent    = bids + ' bids';
-  document.getElementById('lbl-hours').textContent   = hours + ' hrs';
-  document.getElementById('lbl-winrate').textContent = winPct + '%';
-  document.getElementById('lbl-value').textContent   = fmtDollars(avgValue);
-  document.getElementById('lbl-margin').textContent  = marginPct + '%';
+  document.getElementById('lbl-bids').textContent       = bids + ' bids';
+  document.getElementById('lbl-hours').textContent      = fmtHours(hours);
+  document.getElementById('lbl-winrate').textContent    = winPct + '%';
+  document.getElementById('lbl-value').textContent      = fmtDollars(avgValue);
+  document.getElementById('lbl-margin').textContent     = marginPct + '%';
+  document.getElementById('lbl-hourlyrate').textContent = '$' + hourlyRate + '/hr';
 
   // Current state
   const currentHours  = bids * hours;
@@ -2339,16 +2384,23 @@ function calcROI() {
   const addlWins   = bids * (newWinRate - winRate);
   const addlMargin = addlWins * avgValue * margin;
   const newMargin  = currentMargin + addlMargin;
+  const timeValue  = Math.round(hoursSaved * hourlyRate);
 
-  // Stats
-  document.getElementById('stat-hours-before').textContent = currentHours.toLocaleString() + ' hrs';
-  document.getElementById('stat-hours-after').textContent  = newHours.toLocaleString() + ' hrs';
+  // Stats — hours
+  document.getElementById('stat-hours-before').textContent = Math.round(currentHours).toLocaleString() + ' hrs';
+  document.getElementById('stat-hours-after').textContent  = Math.round(newHours).toLocaleString() + ' hrs';
   document.getElementById('stat-hours-delta').textContent  = '−' + hoursSaved + ' hrs saved';
 
+  // Stats — time value
+  document.getElementById('stat-timevalue-after').textContent = fmtDollars(timeValue);
+  document.getElementById('stat-timevalue-delta').textContent = hoursSaved + ' hrs × $' + hourlyRate + '/hr';
+
+  // Stats — wins
   document.getElementById('stat-wins-before').textContent = currentWins.toFixed(1);
   document.getElementById('stat-wins-after').textContent  = (bids * newWinRate).toFixed(1);
   document.getElementById('stat-wins-delta').textContent  = '+' + addlWins.toFixed(1) + ' more wins';
 
+  // Stats — margin
   document.getElementById('stat-margin-before').textContent = fmtDollars(Math.round(currentMargin));
   document.getElementById('stat-margin-after').textContent  = fmtDollars(Math.round(newMargin));
   document.getElementById('stat-margin-delta').textContent  = '+' + fmtDollars(Math.round(addlMargin));
@@ -2366,19 +2418,20 @@ function calcROI() {
     payback.textContent = 'Every better bid decision compounds over time — and this system keeps learning.';
   }
 
-  // Slider fills
-  updateSliderBg('sl-bids',    bids,      10,    150);
-  updateSliderBg('sl-hours',   hours,     2,     24);
-  updateSliderBg('sl-winrate', winPct,    5,     50);
-  updateSliderBg('sl-value',   avgValue,  50000, 2000000);
-  updateSliderBg('sl-margin',  marginPct, 5,     30);
+  // Slider fills — non-linear sliders use position (already 0-100)
+  updateSliderBg('sl-bids',       bidsPos,   0,  100);
+  updateSliderBg('sl-hours',      hoursPos,  0,  100);
+  updateSliderBg('sl-winrate',    winPct,    5,   50);
+  updateSliderBg('sl-value',      valuePos,  0,  100);
+  updateSliderBg('sl-margin',     marginPct, 5,   50);
+  updateSliderBg('sl-hourlyrate', hourlyRate, 25, 150);
 
   // Keep dynamic hours in methodology tooltip
   const methodHours = document.getElementById('roi-method-hours');
-  if (methodHours) methodHours.textContent = hours;
+  if (methodHours) methodHours.textContent = fmtHours(hours);
 
   // Persist state for email capture
-  roiState = { bids, hours, winPct, avgValue, marginPct, hoursSaved, addlMargin: Math.round(addlMargin) };
+  roiState = { bids, hours: Math.round(hours * 10) / 10, winPct, avgValue, marginPct, hourlyRate, hoursSaved, addlMargin: Math.round(addlMargin) };
 }
 
 async function submitROIEmail() {
