@@ -579,8 +579,9 @@ exports.handler = async (event) => {
         `Powered by BidIntell \u00B7 bidintell.ai`
     ].filter(line => line !== null).join('\n');
 
+    let replyStatus = null;
     try {
-        await fetch('https://api.postmarkapp.com/email', {
+        const replyRes = await fetch('https://api.postmarkapp.com/email', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -595,8 +596,10 @@ exports.handler = async (event) => {
                 MessageStream: 'outbound'
             })
         });
+        const replyBody = await replyRes.json().catch(() => ({}));
+        replyStatus = { ok: replyRes.ok, status: replyRes.status, message: replyBody.Message || replyBody.ErrorCode || null };
     } catch (e) {
-        console.error('Reply email failed:', e.message);
+        replyStatus = { ok: false, error: e.message };
     }
 
     // 12. Log admin event
@@ -607,6 +610,7 @@ exports.handler = async (event) => {
         had_attachments:        hadAttachments,
         processed_attachments:  processedCount,
         skipped_attachments:    skippedFiles.length,
+        reply_status:           replyStatus,
         user_id:                userId,
         project_id:             savedProjectId
     });
