@@ -232,9 +232,13 @@ exports.handler = async (event) => {
 
     // 1. Extract alias from To address
     //    e.g. "acme-electric@bids.bidintell.ai" → "acme-electric"
-    const toAddress = Array.isArray(To)
+    const toRaw = Array.isArray(To)
         ? (To[0]?.Email || To[0] || '')
         : (typeof To === 'string' ? To : '');
+
+    // Strip display name — handle "Display Name <email@domain>" and bare "email@domain"
+    const angleMatch = toRaw.match(/<([^>]+)>/);
+    const toAddress = angleMatch ? angleMatch[1].trim() : toRaw.trim();
 
     const aliasMatch = toAddress.match(/^([^@]+)@bids\.bidintell\.ai/i);
     if (!aliasMatch) {
