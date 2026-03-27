@@ -12343,17 +12343,22 @@ Respond now:`;
                     <input type="checkbox" class="div-checkbox" value="${d}" ${userDivisions.includes(d) ? 'checked' : ''}>
                     <span>Div ${d}${divisionNames[d] ? ' — ' + divisionNames[d] : ''}</span>
                 </label>`).join('') : '<span style="color:var(--text-muted);font-size:13px;">Complete onboarding to see your trade divisions here</span>';
+            const scopeLabelHtml = `
+                <div class="form-group">
+                    <label class="form-label">What did you call this bid? <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional — helps track multiple scopes on one project</span></label>
+                    <input type="text" class="form-input" id="scopeLabel" placeholder="e.g. Toilet Compartments, Lockers &amp; Shades — Div 10/12">
+                </div>`;
             const divisionFieldHtml = `
                 <div class="form-group">
                     <label class="form-label">Which divisions did you submit? <span style="color:var(--text-muted);font-weight:400;">(check all that apply)</span></label>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;">
                         ${divHtml}
                     </div>
-                    <div class="form-hint">Pre-checked = your configured trades. Uncheck any you didn't bid.</div>
+                    <div class="form-hint">Used to track your win rate and bid volume by trade over time.</div>
                 </div>`;
 
             if (type === 'won') {
-                html = `
+                html = `${scopeLabelHtml}${divisionFieldHtml}
                     <div class="form-group">
                         <label class="form-label">Bid Analysis Date</label>
                         <input type="date" class="form-input" id="outcomeDate" value="${currentDate}">
@@ -12411,9 +12416,9 @@ Respond now:`;
                         <input type="number" class="form-input" id="outcomeHoursSpent" min="0.5" max="40" step="0.5" placeholder="e.g. 3.5">
                         <div class="form-hint">Actual hours to prepare this bid. Improves Bid Economics accuracy over time.</div>
                     </div>
-                    ${divisionFieldHtml}`;
+                    `;
             } else if (type === 'lost') {
-                html = `
+                html = `${scopeLabelHtml}${divisionFieldHtml}
                     <div class="form-group">
                         <label class="form-label">Bid Analysis Date</label>
                         <input type="date" class="form-input" id="outcomeDate" value="${currentDate}">
@@ -12461,9 +12466,9 @@ Respond now:`;
                         <input type="number" class="form-input" id="outcomeHoursSpent" min="0.5" max="40" step="0.5" placeholder="e.g. 3.5">
                         <div class="form-hint">Actual hours to prepare this bid. Improves Bid Economics accuracy over time.</div>
                     </div>
-                    ${divisionFieldHtml}`;
+                    `;
             } else if (type === 'ghost') {
-                html = `
+                html = `${scopeLabelHtml}${divisionFieldHtml}
                     <div class="form-group">
                         <label class="form-label">Bid Analysis Date</label>
                         <input type="date" class="form-input" id="outcomeDate" value="${currentDate}">
@@ -12497,9 +12502,9 @@ Respond now:`;
                         <div class="form-hint">1 = Should have followed up more, 5 = Expected this response</div>
                         <input type="hidden" id="outcomeConfidence" value="3">
                     </div>
-                    ${divisionFieldHtml}`;
+                    `;
             } else if (type === 'declined') {
-                html = `
+                html = `${scopeLabelHtml}${divisionFieldHtml}
                     <div class="form-group">
                         <label class="form-label">Bid Analysis Date</label>
                         <input type="date" class="form-input" id="outcomeDate" value="${currentDate}">
@@ -12546,11 +12551,19 @@ Respond now:`;
                         <div class="form-hint">1 = Maybe should have bid, 5 = Definitely right to pass</div>
                         <input type="hidden" id="outcomeConfidence" value="3">
                     </div>
-                    ${divisionFieldHtml}`;
+                    `;
             }
             document.getElementById('outcomeFields').innerHTML = html;
             // Initialize confidence to 3
             setTimeout(() => setConfidence(3), 10);
+
+            // Pre-populate scope label if already saved
+            if (project?.outcome_data?.scope_label) {
+                setTimeout(() => {
+                    const sl = document.getElementById('scopeLabel');
+                    if (sl) sl.value = project.outcome_data.scope_label;
+                }, 10);
+            }
 
             // For GHOST outcomes with multiple GCs, show the "which GCs ghosted" field
             if (type === 'ghost' && project?.gcs && project.gcs.length > 1) {
@@ -12631,8 +12644,11 @@ Respond now:`;
             const id = document.getElementById('outcomeProjectId').value;
             const type = document.getElementById('outcomeType').value;
             if (!type) { alert('Please select an outcome'); return; }
-            
+
+            const scopeLabel = document.getElementById('scopeLabel')?.value?.trim() || null;
+
             let outcomeData = {
+                scope_label: scopeLabel,
                 gcAcknowledged: document.getElementById('gcAcknowledged')?.checked || false,
                 gcAnsweredQuestions: document.getElementById('gcAnsweredQuestions')?.checked || false,
                 confidence: parseInt(document.getElementById('outcomeConfidence')?.value) || 3
