@@ -473,6 +473,28 @@ const additionalRevenue = additionalWins * avgProjectSize;
 **Current users** rendered by `renderCurrentUsers(users, projects)` — joins project count per user
 **Known issue:** admin.html uses anon key → RLS may limit user_settings to only admin's own row. If users list shows only 1 row, need to add admin-bypass RLS policy.
 
+### Inbound Email Forwarding — Architecture & Known Limits (Mar 2026)
+
+**Function:** `netlify/functions/inbound-email-background.js` (Netlify background function, 900s timeout)
+**Postmark webhook:** `https://bidintell.ai/.netlify/functions/inbound-email-background`
+**User alias format:** `{slug}@bids.bidintell.ai` (e.g. `facility-systems-inc@bids.bidintell.ai`)
+**MX record:** `bids → inbound.postmarkapp.com priority 10` ✅
+
+**CRITICAL LIMITATION — PDF via email doesn't work:**
+- 7MB PDF → ~9.3MB base64 in JSON payload → exceeds Netlify's 6MB function payload limit → Postmark timeout
+- Without PDFs, scores default to neutral (location=50, keywords=50, trade=0) — not useful for thin bid invite emails
+- **Planned fix (next week):** lightweight webhook receiver stores raw email to Supabase Storage; separate async function processes PDF
+
+**Bugs fixed Mar 27, 2026:**
+- Missing `anthropic-beta: pdfs-2024-09-25` header on PDF Claude calls (silent failure)
+- Postmark sends `To` as `"Display Name <email>"` — alias regex must strip angle brackets first
+- Timeout was 26s → kills function before reply email sends → now 900s
+- Reply email status logged to `admin_events` (`reply_status` field) for debugging
+
+**Microsoft 365 issue:** fsikc.com silently drops outbound forwards. Gmail works. M365 fix: Admin Center → Security → Anti-spam → Outbound → Automatic forwarding = On.
+
+**callClaude() pattern:** accepts optional `extraHeaders` param — required for PDF: `{ 'anthropic-beta': 'pdfs-2024-09-25' }`
+
 ---
 
 ## 🚫 ABSOLUTE PROHIBITIONS
