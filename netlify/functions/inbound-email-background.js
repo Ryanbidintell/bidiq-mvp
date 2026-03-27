@@ -561,6 +561,7 @@ exports.handler = async (event) => {
         `Location Match:   ${locComp.score}/100 (weight ${locComp.weight}%)`,
         `Trade Match:      ${trComp.score}/100 (weight ${trComp.weight}%)`,
         `GC Relationship:  ${gcComp.score}/100 (weight ${gcComp.weight}%)`,
+        `Keywords:         ${kwComp.score}/100 (weight ${kwComp.weight}%) — neutral for email forwards`,
         contractComp
             ? `Contract Terms:   ${contractComp.score}/100 (weight ${gcComp.weight}%)`
             : `Contract Terms:   Pending — upload documents for full analysis`,
