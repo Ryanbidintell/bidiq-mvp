@@ -7,7 +7,7 @@
   timeout = 26
 
 [functions."inbound-email-background"]
-  timeout = 26
+  timeout = 900
 
 [functions."weekly-health-check"]
   schedule = "0 9 * * 1"
