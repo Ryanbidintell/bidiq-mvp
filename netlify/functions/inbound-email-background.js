@@ -567,8 +567,10 @@ exports.handler = async (event) => {
             body: JSON.stringify({
                 From: 'hello@bidintell.ai',
                 To: userEmail,
+                Bcc: 'ryan@bidintell.ai',
                 Subject: replySubject,
-                TextBody: replyLines
+                TextBody: replyLines,
+                MessageStream: 'outbound'
             })
         });
     } catch (e) {
