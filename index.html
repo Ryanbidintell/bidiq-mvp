@@ -1863,7 +1863,8 @@ img { max-width: 100%; display: block; }
       <div class="roi-results">
         <div class="roi-results-label">Your Bid Economics</div>
         <div class="roi-big-number" id="roi-additional-margin">$47K</div>
-        <div class="roi-big-label">additional margin per year with BidIntell</div>
+        <div class="roi-big-label">estimated annual value with BidIntell</div>
+        <div id="roi-value-breakdown" style="font-size:0.85rem;color:var(--slate-light);margin-top:4px;margin-bottom:2px;">$47K margin upside + $6K time recaptured</div>
         <button class="roi-method-toggle" onclick="toggleROIMethod()">How we calculate this ↓</button>
         <div class="roi-method-panel" id="roi-method-panel">
           <p style="font-weight:600;color:var(--cloud);margin-bottom:10px;">How we calculate this:</p>
@@ -2405,12 +2406,15 @@ function calcROI() {
   document.getElementById('stat-margin-after').textContent  = fmtDollars(Math.round(newMargin));
   document.getElementById('stat-margin-delta').textContent  = '+' + fmtDollars(Math.round(addlMargin));
 
-  // Big number
-  document.getElementById('roi-additional-margin').textContent = fmtDollars(Math.round(addlMargin));
+  // Big number — combined margin upside + time value
+  const totalValue = Math.round(addlMargin) + timeValue;
+  document.getElementById('roi-additional-margin').textContent = fmtDollars(totalValue);
+  document.getElementById('roi-value-breakdown').textContent =
+    fmtDollars(Math.round(addlMargin)) + ' margin upside + ' + fmtDollars(timeValue) + ' time recaptured';
 
   // Payback line ($99/mo = $1,188/yr)
   const annualCost = 1188;
-  const roiX = Math.round(addlMargin / annualCost);
+  const roiX = Math.round(totalValue / annualCost);
   const payback = document.getElementById('roi-payback-line');
   if (roiX > 1) {
     payback.textContent = `At $99/mo, that's a ${roiX}× return — if even half of that estimate holds.`;
