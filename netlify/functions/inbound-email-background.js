@@ -254,8 +254,23 @@ exports.handler = async (event) => {
         return { statusCode: 200, body: 'ok' };
     }
 
-    const userId   = userRow.user_id;
-    const userEmail = userRow.user_email;
+    const userId = userRow.user_id;
+    let userEmail = userRow.user_email || null;
+
+    // Fall back to auth email if settings email not filled in
+    if (!userEmail) {
+        try {
+            const { data: authData } = await getSupabase().auth.admin.getUserById(userId);
+            userEmail = authData?.user?.email || null;
+        } catch (e) {
+            console.warn('Auth email lookup failed:', e.message);
+        }
+    }
+
+    if (!userEmail) {
+        await logAdminEvent('email_forward_received', { error: 'no_reply_email', alias, user_id: userId });
+        return { statusCode: 200, body: 'ok' };
+    }
 
     // Normalize settings for scoring helpers
     const rawWeights = userRow.weights || {};
