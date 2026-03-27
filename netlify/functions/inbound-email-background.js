@@ -71,13 +71,14 @@ async function nominatimGeocode(query, cache) {
 
 // ── Claude API call ───────────────────────────────────────────────────────────
 
-async function callClaude(messages, systemPrompt) {
+async function callClaude(messages, systemPrompt, extraHeaders = {}) {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'x-api-key': CLAUDE_API_KEY,
-            'anthropic-version': '2023-06-01'
+            'anthropic-version': '2023-06-01',
+            ...extraHeaders
         },
         body: JSON.stringify({
             model: 'claude-haiku-4-5-20251001',
@@ -419,7 +420,8 @@ exports.handler = async (event) => {
                         { type: 'text', text: pdfUserPrompt }
                     ]
                 }],
-                pdfSystemPrompt
+                pdfSystemPrompt,
+                { 'anthropic-beta': 'pdfs-2024-09-25' }
             );
 
             let pdfExtracted = {};
