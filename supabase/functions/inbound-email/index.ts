@@ -687,7 +687,7 @@ async function processEmail(payload: Record<string, unknown>) {
 
 // ── Entry point ──────────────────────────────────────────────────────────────
 
-Deno.serve(async (req, ctx) => {
+Deno.serve(async (req) => {
     if (req.method !== 'POST') {
         return new Response('ok', { status: 200 });
     }
@@ -700,6 +700,6 @@ Deno.serve(async (req, ctx) => {
     }
 
     // Return 200 to Postmark immediately, process async in background
-    ctx.waitUntil(processEmail(payload).catch(e => console.error('processEmail error:', e)));
+    EdgeRuntime.waitUntil(processEmail(payload).catch(e => console.error('processEmail error:', e)));
     return new Response('ok', { status: 200 });
 });
