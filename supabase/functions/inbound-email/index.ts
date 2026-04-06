@@ -66,6 +66,49 @@ async function nominatimGeocode(query: string) {
     }
 }
 
+// ── Keyword scoring (mirrors app.html calculateScores keyword logic exactly) ──
+
+function searchKeywordsInText(text: string, keywords: string[]): string[] {
+    const found: string[] = [];
+    for (const kw of keywords) {
+        if (!kw || kw.trim().length < 2) continue;
+        const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const rx = new RegExp('\\b' + escaped + 's?\\b', 'gi');
+        if (rx.test(text)) found.push(kw);
+    }
+    return found;
+}
+
+function scoreKeywords(
+    scopeText: string,
+    goodKeywords: string[],
+    badKeywords: string[],
+    riskTolerance: string,
+    hasContractLanguage: boolean,
+    weight: number
+): { score: number; weight: number; reason: string; goodFound: string[]; badFound: string[] } {
+    const goodFound = searchKeywordsInText(scopeText, goodKeywords);
+    const badFound  = searchKeywordsInText(scopeText, badKeywords);
+
+    let kwScore = 50;
+
+    if (goodFound.length === 0) {
+        kwScore = 30;
+    } else {
+        for (let i = 0; i < goodFound.length; i++) kwScore += 8;
+    }
+
+    if (hasContractLanguage && badFound.length > 0) {
+        const penalty = riskTolerance === 'low' ? 15 : riskTolerance === 'medium' ? 10 : 5;
+        kwScore -= penalty * badFound.length;
+    }
+
+    kwScore = Math.max(0, Math.min(100, kwScore));
+    const reason = `Found ${goodFound.length} good terms, ${badFound.length} risk terms`;
+
+    return { score: kwScore, weight, reason, goodFound, badFound };
+}
+
 // ── Claude API ───────────────────────────────────────────────────────────────
 
 async function callClaude(messages: unknown[], systemPrompt: string, extraHeaders: Record<string, string> = {}) {
@@ -362,6 +405,15 @@ async function processEmail(payload: Record<string, unknown>) {
     const userId = userRow.user_id as string;
     let userEmail = (userRow.user_email as string) || null;
 
+    // Fetch user keywords for scoring
+    const { data: kwRow } = await supabase
+        .from('user_keywords')
+        .select('good_keywords, bad_keywords')
+        .eq('user_id', userId)
+        .maybeSingle();
+    const goodKeywords: string[] = (kwRow?.good_keywords as string[]) || [];
+    const badKeywords:  string[] = (kwRow?.bad_keywords  as string[]) || [];
+
     if (!userEmail) {
         try {
             const { data: authData } = await supabase.auth.admin.getUserById(userId);
@@ -525,7 +577,9 @@ async function processEmail(payload: Record<string, unknown>) {
         Promise.resolve(scoreTrade(scopeText, settings))
     ]);
     const gcComp  = scoreGC(extracted.gc_name as string | null, settings, (clients as Client[]) || []);
-    const kwComp  = { score: 50, weight: settings.weights.keywords, reason: 'Email forward — keyword scoring uses bid text' };
+    const hasContractLanguage = !!(contractRisks && contractRisks.risks_found && (contractRisks.risks_found as unknown[]).length > 0);
+    const kwResult = scoreKeywords(scopeText, goodKeywords, badKeywords, settings.riskTolerance, hasContractLanguage, settings.weights.keywords);
+    const kwComp   = { score: kwResult.score, weight: kwResult.weight, reason: kwResult.reason };
     const contractComp = scoreContract(contractRisks);
 
     const components = { location: locComp, keywords: kwComp, gc: gcComp, trade: trComp };
@@ -580,6 +634,8 @@ async function processEmail(payload: Record<string, unknown>) {
                 gcs:           extracted.gc_name ? [{ name: extracted.gc_name }] : [],
                 files:         qualifying.map(a => ({ name: a.Name || 'attachment.pdf', size: null })),
                 contract_risks: contractRisks,
+                good_found:    kwResult.goodFound.map(kw => ({ keyword: kw, pages: [], locations: [] })),
+                bad_found:     kwResult.badFound.map(kw => ({ keyword: kw, pages: [], locations: [] })),
                 outcome:       'pending',
                 full_text:     null
             })
