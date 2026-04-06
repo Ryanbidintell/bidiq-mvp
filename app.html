@@ -2882,6 +2882,11 @@
                 return false;
             }
 
+            // Admin/internal accounts always have access
+            if (currentUser.email && currentUser.email.endsWith('@fsikc.com')) {
+                return true;
+            }
+
             try {
                 // Get user revenue/subscription data
                 const { data: revenue, error } = await supabaseClient
