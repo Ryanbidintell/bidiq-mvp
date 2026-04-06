@@ -10824,8 +10824,8 @@ ${truncatedText}`;
                 const aExtracted = a.extracted_data || a.extracted;
                 const bExtracted = b.extracted_data || b.extracted;
 
-                if (sortBy === 'date-desc') return new Date(b.created_at) - new Date(a.created_at);
-                if (sortBy === 'date-asc') return new Date(a.created_at) - new Date(b.created_at);
+                if (sortBy === 'date-desc') return new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at);
+                if (sortBy === 'date-asc') return new Date(a.createdAt || a.created_at) - new Date(b.createdAt || b.created_at);
                 if (sortBy === 'score-desc') return ((b.scores?.final || b.scores?.bidindex_score) || 0) - ((a.scores?.final || a.scores?.bidindex_score) || 0);
                 if (sortBy === 'score-asc') return ((a.scores?.final || a.scores?.bidindex_score) || 0) - ((b.scores?.final || b.scores?.bidindex_score) || 0);
                 if (sortBy === 'name-asc') {
@@ -10923,7 +10923,7 @@ ${truncatedText}`;
                             };
 
                             // Get both dates
-                            const analysisDate = formatDate(p.created_at);
+                            const analysisDate = formatDate(p.createdAt || p.created_at);
                             const bidDate = formatDate(extracted.bid_deadline);
 
                             // Build date display: Analysis date (primary), bid date (secondary)
