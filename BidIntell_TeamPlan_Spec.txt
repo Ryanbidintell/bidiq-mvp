@@ -1,0 +1,273 @@
+
+BidIntell
+Company Accounts & Team Plan
+
+Product Specification & Build Plan
+Version 1.0  ·  April 2026  ·  Confidential
+
+Strategic Context
+Every specialty subcontracting firm is a company — not a collection of individuals. BidIntell currently signs up users one at a time, which means a shop with three estimators needs three separate accounts, three separate subscriptions, and zero shared visibility. That is backwards from how these businesses actually operate.
+
+Shifting to company-first accounts fixes this at the foundation. The owner creates one company account, invites estimators, and manages everything from a single subscription. The tool becomes a company investment rather than a personal tool — which changes both the buying decision and the adoption dynamic.
+
+WHY THIS ACCELERATES ADOPTION
+When an owner buys BidIntell for their company, estimator adoption becomes a management decision rather than an individual choice. The outcome logging problem — the single most critical behavior for the data moat — is solved by accountability, not nudges.
+Pricing Tiers
+Four tiers, company-first from day one. Every tier is a company subscription — not a personal tool.
+
+TierSoloTeamCompanyEnterpriseSEATS12–34–89+MONTHLY PRICE$49 / mo$99 / mo$179 / moCustomANNUAL PRICE$490 / yr$990 / yr$1,790 / yrContractOWNER DASHBOARD—??? + CustomESTIMATOR ANALYTICS—??? AdvancedONBOARDING SUPPORTSelf-serveSelf-serveSelf-serveWhite-gloveCHECKOUTStripeStripeStripeCall us
+Annual pricing reflects a ~2-month discount (pay 10, get 12). Founding member coupon FOUNDING25 applies to whatever tier the company selects at signup.
+
+Stripe Configuration Required
+Current price IDs cover Starter ($49) and Professional ($99). New price IDs must be created in Stripe before building the checkout flow.
+
+TierMonthly Price IDAnnual Price IDNotesSoloprice_1T0fdmD1qm9w587Oiv0RfU90 (existing)Create newRename from "Starter" to "Solo" in Stripe dashboardTeamprice_1T0ffMD1qm9w587OnLbJc3Tc (existing)Create newRename from "Professional" to "Team". 3-seat max enforced in appCompanyCreate new — $179/moCreate new8-seat max enforced in app. New price object requiredEnterpriseN/A — custom contractN/A"Contact us" CTA — no Stripe checkout
+
+
+Database Schema Changes
+Two new tables. All existing tables get one new nullable column. No existing data is touched.
+
+MIGRATION SAFETY RULE
+Read DATA_SAFETY_PROTOCOL.md before running any SQL. Always commit current state of app.html before and after schema changes. Test RLS policies in Supabase SQL editor before deploying. Existing solo users must continue to work without any changes to their experience.
+New Table: organizations
+One row per company. This is the parent record for all company accounts.
+
+ColumnTypeNullableDescriptioniduuidNOPrimary key — gen_random_uuid()created_attimestampNOWhen organization was creatednametextNOCompany name (e.g. "Summit Insulation")slugtextNOURL-safe unique identifier — auto-generated from nameplan_tiertextNOsolo / team / company / enterprise — default: soloseat_limitintegerNOMax seats for plan: 1 / 3 / 8 / 9999owner_user_iduuidNOFK ? auth.users(id) — the account ownerstripe_customer_idtextYESStripe customer ID — populated on first checkoutstripe_subscription_idtextYESStripe subscription IDsubscription_statustextYESactive / trialing / past_due / cancelledmrrnumericYESMonthly recurring revenue in dollarstrial_ends_attimestampYESEnd of 14-day trial (null = not in trial)is_founding_memberbooleanNOApplied FOUNDING25 coupon — default: false
+RLS Policy: Only org members can read. Only the owner can update.
+
+New Table: org_members
+Links users to organizations. One row per user per org. Supports role-based access.
+
+ColumnTypeNullableDescriptioniduuidNOPrimary keycreated_attimestampNOWhen member was addedorg_iduuidNOFK ? organizations(id)user_iduuidNOFK ? auth.users(id)roletextNOowner / estimator — default: estimatorinvited_byuuidYESFK ? auth.users(id) — who sent the inviteinvite_emailtextYESEmail address invite was sent toinvite_accepted_attimestampYESWhen invite was accepted (null = pending)display_nametextYESEstimator name for owner dashboard displayis_activebooleanNOCan be deactivated without deleting — default: true
+Constraint: UNIQUE (org_id, user_id) — one membership per user per org.
+
+Existing Tables — Additive Changes Only
+Add org_id (nullable uuid FK ? organizations) to these tables. No other columns change. Existing rows get org_id = null and continue working exactly as before.
+
+TableBehavior with org_idprojectsOwner dashboard queries by org_id to aggregate across all estimators. RLS: user sees own rows; owner role sees all org rows.clientsShared GC list across the org (optional Phase 2). For now, each estimator keeps their own clients. Add column, leave null.user_settingsorg_id links a user profile to their company. Used for invite lookup and role display.user_revenueBilling moves to org level. user_revenue still tracks the owner user_id but org_id enables org-level revenue queries.
+
+
+RLS Policy Changes
+Existing RLS policies use user_id = auth.uid(). Owner-role access requires a second policy layer — owners can read all rows where org_id matches their org.
+
+CRITICAL RULE
+Never drop existing RLS policies. Add new policies alongside them. A solo user with org_id = null must still be covered by user_id = auth.uid(). Both policies coexist.
+projects table — new owner read policy
+Add this policy alongside the existing user_id policy:
+
+CREATE POLICY "Org owners can read all org projects"
+ON projects FOR SELECT
+USING (
+  org_id IN (
+    SELECT org_id FROM org_members
+    WHERE user_id = auth.uid()
+    AND role = 'owner'
+  )
+);
+
+Apply the same pattern to user_settings and clients for owner-level reads.
+
+
+
+Feature Specification
+
+Phase A — Org Schema & Auth (Foundation)
+This phase has no visible UI changes for existing users. It only lays the data model.
+
+• Create organizations table with columns above
+• Create org_members table with columns above
+• Add org_id (nullable) to projects, clients, user_settings, user_revenue
+• Write migration SQL — wrap in transaction, test on staging first
+• Add owner RLS policies to projects and user_settings
+• Update getSubscriptionStatus() to read from organizations table when org_id is present
+• Update stripe-webhook.js to write org_id to user_revenue when available
+• All existing solo users: org_id = null — behavior unchanged
+
+DEFINITION OF DONE
+Existing beta users can still log in, analyze bids, and view reports with no change to behavior. Zero regressions. Verified by manual test on at least 2 existing accounts.
+Phase B — Company Signup & Invite Flow
+New onboarding path for owners creating a company account.
+
+Company Signup Flow
+1. Owner goes to bidintell.ai — lands on updated pricing page showing all 4 tiers
+2. Clicks "Start Free Trial" on any tier — redirects to auth.html with tier param (?tier=team)
+3. Magic link auth — same as today
+4. After auth: onboarding wizard detects tier param — adds new Step 0: "Set up your company"
+5. Owner enters: Company Name, their name, their role (Owner / Principal / Estimator)
+6. organizations row created — owner added to org_members with role = owner
+7. Remaining onboarding steps proceed as normal (trade, location, GCs, etc.)
+8. After onboarding: lands on dashboard — sees new "Team" tab (owner only)
+
+Invite Flow (Owner sends invite)
+9. Owner goes to Team tab ? clicks "Invite Estimator"
+10. Modal: enter first name, last name, email address
+11. Postmark sends invite email from hello@bidintell.ai — template: "You've been invited to join [Company] on BidIntell"
+12. Email contains magic link with invite token (?invite=TOKEN)
+13. Invitee clicks link ? auth.html ? magic link auth
+14. After auth: abbreviated onboarding (name pre-filled, company pre-filled, just needs trade + location)
+15. org_members row created — invite_accepted_at populated
+16. Invitee lands on standard estimator dashboard — no Team tab
+
+Seat limit enforcement: if org is at seat_limit, "Invite Estimator" button is disabled with tooltip: "Upgrade your plan to add more estimators."
+
+Phase C — Owner Dashboard (Team Tab)
+New tab in app.html — visible only to users with role = owner in org_members. This is the Basis-equivalent reporting layer.
+
+Summary Cards Row
+• Total Bids Analyzed (org-wide, rolling 30 days)
+• Active Estimators (org_members where is_active = true)
+• Org Win Rate % (won outcomes / total logged outcomes, all estimators)
+• Bids In Flight (projects with outcome = null, all estimators)
+
+Estimator Performance Table
+One row per active estimator. Columns:
+
+EstimatorBids AnalyzedOutcomes LoggedWin RateAvg BidIndexLast ActiveRyan Elder4238 (90%)34.2%71TodayJosh Allen2819 (68%)28.7%642 days agoErik Harper114 (36%)—581 week ago
+Outcome logging % is highlighted: ?80% = green, 50–79% = amber, <50% = red. This makes outcome logging discipline visible to ownership — the single most important behavior for data moat quality.
+
+Trade Win Rate Table
+Aggregated across all estimators. Mirrors the Basis "Win Ratio by # Projects" report.
+
+Trade / CSI DivisionSubmittedWonWin %Roller Shades2298135.4%Operable Partitions481122.9%Drapery12541.7%
+Recent Bids Feed
+All bids analyzed by any estimator in the org, sorted by created_at desc. Shows: project name, estimator, BidIndex score, outcome (if logged), date. Clickable row opens the full report in read-only view.
+
+Phase D — Billing Changes
+Billing moves from per-user to per-organization. The Stripe customer and subscription belong to the org, not the individual.
+
+• stripe-create-checkout.js reads org_id from session — creates Stripe customer for the org
+• Checkout metadata includes org_id so webhook can write to the right organization row
+• stripe-webhook.js updated to write subscription data to organizations table (not user_revenue for multi-seat plans)
+• getSubscriptionStatus() checks organizations.subscription_status when user has an org_id
+• Solo users (org_id = null) continue to use user_revenue — no change
+• Stripe customer portal links are org-level — owner manages billing, estimators cannot
+
+
+
+Build Sequence & Claude Code Prompts
+Four sequential Claude Code sessions. Each must be committed before the next begins. Do not combine sessions.
+
+BEFORE STARTING ANY SESSION
+Read ARCHITECTURE.md v2.0, SCHEMA.md v2.0, and CLAUDE.md. Run git status — working tree must be clean. Never touch files outside the specified scope.
+Session 1 — Schema Migration
+Scope: SQL only. No changes to app.html, no changes to Netlify functions.
+
+-- SESSION 1 PROMPT FOR CLAUDE CODE --
+
+Read SCHEMA.md v2.0 and DATA_SAFETY_PROTOCOL.md before writing any SQL.
+
+Write a single SQL migration file at /migrations/001_org_schema.sql
+that does the following — wrapped in a single transaction:
+
+1. Create organizations table (see spec)
+2. Create org_members table (see spec)
+3. Add org_id (nullable uuid) to: projects, clients,
+   user_settings, user_revenue
+4. Add RLS policies for org owner reads on projects
+   and user_settings
+
+DO NOT touch app.html. DO NOT touch Netlify functions.
+DO NOT modify any existing RLS policy — only add new ones.
+
+After writing the migration, write a verification SQL file at
+/migrations/001_verify.sql that confirms all tables and
+columns exist as expected.
+After running in Supabase SQL editor: run the verify script, confirm all checks pass, commit.
+
+Session 2 — Company Signup & Invite
+Scope: auth.html onboarding wizard + new invite Netlify function + Postmark invite email template. Do not touch existing dashboard or scoring logic.
+
+-- SESSION 2 PROMPT FOR CLAUDE CODE --
+
+Read ARCHITECTURE.md, CLAUDE.md, and SCHEMA.md before writing code.
+Session 1 schema migration must be complete and verified first.
+
+Changes required:
+
+1. auth.html: detect ?tier= param on page load. Store in
+   sessionStorage for use after magic link redirect.
+2. app.html onboarding wizard: if tier != solo, insert new
+   Step 0 (company name + owner name + role). On complete:
+   INSERT into organizations, then INSERT into org_members
+   with role = owner. Update user_settings.org_id.
+3. New Netlify function: netlify/functions/invite.js
+   POST /api/invite { email, first_name, org_id }
+   Creates pending org_members row. Sends invite via Postmark.
+4. auth.html: detect ?invite=TOKEN param. After magic link auth,
+   update org_members.invite_accepted_at. Run abbreviated
+   onboarding (skip company setup — already set).
+
+Touch nothing else. Seat limit check: before inserting into
+org_members, count active members vs organizations.seat_limit.
+Session 3 — Owner Dashboard (Team Tab)
+Scope: new Team tab in app.html. Read-only queries only. No writes. No changes to existing tabs.
+
+-- SESSION 3 PROMPT FOR CLAUDE CODE --
+
+Read ARCHITECTURE.md and CLAUDE.md. Sessions 1 and 2 must
+be complete before starting this session.
+
+Add a new "Team" tab to app.html. This tab is ONLY visible
+to users where org_members.role = owner.
+
+Tab contents:
+
+1. Summary cards: total bids (org, 30d), active estimators,
+   org win rate %, bids in flight
+2. Estimator table: name, bids analyzed, outcomes logged,
+   outcome logging % (color-coded), win rate, last active
+3. Trade win rate table: trade, submitted, won, win %
+4. Recent bids feed: all org bids, latest first, with
+   estimator name, score, outcome
+5. Invite Estimator button: opens modal, calls /api/invite
+
+Use classList.contains("active") for tab detection.
+No changes to existing tabs, scoring, or report logic.
+Session 4 — Billing & Stripe
+Scope: stripe-create-checkout.js, stripe-webhook.js, and billing UI in app.html. No schema changes.
+
+-- SESSION 4 PROMPT FOR CLAUDE CODE --
+
+Read ARCHITECTURE.md, CLAUDE.md, and STRIPE_WEBHOOK_SETUP.md.
+Sessions 1-3 must be complete. Never commit secrets to git.
+
+Changes required:
+
+1. stripe-create-checkout.js: accept org_id in request body.
+   Pass org_id in Stripe metadata. Create Stripe customer
+   for org (not individual user) when org_id present.
+   Pass Company price IDs for Company tier checkout.
+2. stripe-webhook.js: when metadata.org_id present, write
+   subscription data to organizations table, not user_revenue.
+   Solo users (no org_id in metadata): existing logic unchanged.
+3. app.html getSubscriptionStatus(): if user has org_id,
+   read from organizations table. Else read user_revenue.
+4. Billing UI: owner sees "Manage Billing" ? org-level portal.
+   Estimators see no billing UI at all.
+
+FOUNDING25 coupon logic (isFoundingPeriod check) stays intact.
+
+
+Effort & Risk Summary
+
+PhaseEstimated EffortRisk LevelPrimary RiskSession 1 — Schema4–6 hoursMediumRLS changes affect live users if done wrong. Always test in SQL editor first.Session 2 — Signup & Invite6–8 hoursLow–MediumOnboarding wizard changes. Must not break existing solo onboarding flow.Session 3 — Owner Dashboard8–10 hoursLowNew tab only. Read-only queries. Lowest risk session.Session 4 — Billing4–6 hoursMediumWebhook changes affect revenue recording. Test with Stripe CLI before deploying.Total22–30 hours—Estimated across 4 focused Claude Code sessions over 2–3 weeks.
+What This Unlocks
+
+For Sales
+• Every prospect call now has a clear question: "How many estimators does your team have?" — maps directly to a tier
+• Owner buying for the team = management decision, not individual opt-in
+• $99 Team plan is the natural first upgrade for any shop with 2+ estimators
+• "Enterprise" tier signals credibility to larger shops without a self-serve ceiling
+
+For the Data Moat
+• Outcome logging accountability: owner can see who is logging and who is not
+• Org-level win rate data compounds faster with multiple estimators feeding the system
+• Trade win rate aggregation across estimators becomes meaningful at 50+ bids — a 3-person team gets there 3x faster
+
+For the Exit Story
+• Company accounts = enterprise software, not personal tool — changes valuation multiple framing
+• Data keyed to organizations (not individuals) is more acquirer-friendly — survives employee turnover
+• Estimator performance analytics is the exact data layer Procore and Autodesk would want to acquire
+
+
+BidIntell  ·  bidintell.ai  ·  Confidential
