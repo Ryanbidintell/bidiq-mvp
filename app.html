@@ -9155,17 +9155,21 @@ ${truncatedText}`;
                 const exactQuote = risk.evidence || risk.exact_quote || risk.context || '';
                 const location = risk.location || risk.page_reference || risk.page || '';
 
+                const severityBg = severity === 'high' ? 'rgba(239,68,68,0.08)' : severity === 'medium' ? 'rgba(245,158,11,0.08)' : 'rgba(100,116,139,0.08)';
+                const badgeBg   = severity === 'high' ? 'rgba(239,68,68,0.15)' : severity === 'medium' ? 'rgba(245,158,11,0.15)' : 'rgba(100,116,139,0.15)';
+                const badgeColor = severity === 'high' ? '#ef4444' : severity === 'medium' ? '#f59e0b' : '#64748b';
                 return `
-                    <div style="margin-bottom: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; border-left: 3px solid ${borderColor};">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                            <span style="font-size: 16px;">${levelIcon}</span>
-                            <span style="font-weight: 600; color: var(--text-primary);">${riskLabel}</span>
-                            <span style="color: var(--text-muted); font-size: 11px; font-weight: 500; text-transform: uppercase;">${levelLabel}</span>
-                            ${location ? `<span style="font-size: 11px; color: var(--text-muted); background: var(--bg-input); padding: 2px 6px; border-radius: 4px; font-family: monospace;">${location}</span>` : ''}
+                    <div style="margin-bottom:10px;border-radius:10px;border:1px solid ${borderColor};background:${severityBg};overflow:hidden;">
+                        <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;justify-content:space-between;">
+                            <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                                <span style="font-size:18px;flex-shrink:0;">${levelIcon}</span>
+                                <span style="font-weight:700;font-size:14px;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${riskLabel}</span>
+                            </div>
+                            <span style="flex-shrink:0;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;background:${badgeBg};color:${badgeColor};padding:3px 8px;border-radius:20px;">${levelLabel}</span>
                         </div>
-                        ${classification && classification !== riskLabel ? `<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; font-style: italic;">${classification}</div>` : ''}
-                        ${plainEnglish ? `<div style="font-size: 13px; color: var(--text-primary); margin-bottom: 8px;">${plainEnglish}</div>` : ''}
-                        ${exactQuote ? `<div style="font-size: 11px; color: var(--text-muted); padding: 8px; background: rgba(0,0,0,0.05); border-radius: 4px; font-family: monospace; line-height: 1.4;">"${exactQuote.substring(0, 150)}${exactQuote.length > 150 ? '...' : ''}"</div>` : ''}
+                        ${plainEnglish ? `<div style="padding:0 14px 10px;font-size:13px;color:var(--text-primary);line-height:1.5;">${plainEnglish}</div>` : ''}
+                        ${exactQuote ? `<div style="margin:0 14px 12px;padding:10px 12px;background:rgba(0,0,0,0.15);border-radius:6px;font-size:12px;color:var(--text-secondary);line-height:1.5;font-style:italic;">"${exactQuote.substring(0,180)}${exactQuote.length>180?'…':''}"</div>` : ''}
+                        ${location ? `<div style="padding:0 14px 10px;font-size:11px;color:var(--text-muted);">📄 ${location}</div>` : ''}
                     </div>
                 `;
             }).join('');
@@ -9187,19 +9191,17 @@ ${truncatedText}`;
             const overallColor = overallLevel === 'HIGH' ? 'var(--danger)' : overallLevel === 'MEDIUM' ? 'var(--warning)' : 'var(--text-muted)';
 
             const html = `
-                <div style="margin-top:12px;padding:12px;background:rgba(239,68,68,0.1);border-radius:var(--radius);border-left:4px solid var(--danger);">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                        <strong style="color:var(--danger);">⚠️ Contract Risks Detected (${riskCount})</strong>
-                        <span style="color: ${overallColor}; font-weight: 600; font-size: 14px;">Overall: ${overallLevel}</span>
-                    </div>
-                    <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
-                        These clauses may increase project risk. Review carefully before bidding.
+                <div style="padding:4px 0;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border-color);">
+                        <div>
+                            <div style="font-size:16px;font-weight:700;color:var(--text-primary);">⚠️ ${riskCount} Risk Clause${riskCount !== 1 ? 's' : ''} Detected</div>
+                            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Review before bidding</div>
+                        </div>
+                        <span style="font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:${overallColor === 'var(--danger)' ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)'};color:${overallColor};padding:5px 12px;border-radius:20px;">Overall: ${overallLevel}</span>
                     </div>
                     ${summaryHtml}
                     ${penaltyHtml}
-                    <div style="margin-top: 12px;">
-                        ${risksHtml}
-                    </div>
+                    <div style="margin-top:8px;">${risksHtml}</div>
                 </div>
             `;
 
@@ -11297,7 +11299,7 @@ ${truncatedText}`;
 
                 // Economics tab
                 document.getElementById('reportEconomicsContent').innerHTML =
-                    renderBidEconomicsCard({ extracted: p.extracted || {}, contractRisks: [], fileCount: p.fileCount || 1 }, settings, p.outcomeData);
+                    renderBidEconomicsCard({ extracted: p.extracted || {}, contractRisks: p.contractRisks || [], fileCount: p.fileCount || 1 }, settings, p.outcomeData);
 
                 // Add visual feedback for report agreement radio buttons and auto-save
                 setTimeout(() => {
@@ -11384,15 +11386,33 @@ ${truncatedText}`;
 
                 // Display AI Advisor response if available (Intelligence Engine)
                 if (p.aiAdvisorOutput) {
-                    // Convert markdown-style formatting to HTML
                     const advisorHTML = p.aiAdvisorOutput
-                        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') // Bold text
-                        .replace(/^• (.+)$/gm, '<li style="margin-left: 20px;">$1</li>') // Bullet points
-                        .replace(/\n\n/g, '</p><p style="margin-bottom: 12px;">') // Paragraphs
-                        .replace(/\n/g, '<br>'); // Line breaks
+                        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/^• (.+)$/gm, '<li style="margin-left: 20px;">$1</li>')
+                        .replace(/\n\n/g, '</p><p style="margin-bottom: 12px;">')
+                        .replace(/\n/g, '<br>');
                     recsHTML += `<div style="margin-bottom: 16px;"><p style="margin-bottom: 12px;">${advisorHTML}</p></div>`;
+                } else if (p.scores?.source === 'email_forward') {
+                    // Email-forwarded bid: build intelligence from score components + contract risks
+                    const loc  = p.scores?.components?.location;
+                    const kw   = p.scores?.components?.keywords;
+                    const gc   = p.scores?.components?.gc;
+                    const tr   = p.scores?.components?.trade;
+                    const cr   = p.contractRisks;
+                    const insights = [];
+                    if (loc)  insights.push(`<li><strong>Location:</strong> ${loc.reason}</li>`);
+                    if (tr)   insights.push(`<li><strong>Trade Match:</strong> ${tr.reason}</li>`);
+                    if (gc)   insights.push(`<li><strong>GC Relationship:</strong> ${gc.reason}</li>`);
+                    if (kw)   insights.push(`<li><strong>Keywords:</strong> ${kw.reason}</li>`);
+                    if (cr?.riskSummary) insights.push(`<li><strong>Contract Risks:</strong> ${cr.riskSummary}</li>`);
+                    if (insights.length > 0) {
+                        recsHTML += `<div style="margin-bottom:16px;padding:14px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);">
+                            <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">Score Breakdown</div>
+                            <ul style="margin:0;padding-left:18px;line-height:1.8;font-size:13px;color:var(--text-primary);">${insights.join('')}</ul>
+                        </div>`;
+                    }
+                    recsHTML += `<div style="padding:10px 14px;background:var(--bg-tertiary);border-radius:var(--radius);font-size:12px;color:var(--text-muted);">💡 Deep intelligence analysis runs when PDFs are uploaded directly in the app.</div>`;
                 } else {
-                    // Fallback to old format if Intelligence Engine data not available
                     if (p.scores.explanation) {
                         recsHTML += `<p style="margin-bottom: 12px;">${p.scores.explanation}</p>`;
                     }
