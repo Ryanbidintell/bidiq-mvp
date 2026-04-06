@@ -102,9 +102,6 @@ exports.handler = async function(event, context) {
         // Get or create Stripe customer
         const customerId = await getOrCreateCustomer(userId, email, name, companyName);
 
-        // Founding member period ends 2026-04-01T00:00:00Z
-        const isFoundingPeriod = new Date() < new Date('2026-04-01T00:00:00Z');
-
         // Create checkout session
         const stripe = getStripe();
         const sessionParams = {
@@ -134,12 +131,8 @@ exports.handler = async function(event, context) {
         // 7-day free trial for all new subscribers
         sessionParams.subscription_data.trial_period_days = 7;
 
-        // Stripe does not allow allow_promotion_codes and discounts simultaneously.
-        // During founding period: apply FOUNDING30 coupon automatically.
-        // After founding period: no discount.
-        if (isFoundingPeriod) {
-            sessionParams.discounts = [{ coupon: 'FOUNDING30' }];
-        }
+        // Allow users to enter promotion codes (e.g. FOUNDING30) at checkout
+        sessionParams.allow_promotion_codes = true;
 
         const session = await stripe.checkout.sessions.create(sessionParams);
 
