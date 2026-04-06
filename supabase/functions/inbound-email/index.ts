@@ -524,7 +524,8 @@ async function processEmail(payload: Record<string, unknown>) {
             const pdfSystemPrompt = 'You are extracting structured project data from a construction bid document PDF. Return JSON only. No preamble. No markdown.';
             const pdfUserPrompt =
                 `Extract these fields from the PDF. Use null if not found.\n\n` +
-                `{"gc_name":string|null,"project_name":string|null,"project_city":string|null,"project_state":string|null,"project_address":string|null,"bid_due_date":string|null,"scope_description":string|null,"trade_keywords":string[],"bond_required":boolean|null,"estimated_value":number|null,"contract_risk_flags":string[]}`;
+                `{"gc_name":string|null,"project_name":string|null,"project_city":string|null,"project_state":string|null,"project_address":string|null,"bid_due_date":string|null,"scope_description":string|null,"trade_keywords":string[],"bond_required":boolean|null,"estimated_value":number|null,"contract_risk_flags":string[],"searchable_text":string}\n\n` +
+                `For "searchable_text": concatenate ALL text from the document that describes scope of work, specifications, materials, products, systems, CSI division/section headings, general notes, and schedule items. This is used for keyword searching — include product names, brand names, material types, spec section titles, and trade descriptions. Aim for 2000-4000 characters of the most relevant content.`;
 
             const pdfRaw = await callClaude(
                 [{
@@ -549,6 +550,11 @@ async function processEmail(payload: Record<string, unknown>) {
                 const existing = (extracted.trade_keywords as string[]) || [];
                 extracted.trade_keywords = [...new Set([...existing, ...(pdfExtracted.trade_keywords as string[])])];
             }
+            // Accumulate searchable text from PDF for keyword + trade scoring
+            if (typeof pdfExtracted.searchable_text === 'string' && pdfExtracted.searchable_text.length > 0) {
+                const existing = (extracted.searchable_text as string) || '';
+                extracted.searchable_text = existing ? existing + '\n' + pdfExtracted.searchable_text : pdfExtracted.searchable_text;
+            }
 
             if (Array.isArray(pdfExtracted.contract_risk_flags) && (pdfExtracted.contract_risk_flags as string[]).length > 0) {
                 const flags = pdfExtracted.contract_risk_flags as string[];
@@ -564,8 +570,10 @@ async function processEmail(payload: Record<string, unknown>) {
         }
     }
 
-    // 8. Scope text for trade scoring
+    // 8. Scope text for trade + keyword scoring
+    // searchable_text from PDF extraction gives full spec/scope content (same depth as app upload)
     const scopeText = [
+        (extracted.searchable_text as string) || '',
         (extracted.scope_description as string) || '',
         ((extracted.trade_keywords as string[]) || []).join(' '),
         Subject || ''
