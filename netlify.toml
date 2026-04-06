@@ -67,6 +67,21 @@
   to = "/demo.html"
   status = 200
 
+[[redirects]]
+  from = "/works-with-plan-rooms"
+  to = "/works-with-plan-rooms.html"
+  status = 200
+
+[[redirects]]
+  from = "/works-with-estimating-tools"
+  to = "/works-with-estimating-tools.html"
+  status = 200
+
+[[redirects]]
+  from = "/works-with-crm"
+  to = "/works-with-crm.html"
+  status = 200
+
 [[headers]]
   for = "/api/*"
   [headers.values]

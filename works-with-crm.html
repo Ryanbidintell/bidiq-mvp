@@ -7,6 +7,7 @@
   <meta name="description" content="Pipedrive, Buildxact, and general CRMs track contacts and deals — not bid-level GC behavior. BidIntell fills the gap with construction-specific relationship intelligence for specialty subcontractors." />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://bidintell.ai/works-with-crm" />
+  <link rel="icon" href="/favicon.png" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -19,202 +20,706 @@
   </script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XGYJLV0E6G"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XGYJLV0E6G');</script>
-  <!-- CLAUDE CODE INSTRUCTION: Copy all styles from index.html exactly. Match nav, hero, section headings, card grid, callout block, CTA section, footer, and all CSS variables. Do not invent new styles. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --ink: #0B0F14;
+  --ink-light: #141A23;
+  --ink-mid: #1C2533;
+  --slate: #384254;
+  --slate-light: #5A6A7E;
+  --fog: #94A3B8;
+  --cloud: #CBD5E1;
+  --white: #F8FAFC;
+  --accent: #F26522;
+  --accent-dark: #D4551A;
+  --accent-glow: rgba(242, 101, 34, 0.15);
+  --green: #22C55E;
+  --green-muted: rgba(34, 197, 94, 0.12);
+  --red: #EF4444;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --font: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'Space Mono', monospace;
+}
+
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  font-family: var(--font);
+  background: var(--ink);
+  color: var(--cloud);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+.container {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ===== NAV ===== */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(11, 15, 20, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.nav-inner {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--white);
+  letter-spacing: -0.02em;
+}
+
+.nav-logo .logo-mark {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.04em;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fog);
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--white); }
+
+.nav-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: var(--accent);
+  color: white !important;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: background 0.2s, transform 0.15s;
+}
+.nav-cta:hover { background: var(--accent-dark); transform: translateY(-1px); }
+
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--fog);
+  cursor: pointer;
+  padding: 8px;
+}
+
+/* ===== BTN ===== */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: -0.01em;
+}
+.btn-primary:hover { background: var(--accent-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(242,101,34,0.3); }
+
+/* ===== PAGE HERO ===== */
+.page-hero {
+  padding: 140px 0 72px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-hero::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 800px; height: 500px;
+  background: radial-gradient(ellipse, var(--accent-glow), transparent 70%);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 18px;
+  display: block;
+  position: relative;
+}
+
+.page-hero h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.hero-sub {
+  font-size: 1.125rem;
+  color: var(--fog);
+  line-height: 1.7;
+  max-width: 640px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ===== PAGE CONTENT ===== */
+.page-content {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+.page-content h2 {
+  font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.025em;
+  margin: 56px 0 18px;
+  line-height: 1.25;
+}
+
+.page-content p {
+  font-size: 1rem;
+  color: var(--fog);
+  line-height: 1.75;
+  margin-bottom: 18px;
+}
+
+.page-content p strong { color: var(--cloud); }
+
+/* ===== COMPARISON TABLE ===== */
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 28px 0;
+  font-size: 0.9rem;
+}
+
+.comparison-table th {
+  text-align: left;
+  padding: 12px 16px;
+  background: var(--ink-mid);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.comparison-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.15s;
+}
+.comparison-table tbody tr:last-child { border-bottom: none; }
+.comparison-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+.comparison-table td {
+  padding: 12px 16px;
+  color: var(--cloud);
+}
+
+.comparison-table td.check {
+  color: var(--green);
+  font-weight: 700;
+  text-align: center;
+}
+
+.comparison-table td.no {
+  color: var(--slate-light);
+  text-align: center;
+}
+
+/* ===== WORKFLOW STEPS ===== */
+.workflow-steps {
+  list-style: none;
+  margin: 28px 0;
+  counter-reset: steps;
+  padding-left: 64px;
+}
+
+.workflow-step {
+  position: relative;
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  counter-increment: steps;
+}
+.workflow-step:last-child { border-bottom: none; }
+
+.workflow-step::before {
+  content: counter(steps);
+  position: absolute;
+  left: -64px;
+  top: 24px;
+  width: 40px;
+  height: 40px;
+  background: var(--ink-mid);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.workflow-step .step-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.workflow-step strong {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+
+.workflow-step p {
+  font-size: 0.9rem;
+  color: var(--fog);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ===== CARD GRID ===== */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 28px 0;
+}
+
+.card {
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  transition: border-color 0.3s, transform 0.2s;
+}
+.card:hover { border-color: rgba(242,101,34,0.2); transform: translateY(-2px); }
+
+.card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+}
+
+.card p {
+  font-size: 0.875rem;
+  color: var(--fog);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ===== CALLOUT ===== */
+blockquote.callout {
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  margin: 40px 0;
+  font-size: 1.05rem;
+  color: var(--white);
+  line-height: 1.65;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* ===== CTA SECTION ===== */
+.cta-section {
+  padding: 56px 48px;
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  margin-top: 56px;
+}
+
+.cta-section h2 {
+  font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.025em;
+  margin: 0 0 14px;
+}
+
+.cta-section p {
+  font-size: 1rem;
+  color: var(--fog);
+  margin-bottom: 28px;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.7;
+}
+
+.cta-note {
+  font-size: 0.8rem;
+  color: var(--slate-light);
+  margin-top: 14px !important;
+  margin-bottom: 0 !important;
+}
+
+/* ===== RELATED PAGES ===== */
+.related-pages {
+  margin-top: 48px;
+  padding-top: 28px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.related-pages p {
+  font-size: 0.875rem;
+  color: var(--fog);
+  margin: 0;
+  font-weight: 500;
+}
+
+.related-pages a {
+  font-size: 0.875rem;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s;
+}
+.related-pages a:hover { color: var(--accent-dark); }
+
+/* ===== FOOTER ===== */
+.footer { padding: 48px 0 36px; border-top: 1px solid rgba(255,255,255,0.04); }
+.footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.footer-left { display: flex; align-items: center; gap: 10px; }
+.footer-left .logo-mark {
+  width: 28px; height: 28px;
+  background: var(--accent);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: white;
+}
+.footer-copy { font-size: 0.8rem; color: var(--slate-light); }
+.footer-links { display: flex; gap: 24px; list-style: none; flex-wrap: wrap; }
+.footer-links a { font-size: 0.8rem; color: var(--fog); transition: color 0.2s; }
+.footer-links a:hover { color: var(--white); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .card-grid { grid-template-columns: 1fr 1fr; }
+  .workflow-steps { padding-left: 48px; }
+  .workflow-step::before { left: -48px; width: 32px; height: 32px; font-size: 0.75rem; }
+  .cta-section { padding: 40px 24px; }
+  .comparison-table { font-size: 0.8rem; }
+  .comparison-table td, .comparison-table th { padding: 10px 12px; }
+}
+
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .mobile-menu-btn { display: block; }
+  .card-grid { grid-template-columns: 1fr; }
+  .footer-inner { flex-direction: column; text-align: center; }
+  .related-pages { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+</style>
 </head>
 <body>
 
-  <!-- CLAUDE CODE INSTRUCTION: Copy nav from index.html exactly. Same logo, same links, same CTA button. -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="logo-mark">BI</div>
+      BidIntell
+    </a>
+    <ul class="nav-links">
+      <li><a href="/#how">How It Works</a></li>
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/#pricing">Pricing</a></li>
+      <li><a href="/contact">Contact</a></li>
+      <li><a href="/app" style="color: var(--cloud);">Sign In</a></li>
+      <li><a href="/demo" class="nav-cta">Schedule a Demo →</a></li>
+    </ul>
+    <button class="mobile-menu-btn" aria-label="Menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 12h18M3 6h18M3 18h18"/>
+      </svg>
+    </button>
+  </div>
+</nav>
 
-  <section class="page-hero">
+<section class="page-hero">
+  <div class="container">
     <p class="eyebrow">Workflow Guide</p>
     <h1>BidIntell + CRMs</h1>
     <p class="hero-sub">Your CRM tracks contacts and deals. BidIntell tracks which GCs are actually worth bidding for — based on your real bid history, not just their phone number.</p>
-  </section>
+  </div>
+</section>
 
-  <main class="page-content">
+<main class="page-content">
 
-    <h2>What a general CRM cannot tell you</h2>
+  <h2>What a general CRM cannot tell you</h2>
 
-    <p>A lot of specialty subcontracting firms have tried CRM software. Pipedrive, HubSpot, Procore's preconstruction tools, Buildxact — platforms designed to track client relationships and business development activity. Some of them are useful for what they do.</p>
+  <p>A lot of specialty subcontracting firms have tried CRM software. Pipedrive, HubSpot, Procore's preconstruction tools, Buildxact — platforms designed to track client relationships and business development activity. Some of them are useful for what they do.</p>
 
-    <p>But none of them were built for the specific relationship intelligence that matters most in a bid-driven business. The question is not just whether you have a relationship with a GC. It is how many times you have bid for them, how many times you won, how many times they ghosted you after bid day, and what types of projects they actually award to firms like yours.</p>
+  <p>But none of them were built for the specific relationship intelligence that matters most in a bid-driven business. The question is not just whether you have a relationship with a GC. It is how many times you have bid for them, how many times you won, how many times they ghosted you after bid day, and what types of projects they actually award to firms like yours.</p>
 
-    <p>That data exists somewhere in every established subcontracting firm. It lives in email threads, in the estimator's memory, in a spreadsheet someone started three years ago. But it is not organized in a way that influences the next bid decision. That is the gap BidIntell fills.</p>
+  <p>That data exists somewhere in every established subcontracting firm. It lives in email threads, in the estimator's memory, in a spreadsheet someone started three years ago. But it is not organized in a way that influences the next bid decision. That is the gap BidIntell fills.</p>
 
-    <!-- CLAUDE CODE INSTRUCTION: Use a simple two-column table or comparison layout. Style to match any table or comparison section in index.html. -->
-    <table class="comparison-table">
-      <thead>
-        <tr>
-          <th>Data Type</th>
-          <th>General CRM</th>
-          <th>BidIntell</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>GC contact name and phone</td>
-          <td class="check">Yes</td>
-          <td class="check">Yes</td>
-        </tr>
-        <tr>
-          <td>Win and loss history by GC</td>
-          <td class="no">No</td>
-          <td class="check">Yes</td>
-        </tr>
-        <tr>
-          <td>Ghost rate — no response after bid</td>
-          <td class="no">No</td>
-          <td class="check">Yes</td>
-        </tr>
-        <tr>
-          <td>BidIndex Score at time of submission</td>
-          <td class="no">No</td>
-          <td class="check">Yes</td>
-        </tr>
-        <tr>
-          <td>Contract risk flags by GC</td>
-          <td class="no">No</td>
-          <td class="check">Yes</td>
-        </tr>
-        <tr>
-          <td>Trade match history by CSI section</td>
-          <td class="no">No</td>
-          <td class="check">Yes</td>
-        </tr>
-        <tr>
-          <td>Deal pipeline and follow-up tracking</td>
-          <td class="check">Yes</td>
-          <td class="no">No</td>
-        </tr>
-        <tr>
-          <td>Email integration and task reminders</td>
-          <td class="check">Yes</td>
-          <td class="no">No</td>
-        </tr>
-      </tbody>
-    </table>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Data Type</th>
+        <th>General CRM</th>
+        <th>BidIntell</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>GC contact name and phone</td>
+        <td class="check">Yes</td>
+        <td class="check">Yes</td>
+      </tr>
+      <tr>
+        <td>Win and loss history by GC</td>
+        <td class="no">No</td>
+        <td class="check">Yes</td>
+      </tr>
+      <tr>
+        <td>Ghost rate — no response after bid</td>
+        <td class="no">No</td>
+        <td class="check">Yes</td>
+      </tr>
+      <tr>
+        <td>BidIndex Score at time of submission</td>
+        <td class="no">No</td>
+        <td class="check">Yes</td>
+      </tr>
+      <tr>
+        <td>Contract risk flags by GC</td>
+        <td class="no">No</td>
+        <td class="check">Yes</td>
+      </tr>
+      <tr>
+        <td>Trade match history by CSI section</td>
+        <td class="no">No</td>
+        <td class="check">Yes</td>
+      </tr>
+      <tr>
+        <td>Deal pipeline and follow-up tracking</td>
+        <td class="check">Yes</td>
+        <td class="no">No</td>
+      </tr>
+      <tr>
+        <td>Email integration and task reminders</td>
+        <td class="check">Yes</td>
+        <td class="no">No</td>
+      </tr>
+    </tbody>
+  </table>
 
-    <p>The tools do different things. A general CRM manages contacts and follow-up activity. BidIntell captures the bid-level intelligence that tells you whether a GC relationship is worth pursuing in the first place — and whether it is actually producing work over time.</p>
+  <p>The tools do different things. A general CRM manages contacts and follow-up activity. BidIntell captures the bid-level intelligence that tells you whether a GC relationship is worth pursuing in the first place — and whether it is actually producing work over time.</p>
 
-    <h2>What BidIntell's GC Manager builds over time</h2>
+  <h2>What BidIntell's GC Manager builds over time</h2>
 
-    <p>Every client in BidIntell — general contractors, owners, construction managers, developers, or whoever is sending you bid documents — has a profile that builds as you use the tool. Each bid you score and each outcome you log adds to that record.</p>
+  <p>Every client in BidIntell — general contractors, owners, construction managers, developers, or whoever is sending you bid documents — has a profile that builds as you use the tool. Each bid you score and each outcome you log adds to that record.</p>
 
-    <p>After a year of consistent use, your GC profiles in BidIntell show you things that no CRM was designed to capture: which GCs in your market award you work at a reasonable rate, which ones use your number to sharpen their preferred sub's price, which ones go dark after bid day without explanation, and which project types with which GCs you win more often than you lose.</p>
+  <p>After a year of consistent use, your GC profiles in BidIntell show you things that no CRM was designed to capture: which GCs in your market award you work at a reasonable rate, which ones use your number to sharpen their preferred sub's price, which ones go dark after bid day without explanation, and which project types with which GCs you win more often than you lose.</p>
 
-    <p>That intelligence is what experienced estimators carry around in their heads after 20 years in the business. BidIntell captures it systematically, tied to actual bid events and actual outcomes, so it does not walk out the door when someone leaves.</p>
+  <p>That intelligence is what experienced estimators carry around in their heads after 20 years in the business. BidIntell captures it systematically, tied to actual bid events and actual outcomes, so it does not walk out the door when someone leaves.</p>
 
-    <h2>How the two tools work alongside each other</h2>
+  <h2>How the two tools work alongside each other</h2>
 
-    <!-- CLAUDE CODE INSTRUCTION: Use the same numbered step / how-it-works component from index.html. Match styling exactly. -->
-    <ol class="workflow-steps">
+  <ol class="workflow-steps">
 
-      <li class="workflow-step">
-        <span class="step-label">Plan Room or Direct</span>
-        <strong>Bid documents arrive from a GC</strong>
-        <p>You have the relationship in your CRM — contact info, notes from past conversations, whatever you have tracked. That context is useful but it does not tell you whether this specific bid is worth pursuing.</p>
-      </li>
+    <li class="workflow-step">
+      <span class="step-label">Plan Room or Direct</span>
+      <strong>Bid documents arrive from a GC</strong>
+      <p>You have the relationship in your CRM — contact info, notes from past conversations, whatever you have tracked. That context is useful but it does not tell you whether this specific bid is worth pursuing.</p>
+    </li>
 
-      <li class="workflow-step">
-        <span class="step-label">BidIntell</span>
-        <strong>Download and upload the bid documents to BidIntell</strong>
-        <p>BidIntell pulls up your history with this GC, scores the trade fit and location, and flags any contract risk language. Your CRM tells you who they are. BidIntell tells you whether this bid is worth the estimate.</p>
-      </li>
+    <li class="workflow-step">
+      <span class="step-label">BidIntell</span>
+      <strong>Upload the bid documents to BidIntell</strong>
+      <p>BidIntell pulls up your history with this GC, scores the trade fit and location, and flags any contract risk language. Your CRM tells you who they are. BidIntell tells you whether this bid is worth the estimate.</p>
+    </li>
 
-      <li class="workflow-step">
-        <strong>Make the go or pass call</strong>
-        <p>If you pass, log the decline reason in BidIntell. Takes about 30 seconds. If you go, start the estimate.</p>
-      </li>
+    <li class="workflow-step">
+      <strong>Make the go or pass call</strong>
+      <p>If you pass, log the decline reason in BidIntell. Takes about 30 seconds. If you go, start the estimate.</p>
+    </li>
 
-      <li class="workflow-step">
-        <span class="step-label">Your CRM</span>
-        <strong>If go: manage follow-up in your CRM</strong>
-        <p>Schedule calls, set reminders, track the deal stage. That is what CRMs do well. BidIntell does not replace that part of the workflow.</p>
-      </li>
+    <li class="workflow-step">
+      <span class="step-label">Your CRM</span>
+      <strong>If go: manage follow-up in your CRM</strong>
+      <p>Schedule calls, set reminders, track the deal stage. That is what CRMs do well. BidIntell does not replace that part of the workflow.</p>
+    </li>
 
-      <li class="workflow-step">
-        <span class="step-label">BidIntell</span>
-        <strong>Log the outcome when the bid closes</strong>
-        <p>Won, lost, ghosted, or declined. The outcome updates your GC profile in BidIntell and improves future scoring accuracy for this GC.</p>
-      </li>
+    <li class="workflow-step">
+      <span class="step-label">BidIntell</span>
+      <strong>Log the outcome when the bid closes</strong>
+      <p>Won, lost, ghosted, or declined. The outcome updates your GC profile in BidIntell and improves future scoring accuracy for this GC.</p>
+    </li>
 
-    </ol>
+  </ol>
 
-    <!-- CLAUDE CODE INSTRUCTION: Use the same callout/highlight block style from index.html. -->
-    <blockquote class="callout">
-      Your CRM knows you have a relationship with a GC. BidIntell knows whether that relationship actually produces work — and what kinds of projects they award to firms like yours.
-    </blockquote>
+  <blockquote class="callout">
+    Your CRM knows you have a relationship with a GC. BidIntell knows whether that relationship actually produces work — and what kinds of projects they award to firms like yours.
+  </blockquote>
 
-    <h2>CRMs BidIntell works alongside</h2>
+  <h2>CRMs BidIntell works alongside</h2>
 
-    <p>BidIntell does not sync with CRM platforms. They run in parallel. Your CRM manages contact information and follow-up. BidIntell manages bid-level intelligence and GC scoring history. The data in each system is different enough that they do not overlap much.</p>
+  <p>BidIntell does not sync with CRM platforms. They run in parallel. Your CRM manages contact information and follow-up. BidIntell manages bid-level intelligence and GC scoring history. The data in each system is different enough that they do not overlap much.</p>
 
-    <!-- CLAUDE CODE INSTRUCTION: Use the same feature card grid from index.html. Match card style, spacing, and heading size exactly. -->
-    <div class="card-grid">
+  <div class="card-grid">
 
-      <div class="card">
-        <h3>Pipedrive</h3>
-        <p>Use Pipedrive for deal pipeline and follow-up activity. Use BidIntell for bid scoring and GC relationship history. Both contribute to the same client relationship from different angles.</p>
-      </div>
-
-      <div class="card">
-        <h3>Buildxact</h3>
-        <p>Buildxact combines estimating and project management. BidIntell sits upstream — helping you decide which opportunities are worth bringing into Buildxact before you start the takeoff.</p>
-      </div>
-
-      <div class="card">
-        <h3>Procore Preconstruction</h3>
-        <p>Procore's preconstruction tools handle bid management and document sharing on the GC side. BidIntell adds the scoring and outcome-tracking layer that Procore does not provide for the sub.</p>
-      </div>
-
-      <div class="card">
-        <h3>HubSpot</h3>
-        <p>General-purpose CRMs like HubSpot work for contact management but have no construction-specific bid intelligence. BidIntell fills that specific gap without replacing what HubSpot does well.</p>
-      </div>
-
-      <div class="card">
-        <h3>Salesforce</h3>
-        <p>Larger firms using Salesforce for business development can use BidIntell for the bid-scoring and GC behavioral data that Salesforce is not built to capture.</p>
-      </div>
-
-      <div class="card">
-        <h3>No CRM — spreadsheets or nothing</h3>
-        <p>Most specialty subs under ten million in revenue do not use a dedicated CRM. BidIntell's GC Manager functions as a lightweight, bid-specific alternative built for how subcontracting businesses actually operate.</p>
-      </div>
-
+    <div class="card">
+      <h3>Pipedrive</h3>
+      <p>Use Pipedrive for deal pipeline and follow-up activity. Use BidIntell for bid scoring and GC relationship history. Both contribute to the same client relationship from different angles.</p>
     </div>
 
-    <h2>Why capturing this data now matters later</h2>
+    <div class="card">
+      <h3>Buildxact</h3>
+      <p>Buildxact combines estimating and project management. BidIntell sits upstream — helping you decide which opportunities are worth bringing into Buildxact before you start the takeoff.</p>
+    </div>
 
-    <p>Most specialty subcontracting firms have 10 to 30 GC relationships they are actively bidding at any given time. Some of those relationships are genuinely productive — the GC awards work at a fair rate, communicates honestly, and has project types that fit your trade. Others are what the industry calls shopping relationships — the GC uses your number to pressure their preferred sub and you never had a real chance at the award.</p>
+    <div class="card">
+      <h3>Procore Preconstruction</h3>
+      <p>Procore's preconstruction tools handle bid management and document sharing on the GC side. BidIntell adds the scoring and outcome-tracking layer that Procore does not provide for the sub.</p>
+    </div>
 
-    <p>Experienced estimators know the difference. Usually it is someone who has been around long enough to recognize the patterns. When that person leaves, the knowledge walks out with them.</p>
+    <div class="card">
+      <h3>HubSpot</h3>
+      <p>General-purpose CRMs like HubSpot work for contact management but have no construction-specific bid intelligence. BidIntell fills that specific gap without replacing what HubSpot does well.</p>
+    </div>
 
-    <p>BidIntell captures that institutional knowledge as a systematic record tied to actual bid events and actual outcomes — not in someone's memory. A year of consistent outcome logging gives you a GC intelligence database that your CRM was never designed to build and that your estimating software does not track.</p>
+    <div class="card">
+      <h3>Salesforce</h3>
+      <p>Larger firms using Salesforce for business development can use BidIntell for the bid-scoring and GC behavioral data that Salesforce is not built to capture.</p>
+    </div>
 
-    <p>That record makes future bid decisions faster and better, for whoever ends up making them.</p>
+    <div class="card">
+      <h3>No CRM — spreadsheets or nothing</h3>
+      <p>Most specialty subs under ten million in revenue do not use a dedicated CRM. BidIntell's GC Manager functions as a lightweight, bid-specific alternative built for how subcontracting businesses actually operate.</p>
+    </div>
 
-    <!-- CLAUDE CODE INSTRUCTION: Use the same CTA / bottom section style from index.html. Match button class and surrounding layout. -->
-    <section class="cta-section">
-      <h2>Start building your GC intelligence database</h2>
-      <p>Every bid you score and every outcome you log makes the next decision faster and more accurate. 14-day free trial, no credit card required.</p>
-      <a href="/app.html" class="btn-primary">Start Free Trial</a>
-      <p class="cta-note">Founding member pricing — 25% off for life.</p>
-    </section>
+  </div>
 
-    <nav class="related-pages">
-      <p>Also in this series:</p>
-      <a href="/works-with-plan-rooms">BidIntell + Plan Rooms</a>
-      <a href="/works-with-estimating-tools">BidIntell + AI Estimating Tools</a>
-    </nav>
+  <h2>Why capturing this data now matters later</h2>
 
-  </main>
+  <p>Most specialty subcontracting firms have 10 to 30 GC relationships they are actively bidding at any given time. Some of those relationships are genuinely productive — the GC awards work at a fair rate, communicates honestly, and has project types that fit your trade. Others are what the industry calls shopping relationships — the GC uses your number to pressure their preferred sub and you never had a real chance at the award.</p>
 
-  <!-- CLAUDE CODE INSTRUCTION: Copy footer from index.html exactly. Add these three links in the footer alongside existing links:
-    <a href="/works-with-plan-rooms">Plan Rooms</a>
-    <a href="/works-with-estimating-tools">Estimating Tools</a>
-    <a href="/works-with-crm">CRMs</a>
-  -->
+  <p>Experienced estimators know the difference. Usually it is someone who has been around long enough to recognize the patterns. When that person leaves, the knowledge walks out with them.</p>
+
+  <p>BidIntell captures that institutional knowledge as a systematic record tied to actual bid events and actual outcomes — not in someone's memory. A year of consistent outcome logging gives you a GC intelligence database that your CRM was never designed to build and that your estimating software does not track.</p>
+
+  <p>That record makes future bid decisions faster and better, for whoever ends up making them.</p>
+
+  <section class="cta-section">
+    <h2>Start building your GC intelligence database</h2>
+    <p>Every bid you score and every outcome you log makes the next decision faster and more accurate. 14-day free trial, no credit card required.</p>
+    <a href="/app" class="btn-primary">Start Free Trial</a>
+    <p class="cta-note">Founding member pricing available at launch.</p>
+  </section>
+
+  <nav class="related-pages">
+    <p>Also in this series:</p>
+    <a href="/works-with-plan-rooms">BidIntell + Plan Rooms</a>
+    <a href="/works-with-estimating-tools">BidIntell + AI Estimating Tools</a>
+  </nav>
+
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="logo-mark">BI</div>
+        <span class="footer-copy">© 2026 BidIntell. Built by the industry, for the industry.</span>
+      </div>
+      <ul class="footer-links">
+        <li><a href="/legal#privacy">Privacy</a></li>
+        <li><a href="/legal#terms">Terms</a></li>
+        <li><a href="/contact">Contact</a></li>
+        <li><a href="/works-with-plan-rooms">Plan Rooms</a></li>
+        <li><a href="/works-with-estimating-tools">Estimating Tools</a></li>
+        <li><a href="/works-with-crm">CRMs</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
 
 </body>
 </html>

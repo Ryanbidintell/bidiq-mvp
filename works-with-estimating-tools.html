@@ -7,6 +7,7 @@
   <meta name="description" content="BidIntell sits upstream of Stack, Togal, Buildxact, and other estimating tools. Score bid documents before you open the plans — and stop spending takeoff hours on work you were unlikely to win." />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://bidintell.ai/works-with-estimating-tools" />
+  <link rel="icon" href="/favicon.png" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -19,173 +20,679 @@
   </script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XGYJLV0E6G"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XGYJLV0E6G');</script>
-  <!-- CLAUDE CODE INSTRUCTION: Copy all styles from index.html exactly. Match nav, hero, section headings, card grid, callout block, CTA section, footer, and all CSS variables. Do not invent new styles. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --ink: #0B0F14;
+  --ink-light: #141A23;
+  --ink-mid: #1C2533;
+  --slate: #384254;
+  --slate-light: #5A6A7E;
+  --fog: #94A3B8;
+  --cloud: #CBD5E1;
+  --white: #F8FAFC;
+  --accent: #F26522;
+  --accent-dark: #D4551A;
+  --accent-glow: rgba(242, 101, 34, 0.15);
+  --green: #22C55E;
+  --green-muted: rgba(34, 197, 94, 0.12);
+  --red: #EF4444;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --font: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'Space Mono', monospace;
+}
+
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  font-family: var(--font);
+  background: var(--ink);
+  color: var(--cloud);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+
+.container {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ===== NAV ===== */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(11, 15, 20, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.nav-inner {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--white);
+  letter-spacing: -0.02em;
+}
+
+.nav-logo .logo-mark {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.04em;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fog);
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--white); }
+
+.nav-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: var(--accent);
+  color: white !important;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: background 0.2s, transform 0.15s;
+}
+.nav-cta:hover { background: var(--accent-dark); transform: translateY(-1px); }
+
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--fog);
+  cursor: pointer;
+  padding: 8px;
+}
+
+/* ===== BTN ===== */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: -0.01em;
+}
+.btn-primary:hover { background: var(--accent-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(242,101,34,0.3); }
+
+/* ===== PAGE HERO ===== */
+.page-hero {
+  padding: 140px 0 72px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.page-hero::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 800px; height: 500px;
+  background: radial-gradient(ellipse, var(--accent-glow), transparent 70%);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 18px;
+  display: block;
+  position: relative;
+}
+
+.page-hero h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.hero-sub {
+  font-size: 1.125rem;
+  color: var(--fog);
+  line-height: 1.7;
+  max-width: 640px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ===== PAGE CONTENT ===== */
+.page-content {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+.page-content h2 {
+  font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.025em;
+  margin: 56px 0 18px;
+  line-height: 1.25;
+}
+
+.page-content p {
+  font-size: 1rem;
+  color: var(--fog);
+  line-height: 1.75;
+  margin-bottom: 18px;
+}
+
+.page-content p strong { color: var(--cloud); }
+
+/* ===== COMPARISON GRID ===== */
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 28px 0;
+}
+
+.comparison-col {
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+}
+
+.comparison-col h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+
+.comparison-col ul {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.comparison-col ul li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--cloud);
+}
+
+.comparison-col ul li::before {
+  content: '✓';
+  color: var(--green);
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ===== WORKFLOW STEPS ===== */
+.workflow-steps {
+  list-style: none;
+  margin: 28px 0;
+  counter-reset: steps;
+  padding-left: 64px;
+}
+
+.workflow-step {
+  position: relative;
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  counter-increment: steps;
+}
+.workflow-step:last-child { border-bottom: none; }
+
+.workflow-step::before {
+  content: counter(steps);
+  position: absolute;
+  left: -64px;
+  top: 24px;
+  width: 40px;
+  height: 40px;
+  background: var(--ink-mid);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.workflow-step .step-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.workflow-step strong {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+
+.workflow-step p {
+  font-size: 0.9rem;
+  color: var(--fog);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ===== CARD GRID ===== */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 28px 0;
+}
+
+.card {
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  transition: border-color 0.3s, transform 0.2s;
+}
+.card:hover { border-color: rgba(242,101,34,0.2); transform: translateY(-2px); }
+
+.card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+}
+
+.card p {
+  font-size: 0.875rem;
+  color: var(--fog);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ===== CALLOUT ===== */
+blockquote.callout {
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  margin: 40px 0;
+  font-size: 1.05rem;
+  color: var(--white);
+  line-height: 1.65;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* ===== CTA SECTION ===== */
+.cta-section {
+  padding: 56px 48px;
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  margin-top: 56px;
+}
+
+.cta-section h2 {
+  font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.025em;
+  margin: 0 0 14px;
+}
+
+.cta-section p {
+  font-size: 1rem;
+  color: var(--fog);
+  margin-bottom: 28px;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.7;
+}
+
+.cta-note {
+  font-size: 0.8rem;
+  color: var(--slate-light);
+  margin-top: 14px !important;
+  margin-bottom: 0 !important;
+}
+
+/* ===== RELATED PAGES ===== */
+.related-pages {
+  margin-top: 48px;
+  padding-top: 28px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.related-pages p {
+  font-size: 0.875rem;
+  color: var(--fog);
+  margin: 0;
+  font-weight: 500;
+}
+
+.related-pages a {
+  font-size: 0.875rem;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s;
+}
+.related-pages a:hover { color: var(--accent-dark); }
+
+/* ===== FOOTER ===== */
+.footer { padding: 48px 0 36px; border-top: 1px solid rgba(255,255,255,0.04); }
+.footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.footer-left { display: flex; align-items: center; gap: 10px; }
+.footer-left .logo-mark {
+  width: 28px; height: 28px;
+  background: var(--accent);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: white;
+}
+.footer-copy { font-size: 0.8rem; color: var(--slate-light); }
+.footer-links { display: flex; gap: 24px; list-style: none; flex-wrap: wrap; }
+.footer-links a { font-size: 0.8rem; color: var(--fog); transition: color 0.2s; }
+.footer-links a:hover { color: var(--white); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .comparison-grid { grid-template-columns: 1fr; }
+  .card-grid { grid-template-columns: 1fr 1fr; }
+  .workflow-steps { padding-left: 48px; }
+  .workflow-step::before { left: -48px; width: 32px; height: 32px; font-size: 0.75rem; }
+  .cta-section { padding: 40px 24px; }
+}
+
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .mobile-menu-btn { display: block; }
+  .card-grid { grid-template-columns: 1fr; }
+  .footer-inner { flex-direction: column; text-align: center; }
+  .related-pages { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+</style>
 </head>
 <body>
 
-  <!-- CLAUDE CODE INSTRUCTION: Copy nav from index.html exactly. Same logo, same links, same CTA button. -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="logo-mark">BI</div>
+      BidIntell
+    </a>
+    <ul class="nav-links">
+      <li><a href="/#how">How It Works</a></li>
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/#pricing">Pricing</a></li>
+      <li><a href="/contact">Contact</a></li>
+      <li><a href="/app" style="color: var(--cloud);">Sign In</a></li>
+      <li><a href="/demo" class="nav-cta">Schedule a Demo →</a></li>
+    </ul>
+    <button class="mobile-menu-btn" aria-label="Menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 12h18M3 6h18M3 18h18"/>
+      </svg>
+    </button>
+  </div>
+</nav>
 
-  <section class="page-hero">
+<section class="page-hero">
+  <div class="container">
     <p class="eyebrow">Workflow Guide</p>
     <h1>BidIntell + AI Estimating Tools</h1>
     <p class="hero-sub">Estimating software builds the number. BidIntell decides whether that number is worth building. They solve two different problems.</p>
+  </div>
+</section>
+
+<main class="page-content">
+
+  <h2>Two different problems in the estimating process</h2>
+
+  <p>The estimating software market has gotten very good at one thing: helping you build a number faster. Stack, Togal, Buildxact, ProEst, Sage Estimating, and a dozen other tools have made the takeoff and pricing process more efficient. Quantity extraction that used to take two days now takes two hours. That is real value.</p>
+
+  <p>But none of those tools help with the decision that happens before you open the plans. Whether to do the takeoff at all.</p>
+
+  <p>That is the problem BidIntell solves. It is not estimating software. It sits upstream of estimating software — in the gap between receiving bid documents and deciding whether to price the job.</p>
+
+  <div class="comparison-grid">
+    <div class="comparison-col">
+      <h3>BidIntell</h3>
+      <ul>
+        <li>Scores the bid documents 0 to 100</li>
+        <li>Assesses your trade fit and location fit</li>
+        <li>Flags contract risk language</li>
+        <li>Tracks your GC relationship history</li>
+        <li>Helps you decide: go or pass</li>
+      </ul>
+    </div>
+    <div class="comparison-col">
+      <h3>Your estimating software</h3>
+      <ul>
+        <li>Extracts quantities from drawings</li>
+        <li>Calculates material and labor costs</li>
+        <li>Applies assemblies and productivity rates</li>
+        <li>Builds the bid number</li>
+        <li>Formats the proposal</li>
+      </ul>
+    </div>
+  </div>
+
+  <p>Both matter. They are just not solving the same problem. BidIntell is the go or pass filter. Your estimating software is what you use after you have decided to go.</p>
+
+  <h2>The workflow</h2>
+
+  <ol class="workflow-steps">
+
+    <li class="workflow-step">
+      <span class="step-label">Plan Room or Direct</span>
+      <strong>Bid documents arrive</strong>
+      <p>From Dodge, Construct Connect, BuildingConnected, a GC direct email, or any other source. You download the bid package to your computer.</p>
+    </li>
+
+    <li class="workflow-step">
+      <span class="step-label">BidIntell</span>
+      <strong>Upload to BidIntell and score it</strong>
+      <p>Upload the document or forward the email. Get a BidIndex Score in about 60 seconds — trade match, location fit, GC relationship history, and contract risk. Make the go or pass call with the information in front of you instead of gut feel.</p>
+    </li>
+
+    <li class="workflow-step">
+      <span class="step-label">Your Estimating Tool</span>
+      <strong>If go: open your estimating software</strong>
+      <p>Pull the plans. Run the takeoff. Price the work. Your estimating tool takes over from here — you have already decided the opportunity is worth the time investment.</p>
+    </li>
+
+    <li class="workflow-step">
+      <strong>Submit the bid</strong>
+      <p>Your proposal goes out. The GC makes their award decision.</p>
+    </li>
+
+    <li class="workflow-step">
+      <span class="step-label">BidIntell</span>
+      <strong>Log the outcome when the bid closes</strong>
+      <p>Won, lost, ghosted, or you declined. Each outcome makes the next score more accurate for your company with this GC in this territory.</p>
+    </li>
+
+  </ol>
+
+  <h2>Why this matters for firms already using estimating software</h2>
+
+  <p>If you have invested in AI-powered estimating software, you may have noticed something: the tool makes takeoffs faster, but it does not reduce the number of takeoffs you are running on projects you do not win. The speed improvement applies equally to every bid — including the ones you were never going to get.</p>
+
+  <p>That is not a flaw in the estimating software. It is doing exactly what it is designed to do. The problem is upstream. The go or pass decision is still being made by gut feel, and faster takeoffs on wrong bids are still wasted hours — just shorter ones.</p>
+
+  <p>BidIntell addresses the decision that happens before your estimating software opens. A 60-second score on the bid documents is a filter that keeps your estimating capacity focused on the jobs with a realistic chance of winning.</p>
+
+  <blockquote class="callout">
+    A faster takeoff on the wrong bid is still a wasted takeoff. BidIntell is the filter that runs before your estimating software opens.
+  </blockquote>
+
+  <h2>Estimating tools BidIntell works alongside</h2>
+
+  <p>BidIntell does not integrate with estimating software — there is no data sync or API connection. It works independently, upstream of your estimating tool. Once you have made the go decision in BidIntell, you open your estimating software the same way you always have.</p>
+
+  <div class="card-grid">
+
+    <div class="card">
+      <h3>Stack</h3>
+      <p>Score the bid documents in BidIntell, then open the plans in Stack for AI-assisted quantity takeoff. Two tools, two steps, two different problems solved.</p>
+    </div>
+
+    <div class="card">
+      <h3>Togal.AI</h3>
+      <p>BidIntell handles the go or pass decision. Togal handles the plan measurement. Each tool does what it was built for.</p>
+    </div>
+
+    <div class="card">
+      <h3>Buildxact</h3>
+      <p>Firms that use Buildxact for estimating and project tracking can use BidIntell upstream — to decide which opportunities are worth bringing into Buildxact in the first place.</p>
+    </div>
+
+    <div class="card">
+      <h3>ProEst and Sage Estimating</h3>
+      <p>Enterprise estimating platforms benefit from the same upstream filter. The bid decision happens before the platform opens, and that is where BidIntell lives.</p>
+    </div>
+
+    <div class="card">
+      <h3>Planswift and On-Screen Takeoff</h3>
+      <p>Traditional takeoff tools work the same way. BidIntell sits upstream of all of them regardless of which you use for the actual estimate.</p>
+    </div>
+
+    <div class="card">
+      <h3>Spreadsheets</h3>
+      <p>If your estimating process still runs in Excel, BidIntell works exactly the same way. The workflow does not depend on what you use for the takeoff.</p>
+    </div>
+
+  </div>
+
+  <h2>The compounding benefit over time</h2>
+
+  <p>The most visible benefit of BidIntell is immediate: better information at the go or pass decision point. But the less visible benefit builds over time.</p>
+
+  <p>Every bid outcome you log — won, lost, ghosted, declined — feeds back into the scoring model for your company. After six months of consistent outcome logging, BidIntell knows which GCs in your market have awarded you work, which ones use your number for competitive purposes, and which project types in which locations you win at a higher rate.</p>
+
+  <p>Most specialty subcontracting firms do not have this data organized anywhere it can actually influence a decision. It exists in email threads and people's heads, but it is not connected to the next bid that comes in. BidIntell captures it at the point of decision, systematically, without adding significant time to the workflow.</p>
+
+  <p>Firms using AI estimating tools are already thinking about efficiency in the bid process. This is the efficiency gain that happens before the estimating software opens.</p>
+
+  <section class="cta-section">
+    <h2>Score your next bid before you pull the plans</h2>
+    <p>Upload your next bid package to BidIntell and get the BidIndex Score in 60 seconds. 14-day free trial, no credit card required.</p>
+    <a href="/app" class="btn-primary">Start Free Trial</a>
+    <p class="cta-note">Founding member pricing available at launch.</p>
   </section>
 
-  <main class="page-content">
+  <nav class="related-pages">
+    <p>Also in this series:</p>
+    <a href="/works-with-plan-rooms">BidIntell + Plan Rooms</a>
+    <a href="/works-with-crm">BidIntell + CRMs</a>
+  </nav>
 
-    <h2>Two different problems in the estimating process</h2>
+</main>
 
-    <p>The estimating software market has gotten very good at one thing: helping you build a number faster. Stack, Togal, Buildxact, ProEst, Sage Estimating, and a dozen other tools have made the takeoff and pricing process more efficient. Quantity extraction that used to take two days now takes two hours. That is real value.</p>
-
-    <p>But none of those tools help with the decision that happens before you open the plans. Whether to do the takeoff at all.</p>
-
-    <p>That is the problem BidIntell solves. It is not estimating software. It sits upstream of estimating software — in the gap between receiving bid documents and deciding whether to price the job.</p>
-
-    <!-- CLAUDE CODE INSTRUCTION: Use a two-column comparison layout. Style to match any two-column section in index.html. If none exists, use a simple bordered two-column grid. -->
-    <div class="comparison-grid">
-      <div class="comparison-col">
-        <h3>BidIntell</h3>
-        <ul>
-          <li>Scores the bid documents 0 to 100</li>
-          <li>Assesses your trade fit and location fit</li>
-          <li>Flags contract risk language</li>
-          <li>Tracks your GC relationship history</li>
-          <li>Helps you decide: go or pass</li>
-        </ul>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="logo-mark">BI</div>
+        <span class="footer-copy">© 2026 BidIntell. Built by the industry, for the industry.</span>
       </div>
-      <div class="comparison-col">
-        <h3>Your estimating software</h3>
-        <ul>
-          <li>Extracts quantities from drawings</li>
-          <li>Calculates material and labor costs</li>
-          <li>Applies assemblies and productivity rates</li>
-          <li>Builds the bid number</li>
-          <li>Formats the proposal</li>
-        </ul>
-      </div>
+      <ul class="footer-links">
+        <li><a href="/legal#privacy">Privacy</a></li>
+        <li><a href="/legal#terms">Terms</a></li>
+        <li><a href="/contact">Contact</a></li>
+        <li><a href="/works-with-plan-rooms">Plan Rooms</a></li>
+        <li><a href="/works-with-estimating-tools">Estimating Tools</a></li>
+        <li><a href="/works-with-crm">CRMs</a></li>
+      </ul>
     </div>
-
-    <p>Both matter. They are just not solving the same problem. BidIntell is the go or pass filter. Your estimating software is what you use after you have decided to go.</p>
-
-    <h2>The workflow</h2>
-
-    <!-- CLAUDE CODE INSTRUCTION: Use the same numbered step / how-it-works component from index.html. Match styling exactly. -->
-    <ol class="workflow-steps">
-
-      <li class="workflow-step">
-        <span class="step-label">Plan Room or Direct</span>
-        <strong>Bid documents arrive</strong>
-        <p>From Dodge, Construct Connect, BuildingConnected, a GC direct email, or any other source. You download the bid package to your computer.</p>
-      </li>
-
-      <li class="workflow-step">
-        <span class="step-label">BidIntell</span>
-        <strong>Upload to BidIntell and score it</strong>
-        <p>Upload the document. Get a BidIndex Score in about 60 seconds — trade match, location fit, GC relationship history, and contract risk. Make the go or pass call with the information in front of you instead of gut feel.</p>
-      </li>
-
-      <li class="workflow-step">
-        <span class="step-label">Your Estimating Tool</span>
-        <strong>If go: open your estimating software</strong>
-        <p>Pull the plans. Run the takeoff. Price the work. Your estimating tool takes over from here — you have already decided the opportunity is worth the time investment.</p>
-      </li>
-
-      <li class="workflow-step">
-        <strong>Submit the bid</strong>
-        <p>Your proposal goes out. The GC makes their award decision.</p>
-      </li>
-
-      <li class="workflow-step">
-        <span class="step-label">BidIntell</span>
-        <strong>Log the outcome when the bid closes</strong>
-        <p>Won, lost, ghosted, or you declined. Each outcome makes the next score more accurate for your company with this GC in this territory.</p>
-      </li>
-
-    </ol>
-
-    <h2>Why this matters for firms already using estimating software</h2>
-
-    <p>If you have invested in AI-powered estimating software, you may have noticed something: the tool makes takeoffs faster, but it does not reduce the number of takeoffs you are running on projects you do not win. The speed improvement applies equally to every bid — including the ones you were never going to get.</p>
-
-    <p>That is not a flaw in the estimating software. It is doing exactly what it is designed to do. The problem is upstream. The go or pass decision is still being made by gut feel, and faster takeoffs on wrong bids are still wasted hours — just shorter ones.</p>
-
-    <p>BidIntell addresses the decision that happens before your estimating software opens. A 60-second score on the bid documents is a filter that keeps your estimating capacity focused on the jobs with a realistic chance of winning.</p>
-
-    <!-- CLAUDE CODE INSTRUCTION: Use the same callout/highlight block style from index.html. -->
-    <blockquote class="callout">
-      A faster takeoff on the wrong bid is still a wasted takeoff. BidIntell is the filter that runs before your estimating software opens.
-    </blockquote>
-
-    <h2>Estimating tools BidIntell works alongside</h2>
-
-    <p>BidIntell does not integrate with estimating software — there is no data sync or API connection. It works independently, upstream of your estimating tool. Once you have made the go decision in BidIntell, you open your estimating software the same way you always have.</p>
-
-    <!-- CLAUDE CODE INSTRUCTION: Use the same feature card grid from index.html. Match card style, spacing, and heading size exactly. -->
-    <div class="card-grid">
-
-      <div class="card">
-        <h3>Stack</h3>
-        <p>Score the bid documents in BidIntell, then open the plans in Stack for AI-assisted quantity takeoff. Two tools, two steps, two different problems solved.</p>
-      </div>
-
-      <div class="card">
-        <h3>Togal.AI</h3>
-        <p>BidIntell handles the go or pass decision. Togal handles the plan measurement. Each tool does what it was built for.</p>
-      </div>
-
-      <div class="card">
-        <h3>Buildxact</h3>
-        <p>Firms that use Buildxact for estimating and project tracking can use BidIntell upstream — to decide which opportunities are worth bringing into Buildxact in the first place.</p>
-      </div>
-
-      <div class="card">
-        <h3>ProEst and Sage Estimating</h3>
-        <p>Enterprise estimating platforms benefit from the same upstream filter. The bid decision happens before the platform opens, and that is where BidIntell lives.</p>
-      </div>
-
-      <div class="card">
-        <h3>Planswift and On-Screen Takeoff</h3>
-        <p>Traditional takeoff tools work the same way. BidIntell sits upstream of all of them regardless of which you use for the actual estimate.</p>
-      </div>
-
-      <div class="card">
-        <h3>Spreadsheets</h3>
-        <p>If your estimating process still runs in Excel, BidIntell works exactly the same way. The workflow does not depend on what you use for the takeoff.</p>
-      </div>
-
-    </div>
-
-    <h2>The compounding benefit over time</h2>
-
-    <p>The most visible benefit of BidIntell is immediate: better information at the go or pass decision point. But the less visible benefit builds over time.</p>
-
-    <p>Every bid outcome you log — won, lost, ghosted, declined — feeds back into the scoring model for your company. After six months of consistent outcome logging, BidIntell knows which GCs in your market have awarded you work, which ones use your number for competitive purposes, and which project types in which locations you win at a higher rate.</p>
-
-    <p>Most specialty subcontracting firms do not have this data organized anywhere it can actually influence a decision. It exists in email threads and people's heads, but it is not connected to the next bid that comes in. BidIntell captures it at the point of decision, systematically, without adding significant time to the workflow.</p>
-
-    <p>Firms using AI estimating tools are already thinking about efficiency in the bid process. This is the efficiency gain that happens before the estimating software opens.</p>
-
-    <!-- CLAUDE CODE INSTRUCTION: Use the same CTA / bottom section style from index.html. Match button class and surrounding layout. -->
-    <section class="cta-section">
-      <h2>Score your next bid before you pull the plans</h2>
-      <p>Download your next bid package, upload it to BidIntell, and get the BidIndex Score in 60 seconds. 14-day free trial, no credit card required.</p>
-      <a href="/app.html" class="btn-primary">Start Free Trial</a>
-      <p class="cta-note">Founding member pricing — 25% off for life.</p>
-    </section>
-
-    <nav class="related-pages">
-      <p>Also in this series:</p>
-      <a href="/works-with-plan-rooms">BidIntell + Plan Rooms</a>
-      <a href="/works-with-crm">BidIntell + CRMs</a>
-    </nav>
-
-  </main>
-
-  <!-- CLAUDE CODE INSTRUCTION: Copy footer from index.html exactly. Add these three links in the footer alongside existing links:
-    <a href="/works-with-plan-rooms">Plan Rooms</a>
-    <a href="/works-with-estimating-tools">Estimating Tools</a>
-    <a href="/works-with-crm">CRMs</a>
-  -->
+  </div>
+</footer>
 
 </body>
 </html>
