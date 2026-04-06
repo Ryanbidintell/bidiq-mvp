@@ -9327,6 +9327,12 @@ ${truncatedText}`;
                 return `<span class="meta-chip">📅 ${label}</span>`;
             })();
             const buildingChip = analysis.buildingType?.type ? `<span class="meta-chip">🏗️ ${analysis.buildingType.type}</span>` : '';
+            const analyzedChip = (() => {
+                if (!analysis.createdAt) return '';
+                const d = new Date(analysis.createdAt);
+                if (isNaN(d.getTime())) return '';
+                return `<span class="meta-chip">🗓️ Analyzed ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>`;
+            })();
 
             document.getElementById('analysisResult').innerHTML = `
                 <div class="score-report">
@@ -9341,6 +9347,7 @@ ${truncatedText}`;
                             ${locationStr ? `<span class="meta-chip">📍 ${locationStr}</span>` : ''}
                             ${buildingChip}
                             ${deadlineChip}
+                            ${analyzedChip}
                         </div>
                         ${capMsg}
                         ${duplicateHtml}
