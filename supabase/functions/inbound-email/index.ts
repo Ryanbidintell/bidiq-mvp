@@ -423,12 +423,22 @@ async function processEmail(payload: Record<string, unknown>) {
 
     // 6. GC name fallback
     if (!extracted.gc_name) {
-        const displayMatch = (From || '').match(/^(.+?)\s*</);
-        if (displayMatch) {
-            extracted.gc_name = displayMatch[1].trim();
-        } else {
-            const domainMatch = (From || '').match(/@([^.]+)/);
-            extracted.gc_name = domainMatch ? domainMatch[1] : null;
+        // Try to extract original sender from forwarded message headers in email body
+        // Covers: "From: ABC GC <email>" patterns in forwarded email body
+        const fwdFromMatch = emailContent.match(/(?:^|\n)From:\s*([^\n<]+?)(?:\s*<[^>]+>)?\s*\n/i);
+        if (fwdFromMatch) {
+            const candidate = fwdFromMatch[1].trim();
+            // Only use if it looks like a company name (not an email address)
+            if (candidate && !candidate.includes('@') && candidate.length > 2) {
+                extracted.gc_name = candidate;
+            }
+        }
+        // Fallback: use display name from From field (not domain — avoids pulling user's own domain)
+        if (!extracted.gc_name) {
+            const displayMatch = (From || '').match(/^(.+?)\s*</);
+            if (displayMatch) {
+                extracted.gc_name = displayMatch[1].trim();
+            }
         }
     }
 
