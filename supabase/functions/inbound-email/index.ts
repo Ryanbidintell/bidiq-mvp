@@ -66,6 +66,166 @@ async function nominatimGeocode(query: string) {
     }
 }
 
+// ── Contract risk detection (mirrors app.html detectContractRisks exactly) ────
+
+const CONTRACT_INDICATORS = ['shall', 'agreement', 'contract', 'terms', 'conditions', 'indemnify', 'warranty'];
+
+const CONTRACT_RISK_PROMPT = `You are a construction contract risk analyst specializing in subcontractor agreements.
+
+Analyze the following contract text and identify ALL risk clauses that would concern a subcontractor.
+
+CRITICAL DETECTION RULES:
+1. Clauses often do NOT use their common names. "Paid-when-paid" never literally appears — look for the LEGAL MECHANISM instead.
+2. Pay attention to WHO bears the risk in each clause.
+3. Distinguish between severity levels based on legal enforceability and financial impact.
+
+CLAUSE LIBRARY — What to look for and HOW they actually appear:
+
+## PAY-IF-PAID (HIGHEST RISK)
+What it really says: "condition precedent of payment by the Owner" or "only with funds received from Owner"
+Why it matters: Contractor has ZERO obligation to pay sub if owner doesn't pay.
+
+## PAY-WHEN-PAID (HIGH RISK)
+What it really says: "payment within X days after contractor receives payment from owner"
+Why it matters: Creates timing dependency but contractor still ultimately owes the money.
+
+## NO-DAMAGE-FOR-DELAY (HIGH RISK)
+What it really says: "not entitled to claim cost reimbursement for delay" or "extension of time shall be the sole remedy"
+
+## BROAD FORM INDEMNIFICATION (HIGH RISK)
+What it really says: "indemnify, hold harmless and defend contractor... from and against any and all claims"
+
+## FLOW-DOWN / INCORPORATION BY REFERENCE (MEDIUM RISK)
+What it really says: "bound by all terms of the general contract" or "prime contract terms are incorporated herein"
+
+## CONSEQUENTIAL DAMAGES WAIVER (MEDIUM RISK)
+What it really says: "waives all claims for lost profit, home office overhead, and indirect damages"
+
+## JURY TRIAL WAIVER (MEDIUM RISK)
+What it really says: "expressly agrees to waive right to trial by jury"
+
+## LIQUIDATED DAMAGES FLOW-DOWN (HIGH RISK)
+What it really says: "subcontractor shall be liable for liquidated damages"
+
+## TERMINATION FOR CONVENIENCE (MEDIUM RISK)
+What it really says: "contractor may terminate without cause"
+
+## CHANGE ORDER RESTRICTIONS (MEDIUM RISK)
+What it really says: "notice within X hours/days" with very short windows, or "failure to notify constitutes waiver"
+
+## BROAD ACCEPTANCE OF CONDITIONS (MEDIUM RISK)
+What it really says: "subcontractor has inspected the site and accepts all conditions"
+
+## WARRANTY OBLIGATIONS (MEDIUM RISK)
+What it really says: extended warranty periods beyond standard, or pass-through of owner warranty claims
+
+Respond in this exact JSON format:
+{
+  "risks_found": [
+    {
+      "clause_type": "pay_if_paid",
+      "severity": "high",
+      "classification": "pay-if-paid (condition precedent)",
+      "exact_quote": "the first 20-30 words of the actual clause text...",
+      "page_reference": "estimated page or section if detectable",
+      "plain_english": "What this means for the subcontractor in one sentence"
+    }
+  ],
+  "overall_risk_level": "high",
+  "risk_summary": "2-3 sentence summary of the contract risk profile for a subcontractor",
+  "risk_score_penalty": 20
+}
+
+The risk_score_penalty should be:
+- 0-5: Standard/fair contract terms
+- 6-15: Moderately aggressive, common in commercial construction
+- 16-25: Very aggressive, multiple high-risk clauses
+- 26-30: Extremely aggressive, recommend legal review before bidding
+
+Contract text:`;
+
+interface ContractRisk {
+    type: string; severity: string; classification: string;
+    evidence: string; location: string; plainEnglish: string; confidence: number;
+}
+interface ContractRisks {
+    hasContractLanguage: boolean;
+    risksDetected: ContractRisk[];
+    risksByTier: { high: ContractRisk[]; medium: ContractRisk[]; low: ContractRisk[] };
+    riskScorePenalty: number;
+    overallRiskLevel: string;
+    riskSummary: string;
+}
+
+async function detectContractRisks(pdfBase64: string, searchableText: string): Promise<ContractRisks | null> {
+    // Quick check: does the text contain contract language?
+    const textToCheck = (searchableText || '').substring(0, 10000);
+    const hasIndicators = CONTRACT_INDICATORS.some(w => new RegExp(`\\b${w}\\b`, 'i').test(textToCheck));
+    if (!hasIndicators) return null;
+
+    try {
+        // Run contract risk detection against the full PDF (same as app's fullText analysis)
+        const raw = await callClaude(
+            [{
+                role: 'user',
+                content: [
+                    { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 } },
+                    { type: 'text', text: CONTRACT_RISK_PROMPT + '\n[See PDF document above]' }
+                ]
+            }],
+            'You are a construction contract risk analyst. Return JSON only. No preamble. No markdown.',
+            { 'anthropic-beta': 'pdfs-2024-09-25' }
+        );
+
+        let jsonStr = raw.trim();
+        if (jsonStr.includes('```')) {
+            const m = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (m) jsonStr = m[1].trim();
+        }
+        const parsed = JSON.parse(jsonStr);
+
+        const risksDetected: ContractRisk[] = (parsed.risks_found || []).map((r: Record<string, unknown>) => ({
+            type:          String(r.clause_type || r.type || 'unknown_risk'),
+            severity:      String(r.severity || 'medium'),
+            classification: String(r.classification || r.type || 'Unknown'),
+            evidence:      String(r.exact_quote || r.evidence || ''),
+            location:      String(r.page_reference || r.location || ''),
+            plainEnglish:  String(r.plain_english || ''),
+            confidence:    1.0
+        }));
+
+        return {
+            hasContractLanguage: true,
+            risksDetected,
+            risksByTier: {
+                high:   risksDetected.filter(r => r.severity === 'high'),
+                medium: risksDetected.filter(r => r.severity === 'medium'),
+                low:    risksDetected.filter(r => r.severity === 'low')
+            },
+            riskScorePenalty: Number(parsed.risk_score_penalty || 0),
+            overallRiskLevel:  String(parsed.overall_risk_level || 'medium'),
+            riskSummary:       String(parsed.risk_summary || '')
+        };
+    } catch (e) {
+        console.warn('Contract risk detection failed:', (e as Error).message);
+        return null;
+    }
+}
+
+// ── Contract risk keyword penalty (mirrors app.html calculateContractRiskPenalty) ──
+
+function calculateContractRiskPenalty(risksDetected: ContractRisk[], riskTolerance: string): number {
+    if (!risksDetected || risksDetected.length === 0) return 0;
+    const basePenalty = riskTolerance === 'low' ? 15 : riskTolerance === 'medium' ? 10 : 5;
+    let total = 0;
+    for (const risk of risksDetected) {
+        const conf = risk.confidence ?? 1.0;
+        const multiplier = conf >= 0.80 ? 1.0 : conf >= 0.50 ? 0.6 : 0.3;
+        total += basePenalty * multiplier;
+    }
+    return Math.round(total);
+}
+
 // ── Keyword scoring (mirrors app.html calculateScores keyword logic exactly) ──
 
 function searchKeywordsInText(text: string, keywords: string[]): string[] {
@@ -84,27 +244,35 @@ function scoreKeywords(
     goodKeywords: string[],
     badKeywords: string[],
     riskTolerance: string,
-    hasContractLanguage: boolean,
+    contractRisks: ContractRisks | null,
     weight: number
 ): { score: number; weight: number; reason: string; goodFound: string[]; badFound: string[] } {
     const goodFound = searchKeywordsInText(scopeText, goodKeywords);
     const badFound  = searchKeywordsInText(scopeText, badKeywords);
 
     let kwScore = 50;
-
     if (goodFound.length === 0) {
         kwScore = 30;
     } else {
-        for (let i = 0; i < goodFound.length; i++) kwScore += 8;
+        kwScore += goodFound.length * 8;
     }
 
-    if (hasContractLanguage && badFound.length > 0) {
+    // Bad keyword penalty (only if contract language present)
+    if (contractRisks?.hasContractLanguage && badFound.length > 0) {
         const penalty = riskTolerance === 'low' ? 15 : riskTolerance === 'medium' ? 10 : 5;
         kwScore -= penalty * badFound.length;
     }
 
+    // AI contract risk penalty (same as app)
+    let aiRiskPenalty = 0;
+    if (contractRisks?.hasContractLanguage && contractRisks.risksDetected?.length > 0) {
+        aiRiskPenalty = calculateContractRiskPenalty(contractRisks.risksDetected, riskTolerance);
+        kwScore -= aiRiskPenalty;
+    }
+
     kwScore = Math.max(0, Math.min(100, kwScore));
-    const reason = `Found ${goodFound.length} good terms, ${badFound.length} risk terms`;
+    const aiNote = aiRiskPenalty > 0 ? ` | AI detected ${contractRisks!.risksDetected.length} contract risks (-${aiRiskPenalty})` : '';
+    const reason = `Found ${goodFound.length} good terms, ${badFound.length} risk terms${aiNote}`;
 
     return { score: kwScore, weight, reason, goodFound, badFound };
 }
@@ -227,22 +395,12 @@ function scoreTrade(scopeText: string, settings: Settings) {
     return { score, weight, reason: found.length === 0 ? 'No matching trades found' : `${found.length}/${settings.trades.length} trades matched` };
 }
 
-function scoreContract(contractRisks: { risk_score_penalty?: number } | null) {
-    if (!contractRisks) return null;
-    const penalty = contractRisks.risk_score_penalty || 0;
-    return { score: Math.max(0, 100 - penalty * 2), weight: 0, reason: `Risk penalty: ${penalty}` };
-}
-
-function computeFinalScore(components: Record<string, { score: number; weight: number }>, contractRisks: { risk_score_penalty?: number } | null, riskTolerance: string) {
+function computeFinalScore(components: Record<string, { score: number; weight: number }>, _contractRisks: ContractRisks | null, _riskTolerance: string) {
+    // Contract risk penalty is already baked into the keywords score (same as app.html)
     let final = 0;
     for (const k of ['location', 'keywords', 'gc', 'trade']) {
         const c = components[k];
         if (c && c.weight > 0) final += c.score * (c.weight / 100);
-    }
-    if (contractRisks) {
-        const penalty = contractRisks.risk_score_penalty || 0;
-        const scale = riskTolerance === 'low' ? 1.0 : riskTolerance === 'medium' ? 0.6 : 0.3;
-        final = Math.max(0, final - penalty * scale);
     }
     return Math.round(final);
 }
@@ -499,7 +657,7 @@ async function processEmail(payload: Record<string, unknown>) {
     const hadAttachments = allAttachments.length > 0;
     const skippedFiles: string[] = [];
     let processedCount = 0;
-    let contractRisks: { risks_found: Array<{ clause_type: string; severity: string }>; risk_score_penalty: number } | null = null;
+    let contractRisks: ContractRisks | null = null;
 
     const qualifying = allAttachments
         .filter(att => {
@@ -556,13 +714,9 @@ async function processEmail(payload: Record<string, unknown>) {
                 extracted.searchable_text = existing ? existing + '\n' + pdfExtracted.searchable_text : pdfExtracted.searchable_text;
             }
 
-            if (Array.isArray(pdfExtracted.contract_risk_flags) && (pdfExtracted.contract_risk_flags as string[]).length > 0) {
-                const flags = pdfExtracted.contract_risk_flags as string[];
-                contractRisks = {
-                    risks_found: flags.map(f => ({ clause_type: f, severity: 'medium' })),
-                    risk_score_penalty: Math.min(flags.length * 6, 30)
-                };
-            }
+            // Full contract risk detection — same prompt and logic as app.html detectContractRisks()
+            const detectedRisks = await detectContractRisks(pdfBase64, (extracted.searchable_text as string) || '');
+            if (detectedRisks) contractRisks = detectedRisks;
 
             processedCount++;
         } catch (e) {
@@ -585,10 +739,8 @@ async function processEmail(payload: Record<string, unknown>) {
         Promise.resolve(scoreTrade(scopeText, settings))
     ]);
     const gcComp  = scoreGC(extracted.gc_name as string | null, settings, (clients as Client[]) || []);
-    const hasContractLanguage = !!(contractRisks && contractRisks.risks_found && (contractRisks.risks_found as unknown[]).length > 0);
-    const kwResult = scoreKeywords(scopeText, goodKeywords, badKeywords, settings.riskTolerance, hasContractLanguage, settings.weights.keywords);
+    const kwResult = scoreKeywords(scopeText, goodKeywords, badKeywords, settings.riskTolerance, contractRisks, settings.weights.keywords);
     const kwComp   = { score: kwResult.score, weight: kwResult.weight, reason: kwResult.reason };
-    const contractComp = scoreContract(contractRisks);
 
     const components = { location: locComp, keywords: kwComp, gc: gcComp, trade: trComp };
     const finalScore = computeFinalScore(components, contractRisks, settings.riskTolerance);
