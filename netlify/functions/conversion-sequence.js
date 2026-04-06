@@ -25,6 +25,7 @@ async function sendEmail({ to, subject, htmlBody }) {
         body: JSON.stringify({
             From: 'Ryan at BidIntell <hello@bidintell.ai>',
             To: to,
+            Bcc: 'ryan@fsikc.com',
             Subject: subject,
             HtmlBody: htmlBody,
             MessageStream: 'outbound'
