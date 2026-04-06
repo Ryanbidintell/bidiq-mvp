@@ -465,16 +465,10 @@ async function processEmail(payload: Record<string, unknown>) {
     for (const att of qualifying) {
         try {
             const pdfBase64 = att.Content;
-            const filename  = att.Name || `inbound-${Date.now()}.pdf`;
-
-            // Upload to Supabase Storage
-            const storagePath = `users/${userId}/inbound/${Date.now()}-${filename}`;
-            const pdfBytes = Uint8Array.from(atob(pdfBase64), c => c.charCodeAt(0));
-            await supabase.storage
-                .from('bid-documents')
-                .upload(storagePath, pdfBytes, { contentType: 'application/pdf', upsert: true });
 
             // Extract from PDF via Claude document API
+            // Note: Storage upload removed — decoding base64 to Uint8Array spikes memory ~80MB
+            // and exceeds Supabase Edge Function's 150MB limit for large PDFs.
             const pdfSystemPrompt = 'You are extracting structured project data from a construction bid document PDF. Return JSON only. No preamble. No markdown.';
             const pdfUserPrompt =
                 `Extract these fields from the PDF. Use null if not found.\n\n` +
