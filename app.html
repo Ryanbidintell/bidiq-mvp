@@ -1320,6 +1320,7 @@
                 <div class="page-content">
                     <div id="setupBanner"></div>
                     <div id="emailAliasBanner"></div>
+                    <div id="mergeSuggestionBanner"></div>
                     <div class="stats-grid">
                         <div class="stat-card accent">
                             <div class="stat-label">Total Bids Analyzed</div>
@@ -2232,6 +2233,11 @@
             <div class="modal-header"><h3 class="modal-title">Record Outcome</h3><button class="modal-close" onclick="closeModal('outcomeModal')">×</button></div>
             <div class="modal-body">
                 <input type="hidden" id="outcomeProjectId">
+                <div class="form-group" id="outcomeGCSelectorGroup" style="display:none;">
+                    <label class="form-label">Which GC is this outcome for?</label>
+                    <select class="form-select" id="outcomeGCSelector"></select>
+                    <div class="form-hint">For "Won" — the winning GC's score counts; other GCs on this project are marked as not applicable.</div>
+                </div>
                 <div class="form-group">
                     <label class="form-label">What happened with this bid?</label>
                     <select class="form-select" id="outcomeType" onchange="(async()=>{await updateOutcomeFields();})()">
@@ -2248,6 +2254,23 @@
         </div>
     </div>
     
+    <!-- Merge Review Modal -->
+    <div class="modal-overlay" id="mergeReviewModal">
+        <div class="modal" style="max-width:720px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Review Merge Suggestion</h3>
+                <button class="modal-close" onclick="closeModal('mergeReviewModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="mergeReviewContent">Loading...</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="rejectMergeSuggestion()">Keep Separate</button>
+                <button class="btn btn-primary" onclick="confirmMergeSuggestion()">Merge Projects</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="addGCModal">
         <div class="modal" style="max-width: 520px;">
             <div class="modal-header"><h3 class="modal-title">Add Client</h3><button class="modal-close" onclick="closeModal('addGCModal')">×</button></div>
@@ -10594,7 +10617,149 @@ ${truncatedText}`;
                 }).join('')}</tbody></table>`;
             }
             await updateCapacity();
+            loadMergeSuggestions(); // fire-and-forget: show merge banner if pending suggestions
         }
+
+        // ── Merge suggestion functions ─────────────────────────────────────────
+
+        let _activeMergeSuggestion = null; // currently-open suggestion in review modal
+
+        async function loadMergeSuggestions() {
+            if (!supabaseClient || !currentUser) return;
+            try {
+                const { data: suggestions } = await supabaseClient
+                    .from('merge_suggestions')
+                    .select('*, source:source_project_id(id,extracted_data,scores,gc_bids,gcs,created_at), target:target_project_id(id,extracted_data,scores,gc_bids,gcs,created_at)')
+                    .eq('user_id', currentUser.id)
+                    .eq('status', 'pending')
+                    .order('created_at', { ascending: false });
+
+                const banner = document.getElementById('mergeSuggestionBanner');
+                if (!banner) return;
+
+                if (!suggestions || suggestions.length === 0) {
+                    banner.innerHTML = '';
+                    return;
+                }
+
+                banner.innerHTML = `<div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+                    <div>
+                        <span style="font-weight:600;color:var(--text-primary);">📎 ${suggestions.length} merge suggestion${suggestions.length > 1 ? 's' : ''} pending</span>
+                        <span style="font-size:13px;color:var(--text-muted);margin-left:8px;">We detected emails that may be for the same project</span>
+                    </div>
+                    <button class="btn btn-sm btn-secondary" onclick="openMergeReview(${JSON.stringify(suggestions).replace(/"/g, '&quot;')})">Review</button>
+                </div>`;
+            } catch (e) {
+                console.warn('loadMergeSuggestions failed:', e.message);
+            }
+        }
+
+        async function openMergeReview(suggestions) {
+            if (!suggestions || !suggestions.length) return;
+            _activeMergeSuggestion = suggestions[0]; // review one at a time
+
+            const s = _activeMergeSuggestion;
+            const src = s.source;
+            const tgt = s.target;
+
+            if (!src || !tgt) {
+                // Project was already deleted — mark as accepted and reload
+                await supabaseClient.from('merge_suggestions').update({ status: 'accepted' }).eq('id', s.id);
+                await loadMergeSuggestions();
+                return;
+            }
+
+            const srcName = src.extracted_data?.project_name || src.extracted_data?.email_subject || 'New Email';
+            const tgtName = tgt.extracted_data?.project_name || 'Existing Project';
+            const srcGC   = src.extracted_data?.gc_name || '—';
+            const tgtGC   = tgt.extracted_data?.gc_name || '—';
+            const srcDate = new Date(src.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const tgtDate = new Date(tgt.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const srcScore = src.scores?.final || '—';
+            const tgtScore = tgt.scores?.final || '—';
+
+            const confidenceBadge = s.confidence === 'high'
+                ? `<span style="color:var(--success);font-weight:600;">High confidence</span>`
+                : `<span style="color:var(--warning);font-weight:600;">Medium confidence</span>`;
+
+            const sameGCNote = s.same_gc
+                ? `<p style="font-size:13px;color:var(--text-secondary);margin:0 0 16px;">Merging will combine documents from the same GC into one project record and recalculate the score.</p>`
+                : `<p style="font-size:13px;color:var(--text-secondary);margin:0 0 16px;"><strong>Different GCs</strong> — merging will create one project with separate scores for each GC.</p>`;
+
+            document.getElementById('mergeReviewContent').innerHTML = `
+                <div style="margin-bottom:12px;">
+                    ${confidenceBadge} — ${s.reason || 'Potential match detected'}
+                </div>
+                ${sameGCNote}
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div style="background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:var(--radius);padding:14px;">
+                        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">New Email (${srcDate})</div>
+                        <div style="font-weight:600;margin-bottom:4px;">${srcName}</div>
+                        <div style="font-size:13px;color:var(--text-secondary);">GC: ${srcGC}</div>
+                        <div style="font-size:13px;color:var(--text-secondary);">Score: ${srcScore}</div>
+                    </div>
+                    <div style="background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:var(--radius);padding:14px;">
+                        <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Existing Project (${tgtDate})</div>
+                        <div style="font-weight:600;margin-bottom:4px;">${tgtName}</div>
+                        <div style="font-size:13px;color:var(--text-secondary);">GC: ${tgtGC}</div>
+                        <div style="font-size:13px;color:var(--text-secondary);">Score: ${tgtScore}</div>
+                    </div>
+                </div>`;
+
+            openModal('mergeReviewModal');
+        }
+
+        async function confirmMergeSuggestion() {
+            if (!_activeMergeSuggestion) return;
+            const btn = document.querySelector('#mergeReviewModal .btn-primary');
+            if (btn) { btn.disabled = true; btn.textContent = 'Merging...'; }
+
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                const res = await fetch('/.netlify/functions/merge-projects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        suggestionId: _activeMergeSuggestion.id,
+                        action: 'merge',
+                        authToken: session?.access_token
+                    })
+                });
+                const data = await res.json();
+                if (!data.ok) throw new Error(data.error || 'Merge failed');
+
+                closeModal('mergeReviewModal');
+                _activeMergeSuggestion = null;
+                dataCache.projects = null;
+                await loadAll();
+            } catch (e) {
+                alert('Merge failed: ' + e.message);
+                if (btn) { btn.disabled = false; btn.textContent = 'Merge Projects'; }
+            }
+        }
+
+        async function rejectMergeSuggestion() {
+            if (!_activeMergeSuggestion) return;
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                await fetch('/.netlify/functions/merge-projects', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        suggestionId: _activeMergeSuggestion.id,
+                        action: 'reject',
+                        authToken: session?.access_token
+                    })
+                });
+            } catch (e) {
+                console.warn('Reject failed:', e.message);
+            }
+            closeModal('mergeReviewModal');
+            _activeMergeSuggestion = null;
+            await loadMergeSuggestions();
+        }
+
+        // ── End merge suggestion functions ────────────────────────────────────
 
         async function updateCapacity() {
             const settings = await getSettings();
@@ -10770,8 +10935,21 @@ ${truncatedText}`;
                                 gcDisplay = extracted.general_contractor || extracted.gc_name;
                             }
 
-                            // Show score display
-                            const scoreDisplay = score > 0 ? `${score} - ${recommendation}` : 'No score yet';
+                            // Multi-GC score display: show each GC's score ordered best to worst
+                            let scoreCellHtml;
+                            if (p.gc_bids && p.gc_bids.length > 1) {
+                                const sortedBids = [...p.gc_bids].sort((a, b) => (b.scores?.final || 0) - (a.scores?.final || 0));
+                                scoreCellHtml = sortedBids.map(b => {
+                                    const s = b.scores?.final || 0;
+                                    const r = b.scores?.recommendation || (s >= 80 ? 'GO' : s >= 60 ? 'REVIEW' : 'PASS');
+                                    const cls = r === 'GO' ? 'success' : r === 'REVIEW' || r === 'REVIEW CAREFULLY' ? 'warning' : '';
+                                    const gcShort = (b.gc_name || '?').split(' ').slice(0, 2).join(' ');
+                                    return `<div style="margin-bottom:2px;"><span class="score-badge ${cls}" style="font-size:11px;padding:2px 7px;">${gcShort}: ${s}</span></div>`;
+                                }).join('');
+                            } else {
+                                const scoreDisplay = score > 0 ? `${score} - ${recommendation}` : 'No score yet';
+                                scoreCellHtml = `<span class="score-badge ${recClass}">${scoreDisplay}</span>`;
+                            }
 
                             return `
                                 <tr>
@@ -10784,7 +10962,7 @@ ${truncatedText}`;
                                     </td>
                                     <td>${gcDisplay}</td>
                                     <td>${city}${city && state ? ', ' : ''}${state}</td>
-                                    <td><span class="score-badge ${recClass}">${scoreDisplay}</span></td>
+                                    <td>${scoreCellHtml}</td>
                                     <td><span class="outcome-badge ${outcomeClass}">${(p.outcome || 'pending').toUpperCase()}</span></td>
                                     <td style="color:var(--text-muted);">${dateDisplay}</td>
                                     <td style="white-space: nowrap;">
@@ -11008,7 +11186,50 @@ ${truncatedText}`;
                 const recTextSaved = { GO: 'Strong fit', REVIEW: 'Review carefully', PASS: 'Poor fit' }[p.scores?.recommendation] || '';
                 const locStrSaved = [p.extracted?.project_city, p.extracted?.project_state].filter(Boolean).join(', ');
                 const btSaved = (typeof p.extracted?.building_type === 'string' ? p.extracted.building_type : p.extracted?.building_type?.type) || '';
+
+                // Multi-GC scores summary (shown when project has 2+ GC bids)
+                let multiGCHtml = '';
+                if (p.gc_bids && p.gc_bids.length > 1) {
+                    const sortedGCBids = [...p.gc_bids].sort((a, b) => (b.scores?.final || 0) - (a.scores?.final || 0));
+                    const gcRows = sortedGCBids.map(b => {
+                        const s = b.scores?.final || 0;
+                        const r = b.scores?.recommendation || (s >= 80 ? 'GO' : s >= 60 ? 'REVIEW' : 'PASS');
+                        const cls = r === 'GO' ? 'success' : r === 'REVIEW' || r === 'REVIEW CAREFULLY' ? 'warning' : '';
+                        const outcomePill = b.outcome && b.outcome !== 'pending'
+                            ? `<span class="outcome-badge ${b.outcome === 'won' ? 'success' : b.outcome === 'lost_competitor' ? 'muted' : 'danger'}" style="font-size:11px;padding:2px 7px;">${b.outcome === 'lost_competitor' ? 'N/A' : b.outcome.toUpperCase()}</span>`
+                            : '';
+                        const locComp = b.scores?.components?.location;
+                        const gcComp  = b.scores?.components?.gc;
+                        const trComp  = b.scores?.components?.trade;
+                        const detailRows = [
+                            locComp ? `<span style="font-size:11px;color:var(--text-muted);">📍 ${locComp.score}/100</span>` : '',
+                            gcComp  ? `<span style="font-size:11px;color:var(--text-muted);">🏢 ${gcComp.score}/100</span>` : '',
+                            trComp  ? `<span style="font-size:11px;color:var(--text-muted);">🔧 ${trComp.score}/100</span>` : ''
+                        ].filter(Boolean).join(' · ');
+                        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border-color);">
+                            <div>
+                                <div style="font-weight:600;font-size:14px;">${b.gc_name || 'Unknown GC'}</div>
+                                ${detailRows ? `<div style="margin-top:3px;">${detailRows}</div>` : ''}
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                ${outcomePill}
+                                <span class="score-badge ${cls}" style="font-size:13px;">${s} — ${r}</span>
+                            </div>
+                        </div>`;
+                    }).join('');
+                    multiGCHtml = `<div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);margin-bottom:16px;">
+                        <div style="padding:10px 14px;border-bottom:1px solid var(--border-color);font-weight:600;font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">
+                            ${sortedGCBids.length} GC Invitations — Scores by Relationship
+                        </div>
+                        ${gcRows}
+                        <div style="padding:8px 14px;font-size:11px;color:var(--text-muted);">
+                            Main score below reflects your best opportunity (${sortedGCBids[0]?.gc_name || 'top GC'})
+                        </div>
+                    </div>`;
+                }
+
                 const scoreHTML = `
+                    ${multiGCHtml}
                     <div class="score-report">
                         <div class="score-report-header rec-${recClassSaved}">
                             <div class="report-header-tag">BidIndex™ Intelligence Report</div>
@@ -12317,6 +12538,25 @@ Respond now:`;
             document.getElementById('outcomeProjectId').value = id;
             document.getElementById('outcomeType').value = '';
             document.getElementById('outcomeFields').innerHTML = '';
+
+            // Show GC selector if project has multiple GC bids
+            const project = allProjectsCache.find(p => p.id === id);
+            const gcBids = project?.gc_bids || [];
+            const gcSelectorGroup = document.getElementById('outcomeGCSelectorGroup');
+            const gcSelector = document.getElementById('outcomeGCSelector');
+            if (gcBids.length > 1) {
+                gcSelector.innerHTML = gcBids
+                    .sort((a, b) => (b.scores?.final || 0) - (a.scores?.final || 0))
+                    .map(b => `<option value="${b.gc_name || ''}">${b.gc_name || 'Unknown GC'} — ${b.scores?.final || 0}/100 ${b.scores?.recommendation || ''}</option>`)
+                    .join('');
+                gcSelectorGroup.style.display = '';
+            } else {
+                gcSelectorGroup.style.display = 'none';
+                gcSelector.innerHTML = gcBids.length === 1
+                    ? `<option value="${gcBids[0].gc_name || ''}">${gcBids[0].gc_name || 'Unknown GC'}</option>`
+                    : '';
+            }
+
             openModal('outcomeModal');
         }
 
@@ -12654,6 +12894,9 @@ Respond now:`;
                 confidence: parseInt(document.getElementById('outcomeConfidence')?.value) || 3
             };
             
+            // Determine which GC this outcome applies to (for multi-GC projects)
+            const outcomeGCName = (document.getElementById('outcomeGCSelector')?.value || '').trim() || null;
+
             if (type === 'won') {
                 outcomeData.amount = document.getElementById('outcomeAmount')?.value;
                 outcomeData.alternates = outcomeAlternates.filter(alt => alt.description || alt.amount); // Only save non-empty alternates
@@ -12662,18 +12905,37 @@ Respond now:`;
                 outcomeData.pricingFeedback = document.getElementById('outcomePricingFeedback')?.value;
                 const hoursSpentWon = parseFloat(document.getElementById('outcomeHoursSpent')?.value);
                 if (hoursSpentWon > 0) outcomeData.hours_spent = hoursSpentWon;
-                // Update GC wins
+
+                // Update GC clients table: only the winning GC gets wins+1
                 const projects = await getProjects();
                 const p = projects.find(x => x.id === id);
                 if (p) {
                     const gcs = await getGCs();
-                    for (const sg of p.gcs) {
-                        const gc = gcs.find(g => g.name === sg.name);
-                        if (gc) {
-                            gc.wins = (gc.wins || 0) + 1;
-                            await saveGC(gc);
-                        }
+                    const winningGCName = outcomeGCName || p.gcs?.[0]?.name;
+                    // Winning GC: bids+1, wins+1
+                    const winningGC = gcs.find(g => g.name === winningGCName);
+                    if (winningGC) {
+                        winningGC.wins = (winningGC.wins || 0) + 1;
+                        winningGC.bids = (winningGC.bids || 0) + 1;
+                        await saveGC(winningGC);
                     }
+                    // Other GCs on this project: lost_competitor — no stats change
+                }
+
+                // Update gc_bids outcomes in the project
+                const projForGCBids = allProjectsCache.find(x => x.id === id);
+                if (projForGCBids?.gc_bids?.length > 0) {
+                    const winningGCName = outcomeGCName || projForGCBids.gc_bids[0]?.gc_name;
+                    const updatedGCBids = projForGCBids.gc_bids.map(b => ({
+                        ...b,
+                        outcome: (b.gc_name || '').toLowerCase() === (winningGCName || '').toLowerCase()
+                            ? 'won'
+                            : 'lost_competitor',
+                        outcome_data: (b.gc_name || '').toLowerCase() === (winningGCName || '').toLowerCase()
+                            ? outcomeData
+                            : b.outcome_data
+                    }));
+                    await supabaseClient.from('projects').update({ gc_bids: updatedGCBids }).eq('id', id);
                 }
             } else if (type === 'lost') {
                 outcomeData.howHigh = document.getElementById('outcomeHowHigh')?.value;
@@ -12682,6 +12944,18 @@ Respond now:`;
                 outcomeData.pricingFeedback = document.getElementById('outcomePricingFeedback')?.value;
                 const hoursSpentLost = parseFloat(document.getElementById('outcomeHoursSpent')?.value);
                 if (hoursSpentLost > 0) outcomeData.hours_spent = hoursSpentLost;
+
+                // Update gc_bids: mark the selected GC's bid as 'lost'
+                const projForGCBidsLost = allProjectsCache.find(x => x.id === id);
+                if (projForGCBidsLost?.gc_bids?.length > 0) {
+                    const losingGCName = outcomeGCName || projForGCBidsLost.gc_bids[0]?.gc_name;
+                    const updatedGCBidsLost = projForGCBidsLost.gc_bids.map(b => ({
+                        ...b,
+                        outcome: (b.gc_name || '').toLowerCase() === (losingGCName || '').toLowerCase() ? 'lost' : b.outcome,
+                        outcome_data: (b.gc_name || '').toLowerCase() === (losingGCName || '').toLowerCase() ? outcomeData : b.outcome_data
+                    }));
+                    await supabaseClient.from('projects').update({ gc_bids: updatedGCBidsLost }).eq('id', id);
+                }
             } else if (type === 'ghost') {
                 outcomeData.daysSince = parseInt(document.getElementById('outcomeDaysSince')?.value) || 60;
                 outcomeData.ghostedGCs = document.getElementById('outcomeGhostedGCs')?.value;
