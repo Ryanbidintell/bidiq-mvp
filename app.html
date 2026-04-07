@@ -4200,6 +4200,7 @@ ${fullText.substring(0, 40000)}`;
                     // Create default settings for new user
                     const newSettings = {
                         user_id: currentUser.id,
+                        user_email: currentUser.email || null,
                         company_type: 'subcontractor',
                         city: '',
                         state: '',
@@ -15714,9 +15715,9 @@ Respond now:`;
                 <div class="settings-card-body">${content}</div>
             </div>`;
 
-            // Beta user table — per-user breakdown (filter ghost users with no email)
+            // Beta user table — per-user breakdown (filter true ghost signups: no email AND no company AND no progress)
             const d30 = new Date(Date.now() - 30*24*60*60*1000);
-            const userRows = users.filter(u => u.user_email).map(u => {
+            const userRows = users.filter(u => u.user_email || u.company_name || u.onboarding_completed).map(u => {
                 const userProjects = projects.filter(p => p.user_id === u.user_id);
                 const lastProject = userProjects.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
                 const lastActive = lastProject ? new Date(lastProject.created_at) : null;
@@ -15729,7 +15730,7 @@ Respond now:`;
                     : `<span style="color:var(--text-muted);font-style:italic;">no company set</span>`;
                 return `<tr style="border-bottom:1px solid var(--border-color);">
                     <td style="padding:10px 8px;font-size:13px;">${companyDisplay}</td>
-                    <td style="padding:10px 8px;font-size:12px;color:var(--text-muted);">${u.user_email}</td>
+                    <td style="padding:10px 8px;font-size:12px;color:var(--text-muted);">${u.user_email || '<span style="font-style:italic;">not captured</span>'}</td>
                     <td style="padding:10px 8px;font-size:13px;text-align:center;">${userProjects.length}</td>
                     <td style="padding:10px 8px;font-size:13px;text-align:center;">${outcomes}</td>
                     <td style="padding:10px 8px;font-size:12px;color:${isActive30 ? 'var(--success)' : 'var(--text-muted)'};">${lastActive ? lastActive.toLocaleDateString() : 'Never'}</td>
