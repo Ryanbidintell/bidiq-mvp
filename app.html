@@ -6340,6 +6340,13 @@ ${fullText.substring(0, 40000)}`;
                                     <span style="font-size: 12px; color: var(--text-muted); line-height: 1.4;">We'll track how this changes as you use BidIntell — real data beats guesswork.</span>
                                 </div>
                             </div>
+                            ${onboardingData.emailAlias ? `
+                            <div style="background: var(--bg-secondary); padding: 16px 20px; border-radius: var(--radius); margin-bottom: 16px; border-left: 3px solid #22c55e;">
+                                <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #22c55e; font-weight: 600; margin-bottom: 8px;">Email Forwarding Active</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">Forward bid PDFs to:</div>
+                                <div style="font-family: monospace; font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 6px 0;">${onboardingData.emailAlias}@bids.bidintell.ai</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">BidIntell will auto-score and reply with results. Max 10MB per file.</div>
+                            </div>` : ''}
                             <div style="background: linear-gradient(135deg, var(--accent-dim), rgba(34, 197, 94, 0.1)); padding: 20px; border-radius: var(--radius); border: 2px solid var(--accent);">
                                 <h4 style="color: var(--text-primary); margin-bottom: 8px;">Next Step: Analyze Your First Bid</h4>
                                 <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
@@ -6450,6 +6457,7 @@ ${fullText.substring(0, 40000)}`;
                 if (alias) {
                     try {
                         await saveEmailAlias(alias);
+                        onboardingData.emailAlias = alias;
                     } catch (e) {
                         // Unique constraint means alias was just taken — inform but still advance
                         console.warn('Email alias save failed (likely taken):', e.message);
@@ -13829,30 +13837,29 @@ Respond now:`;
             // AI Advisor settings
             const aiAdvisorName = s.ai_advisor_name || 'Sam';
             const aiAdvisorNameSelect = document.getElementById('settingAiAdvisorName');
-            const customNameGroup = document.getElementById('customAdvisorNameGroup');
-            const customNameInput = document.getElementById('settingCustomAdvisorName');
-
-            const presetNames = ['Sam', 'Scout', 'Jake', 'Alex', 'Taylor'];
-            if (presetNames.includes(aiAdvisorName)) {
-                aiAdvisorNameSelect.value = aiAdvisorName;
-                customNameGroup.style.display = 'none';
-            } else {
-                aiAdvisorNameSelect.value = 'Custom';
-                customNameGroup.style.display = 'block';
-                customNameInput.value = aiAdvisorName;
+            if (aiAdvisorNameSelect) {
+                const customNameGroup = document.getElementById('customAdvisorNameGroup');
+                const customNameInput = document.getElementById('settingCustomAdvisorName');
+                const presetNames = ['Sam', 'Scout', 'Jake', 'Alex', 'Taylor'];
+                if (presetNames.includes(aiAdvisorName)) {
+                    aiAdvisorNameSelect.value = aiAdvisorName;
+                    if (customNameGroup) customNameGroup.style.display = 'none';
+                } else {
+                    aiAdvisorNameSelect.value = 'Custom';
+                    if (customNameGroup) customNameGroup.style.display = 'block';
+                    if (customNameInput) customNameInput.value = aiAdvisorName;
+                }
+                aiAdvisorNameSelect.addEventListener('change', function() {
+                    if (this.value === 'Custom') {
+                        if (customNameGroup) customNameGroup.style.display = 'block';
+                        if (customNameInput) customNameInput.focus();
+                    } else {
+                        if (customNameGroup) customNameGroup.style.display = 'none';
+                    }
+                });
             }
 
             document.getElementById('settingAiAdvisorTone').value = s.ai_advisor_tone || 'supportive';
-
-            // Add change listener for advisor name dropdown
-            aiAdvisorNameSelect.addEventListener('change', function() {
-                if (this.value === 'Custom') {
-                    customNameGroup.style.display = 'block';
-                    customNameInput.focus();
-                } else {
-                    customNameGroup.style.display = 'none';
-                }
-            });
 
             document.querySelector('#weightLocation input').value = s.weights.location;
             document.querySelector('#weightLocation .weight-slider-value').textContent = s.weights.location + '%';
@@ -14306,9 +14313,7 @@ Respond now:`;
                 decisionTime: parseInt(document.getElementById('settingDecisionTime').value) || 45,
                 defaultStars: parseInt(document.getElementById('settingDefaultStars').value),
                 target_margin: parseFloat(document.getElementById('settingTargetMargin')?.value) || 15,
-                ai_advisor_name: document.getElementById('settingAiAdvisorName').value === 'Custom'
-                    ? document.getElementById('settingCustomAdvisorName').value.trim() || 'Sam'
-                    : document.getElementById('settingAiAdvisorName').value,
+                ai_advisor_name: document.getElementById('settingAiAdvisorName')?.value || dataCache.settings?.ai_advisor_name || 'Sam',
                 ai_advisor_tone: document.getElementById('settingAiAdvisorTone').value,
                 weights
             };
@@ -15519,14 +15524,23 @@ Respond now:`;
             if (!settings || !settings.org_id) return;
 
             try {
-                // Fetch org info + members
-                const [orgRes, membersRes] = await Promise.all([
+                // Fetch org info, members, and per-member project counts
+                const [orgRes, membersRes, projectsRes] = await Promise.all([
                     supabaseClient.from('organizations').select('*').eq('id', settings.org_id).single(),
-                    supabaseClient.from('org_members').select('*').eq('org_id', settings.org_id).eq('is_active', true).order('created_at')
+                    supabaseClient.from('org_members').select('*').eq('org_id', settings.org_id).eq('is_active', true).order('created_at'),
+                    supabaseClient.from('projects').select('user_id, recommendation').eq('org_id', settings.org_id)
                 ]);
 
                 const org = orgRes.data;
                 const members = membersRes.data || [];
+
+                // Build per-member project stats (owner RLS required; degrades gracefully if blocked)
+                const projectsByUser = {};
+                (projectsRes.data || []).forEach(p => {
+                    if (!projectsByUser[p.user_id]) projectsByUser[p.user_id] = { total: 0, go: 0 };
+                    projectsByUser[p.user_id].total++;
+                    if (p.recommendation === 'GO') projectsByUser[p.user_id].go++;
+                });
 
                 if (!org) return;
 
@@ -15562,6 +15576,10 @@ Respond now:`;
                     const statusBadge = accepted
                         ? '<span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;">Active</span>'
                         : '<span style="background:#fef9c3;color:#a16207;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;">Invited</span>';
+                    const stats = m.user_id ? projectsByUser[m.user_id] : null;
+                    const statsHtml = stats
+                        ? `<div style="font-size:12px;color:#64748b;text-align:right;flex-shrink:0;line-height:1.4;"><div style="font-weight:600;color:#94a3b8;">${stats.total} bid${stats.total !== 1 ? 's' : ''}</div>${stats.total > 0 ? `<div>${stats.go} GO</div>` : ''}</div>`
+                        : (accepted ? '<div style="font-size:12px;color:#475569;flex-shrink:0;">—</div>' : '');
                     return `
                         <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #1e293b;">
                             <div style="width:36px;height:36px;border-radius:50%;background:#1e293b;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;font-weight:700;color:#94a3b8;">
@@ -15571,7 +15589,7 @@ Respond now:`;
                                 <div style="font-size:14px;font-weight:600;color:#f1f5f9;">${name}${isMe ? ' <span style="color:#64748b;font-size:12px;">(you)</span>' : ''}</div>
                                 <div style="font-size:12px;color:#64748b;margin-top:2px;">${email}</div>
                             </div>
-                            <div style="display:flex;gap:6px;flex-shrink:0;">${roleBadge}${statusBadge}</div>
+                            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">${statsHtml}<div style="display:flex;gap:6px;">${roleBadge}${statusBadge}</div></div>
                         </div>`;
                 }).join('');
                 // Remove last border

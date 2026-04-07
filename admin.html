@@ -771,7 +771,7 @@
                     <td style="white-space:nowrap;">${joined}</td>
                     <td>${u.user_name || '—'}</td>
                     <td>${u.user_email || '—'}</td>
-                    <td>${u.company_name || '—'}</td>
+                    <td>${u.company_name || u.user_name || '—'}</td>
                     <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${trades}</td>
                     <td style="color:${tierColor};font-weight:600;text-transform:capitalize;">${tier}</td>
                     <td style="text-align:right;">${bidCount}</td>
@@ -797,7 +797,7 @@
                     ${withEmail.map(u => `<tr style="border-top:1px solid #eee;">
                         <td style="padding:6px 8px;">${u.user_name || '—'}</td>
                         <td style="padding:6px 8px;">${u.user_email}</td>
-                        <td style="padding:6px 8px;">${u.company_name || '—'}</td>
+                        <td style="padding:6px 8px;">${u.company_name || u.user_name || '—'}</td>
                         <td style="padding:6px 8px;">${u.onboarding_completed ? '✅' : '—'}</td>
                     </tr>`).join('')}
                 </table>
