@@ -1291,6 +1291,10 @@
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     Settings
                 </div>
+                <div class="nav-item" data-tab="team" id="teamNavItem" style="display:none;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                    Team
+                </div>
                 <a class="nav-item nav-item-external" href="/demo" target="_blank" rel="noopener noreferrer">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     Schedule a Demo
@@ -2032,6 +2036,60 @@
                     </div>
 
                     <button class="btn btn-primary" onclick="saveSettings()" style="width: 100%; padding: 14px; font-size: 15px;">💾 Save All Settings</button>
+                </div>
+            </div>
+
+            <!-- Team Tab -->
+            <div class="tab-content" id="tab-team">
+                <header class="page-header">
+                    <h2 class="page-title">Team</h2>
+                    <p class="page-subtitle">Manage your estimators and invitations</p>
+                </header>
+                <div class="page-content">
+
+                    <!-- Seats summary -->
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">Seats</div>
+                            <div class="settings-card-description" id="teamSeatsDescription">Loading...</div>
+                        </div>
+                    </div>
+
+                    <!-- Member list -->
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">Members</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div id="teamMembersList" style="min-height:60px;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:14px;">Loading...</div>
+                        </div>
+                    </div>
+
+                    <!-- Invite form -->
+                    <div class="settings-card" id="teamInviteCard">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">Invite an Estimator</div>
+                            <div class="settings-card-description">They'll get an email with a link to create their account and join your team.</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                                <div>
+                                    <label class="form-label">First Name <span style="color:#64748b;font-size:12px;">(optional)</span></label>
+                                    <input type="text" id="inviteFirstName" class="form-input" placeholder="Alex">
+                                </div>
+                                <div>
+                                    <label class="form-label">Last Name <span style="color:#64748b;font-size:12px;">(optional)</span></label>
+                                    <input type="text" id="inviteLastName" class="form-input" placeholder="Johnson">
+                                </div>
+                            </div>
+                            <div style="margin-bottom:16px;">
+                                <label class="form-label">Email Address *</label>
+                                <input type="email" id="inviteEmail" class="form-input" placeholder="estimator@yourcompany.com">
+                            </div>
+                            <button class="btn btn-primary" onclick="sendInvite()" id="inviteBtn" style="padding:12px 28px;">Send Invitation</button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -4284,7 +4342,8 @@ ${fullText.substring(0, 40000)}`;
                     onboarding_completed: data.onboarding_completed === true,  // Explicit boolean check
                     plan_rooms: data.plan_rooms || [],
                     baseline_win_rate: data.baseline_win_rate || null,
-                    email_alias: data.email_alias || null
+                    email_alias: data.email_alias || null,
+                    org_id: data.org_id || null
                 };
                 return dataCache.settings;
             } catch (e) {
@@ -15438,9 +15497,132 @@ Respond now:`;
                     document.getElementById('adminOperationsNavItem').style.display = 'none';
                     document.getElementById('adminMetricsNavItem').style.display = 'none';
                 }
+
+                // Show Team tab for org owners
+                const teamSettings = dataCache.settings;
+                if (teamSettings && teamSettings.org_id) {
+                    document.getElementById('teamNavItem').style.display = 'flex';
+                    loadTeamTab();
+                } else {
+                    document.getElementById('teamNavItem').style.display = 'none';
+                }
             } catch (error) {
                 console.error('❌ loadAll() error:', error);
                 throw error;
+            }
+        }
+
+        // ============================================
+        // TEAM TAB FUNCTIONS
+        // ============================================
+
+        async function loadTeamTab() {
+            const settings = dataCache.settings;
+            if (!settings || !settings.org_id) return;
+
+            try {
+                // Fetch org info + members
+                const [orgRes, membersRes] = await Promise.all([
+                    supabaseClient.from('organizations').select('*').eq('id', settings.org_id).single(),
+                    supabaseClient.from('org_members').select('*').eq('org_id', settings.org_id).eq('is_active', true).order('created_at')
+                ]);
+
+                const org = orgRes.data;
+                const members = membersRes.data || [];
+
+                if (!org) return;
+
+                // Is current user the owner?
+                const isOwner = org.owner_user_id === currentUser?.id;
+                const inviteCard = document.getElementById('teamInviteCard');
+                if (inviteCard) inviteCard.style.display = isOwner ? '' : 'none';
+
+                // Seats summary
+                const seatsUsed = members.length;
+                const seatsTotal = org.seat_limit;
+                const desc = document.getElementById('teamSeatsDescription');
+                if (desc) desc.textContent = `${seatsUsed} of ${seatsTotal} seats used · ${org.plan_tier.charAt(0).toUpperCase() + org.plan_tier.slice(1)} Plan`;
+
+                // Render member rows
+                const list = document.getElementById('teamMembersList');
+                if (!list) return;
+
+                if (members.length === 0) {
+                    list.innerHTML = '<span style="color:#64748b;font-size:14px;">No members yet. Send an invite below.</span>';
+                    return;
+                }
+
+                list.style.display = 'block';
+                list.innerHTML = members.map(m => {
+                    const isMe = m.user_id === currentUser?.id;
+                    const accepted = !!m.invite_accepted_at;
+                    const name = m.display_name || m.invite_email || '—';
+                    const email = m.invite_email || '—';
+                    const roleBadge = m.role === 'owner'
+                        ? '<span style="background:#e0e7ff;color:#4338ca;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;">Owner</span>'
+                        : '<span style="background:#f1f5f9;color:#475569;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;">Estimator</span>';
+                    const statusBadge = accepted
+                        ? '<span style="background:#dcfce7;color:#16a34a;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;">Active</span>'
+                        : '<span style="background:#fef9c3;color:#a16207;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;">Invited</span>';
+                    return `
+                        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #1e293b;">
+                            <div style="width:36px;height:36px;border-radius:50%;background:#1e293b;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;font-weight:700;color:#94a3b8;">
+                                ${name.charAt(0).toUpperCase()}
+                            </div>
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-size:14px;font-weight:600;color:#f1f5f9;">${name}${isMe ? ' <span style="color:#64748b;font-size:12px;">(you)</span>' : ''}</div>
+                                <div style="font-size:12px;color:#64748b;margin-top:2px;">${email}</div>
+                            </div>
+                            <div style="display:flex;gap:6px;flex-shrink:0;">${roleBadge}${statusBadge}</div>
+                        </div>`;
+                }).join('');
+                // Remove last border
+                list.querySelectorAll('div[style*="border-bottom"]').forEach((el, i, arr) => {
+                    if (i === arr.length - 1) el.style.borderBottom = 'none';
+                });
+
+            } catch (err) {
+                console.error('loadTeamTab error:', err);
+            }
+        }
+
+        async function sendInvite() {
+            const email = document.getElementById('inviteEmail')?.value?.trim();
+            const firstName = document.getElementById('inviteFirstName')?.value?.trim();
+            const lastName = document.getElementById('inviteLastName')?.value?.trim();
+            const settings = dataCache.settings;
+
+            if (!email) { showNotification('Please enter an email address.', 'error'); return; }
+            if (!settings?.org_id) { showNotification('No organization found.', 'error'); return; }
+
+            const btn = document.getElementById('inviteBtn');
+            if (btn) { btn.disabled = true; btn.textContent = 'Sending...'; }
+
+            try {
+                const session = await supabaseClient.auth.getSession();
+                const jwt = session?.data?.session?.access_token;
+
+                const res = await fetch('/.netlify/functions/invite', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
+                    body: JSON.stringify({ email, first_name: firstName, last_name: lastName, org_id: settings.org_id })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showNotification(data.error || 'Failed to send invitation.', 'error');
+                } else {
+                    showNotification(`Invitation sent to ${email}.`, 'success');
+                    document.getElementById('inviteEmail').value = '';
+                    document.getElementById('inviteFirstName').value = '';
+                    document.getElementById('inviteLastName').value = '';
+                    loadTeamTab();
+                }
+            } catch (err) {
+                showNotification('Failed to send invitation. Please try again.', 'error');
+                console.error('sendInvite error:', err);
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = 'Send Invitation'; }
             }
         }
 
