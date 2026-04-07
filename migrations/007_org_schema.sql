@@ -24,25 +24,15 @@ CREATE TABLE IF NOT EXISTS organizations (
     is_founding_member      boolean     NOT NULL DEFAULT false
 );
 
--- RLS
+-- RLS enabled now; policies that reference org_members added after org_members is created
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
 
--- Members can read their own org
-CREATE POLICY "Org members can read their organization"
-ON organizations FOR SELECT
-USING (
-    id IN (
-        SELECT org_id FROM org_members
-        WHERE user_id = auth.uid()
-    )
-);
-
--- Only owner can update
+-- Only owner can update (no org_members dependency)
 CREATE POLICY "Org owner can update their organization"
 ON organizations FOR UPDATE
 USING (owner_user_id = auth.uid());
 
--- Owner can insert (on signup)
+-- Owner can insert (no org_members dependency)
 CREATE POLICY "Org owner can insert"
 ON organizations FOR INSERT
 WITH CHECK (owner_user_id = auth.uid());
@@ -104,6 +94,16 @@ USING (
 CREATE POLICY "Users can update their own membership"
 ON org_members FOR UPDATE
 USING (user_id = auth.uid());
+
+-- organizations: members can read their org (added here because org_members now exists)
+CREATE POLICY "Org members can read their organization"
+ON organizations FOR SELECT
+USING (
+    id IN (
+        SELECT org_id FROM org_members
+        WHERE user_id = auth.uid()
+    )
+);
 
 
 -- ============================================================
