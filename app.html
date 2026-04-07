@@ -1125,7 +1125,7 @@
                 </ul>
                 <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border); text-align:center;">
                     <span style="font-size:12px; color:var(--accent); font-weight:700;">Free through March 31</span>
-                    <span style="font-size:12px; color:var(--text-muted);"> · Then from $49/mo · No credit card now</span>
+                    <span style="font-size:12px; color:var(--text-muted);"> · Then from $49/mo (Solo) · No credit card now</span>
                 </div>
             </div>
 
@@ -1207,42 +1207,71 @@
                 </p>
             </div>
 
+            <!-- Billing Toggle -->
+            <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px;">
+                <span style="font-size:13px;color:var(--text-secondary);">Monthly</span>
+                <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;">
+                    <input type="checkbox" id="billingToggle" style="opacity:0;width:0;height:0;" onchange="updateUpgradePrices()">
+                    <span style="position:absolute;inset:0;background:#334155;border-radius:99px;transition:.2s;"></span>
+                    <span id="billingToggleThumb" style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.2s;"></span>
+                </label>
+                <span style="font-size:13px;color:var(--text-secondary);">Annual <span style="background:rgba(34,197,94,0.15);color:#22c55e;font-size:11px;font-weight:600;padding:2px 7px;border-radius:99px;">Save 20%</span></span>
+            </div>
+
             <!-- Pricing Cards -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
-                <!-- Starter Plan -->
-                <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; background: var(--bg-input);">
-                    <div style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Starter</div>
-                    <div style="font-size: 36px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">
-                        $49<span style="font-size: 16px; font-weight: 400; color: var(--text-muted);">/month</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 24px;">
+                <!-- Solo -->
+                <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; background: var(--bg-input);">
+                    <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Solo</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">1 seat</div>
+                    <div style="font-size: 30px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">
+                        <span id="soloPrice">$49</span><span style="font-size: 14px; font-weight: 400; color: var(--text-muted);"><span id="soloPer">/mo</span></span>
                     </div>
-                    <ul style="list-style: none; padding: 0; margin: 20px 0; font-size: 14px; color: var(--text-secondary);">
-                        <li style="margin-bottom: 10px;">✓ Unlimited bid analysis</li>
-                        <li style="margin-bottom: 10px;">✓ AI recommendations</li>
-                        <li style="margin-bottom: 10px;">✓ GC database</li>
-                        <li style="margin-bottom: 10px;">✓ Outcome tracking</li>
+                    <ul style="list-style: none; padding: 0; margin: 14px 0; font-size: 13px; color: var(--text-secondary);">
+                        <li style="margin-bottom: 8px;">✓ Unlimited bid analysis</li>
+                        <li style="margin-bottom: 8px;">✓ AI recommendations</li>
+                        <li style="margin-bottom: 8px;">✓ Client database</li>
+                        <li style="margin-bottom: 8px;">✓ Outcome tracking</li>
                     </ul>
-                    <button class="btn" onclick="upgradeToStarter()" style="width: 100%; margin-top: 16px; background: var(--bg-hover); color: var(--text-primary); border: 2px solid var(--border); font-weight: 600;">Start Free Trial — $49/mo after</button>
+                    <button class="btn" onclick="upgradeToSolo()" id="soloBtn" style="width: 100%; margin-top: 12px; background: var(--bg-hover); color: var(--text-primary); border: 2px solid var(--border); font-weight: 600; font-size:13px;">Start Free Trial</button>
                 </div>
 
-                <!-- Professional Plan -->
-                <div style="border: 2px solid var(--accent); border-radius: var(--radius-md); padding: 24px; background: linear-gradient(135deg, rgba(242, 101, 34, 0.05), rgba(242, 101, 34, 0.1)); position: relative;">
-                    <div style="position: absolute; top: -12px; right: 20px; background: var(--accent); color: white; padding: 4px 12px; border-radius: var(--radius); font-size: 11px; font-weight: 700;">RECOMMENDED</div>
-                    <div style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Professional</div>
-                    <div style="font-size: 36px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">
-                        $99<span style="font-size: 16px; font-weight: 400; color: var(--text-muted);">/month</span>
+                <!-- Team -->
+                <div style="border: 2px solid var(--accent); border-radius: var(--radius-md); padding: 20px; background: linear-gradient(135deg, rgba(242, 101, 34, 0.05), rgba(242, 101, 34, 0.1)); position: relative;">
+                    <div style="position: absolute; top: -11px; right: 14px; background: var(--accent); color: white; padding: 3px 10px; border-radius: var(--radius); font-size: 10px; font-weight: 700;">POPULAR</div>
+                    <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Team</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">Up to 3 seats</div>
+                    <div style="font-size: 30px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">
+                        <span id="teamPrice">$99</span><span style="font-size: 14px; font-weight: 400; color: var(--text-muted);"><span id="teamPer">/mo</span></span>
                     </div>
-                    <ul style="list-style: none; padding: 0; margin: 20px 0; font-size: 14px; color: var(--text-secondary);">
-                        <li style="margin-bottom: 10px;">✓ Everything in Starter</li>
-                        <li style="margin-bottom: 10px;">✓ Advanced analytics</li>
-                        <li style="margin-bottom: 10px;">✓ Competitor insights</li>
-                        <li style="margin-bottom: 10px;">✓ Priority support</li>
+                    <ul style="list-style: none; padding: 0; margin: 14px 0; font-size: 13px; color: var(--text-secondary);">
+                        <li style="margin-bottom: 8px;">✓ Everything in Solo</li>
+                        <li style="margin-bottom: 8px;">✓ 3 estimator seats</li>
+                        <li style="margin-bottom: 8px;">✓ Shared client database</li>
+                        <li style="margin-bottom: 8px;">✓ Team analytics</li>
                     </ul>
-                    <button class="btn btn-primary" onclick="upgradeToProfessional()" style="width: 100%; margin-top: 16px; font-weight: 600;">Start Free Trial — $99/mo after</button>
+                    <button class="btn btn-primary" onclick="upgradeToTeam()" id="teamBtn" style="width: 100%; margin-top: 12px; font-weight: 600; font-size:13px;">Start Free Trial</button>
+                </div>
+
+                <!-- Company -->
+                <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; background: var(--bg-input);">
+                    <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Company</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">Up to 8 seats</div>
+                    <div style="font-size: 30px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">
+                        <span id="companyPrice">$179</span><span style="font-size: 14px; font-weight: 400; color: var(--text-muted);"><span id="companyPer">/mo</span></span>
+                    </div>
+                    <ul style="list-style: none; padding: 0; margin: 14px 0; font-size: 13px; color: var(--text-secondary);">
+                        <li style="margin-bottom: 8px;">✓ Everything in Team</li>
+                        <li style="margin-bottom: 8px;">✓ 8 estimator seats</li>
+                        <li style="margin-bottom: 8px;">✓ Company-wide reporting</li>
+                        <li style="margin-bottom: 8px;">✓ Priority support</li>
+                    </ul>
+                    <button class="btn" onclick="upgradeToCompany()" id="companyBtn" style="width: 100%; margin-top: 12px; background: var(--bg-hover); color: var(--text-primary); border: 2px solid var(--border); font-weight: 600; font-size:13px;">Start Free Trial</button>
                 </div>
             </div>
 
             <div style="text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 16px;">
-                <p>Cancel anytime. No long-term contracts.</p>
+                <p>7-day free trial. Cancel anytime.</p>
             </div>
 
             <button onclick="handleLogout()" style="background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; margin-top: 16px; display: block; width: 100%; text-align: center;">Sign out</button>
@@ -1770,34 +1799,38 @@
 
                             <!-- Upgrade Options (Hidden during beta) -->
                             <div id="upgradeOptions" style="display: none;">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                                    <!-- Starter Plan -->
-                                    <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; background: var(--bg-input);">
-                                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Starter</div>
-                                        <div style="font-size: 32px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">$49<span style="font-size: 14px; font-weight: 400; color: var(--text-muted);">/month</span></div>
-                                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">Perfect for getting started</div>
-                                        <ul style="list-style: none; padding: 0; margin: 0 0 16px 0; font-size: 13px; color: var(--text-secondary);">
-                                            <li style="margin-bottom: 8px;">✓ Unlimited bid analysis</li>
-                                            <li style="margin-bottom: 8px;">✓ AI recommendations</li>
-                                            <li style="margin-bottom: 8px;">✓ GC database</li>
-                                            <li style="margin-bottom: 8px;">✓ Outcome tracking</li>
-                                        </ul>
-                                        <button class="btn" onclick="upgradeToStarter()" style="width: 100%; background: var(--bg-hover); color: var(--text-primary); border: 2px solid var(--border); font-weight: 600;">Start Free Trial — $49/mo after</button>
+                                <!-- Billing Toggle -->
+                                <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px;">
+                                    <span style="font-size:13px;color:var(--text-secondary);">Monthly</span>
+                                    <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;">
+                                        <input type="checkbox" id="billingToggle" style="opacity:0;width:0;height:0;" onchange="updateUpgradePrices()">
+                                        <span style="position:absolute;inset:0;background:#334155;border-radius:99px;transition:.2s;"></span>
+                                        <span id="billingToggleThumb" style="position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.2s;"></span>
+                                    </label>
+                                    <span style="font-size:13px;color:var(--text-secondary);">Annual <span style="background:rgba(34,197,94,0.15);color:#22c55e;font-size:11px;font-weight:600;padding:2px 7px;border-radius:99px;">Save 20%</span></span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                                    <!-- Solo -->
+                                    <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background: var(--bg-input);">
+                                        <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">Solo</div>
+                                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">1 seat</div>
+                                        <div style="font-size: 26px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px;"><span id="soloPrice">$49</span><span style="font-size: 12px; font-weight: 400; color: var(--text-muted);"><span id="soloPer">/mo</span></span></div>
+                                        <button class="btn" onclick="upgradeToSolo()" id="soloBtn" style="width: 100%; background: var(--bg-hover); color: var(--text-primary); border: 2px solid var(--border); font-weight: 600; font-size:12px; padding:8px;">Start Free Trial</button>
                                     </div>
-
-                                    <!-- Professional Plan -->
-                                    <div style="border: 2px solid var(--accent); border-radius: var(--radius-md); padding: 20px; background: linear-gradient(135deg, rgba(242, 101, 34, 0.05), rgba(242, 101, 34, 0.1)); position: relative;">
-                                        <div style="position: absolute; top: -10px; right: 20px; background: var(--accent); color: white; padding: 4px 12px; border-radius: var(--radius); font-size: 11px; font-weight: 700;">RECOMMENDED</div>
-                                        <div style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">Professional</div>
-                                        <div style="font-size: 32px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">$99<span style="font-size: 14px; font-weight: 400; color: var(--text-muted);">/month</span></div>
-                                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">For serious bidders</div>
-                                        <ul style="list-style: none; padding: 0; margin: 0 0 16px 0; font-size: 13px; color: var(--text-secondary);">
-                                            <li style="margin-bottom: 8px;">✓ Everything in Starter</li>
-                                            <li style="margin-bottom: 8px;">✓ Advanced analytics</li>
-                                            <li style="margin-bottom: 8px;">✓ Competitor insights</li>
-                                            <li style="margin-bottom: 8px;">✓ Priority support</li>
-                                        </ul>
-                                        <button class="btn btn-primary" onclick="upgradeToProfessional()" style="width: 100%;">Start Free Trial — $99/mo after</button>
+                                    <!-- Team -->
+                                    <div style="border: 2px solid var(--accent); border-radius: var(--radius-md); padding: 16px; background: linear-gradient(135deg, rgba(242, 101, 34, 0.05), rgba(242, 101, 34, 0.1)); position: relative;">
+                                        <div style="position: absolute; top: -10px; right: 10px; background: var(--accent); color: white; padding: 3px 8px; border-radius: var(--radius); font-size: 10px; font-weight: 700;">POPULAR</div>
+                                        <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">Team</div>
+                                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Up to 3 seats</div>
+                                        <div style="font-size: 26px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px;"><span id="teamPrice">$99</span><span style="font-size: 12px; font-weight: 400; color: var(--text-muted);"><span id="teamPer">/mo</span></span></div>
+                                        <button class="btn btn-primary" onclick="upgradeToTeam()" id="teamBtn" style="width: 100%; font-weight: 600; font-size:12px; padding:8px;">Start Free Trial</button>
+                                    </div>
+                                    <!-- Company -->
+                                    <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background: var(--bg-input);">
+                                        <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">Company</div>
+                                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Up to 8 seats</div>
+                                        <div style="font-size: 26px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px;"><span id="companyPrice">$179</span><span style="font-size: 12px; font-weight: 400; color: var(--text-muted);"><span id="companyPer">/mo</span></span></div>
+                                        <button class="btn" onclick="upgradeToCompany()" id="companyBtn" style="width: 100%; background: var(--bg-hover); color: var(--text-primary); border: 2px solid var(--border); font-weight: 600; font-size:12px; padding:8px;">Start Free Trial</button>
                                     </div>
                                 </div>
                             </div>
@@ -14382,8 +14415,17 @@ Respond now:`;
 
         // Stripe Price IDs
         const STRIPE_PRICES = {
-            starter: 'price_1T0fdmD1qm9w587Oiv0RfU90',  // $49/month
-            professional: 'price_1T0ffMD1qm9w587OnLbJc3Tc'  // $99/month
+            // Monthly
+            solo:        'price_1T0fdmD1qm9w587Oiv0RfU90',  // $49/month
+            team:        'price_1T0ffMD1qm9w587OnLbJc3Tc',  // $99/month
+            company:     'price_1TJctMD1qm9w587OAECMBd1x',  // $179/month
+            // Annual
+            solo_annual:    'price_1TJcqjD1qm9w587O2fvXQNYp',  // $470/year
+            team_annual:    'price_1TJcrgD1qm9w587O2N0xfrgN',  // $950/year
+            company_annual: 'price_1TJctyD1qm9w587Ofl0uP95X',  // $1720/year
+            // Legacy aliases
+            starter:      'price_1T0fdmD1qm9w587Oiv0RfU90',
+            professional: 'price_1T0ffMD1qm9w587OnLbJc3Tc'
         };
 
         /**
@@ -14450,19 +14492,37 @@ Respond now:`;
             }
         }
 
-        /**
-         * Upgrade to Starter plan ($49/mo)
-         */
-        async function upgradeToStarter() {
-            await createCheckoutSession('starter', 'Starter');
+        function updateUpgradePrices() {
+            const annual = document.getElementById('billingToggle')?.checked;
+            // Sync both toggles if there are two (paywall + settings)
+            document.querySelectorAll('#billingToggle').forEach(t => t.checked = annual);
+            document.querySelectorAll('#billingToggleThumb').forEach(el => {
+                el.style.left = annual ? '23px' : '3px';
+            });
+            document.querySelectorAll('#billingToggle').forEach(t => {
+                t.parentElement?.querySelector('span:first-of-type') && (t.parentElement.querySelector('span:first-of-type').style.background = annual ? '#F26522' : '#334155');
+            });
+            const prices = annual
+                ? { solo: '$470', team: '$950', company: '$1,720', per: '/yr' }
+                : { solo: '$49',  team: '$99',  company: '$179',   per: '/mo' };
+            document.querySelectorAll('#soloPrice').forEach(el => el.textContent = prices.solo);
+            document.querySelectorAll('#teamPrice').forEach(el => el.textContent = prices.team);
+            document.querySelectorAll('#companyPrice').forEach(el => el.textContent = prices.company);
+            document.querySelectorAll('#soloPer,#teamPer,#companyPer').forEach(el => el.textContent = prices.per);
         }
 
-        /**
-         * Upgrade to Professional plan ($99/mo)
-         */
-        async function upgradeToProfessional() {
-            await createCheckoutSession('professional', 'Professional');
+        // Plan upgrade helpers — use billing period toggle state
+        function _getBillingPeriod() {
+            const toggle = document.getElementById('billingToggle');
+            return toggle && toggle.checked ? 'annual' : 'monthly';
         }
+
+        async function upgradeToSolo()        { const annual = _getBillingPeriod() === 'annual'; await createCheckoutSession(annual ? 'solo_annual' : 'solo', 'Solo'); }
+        async function upgradeToTeam()        { const annual = _getBillingPeriod() === 'annual'; await createCheckoutSession(annual ? 'team_annual' : 'team', 'Team'); }
+        async function upgradeToCompany()     { const annual = _getBillingPeriod() === 'annual'; await createCheckoutSession(annual ? 'company_annual' : 'company', 'Company'); }
+        // Legacy aliases
+        async function upgradeToStarter()     { await upgradeToSolo(); }
+        async function upgradeToProfessional(){ await upgradeToTeam(); }
 
         /**
          * Create Stripe Checkout Session
