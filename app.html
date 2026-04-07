@@ -2548,6 +2548,13 @@
         const GOOGLE_MAPS_API_KEY = 'AIzaSyAPxYsWrlpVgYW4xBdXg82Zcp5Ll0_icd0';
         const API_BASE_URL = '/.netlify/functions'; // Backend API functions
 
+        // Capture tier/invite URL params into sessionStorage (survive magic link round-trip)
+        (function() {
+            const _p = new URLSearchParams(window.location.search);
+            if (_p.get('tier')) sessionStorage.setItem('bidintell_pending_tier', _p.get('tier'));
+            if (_p.get('invite')) sessionStorage.setItem('bidintell_pending_invite', _p.get('invite'));
+        })();
+
         let supabaseClient = null;
         let currentUser = null;
 
@@ -3037,7 +3044,11 @@
             gcsAdded: 0,
             sampleBidUploaded: false,
             acquisition_source: null,  // How user heard about BidIntell
-            plan_rooms: []  // Which plan rooms they use to receive bid invitations
+            plan_rooms: [],  // Which plan rooms they use to receive bid invitations
+            // Company setup (team/company tier)
+            orgName: '',
+            ownerName: '',
+            ownerRole: 'owner',
         };
 
         // Helper function to get ISO week number
@@ -5677,6 +5688,36 @@ ${fullText.substring(0, 40000)}`;
         // ONBOARDING FLOW
         // ============================================
 
+        function renderStep0HTML() {
+            const ownerSelected = onboardingData.ownerRole || 'owner';
+            const optOwner = ownerSelected === 'owner' ? ' selected' : '';
+            const optEst = ownerSelected === 'estimator' ? ' selected' : '';
+            const optPM = ownerSelected === 'pm' ? ' selected' : '';
+            return '<div style="text-align:center;padding:20px 0;">'
+                + '<div style="font-size:64px;margin-bottom:16px;">🏢</div>'
+                + '<h3 style="color:var(--text-primary);margin-bottom:12px;">Set up your company</h3>'
+                + '<p style="color:var(--text-muted);margin-bottom:28px;">This creates your company account. You can invite estimators after setup.</p>'
+                + '<div style="max-width:480px;margin:0 auto;text-align:left;">'
+                + '<div class="form-group" style="margin-bottom:16px;">'
+                + '<label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">Company Name</label>'
+                + '<input type="text" class="form-input" id="onboarding_orgName" placeholder="e.g. Summit Sealants" value="' + (onboardingData.orgName || '') + '" oninput="onboardingData.orgName = this.value.trim();" style="font-size:15px;">'
+                + '</div>'
+                + '<div class="form-group" style="margin-bottom:16px;">'
+                + '<label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">Your Name</label>'
+                + '<input type="text" class="form-input" id="onboarding_ownerName" placeholder="e.g. Ryan Elder" value="' + (onboardingData.ownerName || '') + '" oninput="onboardingData.ownerName = this.value.trim();" style="font-size:15px;">'
+                + '</div>'
+                + '<div class="form-group" style="margin-bottom:16px;">'
+                + '<label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">Your Role</label>'
+                + '<select class="form-input" id="onboarding_ownerRole" onchange="onboardingData.ownerRole = this.value;" style="font-size:15px;">'
+                + '<option value="owner"' + optOwner + '>Owner / Principal</option>'
+                + '<option value="estimator"' + optEst + '>Lead Estimator</option>'
+                + '<option value="pm"' + optPM + '>Project Manager</option>'
+                + '</select>'
+                + '</div>'
+                + '</div>'
+                + '</div>';
+        }
+
         function renderOnboardingStep(step) {
             onboardingStep = step;
             const body = document.getElementById('onboardingBody');
@@ -5684,19 +5725,45 @@ ${fullText.substring(0, 40000)}`;
             const nextBtn = document.getElementById('onboardingNextBtn');
             const skipBtn = document.getElementById('onboardingSkipBtn');
 
+            const pendingTier = sessionStorage.getItem('bidintell_pending_tier');
+            const isCompanyTier = pendingTier === 'team' || pendingTier === 'company';
+            const totalSteps = isCompanyTier ? 14 : 13;
+            const displayStep = isCompanyTier ? (step === 0 ? 1 : step + 1) : step;
+
             // Update progress
-            const progress = Math.round((step / 13) * 100);
-            document.getElementById('onboardingCurrentStep').textContent = step;
+            const progress = step === 0 ? 0 : Math.round((displayStep / totalSteps) * 100);
+            document.getElementById('onboardingCurrentStep').textContent = displayStep;
             document.getElementById('onboardingProgress').textContent = progress;
             document.getElementById('onboardingProgressBar').style.width = progress + '%';
 
             // Show/hide back button
-            backBtn.style.display = step === 1 ? 'none' : 'inline-flex';
+            backBtn.style.display = (step === 1 && !isCompanyTier) || step === 0 ? 'none' : 'inline-flex';
             skipBtn.style.display = step === 13 ? 'none' : 'inline-block';
             nextBtn.textContent = step === 13 ? 'Complete Setup 🎉' : 'Next →';
             // Re-enable next button by default (step 2 plan rooms may override this below)
             nextBtn.disabled = false;
             nextBtn.style.opacity = '';
+
+            // Step 0: Company setup (team/company tier only)
+            if (step === 0) {
+                body.innerHTML = renderStep0HTML();
+                // Back button hidden on step 0
+                backBtn.style.display = 'none';
+                skipBtn.style.display = 'none';
+                nextBtn.disabled = !onboardingData.orgName || !onboardingData.ownerName;
+                // Re-check on input
+                setTimeout(() => {
+                    const nameInput = document.getElementById('onboarding_orgName');
+                    const ownerInput = document.getElementById('onboarding_ownerName');
+                    if (nameInput) nameInput.addEventListener('input', () => {
+                        nextBtn.disabled = !nameInput.value.trim() || !ownerInput.value.trim();
+                    });
+                    if (ownerInput) ownerInput.addEventListener('input', () => {
+                        nextBtn.disabled = !nameInput.value.trim() || !ownerInput.value.trim();
+                    });
+                }, 50);
+                return;
+            }
 
             // Render step content
             if (step === 1) {
@@ -6256,6 +6323,13 @@ ${fullText.substring(0, 40000)}`;
         }
 
         async function onboardingNext() {
+            const pendingTier = sessionStorage.getItem('bidintell_pending_tier');
+            const isCompanyTier = pendingTier === 'team' || pendingTier === 'company';
+            if (isCompanyTier && onboardingStep === 0) {
+                if (!onboardingData.orgName || !onboardingData.ownerName) return;
+                renderOnboardingStep(1);
+                return;
+            }
             // Validate current step
             if (onboardingStep === 1) {
                 // Step 1: Company type - always valid, one is selected by default
@@ -6362,6 +6436,12 @@ ${fullText.substring(0, 40000)}`;
         }
 
         function onboardingBack() {
+            const pendingTier = sessionStorage.getItem('bidintell_pending_tier');
+            const isCompanyTier = pendingTier === 'team' || pendingTier === 'company';
+            if (isCompanyTier && onboardingStep === 1) {
+                renderOnboardingStep(0);
+                return;
+            }
             if (onboardingStep > 1) {
                 renderOnboardingStep(onboardingStep - 1);
             }
@@ -6665,6 +6745,37 @@ ${fullText.substring(0, 40000)}`;
                 }
 
                 gtag('event', 'onboarding_completed');
+
+                // Create org if this is a team/company signup
+                const _pendingTier2 = sessionStorage.getItem('bidintell_pending_tier');
+                if ((_pendingTier2 === 'team' || _pendingTier2 === 'company') && onboardingData.orgName) {
+                    try {
+                        const seatLimits = { solo: 1, team: 3, company: 8, enterprise: 9999 };
+                        const slug = onboardingData.orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36);
+                        const { data: orgData, error: orgErr } = await supabaseClient.from('organizations').insert({
+                            name: onboardingData.orgName,
+                            slug,
+                            plan_tier: _pendingTier2,
+                            seat_limit: seatLimits[_pendingTier2] || 1,
+                            owner_user_id: currentUser.id,
+                        }).select('id').single();
+                        if (orgErr) throw orgErr;
+                        const orgId = orgData.id;
+                        await supabaseClient.from('org_members').insert({
+                            org_id: orgId,
+                            user_id: currentUser.id,
+                            role: 'owner',
+                            display_name: onboardingData.ownerName || currentUser.email,
+                            invite_accepted_at: new Date().toISOString(),
+                        });
+                        await supabaseClient.from('user_settings').update({ org_id: orgId, company_name: onboardingData.orgName }).eq('user_id', currentUser.id);
+                        sessionStorage.removeItem('bidintell_pending_tier');
+                        console.log('✅ Organization created:', orgId);
+                    } catch (orgCreateErr) {
+                        console.error('❌ Org creation failed (non-fatal):', orgCreateErr);
+                    }
+                }
+
                 // Close modal and reload
                 closeModal('onboardingModal');
 
@@ -15217,10 +15328,42 @@ Respond now:`;
                     userId: currentUser?.id
                 });
 
+                // Handle pending invite
+                const _pendingInvite = sessionStorage.getItem('bidintell_pending_invite');
+                if (_pendingInvite && currentUser) {
+                    try {
+                        // Find the org_members row for this invite token
+                        const { data: inviteRow } = await supabaseClient
+                            .from('org_members')
+                            .select('id, org_id, invite_email, invite_accepted_at, organizations(name)')
+                            .eq('invite_token', _pendingInvite)
+                            .is('invite_accepted_at', null)
+                            .maybeSingle();
+                        if (inviteRow) {
+                            // Accept the invite
+                            await supabaseClient.from('org_members').update({
+                                user_id: currentUser.id,
+                                invite_accepted_at: new Date().toISOString(),
+                            }).eq('id', inviteRow.id);
+                            await supabaseClient.from('user_settings').update({
+                                org_id: inviteRow.org_id,
+                                company_name: inviteRow.organizations?.name || null,
+                            }).eq('user_id', currentUser.id);
+                            sessionStorage.removeItem('bidintell_pending_invite');
+                            showNotification('Welcome to ' + (inviteRow.organizations?.name || 'your team') + ' on BidIntell!', 'success');
+                        }
+                    } catch (inviteErr) {
+                        console.error('Invite acceptance failed:', inviteErr);
+                        sessionStorage.removeItem('bidintell_pending_invite');
+                    }
+                }
+
                 // Only show onboarding if explicitly NOT completed AND user has no projects
                 if (settings.onboarding_completed !== true && !hasProjects && currentUser && supabaseClient) {
                     console.log('🎯 Showing onboarding because onboarding_completed =', settings.onboarding_completed);
-                    renderOnboardingStep(1);
+                    const _pendingTier = sessionStorage.getItem('bidintell_pending_tier');
+                    const _isCompanyTier = _pendingTier === 'team' || _pendingTier === 'company';
+                    renderOnboardingStep(_isCompanyTier ? 0 : 1);
                     document.getElementById('onboardingModal').classList.add('active');
                     return; // Don't load other data until onboarding is complete
                 } else {
@@ -15264,6 +15407,12 @@ Respond now:`;
 
                 // Handle OAuth return params (bc_connected, bc_error)
                 const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('invite')) {
+                    window.history.replaceState({}, '', window.location.pathname);
+                }
+                if (urlParams.get('tier')) {
+                    window.history.replaceState({}, '', window.location.pathname);
+                }
                 if (urlParams.get('bc_connected') === 'true') {
                     showNotification('BuildingConnected account linked successfully!', 'success');
                     // Clean up URL without triggering a page reload
