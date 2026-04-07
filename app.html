@@ -4686,7 +4686,8 @@ ${fullText.substring(0, 40000)}`;
                     // Bid Risk detection fields
                     multiple_bidders_expected: project.extracted.multiple_bidders_expected || false,
                     bid_shopping_language: project.extracted.bid_shopping_language || false,
-                    vague_scope: project.extracted.vague_scope || false
+                    vague_scope: project.extracted.vague_scope || false,
+                    aggressive_timeline: project.extracted.aggressive_timeline || false
                 };
 
                 // Generate fingerprint for duplicate detection
@@ -7690,7 +7691,8 @@ ${fullText.substring(0, 40000)}`;
   "scope_summary": "A brief 2-3 sentence summary of the project scope and major work items.",
   "multiple_bidders_expected": "Boolean. True if document implies many competing subs: pre-qualified lists, mandatory pre-bid meetings, 'all subs are encouraged to bid', bid registry, or bid bond required. Return true or false.",
   "bid_shopping_language": "Boolean. True if document contains bid shopping risk language: 'reserve the right to negotiate', 'best and final', 'revised bids', 'post-bid clarifications'. Return true or false.",
-  "vague_scope": "Boolean. True if the document contains significant undefined scope: multiple instances of 'TBD', 'by others', 'NIC', 'not in contract', 'specifications to follow', 'drawings not yet issued', or 'scope to be determined'. Return true or false."
+  "vague_scope": "Boolean. True if the document contains significant undefined scope: multiple instances of 'TBD', 'by others', 'NIC', 'not in contract', 'specifications to follow', 'drawings not yet issued', or 'scope to be determined'. Return true or false.",
+  "aggressive_timeline": "Boolean. True if project schedule appears unrealistically compressed: 'fast track', 'accelerated schedule', completion in <12 weeks for commercial work over 10,000 SF, or explicitly compressed timelines. Return true or false."
 }
 
 IMPORTANT RULES:
@@ -7790,6 +7792,59 @@ ${truncatedText}`;
             } catch (e) {
                 return { score: 50, weight: 0, reason: 'Competition data unavailable', details: { status: 'error' } };
             }
+        }
+
+        // Module 2b: Winner's Curse Risk
+        // Bible ref: "The winner is often whoever underestimated costs most."
+        // Separate from BidIndex score — a flag, not a component.
+        function calculateWinnersCurseRisk(extracted, gcs, contractRisks) {
+            const factors = [];
+
+            // 1. Vague or incomplete scope
+            if (extracted.vague_scope) {
+                factors.push('Scope contains undefined sections (TBD, "by others", specs TBD) — cost overrun risk if awarded');
+            }
+
+            // 2. Aggressive project schedule
+            if (extracted.aggressive_timeline) {
+                factors.push('Project schedule appears compressed — timeline risk may not be priced into competitors\' bids');
+            }
+
+            // 3. New/unknown GC relationship
+            const hasUnknownGC = gcs && gcs.length > 0 && gcs.some(gc => !gc.bids || gc.bids === 0);
+            if (hasUnknownGC) {
+                factors.push('No bid history with this GC — behavior is less predictable in a first-time relationship');
+            }
+
+            // 4. High competition (margin pressure = someone will miss scope)
+            if (extracted.multiple_bidders_expected) {
+                factors.push('Many bidders expected — competitive margin pressure increases the odds someone wins by missing something');
+            }
+
+            // 5. High contract risk clause density
+            const highRiskCount = (contractRisks?.risks || []).filter(r => r.severity === 'high').length;
+            if (highRiskCount >= 2) {
+                factors.push(`${highRiskCount} high-severity contract clauses — liability exposure compounds if scope is underestimated`);
+            }
+
+            if (factors.length === 0) return null;
+
+            const level = factors.length >= 4 ? 'high' : factors.length === 3 ? 'elevated' : factors.length === 2 ? 'moderate' : 'low';
+            return { level, count: factors.length, factors };
+        }
+
+        function renderWinnersCurseCard(risk) {
+            const colors = { low: '#22c55e', moderate: '#eab308', elevated: '#ef4444', high: '#7f1d1d' };
+            const bgColors = { low: 'rgba(34,197,94,0.08)', moderate: 'rgba(234,179,8,0.08)', elevated: 'rgba(239,68,68,0.08)', high: 'rgba(127,29,29,0.12)' };
+            const labels = { low: 'LOW', moderate: 'MODERATE', elevated: 'ELEVATED', high: 'HIGH' };
+            return `
+            <div style="margin-top:16px;padding:16px;background:${bgColors[risk.level]};border-radius:var(--radius);border-left:4px solid ${colors[risk.level]};">
+                <div style="font-weight:700;color:${colors[risk.level]};margin-bottom:6px;font-size:14px;">Winner's Curse Risk: ${labels[risk.level]}</div>
+                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;line-height:1.5;">In sealed-bid construction, the winner is often the sub who underestimated costs most. ${risk.count === 1 ? 'One indicator suggests' : `${risk.count} indicators suggest`} this bid carries hidden cost risk worth pricing in.</div>
+                <ul style="margin:0;padding-left:18px;font-size:13px;color:var(--text-secondary);line-height:1.9;">
+                    ${risk.factors.map(f => `<li>${f}</li>`).join('')}
+                </ul>
+            </div>`;
         }
 
         // Module 2: Render Bid Risk Card
@@ -8303,7 +8358,8 @@ ${truncatedText}`;
   "scope_summary": "A brief 2-3 sentence summary of the project scope and major work items.",
   "multiple_bidders_expected": "Boolean. True if document implies many competing subs: pre-qualified lists, mandatory pre-bid meetings, 'all subs are encouraged to bid', bid registry, or bid bond required. Return true or false.",
   "bid_shopping_language": "Boolean. True if document contains bid shopping risk language: 'reserve the right to negotiate', 'best and final', 'revised bids', 'post-bid clarifications'. Return true or false.",
-  "vague_scope": "Boolean. True if the document contains significant undefined scope: multiple instances of 'TBD', 'by others', 'NIC', 'not in contract', 'specifications to follow', 'drawings not yet issued', or 'scope to be determined'. Return true or false."
+  "vague_scope": "Boolean. True if the document contains significant undefined scope: multiple instances of 'TBD', 'by others', 'NIC', 'not in contract', 'specifications to follow', 'drawings not yet issued', or 'scope to be determined'. Return true or false.",
+  "aggressive_timeline": "Boolean. True if the project schedule or completion timeline appears unrealistically compressed for the project type and size. Look for: 'fast track', 'accelerated schedule', completion in <12 weeks for commercial work over 10,000 SF, substantial completion dates that leave minimal construction time from the bid date, or explicit 'compressed schedule' language. Return true or false."
 }
 
 IMPORTANT RULES:
@@ -8451,7 +8507,8 @@ ${truncatedText}`;
                         retainage_over_10_percent: false
                     },
                     has_contract_language: extracted.contract_language_present || false,
-                    scope_summary: extracted.scope_summary || null
+                    scope_summary: extracted.scope_summary || null,
+                    aggressive_timeline: extracted.aggressive_timeline || false
                 };
             } catch (e) {
                 console.error('Claude extraction failed:', e);
@@ -8633,6 +8690,7 @@ ${truncatedText}`;
                     : null;
 
                 const bidRisk = calculateBidRisk(extracted);
+                const winnersCurseRisk = calculateWinnersCurseRisk(extracted, selectedGCs, contractRisks);
                 const gcNames = selectedGCs.map(g => g.name);
                 const scores = await calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks, tradeDetection, gcNames, foundSections);
 
@@ -8681,6 +8739,7 @@ ${truncatedText}`;
                     buildingType,
                     marketMetroArea,
                     bidRisk,
+                    winnersCurseRisk,
                     createdAt: new Date().toISOString(),
                     outcome: 'pending', // Default outcome
                     // Intelligence Engine Data
@@ -9508,6 +9567,7 @@ ${truncatedText}`;
                         ${contractRisksHtml}
                         ${gcRiskHtml}
                         ${analysis.bidRisk ? renderBidRiskCard(analysis.bidRisk) : ''}
+                        ${analysis.winnersCurseRisk ? renderWinnersCurseCard(analysis.winnersCurseRisk) : ''}
                     </div>
                     ${await renderProfileWarningHtml(settings)}
                     ${renderComponent('📍', 'Location Fit', analysis.scores.components.location)}
@@ -11336,8 +11396,9 @@ ${truncatedText}`;
                     }
                 }
 
-                // Recalculate Bid Risk from saved extracted data
+                // Recalculate risk flags from saved extracted data
                 const bidRisk = calculateBidRisk(p.extracted);
+                const winnersCurseRisk = calculateWinnersCurseRisk(p.extracted, p.gcs || [], p.contractRisks || null);
 
                 // Pre-compute profile completeness prompts
                 const profileWarningHtml = await renderProfileWarningHtml(settings);
@@ -11404,6 +11465,7 @@ ${truncatedText}`;
                             ${(locStrSaved || btSaved) ? `<div class="meta-chips-row">${locStrSaved ? `<span class="meta-chip">📍 ${locStrSaved}</span>` : ''}${btSaved ? `<span class="meta-chip">🏗️ ${btSaved}</span>` : ''}</div>` : ''}
                             ${contractRisksHtml}
                             ${bidRisk ? renderBidRiskCard(bidRisk) : ''}
+                            ${winnersCurseRisk ? renderWinnersCurseCard(winnersCurseRisk) : ''}
                             ${p.bid_divisions_submitted && p.bid_divisions_submitted.length > 0 ? `<div style="margin-top:12px;padding:10px 14px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);font-size:13px;"><span style="font-weight:600;color:var(--text-primary);">📋 Submitted:</span> <span style="color:var(--text-secondary);">${p.bid_divisions_submitted.map(d => 'Div ' + d).join(', ')}</span></div>` : ''}
                         </div>
                         ${profileWarningHtml}
