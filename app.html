@@ -4686,8 +4686,7 @@ ${fullText.substring(0, 40000)}`;
                     // Bid Risk detection fields
                     multiple_bidders_expected: project.extracted.multiple_bidders_expected || false,
                     bid_shopping_language: project.extracted.bid_shopping_language || false,
-                    vague_scope: project.extracted.vague_scope || false,
-                    aggressive_timeline: project.extracted.aggressive_timeline || false
+                    vague_scope: project.extracted.vague_scope || false
                 };
 
                 // Generate fingerprint for duplicate detection
@@ -7691,8 +7690,7 @@ ${fullText.substring(0, 40000)}`;
   "scope_summary": "A brief 2-3 sentence summary of the project scope and major work items.",
   "multiple_bidders_expected": "Boolean. True if document implies many competing subs: pre-qualified lists, mandatory pre-bid meetings, 'all subs are encouraged to bid', bid registry, or bid bond required. Return true or false.",
   "bid_shopping_language": "Boolean. True if document contains bid shopping risk language: 'reserve the right to negotiate', 'best and final', 'revised bids', 'post-bid clarifications'. Return true or false.",
-  "vague_scope": "Boolean. True if the document contains significant undefined scope: multiple instances of 'TBD', 'by others', 'NIC', 'not in contract', 'specifications to follow', 'drawings not yet issued', or 'scope to be determined'. Return true or false.",
-  "aggressive_timeline": "Boolean. True if project schedule appears unrealistically compressed: 'fast track', 'accelerated schedule', completion in <12 weeks for commercial work over 10,000 SF, or explicitly compressed timelines. Return true or false."
+  "vague_scope": "Boolean. True if the document contains significant undefined scope: multiple instances of 'TBD', 'by others', 'NIC', 'not in contract', 'specifications to follow', 'drawings not yet issued', or 'scope to be determined'. Return true or false."
 }
 
 IMPORTANT RULES:
@@ -7805,23 +7803,18 @@ ${truncatedText}`;
                 factors.push('Scope contains undefined sections (TBD, "by others", specs TBD) — cost overrun risk if awarded');
             }
 
-            // 2. Aggressive project schedule
-            if (extracted.aggressive_timeline) {
-                factors.push('Project schedule appears compressed — timeline risk may not be priced into competitors\' bids');
-            }
-
-            // 3. New/unknown GC relationship
+            // 2. New/unknown GC relationship
             const hasUnknownGC = gcs && gcs.length > 0 && gcs.some(gc => !gc.bids || gc.bids === 0);
             if (hasUnknownGC) {
                 factors.push('No bid history with this GC — behavior is less predictable in a first-time relationship');
             }
 
-            // 4. High competition (margin pressure = someone will miss scope)
+            // 3. High competition (margin pressure = someone will miss scope)
             if (extracted.multiple_bidders_expected) {
                 factors.push('Many bidders expected — competitive margin pressure increases the odds someone wins by missing something');
             }
 
-            // 5. High contract risk clause density
+            // 4. High contract risk clause density
             const highRiskCount = (contractRisks?.risks || []).filter(r => r.severity === 'high').length;
             if (highRiskCount >= 2) {
                 factors.push(`${highRiskCount} high-severity contract clauses — liability exposure compounds if scope is underestimated`);
@@ -8358,8 +8351,7 @@ ${truncatedText}`;
   "scope_summary": "A brief 2-3 sentence summary of the project scope and major work items.",
   "multiple_bidders_expected": "Boolean. True if document implies many competing subs: pre-qualified lists, mandatory pre-bid meetings, 'all subs are encouraged to bid', bid registry, or bid bond required. Return true or false.",
   "bid_shopping_language": "Boolean. True if document contains bid shopping risk language: 'reserve the right to negotiate', 'best and final', 'revised bids', 'post-bid clarifications'. Return true or false.",
-  "vague_scope": "Boolean. True if the document contains significant undefined scope: multiple instances of 'TBD', 'by others', 'NIC', 'not in contract', 'specifications to follow', 'drawings not yet issued', or 'scope to be determined'. Return true or false.",
-  "aggressive_timeline": "Boolean. True if the project schedule or completion timeline appears unrealistically compressed for the project type and size. Look for: 'fast track', 'accelerated schedule', completion in <12 weeks for commercial work over 10,000 SF, substantial completion dates that leave minimal construction time from the bid date, or explicit 'compressed schedule' language. Return true or false."
+  "vague_scope": "Boolean. True if the document contains significant undefined scope: multiple instances of 'TBD', 'by others', 'NIC', 'not in contract', 'specifications to follow', 'drawings not yet issued', or 'scope to be determined'. Return true or false."
 }
 
 IMPORTANT RULES:
@@ -8507,8 +8499,7 @@ ${truncatedText}`;
                         retainage_over_10_percent: false
                     },
                     has_contract_language: extracted.contract_language_present || false,
-                    scope_summary: extracted.scope_summary || null,
-                    aggressive_timeline: extracted.aggressive_timeline || false
+                    scope_summary: extracted.scope_summary || null
                 };
             } catch (e) {
                 console.error('Claude extraction failed:', e);
