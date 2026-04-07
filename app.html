@@ -1349,7 +1349,7 @@
         <main class="main">
             <!-- Dashboard Tab -->
             <div class="tab-content active" id="tab-dashboard">
-                <header class="page-header"><h2 class="page-title">Dashboard</h2><p class="page-subtitle">Your bid intelligence at a glance</p></header>
+                <header class="page-header"><h2 class="page-title">Dashboard</h2><p class="page-subtitle">Your bids at a glance</p></header>
                 <div class="page-content">
                     <div id="setupBanner"></div>
                     <div id="emailAliasBanner"></div>
@@ -1381,9 +1381,9 @@
                             <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">across <span id="statRiskyProjects">0</span> projects</div>
                         </div>
                         <div class="stat-card" style="background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(59,130,246,0.1));border-color:var(--success);">
-                            <div class="stat-label">AI Learning Progress</div>
+                            <div class="stat-label">Outcomes Recorded</div>
                             <div class="stat-value" id="statDataMoat">--</div>
-                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;"><span id="statOutcomeRate">0 of 0</span> projects • Trains AI</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;"><span id="statOutcomeRate">0 of 0</span> projects tracked</div>
                         </div>
                     </div>
                     <div class="card">
@@ -1549,14 +1549,14 @@
             <!-- Analytics Tab -->
             <div class="tab-content" id="tab-analytics">
                 <header class="page-header">
-                    <h2 class="page-title">AI Learning Analytics</h2>
-                    <p class="page-subtitle">Track prediction accuracy and scoring improvements over time</p>
+                    <h2 class="page-title">Bid Performance</h2>
+                    <p class="page-subtitle">Win rates, scoring accuracy, and trends across your analyzed bids</p>
                 </header>
                 <div class="page-content">
                     <!-- Win Rate Trends Over Time -->
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">📈 Win Rate Trends</h3>
+                            <h3 class="card-title">Win Rate Trends</h3>
                             <div class="form-hint">Your win rate performance over time</div>
                         </div>
                         <div class="card-body">
@@ -1567,7 +1567,7 @@
                     <!-- Bid Volume by Month -->
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">📊 Bid Volume</h3>
+                            <h3 class="card-title">Bid Volume</h3>
                             <div class="form-hint">Number of bids analyzed per month</div>
                         </div>
                         <div class="card-body">
@@ -1578,7 +1578,7 @@
                     <!-- GC Performance Tables -->
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">🏆 Top Performing Clients</h3>
+                            <h3 class="card-title">Top Performing Clients</h3>
                             <div class="form-hint">Clients with the highest win rates (minimum 3 bids)</div>
                         </div>
                         <div class="card-body">
@@ -1588,7 +1588,7 @@
 
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">👻 High Ghost Rate Clients</h3>
+                            <h3 class="card-title">High Ghost Rate Clients</h3>
                             <div class="form-hint">Clients with the highest ghost/decline rates</div>
                         </div>
                         <div class="card-body">
@@ -1621,7 +1621,7 @@
                     <!-- Client Type Performance -->
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">🤝 Client Type Performance</h3>
+                            <h3 class="card-title">Client Type Performance</h3>
                             <div class="form-hint">Which types of clients are most profitable for your business?</div>
                         </div>
                         <div class="card-body">
@@ -1632,7 +1632,7 @@
                     <!-- Prediction Accuracy -->
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">🎯 Prediction Accuracy</h3>
+                            <h3 class="card-title">Score Accuracy</h3>
                             <div class="form-hint">How often do score recommendations match actual outcomes?</div>
                         </div>
                         <div class="card-body">
@@ -1643,8 +1643,8 @@
                     <!-- User Feedback Analysis -->
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">💭 User Feedback Analysis</h3>
-                            <div class="form-hint">How often do you agree with the AI's score?</div>
+                            <h3 class="card-title">Score Agreement</h3>
+                            <div class="form-hint">How often do the scores match your own read on the bid?</div>
                         </div>
                         <div class="card-body">
                             <div id="feedbackAnalysis"></div>
@@ -1654,8 +1654,8 @@
                     <!-- Calibration Insights -->
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">📊 Calibration Insights</h3>
-                            <div class="form-hint">Are scores too conservative or too aggressive?</div>
+                            <h3 class="card-title">Score Calibration</h3>
+                            <div class="form-hint">Are your scores trending too conservative or too aggressive?</div>
                         </div>
                         <div class="card-body">
                             <div id="calibrationInsights"></div>
@@ -1665,8 +1665,8 @@
                     <!-- Recommendations -->
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">💡 AI Recommendations</h3>
-                            <div class="form-hint">Suggested improvements based on your data</div>
+                            <h3 class="card-title">Insights</h3>
+                            <div class="form-hint">Patterns and suggested adjustments based on your bid history</div>
                         </div>
                         <div class="card-body">
                             <div id="aiRecommendations"></div>
@@ -1728,7 +1728,7 @@
                     <!-- User Profile -->
                     <div class="settings-card">
                         <div class="settings-card-header">
-                            <div class="settings-card-title">👤 User Profile</div>
+                            <div class="settings-card-title">User Profile</div>
                             <div class="settings-card-description">Your contact information and company details</div>
                         </div>
                         <div class="settings-card-body">
@@ -1757,7 +1757,7 @@
                     <!-- Forwarding Address -->
                     <div class="settings-card" id="emailAliasCard">
                         <div class="settings-card-header">
-                            <div class="settings-card-title">📧 Your Forwarding Address</div>
+                            <div class="settings-card-title">Bid Forwarding Address</div>
                             <div class="settings-card-description">Forward bid documents here and BidIntell will auto-score them and reply with results</div>
                         </div>
                         <div class="settings-card-body" id="emailAliasCardBody">
@@ -1768,13 +1768,13 @@
                     <!-- Subscription & Billing -->
                     <div class="settings-card" id="billingCard">
                         <div class="settings-card-header">
-                            <div class="settings-card-title">💳 Subscription & Billing</div>
+                            <div class="settings-card-title">Subscription & Billing</div>
                             <div class="settings-card-description">Manage your subscription and payment methods</div>
                         </div>
                         <div class="settings-card-body">
                             <!-- Beta Period Message -->
                             <div id="betaPeriodMessage" style="display: none; padding: 16px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(59, 130, 246, 0.1)); border-radius: var(--radius); border: 1px solid rgba(34, 197, 94, 0.3); margin-bottom: 16px;">
-                                <div style="font-size: 14px; font-weight: 600; color: var(--success); margin-bottom: 4px;">🎉 Beta User - Free Until April 1, 2026</div>
+                                <div style="font-size: 14px; font-weight: 600; color: var(--success); margin-bottom: 4px;">Beta Access — Free Until April 1, 2026</div>
                                 <div style="font-size: 13px; color: var(--text-secondary);">
                                     You're part of our founding beta group! Your account is free until <strong>April 1, 2026</strong>.
                                     After that, choose a paid plan to continue using BidIntell.
@@ -1838,7 +1838,7 @@
                             <!-- Manage Billing Button (Only shown if subscribed) -->
                             <div id="manageBillingSection" style="display: none;">
                                 <button class="btn btn-secondary" onclick="openBillingPortal()" style="width: 100%;">
-                                    ⚙️ Manage Billing & Payment Methods
+                                    Manage Billing & Payment Methods
                                 </button>
                             </div>
                         </div>
@@ -1846,7 +1846,7 @@
 
                     <div class="settings-card">
                         <div class="settings-card-header">
-                            <div class="settings-card-title">📍 Business Location</div>
+                            <div class="settings-card-title">Business Location</div>
                             <div class="settings-card-description">Enter your full office address for accurate distance calculations. At minimum, provide city and state.</div>
                         </div>
                         <div class="settings-card-body">
@@ -1873,7 +1873,7 @@
 
                     <div class="settings-card">
                         <div class="settings-card-header">
-                            <div class="settings-card-title">🔧 Your Trades</div>
+                            <div class="settings-card-title">Your Trades</div>
                             <div class="settings-card-description">Select the CSI divisions you work in. BidIntell searches bid docs for these divisions to calculate your Trade Match score.</div>
                         </div>
                         <div class="settings-card-body">
@@ -1883,14 +1883,14 @@
 
                     <div class="settings-card">
                         <div class="settings-card-header">
-                            <div class="settings-card-title">⚖️ Score Weights</div>
+                            <div class="settings-card-title">Score Weights</div>
                             <div class="settings-card-description">How important is each factor to YOUR bid decisions? Adjust the sliders so they total exactly 100%. For example, if location doesn't matter much to you, reduce it and increase GC relationships.</div>
                         </div>
                         <div class="settings-card-body">
                             <div class="weights-container">
                                 <div class="weight-slider" id="weightLocation">
                                     <div class="weight-slider-header">
-                                        <span class="weight-slider-label">📍 Location Fit</span>
+                                        <span class="weight-slider-label">Location Fit</span>
                                         <span class="weight-slider-value">25%</span>
                                     </div>
                                     <input type="range" min="0" max="60" value="25">
@@ -1898,7 +1898,7 @@
                                 </div>
                                 <div class="weight-slider" id="weightKeywords">
                                     <div class="weight-slider-header">
-                                        <span class="weight-slider-label">🔑 Keywords & Contract Terms</span>
+                                        <span class="weight-slider-label">Keywords & Contract Terms</span>
                                         <span class="weight-slider-value">30%</span>
                                     </div>
                                     <input type="range" min="0" max="60" value="30">
@@ -1906,7 +1906,7 @@
                                 </div>
                                 <div class="weight-slider" id="weightGC">
                                     <div class="weight-slider-header">
-                                        <span class="weight-slider-label">🏢 GC Relationship & Competition</span>
+                                        <span class="weight-slider-label">Client Relationship & Competition</span>
                                         <span class="weight-slider-value">25%</span>
                                     </div>
                                     <input type="range" min="0" max="60" value="25">
@@ -1914,7 +1914,7 @@
                                 </div>
                                 <div class="weight-slider" id="weightTrade">
                                     <div class="weight-slider-header">
-                                        <span class="weight-slider-label">🔧 Trade Match</span>
+                                        <span class="weight-slider-label">Trade Match</span>
                                         <span class="weight-slider-value">20%</span>
                                     </div>
                                     <input type="range" min="0" max="60" value="20">
@@ -1930,7 +1930,7 @@
 
                     <div class="settings-card">
                         <div class="settings-card-header">
-                            <div class="settings-card-title">⚡ Risk & Capacity</div>
+                            <div class="settings-card-title">Risk & Capacity</div>
                             <div class="settings-card-description">These settings affect how BidIntell scores and recommends bids based on your current situation.</div>
                         </div>
                         <div class="settings-card-body">
@@ -1947,9 +1947,9 @@
                                 <div class="form-group">
                                     <label class="form-label">Current Capacity</label>
                                     <select class="form-select" id="settingCapacity">
-                                        <option value="hungry">🔴 Hungry - Need work, more aggressive recommendations</option>
-                                        <option value="steady" selected>🟢 Steady - Normal workload, balanced recommendations</option>
-                                        <option value="maxed">🟡 Maxed - At capacity, only recommend the best fits</option>
+                                        <option value="hungry">Hungry — Need work, more aggressive recommendations</option>
+                                        <option value="steady" selected>Steady — Normal workload, balanced recommendations</option>
+                                        <option value="maxed">Maxed — At capacity, only recommend the best fits</option>
                                     </select>
                                     <div class="form-hint">This affects the recommendation messaging (not the score itself)</div>
                                 </div>
@@ -1959,47 +1959,25 @@
 
                     <div class="settings-card">
                         <div class="settings-card-header">
-                            <div class="settings-card-title">🤖 AI Advisor</div>
-                            <div class="settings-card-description">Customize your personalized AI advisor's name and communication style</div>
+                            <div class="settings-card-title">Recommendation Style</div>
+                            <div class="settings-card-description">How should BidIntell communicate its GO/REVIEW/PASS recommendations to you?</div>
                         </div>
                         <div class="settings-card-body">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Advisor Name</label>
-                                    <select class="form-select" id="settingAiAdvisorName">
-                                        <option value="Sam">Sam</option>
-                                        <option value="Scout">Scout</option>
-                                        <option value="Jake">Jake</option>
-                                        <option value="Alex">Alex</option>
-                                        <option value="Taylor">Taylor</option>
-                                        <option value="Custom">Custom (Enter below)</option>
-                                    </select>
-                                    <div class="form-hint">This is how your AI advisor will introduce themselves in recommendations</div>
-                                </div>
-                                <div class="form-group" id="customAdvisorNameGroup" style="display: none;">
-                                    <label class="form-label">Custom Advisor Name</label>
-                                    <input type="text" class="form-input" id="settingCustomAdvisorName" placeholder="e.g., Chris, Jordan, Morgan...">
-                                    <div class="form-hint">Enter any name you'd like (keep it short)</div>
-                                </div>
-                            </div>
                             <div class="form-group">
-                                <label class="form-label">Advisor Personality</label>
+                                <label class="form-label">Communication Style</label>
                                 <select class="form-select" id="settingAiAdvisorTone">
-                                    <option value="supportive">🤝 Supportive Coach - Encouraging, friendly, explains things clearly</option>
-                                    <option value="straight_shooter">🎯 Straight Shooter - Direct, no-nonsense, gets to the point</option>
-                                    <option value="data_nerd">📊 Data Nerd - Analytical, statistical, loves the numbers</option>
+                                    <option value="straight_shooter">Direct — Straight to the point, no extra context</option>
+                                    <option value="supportive">Detailed — Explains the reasoning behind each recommendation</option>
+                                    <option value="data_nerd">Analytical — Data-focused, includes scoring breakdowns</option>
                                 </select>
-                                <div class="form-hint">This affects how your AI advisor communicates recommendations</div>
-                            </div>
-                            <div style="padding: 12px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1)); border-radius: var(--radius); font-size: 12px; color: var(--text-secondary); margin-top: 12px; border: 1px solid var(--accent);">
-                                <strong>💡 How it works:</strong> Your AI advisor analyzes each bid and gives you personalized GO/REVIEW/PASS recommendations in their unique style. Changes take effect on your next bid analysis or when you re-analyze existing projects.
+                                <div class="form-hint">Affects the language used in your bid recommendations. Can be changed anytime.</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="settings-card">
                         <div class="settings-card-header">
-                            <div class="settings-card-title">🎛️ Other Preferences</div>
+                            <div class="settings-card-title">Other Preferences</div>
                             <div class="settings-card-description">Additional settings for calculations and defaults</div>
                         </div>
                         <div class="settings-card-body">
@@ -2034,7 +2012,7 @@
                     <!-- Integrations -->
                     <div class="settings-card" id="integrationsCard">
                         <div class="settings-card-header">
-                            <div class="settings-card-title">🔌 Integrations</div>
+                            <div class="settings-card-title">Integrations</div>
                             <div class="settings-card-description">Connect your plan rooms and bid management tools</div>
                         </div>
                         <div class="settings-card-body">
@@ -2512,8 +2490,8 @@
         <div class="modal" style="max-width: 900px; width: 90%; max-height: 90vh; overflow-y: auto;">
             <div class="modal-header" style="border-bottom: 2px solid var(--accent);">
                 <div>
-                    <h3 class="modal-title">Welcome to BidIntell 🎯</h3>
-                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Let's get you set up in 12 quick steps</p>
+                    <h3 class="modal-title">Account Setup</h3>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Takes about 5 minutes. All of this can be updated later in Settings.</p>
                 </div>
             </div>
 
@@ -2545,21 +2523,21 @@
     <div class="modal-overlay" id="feedbackModal">
         <div class="modal" style="max-width: 600px;">
             <div class="modal-header">
-                <h3 class="modal-title">🎯 Beta Feedback</h3>
+                <h3 class="modal-title">Share Feedback</h3>
                 <button class="modal-close" onclick="closeFeedbackModal()">×</button>
             </div>
             <div class="modal-body">
                 <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 14px;">
-                    Your feedback helps us build BidIntell for real subcontractors. Thank you! 🙏
+                    Your feedback helps us build a better product. Thank you.
                 </p>
 
                 <div class="form-group">
                     <label class="form-label">Feedback Type</label>
                     <select class="form-select" id="feedbackType">
-                        <option value="bug">🐛 Bug Report</option>
-                        <option value="feature">💡 Feature Request</option>
-                        <option value="ux">🎨 UX/Design Issue</option>
-                        <option value="general">💬 General Feedback</option>
+                        <option value="bug">Bug Report</option>
+                        <option value="feature">Feature Request</option>
+                        <option value="ux">UX / Design Issue</option>
+                        <option value="general">General Feedback</option>
                     </select>
                 </div>
 
@@ -2619,7 +2597,7 @@
 
     <!-- Floating Feedback Button -->
     <button id="feedbackButton" onclick="openFeedbackModal()" style="position: fixed; bottom: 20px; right: 20px; z-index: 999; background: var(--accent); color: white; border: none; border-radius: 50px; padding: 14px 20px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); cursor: pointer; display: none; align-items: center; gap: 8px; transition: all 0.2s;">
-        <span style="font-size: 18px;">💬</span> Beta Feedback
+        Feedback
     </button>
 
     <script>
@@ -5831,7 +5809,7 @@ ${fullText.substring(0, 40000)}`;
             // Show/hide back button
             backBtn.style.display = (step === 1 && !isCompanyTier) || step === 0 ? 'none' : 'inline-flex';
             skipBtn.style.display = step === 13 ? 'none' : 'inline-block';
-            nextBtn.textContent = step === 13 ? 'Complete Setup 🎉' : 'Next →';
+            nextBtn.textContent = step === 13 ? 'Complete Setup' : 'Continue';
             // Re-enable next button by default (step 2 plan rooms may override this below)
             nextBtn.disabled = false;
             nextBtn.style.opacity = '';
@@ -5861,9 +5839,8 @@ ${fullText.substring(0, 40000)}`;
             if (step === 1) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
-                        <div style="font-size: 64px; margin-bottom: 16px;">🏢</div>
-                        <h3 style="color: var(--text-primary); margin-bottom: 12px;">What type of company are you?</h3>
-                        <p style="color: var(--text-muted); margin-bottom: 32px;">This helps us customize scoring for your business model</p>
+                        <h3 style="color: var(--text-primary); margin-bottom: 10px; font-size: 20px;">What type of company are you?</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 32px; font-size: 14px;">This determines how BidIntell scores and analyzes your bids.</p>
                         <div style="max-width: 500px; margin: 0 auto;">
                             <div style="display: flex; flex-direction: column; gap: 12px;">
                                 ${[
@@ -5874,7 +5851,7 @@ ${fullText.substring(0, 40000)}`;
                                     <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.companyType === opt.value ? 'var(--accent)' : 'transparent'};">
                                         <input type="radio" name="onboarding_companyType" value="${opt.value}" ${onboardingData.companyType === opt.value ? 'checked' : ''} onchange="onboardingData.companyType = this.value; renderOnboardingStep(1); setTimeout(() => onboardingNext(), 300);" style="margin-top: 4px; accent-color: var(--accent);">
                                         <div style="flex: 1; text-align: left;">
-                                            <div style="font-size: 16px; margin-bottom: 4px;">${opt.icon} <strong>${opt.label}</strong></div>
+                                            <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;">${opt.label}</div>
                                             <div style="font-size: 13px; color: var(--text-muted);">${opt.desc}</div>
                                         </div>
                                     </label>
@@ -5924,15 +5901,14 @@ ${fullText.substring(0, 40000)}`;
             } else if (step === 3) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
-                        <div style="font-size: 64px; margin-bottom: 16px;">🏢</div>
-                        <h3 style="color: var(--text-primary); margin-bottom: 12px;">Where's your office located?</h3>
-                        <p style="color: var(--text-muted); margin-bottom: 32px;">Enter your full office address - this will also populate your Settings</p>
+                        <h3 style="color: var(--text-primary); margin-bottom: 10px; font-size: 20px;">Where is your office located?</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 32px; font-size: 14px;">Used to calculate distance to bid locations. You can update this anytime in Settings.</p>
                         <div style="max-width: 500px; margin: 0 auto;">
                             <div class="form-group" style="text-align: left;">
                                 <label class="form-label">Office Address</label>
                                 <input type="text" class="form-input" id="onboarding_address" placeholder="123 Main St, Kansas City, MO 64106" value="${onboardingData.fullAddress || ''}">
                                 <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">
-                                    💡 Start typing and select from dropdown for accurate geocoding
+                                    Start typing your address and select from the dropdown for best accuracy.
                                 </div>
                             </div>
                             ${onboardingData.city ? `
@@ -6025,9 +6001,8 @@ ${fullText.substring(0, 40000)}`;
                 // Acquisition Source
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
-                        <div style="font-size: 64px; margin-bottom: 16px;">👋</div>
-                        <h3 style="color: var(--text-primary); margin-bottom: 12px;">How did you hear about BidIntell?</h3>
-                        <p style="color: var(--text-muted); margin-bottom: 32px;">This helps us understand what's working (optional - you can skip)</p>
+                        <h3 style="color: var(--text-primary); margin-bottom: 10px; font-size: 20px;">How did you hear about BidIntell?</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 32px; font-size: 14px;">Optional — helps us understand what's working.</p>
                         <div style="max-width: 500px; margin: 0 auto;">
                             <div style="display: flex; flex-direction: column; gap: 12px;">
                                 ${[
@@ -6042,7 +6017,7 @@ ${fullText.substring(0, 40000)}`;
                                     <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.acquisition_source === opt.value ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
                                         <input type="radio" name="onboarding_acquisitionSource" value="${opt.value}" ${onboardingData.acquisition_source === opt.value ? 'checked' : ''} onchange="onboardingData.acquisition_source = this.value; renderOnboardingStep(4); setTimeout(() => onboardingNext(), 300);" style="margin-top: 4px; accent-color: var(--accent);">
                                         <div style="flex: 1; text-align: left;">
-                                            <div style="font-size: 16px; margin-bottom: 4px;">${opt.icon} <strong>${opt.label}</strong></div>
+                                            <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;">${opt.label}</div>
                                             <div style="font-size: 13px; color: var(--text-muted);">${opt.desc}</div>
                                         </div>
                                     </label>
@@ -6073,9 +6048,8 @@ ${fullText.substring(0, 40000)}`;
                     // Show product lines for distributors and manufacturer reps
                     body.innerHTML = `
                         <div style="text-align: center; padding: 20px 0;">
-                            <div style="font-size: 64px; margin-bottom: 16px;">📦</div>
-                            <h3 style="color: var(--text-primary); margin-bottom: 12px;">What brands/products do you carry?</h3>
-                            <p style="color: var(--text-muted); margin-bottom: 32px;">Add the manufacturers and product lines you distribute</p>
+                            <h3 style="color: var(--text-primary); margin-bottom: 10px; font-size: 20px;">What brands and products do you carry?</h3>
+                            <p style="color: var(--text-muted); margin-bottom: 32px; font-size: 14px;">Add the manufacturers and product lines you distribute or represent.</p>
                             <div style="max-width: 500px; margin: 0 auto; text-align: left;">
                                 <div class="form-group">
                                     <label class="form-label">Product Lines / Brands</label>
@@ -6111,7 +6085,6 @@ ${fullText.substring(0, 40000)}`;
             } else if (step === 6) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
-                        <div style="font-size: 64px; margin-bottom: 16px;">📍</div>
                         <h3 style="color: var(--text-primary); margin-bottom: 12px;">How important is project location?</h3>
                         <p style="color: var(--text-muted); margin-bottom: 32px;">Adjust the slider based on how much location matters to your business</p>
                         <div style="max-width: 500px; margin: 0 auto;">
@@ -6123,7 +6096,7 @@ ${fullText.substring(0, 40000)}`;
                                 </div>
                                 <input type="range" min="0" max="100" value="${onboardingData.locationImportance}" id="onboarding_locationImportance" oninput="document.getElementById('locationImportanceValue').textContent = this.value + '%'" style="width: 100%; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--bg-tertiary) 0%, var(--accent) 100%); outline: none; -webkit-appearance: none; appearance: none; cursor: pointer;">
                                 <div style="margin-top: 16px; padding: 12px; background: var(--bg-tertiary); border-radius: var(--radius); font-size: 12px; color: var(--text-secondary);">
-                                    <strong>💡 Tip:</strong> If you work locally, set this high (70-100%). If you travel for work or location doesn't matter, set it low (0-30%).
+                                    If you work locally, set this high (70–100%). If you travel for work or location doesn't matter, set it low (0–30%).
                                 </div>
                             </div>
                         </div>
@@ -6132,7 +6105,6 @@ ${fullText.substring(0, 40000)}`;
             } else if (step === 7) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
-                        <div style="font-size: 64px; margin-bottom: 16px;">⚖️</div>
                         <h3 style="color: var(--text-primary); margin-bottom: 12px;">What's your risk tolerance?</h3>
                         <p style="color: var(--text-muted); margin-bottom: 32px;">How cautious should BidIntell be when scoring contract risks?</p>
                         <div style="max-width: 500px; margin: 0 auto;">
@@ -6145,7 +6117,7 @@ ${fullText.substring(0, 40000)}`;
                                     <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.riskTolerance === opt.value ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
                                         <input type="radio" name="onboarding_riskTolerance" value="${opt.value}" ${onboardingData.riskTolerance === opt.value ? 'checked' : ''} onchange="onboardingData.riskTolerance = this.value; renderOnboardingStep(7); setTimeout(() => onboardingNext(), 300);" style="margin-top: 4px; accent-color: var(--accent);">
                                         <div style="flex: 1; text-align: left;">
-                                            <div style="font-size: 16px; margin-bottom: 4px;">${opt.icon} <strong>${opt.label}</strong></div>
+                                            <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;"><strong>${opt.label}</strong></div>
                                             <div style="font-size: 13px; color: var(--text-muted);">${opt.desc}</div>
                                         </div>
                                     </label>
@@ -6157,7 +6129,6 @@ ${fullText.substring(0, 40000)}`;
             } else if (step === 8) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
-                        <div style="font-size: 64px; margin-bottom: 16px;">🏗️</div>
                         <h3 style="color: var(--text-primary); margin-bottom: 12px;">Current workload capacity?</h3>
                         <p style="color: var(--text-muted); margin-bottom: 32px;">This helps us adjust recommendations based on your bandwidth</p>
                         <div style="max-width: 500px; margin: 0 auto;">
@@ -6170,7 +6141,7 @@ ${fullText.substring(0, 40000)}`;
                                     <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.capacity === opt.value ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
                                         <input type="radio" name="onboarding_capacity" value="${opt.value}" ${onboardingData.capacity === opt.value ? 'checked' : ''} onchange="onboardingData.capacity = this.value; renderOnboardingStep(8); setTimeout(() => onboardingNext(), 300);" style="margin-top: 4px; accent-color: var(--accent);">
                                         <div style="flex: 1; text-align: left;">
-                                            <div style="font-size: 16px; margin-bottom: 4px;">${opt.icon} <strong>${opt.label}</strong></div>
+                                            <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;"><strong>${opt.label}</strong></div>
                                             <div style="font-size: 13px; color: var(--text-muted);">${opt.desc}</div>
                                         </div>
                                     </label>
@@ -6182,50 +6153,25 @@ ${fullText.substring(0, 40000)}`;
             } else if (step === 9) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
-                        <div style="font-size: 64px; margin-bottom: 16px;">🤖</div>
-                        <h3 style="color: var(--text-primary); margin-bottom: 12px;">Meet your AI Advisor</h3>
-                        <p style="color: var(--text-muted); margin-bottom: 32px;">Choose a name and personality for your personalized recommendations</p>
+                        <h3 style="color: var(--text-primary); margin-bottom: 10px; font-size: 20px;">Recommendation Style</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 32px; font-size: 14px;">How should BidIntell communicate its GO/REVIEW/PASS recommendations?</p>
                         <div style="max-width: 500px; margin: 0 auto; text-align: left;">
                             <div class="form-group">
-                                <label class="form-label">Advisor Name</label>
-                                <select class="form-select" id="onboarding_aiAdvisorName" onchange="toggleCustomAdvisorName(this.value)">
-                                    <option value="Sam" ${onboardingData.aiAdvisorName === 'Sam' ? 'selected' : ''}>Sam</option>
-                                    <option value="Scout" ${onboardingData.aiAdvisorName === 'Scout' ? 'selected' : ''}>Scout</option>
-                                    <option value="Jake" ${onboardingData.aiAdvisorName === 'Jake' ? 'selected' : ''}>Jake</option>
-                                    <option value="Alex" ${onboardingData.aiAdvisorName === 'Alex' ? 'selected' : ''}>Alex</option>
-                                    <option value="Taylor" ${onboardingData.aiAdvisorName === 'Taylor' ? 'selected' : ''}>Taylor</option>
-                                    <option value="Custom" ${!['Sam','Scout','Jake','Alex','Taylor'].includes(onboardingData.aiAdvisorName) ? 'selected' : ''}>Custom (Choose your own)</option>
-                                </select>
-                                <div class="form-hint">This is how your AI advisor will introduce themselves</div>
-                            </div>
-
-                            <div class="form-group" id="customAdvisorNameField" style="margin-top: 12px; display: ${!['Sam','Scout','Jake','Alex','Taylor'].includes(onboardingData.aiAdvisorName) ? 'block' : 'none'};">
-                                <label class="form-label">Custom Advisor Name</label>
-                                <input type="text" class="form-input" id="onboarding_customAdvisorName" placeholder="e.g., Chris, Jordan, Morgan..." value="${!['Sam','Scout','Jake','Alex','Taylor'].includes(onboardingData.aiAdvisorName) ? onboardingData.aiAdvisorName : ''}" oninput="onboardingData.aiAdvisorName = this.value">
-                                <div class="form-hint">Enter any name you'd like (keep it short)</div>
-                            </div>
-
-                            <div class="form-group" style="margin-top: 20px;">
-                                <label class="form-label">Advisor Personality</label>
+                                <label class="form-label">Style</label>
                                 <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px;">
                                     ${[
-                                        { value: 'supportive', icon: '🤝', label: 'Supportive Coach', desc: 'Encouraging, friendly, explains things clearly' },
-                                        { value: 'straight_shooter', icon: '🎯', label: 'Straight Shooter', desc: 'Direct, no-nonsense, gets to the point' },
-                                        { value: 'data_nerd', icon: '📊', label: 'Data Nerd', desc: 'Analytical, statistical, loves the numbers' }
+                                        { value: 'supportive', icon: '🤝', label: 'Detailed — Explains the reasoning behind each recommendation', desc: '' },
+                                        { value: 'straight_shooter', icon: '🎯', label: 'Direct — Straight to the point', desc: '' },
+                                        { value: 'data_nerd', icon: '📊', label: 'Analytical — Data-focused, includes score breakdowns', desc: '' }
                                     ].map(opt => `
                                         <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.aiAdvisorTone === opt.value ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
                                             <input type="radio" name="onboarding_aiAdvisorTone" value="${opt.value}" ${onboardingData.aiAdvisorTone === opt.value ? 'checked' : ''} onchange="onboardingData.aiAdvisorTone = this.value; renderOnboardingStep(9);" style="margin-top: 4px; accent-color: var(--accent);">
                                             <div style="flex: 1; text-align: left;">
-                                                <div style="font-size: 16px; margin-bottom: 4px;">${opt.icon} <strong>${opt.label}</strong></div>
-                                                <div style="font-size: 13px; color: var(--text-muted);">${opt.desc}</div>
+                                                <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;"><strong>${opt.label}</strong></div>
                                             </div>
                                         </label>
                                     `).join('')}
                                 </div>
-                            </div>
-
-                            <div style="padding: 12px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(34, 197, 94, 0.1)); border-radius: var(--radius); font-size: 12px; color: var(--text-secondary); margin-top: 16px; border: 1px solid var(--accent);">
-                                <strong>💡 How it works:</strong> Your AI advisor will analyze each bid and give you personalized GO/REVIEW/PASS recommendations in their unique style. You can change this anytime in Settings.
                             </div>
                         </div>
                     </div>
@@ -6233,7 +6179,6 @@ ${fullText.substring(0, 40000)}`;
             } else if (step === 10) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
-                        <div style="font-size: 64px; margin-bottom: 16px;">🤝</div>
                         <h3 style="color: var(--text-primary); margin-bottom: 12px;">Who are your typical clients?</h3>
                         <p style="color: var(--text-muted); margin-bottom: 32px;">Select all that apply - this helps track which client types are most profitable</p>
                         <div style="max-width: 600px; margin: 0 auto;">
@@ -6249,7 +6194,6 @@ ${fullText.substring(0, 40000)}`;
                                     <label style="display: flex; flex-direction: column; gap: 8px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.clientTypes.includes(opt.value) ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <input type="checkbox" value="${opt.value}" ${onboardingData.clientTypes.includes(opt.value) ? 'checked' : ''} onchange="toggleClientType('${opt.value}')" style="accent-color: var(--accent);">
-                                            <div style="font-size: 32px;">${opt.icon}</div>
                                         </div>
                                         <div style="text-align: left;">
                                             <div style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">${opt.label}</div>
@@ -6258,16 +6202,12 @@ ${fullText.substring(0, 40000)}`;
                                     </label>
                                 `).join('')}
                             </div>
-                            <div style="margin-top: 20px; padding: 12px; background: var(--accent-dim); border-radius: var(--radius); border: 1px solid var(--accent); font-size: 12px; color: var(--text-secondary);">
-                                <strong>💡 Why this matters:</strong> BidIntell will track win rates, revenue, and profitability by client type, helping you identify which clients are most valuable to your business.
-                            </div>
                         </div>
                     </div>
                 `;
             } else if (step === 11) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
-                        <div style="font-size: 64px; margin-bottom: 16px;">🤝</div>
                         <h3 style="color: var(--text-primary); margin-bottom: 12px;">Add your first client</h3>
                         <p style="color: var(--text-muted); margin-bottom: 32px;">You can add more later, but let's start with one you work with often</p>
                         <div style="max-width: 400px; margin: 0 auto; text-align: left;">
@@ -6295,7 +6235,7 @@ ${fullText.substring(0, 40000)}`;
                                 <div class="form-hint">How would you rate working with this client?</div>
                             </div>
                             <div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius); font-size: 12px; color: var(--text-secondary); margin-top: 16px;">
-                                <strong>💡 Tip:</strong> You can skip this and add clients later from the Client Manager tab
+                                You can skip this and add clients later from the Client Manager tab.
                             </div>
                         </div>
                     </div>
@@ -6359,8 +6299,8 @@ ${fullText.substring(0, 40000)}`;
                 const companyTypeLabel = onboardingData.companyType === 'subcontractor' ? 'Subcontractor' :
                                         onboardingData.companyType === 'distributor' ? 'Distributor' : 'Manufacturer Rep';
                 const tradesOrProducts = onboardingData.companyType === 'subcontractor' ?
-                    `🔧 Trades: <strong>${onboardingData.trades.length} selected</strong>` :
-                    `📦 Product Lines: <strong>${onboardingData.productLines.length} added</strong>`;
+                    `Trades: <strong>${onboardingData.trades.length} selected</strong>` :
+                    `Product Lines: <strong>${onboardingData.productLines.length} added</strong>`;
                 const advisorToneLabel = onboardingData.aiAdvisorTone === 'supportive' ? 'Supportive Coach' :
                                         onboardingData.aiAdvisorTone === 'straight_shooter' ? 'Straight Shooter' : 'Data Nerd';
                 const clientTypesLabels = {
@@ -6373,22 +6313,21 @@ ${fullText.substring(0, 40000)}`;
 
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
-                        <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
-                        <h3 style="color: var(--text-primary); margin-bottom: 12px;">You're all set!</h3>
-                        <p style="color: var(--text-muted); margin-bottom: 32px;">BidIntell is configured and ready to analyze your bids</p>
+                        <h3 style="color: var(--text-primary); margin-bottom: 12px;">Setup Complete</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 32px;">BidIntell is ready. Here's what you configured:</p>
                         <div style="max-width: 500px; margin: 0 auto; text-align: left;">
                             <div style="background: var(--bg-secondary); padding: 20px; border-radius: var(--radius); margin-bottom: 20px;">
-                                <h4 style="color: var(--text-primary); margin-bottom: 12px;">✅ Your Setup Summary:</h4>
+                                <h4 style="color: var(--text-primary); margin-bottom: 12px;">Your Setup Summary:</h4>
                                 <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.8;">
-                                    <div>🏢 Company Type: <strong>${companyTypeLabel}</strong></div>
-                                    <div>📍 Office: <strong>${onboardingData.city}, ${onboardingData.state}</strong></div>
+                                    <div>Company Type: <strong>${companyTypeLabel}</strong></div>
+                                    <div>Office: <strong>${onboardingData.city}, ${onboardingData.state}</strong></div>
                                     <div>${tradesOrProducts}</div>
-                                    <div>🤝 Client Types: <strong>${clientTypesText}</strong></div>
-                                    <div>📍 Location Importance: <strong>${onboardingData.locationImportance}%</strong></div>
-                                    <div>⚖️ Risk Tolerance: <strong>${onboardingData.riskTolerance}</strong></div>
-                                    <div>🏗️ Capacity: <strong>${onboardingData.capacity}</strong></div>
-                                    <div>🤖 AI Advisor: <strong>${onboardingData.aiAdvisorName}</strong> (${advisorToneLabel})</div>
-                                    <div>🤝 GCs Added: <strong>${onboardingData.gcsAdded}</strong></div>
+                                    <div>Client Types: <strong>${clientTypesText}</strong></div>
+                                    <div>Location Importance: <strong>${onboardingData.locationImportance}%</strong></div>
+                                    <div>Risk Tolerance: <strong>${onboardingData.riskTolerance}</strong></div>
+                                    <div>Capacity: <strong>${onboardingData.capacity}</strong></div>
+                                    <div>Recommendation Style: <strong>${advisorToneLabel}</strong></div>
+                                    <div>Clients Added: <strong>${onboardingData.gcsAdded}</strong></div>
                                 </div>
                             </div>
                             <div style="background: var(--bg-secondary); padding: 16px 20px; border-radius: var(--radius); margin-bottom: 16px; border-left: 3px solid var(--accent);">
@@ -6403,9 +6342,9 @@ ${fullText.substring(0, 40000)}`;
                                 </div>
                             </div>
                             <div style="background: linear-gradient(135deg, var(--accent-dim), rgba(34, 197, 94, 0.1)); padding: 20px; border-radius: var(--radius); border: 2px solid var(--accent);">
-                                <h4 style="color: var(--text-primary); margin-bottom: 8px;">🚀 Next Step: Analyze Your First Bid</h4>
+                                <h4 style="color: var(--text-primary); margin-bottom: 8px;">Next Step: Analyze Your First Bid</h4>
                                 <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                                    Go to the <strong>Analyze</strong> tab and upload a bid document. BidIntell will use AI to extract project details, detect contract risks, identify building type, and give you an intelligent GO/REVIEW/PASS recommendation.
+                                    Go to the <strong>Analyze</strong> tab and upload a bid document. BidIntell will extract project details, detect contract risks, identify building type, and give you an intelligent GO/REVIEW/PASS recommendation.
                                 </p>
                             </div>
                         </div>
