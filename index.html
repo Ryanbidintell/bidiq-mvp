@@ -7,7 +7,7 @@
 <!-- Primary Meta Tags -->
 <title>BidIntell – Bid Scoring for Construction Subcontractors | Know Which Bids to Chase</title>
 <meta name="title" content="BidIntell – Bid Scoring for Construction Subcontractors | Know Which Bids to Chase">
-<meta name="description" content="Stop wasting 80% of estimating time on unwinnable bids. BidIntell scores every opportunity 0-100 with our BidIndex algorithm — personalized to YOUR business. Built for subs. Starting at $49/mo.">
+<meta name="description" content="Stop wasting 80% of estimating time on unwinnable bids. BidIntell scores every opportunity 0-100 with our BidIndex algorithm — personalized to YOUR business. Built for subs. Solo, Team, and Company plans from $49/mo.">
 <meta name="keywords" content="construction bid software, subcontractor bidding, AI construction software, bid analysis tool, construction estimating, GC tracking, contract risk detection">
 <link rel="canonical" href="https://bidintell.ai/">
 
@@ -15,7 +15,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://bidintell.ai">
 <meta property="og:title" content="BidIntell – AI Bid Scoring for Construction Subcontractors">
-<meta property="og:description" content="Score every bid opportunity 0-100 with BidIndex. Personalized to your trade, region, and GC history. Plans from $49/mo.">
+<meta property="og:description" content="Score every bid opportunity 0-100 with BidIndex. Personalized to your trade, region, and GC history. Solo, Team, and Company plans from $49/mo.">
 <meta property="og:image" content="https://bidintell.ai/og-image.png">
 
 <!-- Twitter -->
@@ -61,15 +61,22 @@
       "offers": [
         {
           "@type": "Offer",
-          "name": "Starter",
+          "name": "Solo",
           "price": "49.00",
           "priceCurrency": "USD",
           "billingIncrement": "P1M"
         },
         {
           "@type": "Offer",
-          "name": "Professional",
+          "name": "Team",
           "price": "99.00",
+          "priceCurrency": "USD",
+          "billingIncrement": "P1M"
+        },
+        {
+          "@type": "Offer",
+          "name": "Company",
+          "price": "179.00",
           "priceCurrency": "USD",
           "billingIncrement": "P1M"
         }
@@ -779,7 +786,7 @@ img { max-width: 100%; display: block; }
 /* ===== PRICING ===== */
 .pricing-section { padding: 100px 0; }
 .pricing-section .section-header { text-align: center; margin-left: auto; margin-right: auto; }
-.pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 800px; margin: 0 auto; }
+.pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1100px; margin: 0 auto; }
 .pricing-card {
   background: var(--ink-light);
   border: 1px solid rgba(255,255,255,0.06);
@@ -890,7 +897,7 @@ img { max-width: 100%; display: block; }
   .steps::before { display: none; }
   .feature-row, .feature-row.reverse { grid-template-columns: 1fr; direction: ltr; }
   .feature-row.reverse > * { direction: ltr; }
-  .pricing-grid { grid-template-columns: 1fr; max-width: 420px; }
+  .pricing-grid { grid-template-columns: 1fr; max-width: 440px; }
   .theory-cards { grid-template-columns: 1fr; }
 }
 
@@ -1931,36 +1938,57 @@ img { max-width: 100%; display: block; }
     </div>
     <p style="text-align:center; max-width:640px; margin:0 auto 48px; font-size:1rem; color:var(--fog); line-height:1.7;">Every bad bid decision costs your team 1–4 hours before estimating even starts. At $49/month, BidIntell pays for itself the moment it helps you skip one bad go.</p>
     <div class="pricing-grid">
+      <!-- Solo -->
       <div class="pricing-card">
-        <h3>Starter</h3>
+        <h3>Solo</h3>
+        <p style="font-size:0.8rem;color:var(--fog);margin:-4px 0 12px;">1 seat</p>
         <div class="price">
           <span class="amount">$49</span><span class="period">/month</span>
-          <span class="beta-note">7-day free trial · Founding member pricing</span>
+          <span class="beta-note">7-day free trial · No credit card now</span>
         </div>
         <ul class="pricing-features">
-          <li>Up to 25 bid analyses/month</li>
+          <li>Unlimited bid analyses</li>
           <li>Personalized BidIndex Score</li>
           <li>AI document extraction</li>
           <li>Outcome tracking dashboard</li>
           <li>Contract risk flagging</li>
         </ul>
-        <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=pricing-starter-cta" class="btn-secondary btn-full">Get Started Free →</a>
+        <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=pricing-solo-cta" class="btn-secondary btn-full">Get Started Free →</a>
       </div>
+      <!-- Team -->
       <div class="pricing-card featured">
         <div class="popular-tag">Most Popular</div>
-        <h3>Professional</h3>
+        <h3>Team</h3>
+        <p style="font-size:0.8rem;color:var(--fog);margin:-4px 0 12px;">Up to 3 seats</p>
         <div class="price">
           <span class="amount">$99</span><span class="period">/month</span>
-          <span class="beta-note">7-day free trial · Founding member pricing</span>
+          <span class="beta-note">7-day free trial · No credit card now</span>
         </div>
         <ul class="pricing-features">
-          <li>Unlimited bid analyses</li>
-          <li>Everything in Starter</li>
-          <li>GC & client risk tagging & notes</li>
-          <li>Email forwarding — auto-analyze (coming soon)</li>
-          <li>Priority support</li>
+          <li>Everything in Solo</li>
+          <li>3 estimator seats</li>
+          <li>Shared client database</li>
+          <li>Email forwarding — auto-analyze</li>
+          <li>Team analytics</li>
         </ul>
-        <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=pricing-pro-cta" class="btn-primary btn-full">Get Started Free →</a>
+        <a href="/app?tier=team&utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=pricing-team-cta" class="btn-primary btn-full">Get Started Free →</a>
+      </div>
+      <!-- Company -->
+      <div class="pricing-card">
+        <h3>Company</h3>
+        <p style="font-size:0.8rem;color:var(--fog);margin:-4px 0 12px;">Up to 8 seats</p>
+        <div class="price">
+          <span class="amount">$179</span><span class="period">/month</span>
+          <span class="beta-note">7-day free trial · No credit card now</span>
+        </div>
+        <ul class="pricing-features">
+          <li>Everything in Team</li>
+          <li>8 estimator seats</li>
+          <li>Company-wide reporting</li>
+          <li>Priority support</li>
+          <li>Annual billing available</li>
+        </ul>
+        <a href="/app?tier=company&utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=pricing-company-cta" class="btn-secondary btn-full">Get Started Free →</a>
       </div>
     </div>
   </div>
