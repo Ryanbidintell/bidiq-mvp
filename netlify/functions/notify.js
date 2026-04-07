@@ -44,7 +44,7 @@ exports.handler = async function(event, context) {
             const { errorType, errorMessage, userEmail, stackTrace } = body;
             await sendEmail({
                 to: 'ryan@fsikc.com',
-                subject: `🚨 BidIQ Error: ${errorType}`,
+                subject: `🚨 BidIntell Error: ${errorType}`,
                 htmlBody: `
                     <h2>Error Report</h2>
                     <p><strong>Type:</strong> ${errorType}</p>

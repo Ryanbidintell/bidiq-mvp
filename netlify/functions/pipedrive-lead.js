@@ -72,7 +72,7 @@ exports.handler = async (event) => {
 
     // Step 4: Add note to lead
     const noteContent = [
-      'Demo Request — BidIQ / BidIntell',
+      'Demo Request — BidIntell',
       `Trade: ${trade}`,
       `Bids per month: ${bidsPerMonth}`,
       `Current process: ${currentProcess}`,
