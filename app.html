@@ -1887,46 +1887,57 @@
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <div class="settings-card-title">Score Weights</div>
-                            <div class="settings-card-description">How important is each factor to YOUR bid decisions? Adjust the sliders so they total exactly 100%. For example, if location doesn't matter much to you, reduce it and increase GC relationships.</div>
+                            <div class="settings-card-description">These weights make BidIntell's scoring personal to your business. A relationship-focused sub weights GC score heavily. A risk-averse shop weights contract terms heavily. Adjust until the GO/PASS recommendations match how you actually decide. Must total 100%.</div>
                         </div>
                         <div class="settings-card-body">
+                            <!-- Presets -->
+                            <div style="margin-bottom: 20px;">
+                                <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 10px; font-weight: 600;">Quick Presets</div>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyWeightPreset('relationship')">Relationship-First</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyWeightPreset('risk_averse')">Risk-Averse</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyWeightPreset('market')">Market-Volume</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyWeightPreset('trade')">Trade Specialist</button>
+                                </div>
+                            </div>
                             <div class="weights-container">
                                 <div class="weight-slider" id="weightLocation">
                                     <div class="weight-slider-header">
                                         <span class="weight-slider-label">Location Fit</span>
                                         <span class="weight-slider-value">25%</span>
                                     </div>
-                                    <input type="range" min="0" max="60" value="25">
-                                    <div class="weight-slider-hint">How much does distance from your office matter?</div>
+                                    <input type="range" min="0" max="70" value="25">
+                                    <div class="weight-slider-hint">How much does distance from your office matter? Lower this if you regularly travel for work.</div>
                                 </div>
                                 <div class="weight-slider" id="weightKeywords">
                                     <div class="weight-slider-header">
-                                        <span class="weight-slider-label">Keywords & Contract Terms</span>
+                                        <span class="weight-slider-label">Contract Terms & Risk</span>
                                         <span class="weight-slider-value">30%</span>
                                     </div>
-                                    <input type="range" min="0" max="60" value="30">
-                                    <div class="weight-slider-hint">How much do contract terms (risk clauses, preferences) influence your decision?</div>
+                                    <input type="range" min="0" max="70" value="30">
+                                    <div class="weight-slider-hint">How much do contract terms (liquidated damages, pay-if-paid, retainage) drive your PASS decisions?</div>
                                 </div>
                                 <div class="weight-slider" id="weightGC">
                                     <div class="weight-slider-header">
                                         <span class="weight-slider-label">Client Relationship & Competition</span>
                                         <span class="weight-slider-value">25%</span>
                                     </div>
-                                    <input type="range" min="0" max="60" value="25">
-                                    <div class="weight-slider-hint">How much does your relationship with the GC (and number of competitors) matter?</div>
+                                    <input type="range" min="0" max="70" value="25">
+                                    <div class="weight-slider-hint">How much does your relationship with the GC — and how many subs are bidding — drive your decision?</div>
                                 </div>
                                 <div class="weight-slider" id="weightTrade">
                                     <div class="weight-slider-header">
-                                        <span class="weight-slider-label">Trade Match</span>
+                                        <span class="weight-slider-label">Trade & Scope Match</span>
                                         <span class="weight-slider-value">20%</span>
                                     </div>
-                                    <input type="range" min="0" max="60" value="20">
-                                    <div class="weight-slider-hint">How important is it that your specific trades appear in the specs?</div>
+                                    <input type="range" min="0" max="70" value="20">
+                                    <div class="weight-slider-hint">How important is it that your exact trade divisions appear in the specs? Higher if you're a specialist.</div>
                                 </div>
                                 <div class="weight-total">
                                     Total: <span class="weight-total-value valid" id="weightTotal">100%</span>
                                     <span id="weightWarning" style="display: none; color: var(--danger); font-size: 12px; margin-left: 10px;">Must equal 100%</span>
                                 </div>
+                                <div id="scoringProfileLabel" style="margin-top: 12px; padding: 10px 14px; background: var(--accent-dim); border-radius: var(--radius); font-size: 13px; color: var(--accent); font-weight: 600; display: none;"></div>
                             </div>
                         </div>
                     </div>
@@ -2314,10 +2325,11 @@
                     <label class="form-label">What happened with this bid?</label>
                     <select class="form-select" id="outcomeType" onchange="(async()=>{await updateOutcomeFields();})()">
                         <option value="">Select outcome...</option>
-                        <option value="won">🎉 Won - We got the job!</option>
-                        <option value="lost">❌ Lost - Someone else got it</option>
-                        <option value="ghost">👻 Ghosted - No response from GC</option>
-                        <option value="declined">🚫 Didn't Bid - We passed on this one</option>
+                        <option value="won">Won — We got the job</option>
+                        <option value="lost">Lost — Someone else got it</option>
+                        <option value="ghost">Ghosted — No response from GC</option>
+                        <option value="declined">Passed — Was invited, chose not to bid</option>
+                        <option value="no_bid">No Bid — Saw it, didn't pursue an invitation</option>
                     </select>
                 </div>
                 <div id="outcomeFields"></div>
@@ -13082,6 +13094,60 @@ Respond now:`;
                         <input type="hidden" id="outcomeConfidence" value="3">
                     </div>
                     `;
+            } else if (type === 'no_bid') {
+                html = `${scopeLabelHtml}
+                    <div class="form-group">
+                        <label class="form-label">Bid Analysis Date</label>
+                        <input type="date" class="form-input" id="outcomeDate" value="${currentDate}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Why didn't you pursue this? (select all that apply)</label>
+                        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="not_invited"> Not invited — no GC asked us to bid
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="capacity"> Capacity — too busy to pursue
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="wrong_trade"> Wrong trade / not our scope
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="gc_relationship"> Weak GC relationship — not worth pursuing
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="bad_contract"> Bad contract terms
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="too_many_bidders"> Too many bidders expected
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="below_min_size"> Below minimum project size
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="insufficient_lead_time"> Insufficient lead time
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="gc_payment_history"> GC payment history concerns
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="out_of_territory"> Out of our territory
+                            </label>
+                            <label class="reason-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;">
+                                <input type="checkbox" value="other"> Other
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Notes (optional)</label>
+                        <input type="text" class="form-input" id="outcomeDeclineNotes" placeholder="Any other context...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Hours spent reviewing (optional)</label>
+                        <input type="number" class="form-input" id="outcomeHoursSpent" min="0.1" max="8" step="0.25" placeholder="e.g. 0.5">
+                        <div class="form-hint">Even 30 minutes reviewing a bid you passed on is worth tracking.</div>
+                    </div>
+                    `;
             }
             document.getElementById('outcomeFields').innerHTML = html;
             // Initialize confidence to 3
@@ -13254,6 +13320,15 @@ Respond now:`;
                 outcomeData.notes = document.getElementById('outcomeDeclineNotes')?.value;
                 if (outcomeData.reasons.length === 0) {
                     alert('Please select at least one reason for passing');
+                    return;
+                }
+            } else if (type === 'no_bid') {
+                outcomeData.reasons = Array.from(document.querySelectorAll('.reason-checkbox input:checked')).map(cb => cb.value);
+                outcomeData.notes = document.getElementById('outcomeDeclineNotes')?.value;
+                const hoursSpentNoBid = parseFloat(document.getElementById('outcomeHoursSpent')?.value);
+                if (hoursSpentNoBid > 0) outcomeData.hours_spent = hoursSpentNoBid;
+                if (outcomeData.reasons.length === 0) {
+                    alert('Please select at least one reason');
                     return;
                 }
             }
@@ -13992,6 +14067,7 @@ Respond now:`;
             document.querySelector('#weightTrade input').value = s.weights.trade;
             document.querySelector('#weightTrade .weight-slider-value').textContent = s.weights.trade + '%';
             updateWeightTotal();
+            updateScoringProfile(s.weights.location, s.weights.keywords, s.weights.gc, s.weights.trade);
 
             // Render Trades or Product Lines based on company type
             const tradesContainer = document.getElementById('tradesCheckboxes');
@@ -14246,6 +14322,44 @@ Respond now:`;
             el.textContent = total + '%';
             el.className = 'weight-total-value ' + (total === 100 ? 'valid' : 'invalid');
             warning.style.display = total === 100 ? 'none' : 'inline';
+            updateScoringProfile(l, k, g, t);
+        }
+
+        function updateScoringProfile(l, k, g, t) {
+            const el = document.getElementById('scoringProfileLabel');
+            if (!el) return;
+            const profiles = [
+                { label: 'Relationship-First', desc: 'You win on trust and track record. GC relationship is your primary signal.', condition: () => g >= 40 },
+                { label: 'Risk-Averse', desc: 'Bad contract terms are a dealbreaker. You protect margin over volume.', condition: () => k >= 38 },
+                { label: 'Trade Specialist', desc: 'Your work must match the specs. You go deep in a few divisions.', condition: () => t >= 35 },
+                { label: 'Market-Volume', desc: "You're building presence. Location and availability drive pursuit decisions.", condition: () => l >= 35 },
+                { label: 'Balanced', desc: 'You weigh all factors evenly. Good default for shops with diverse GC lists.', condition: () => true }
+            ];
+            const match = profiles.find(p => p.condition());
+            el.style.display = 'block';
+            el.innerHTML = `Scoring Profile: <strong>${match.label}</strong> — ${match.desc}`;
+        }
+
+        function applyWeightPreset(preset) {
+            const presets = {
+                relationship: { location: 15, keywords: 15, gc: 55, trade: 15 },
+                risk_averse:  { location: 20, keywords: 45, gc: 20, trade: 15 },
+                market:       { location: 35, keywords: 20, gc: 25, trade: 20 },
+                trade:        { location: 20, keywords: 20, gc: 20, trade: 40 }
+            };
+            const w = presets[preset];
+            if (!w) return;
+            const set = (id, val) => {
+                const slider = document.querySelector(`#${id} input`);
+                const label = document.querySelector(`#${id} .weight-slider-value`);
+                if (slider) slider.value = val;
+                if (label) label.textContent = val + '%';
+            };
+            set('weightLocation', w.location);
+            set('weightKeywords', w.keywords);
+            set('weightGC', w.gc);
+            set('weightTrade', w.trade);
+            updateWeightTotal();
         }
 
         document.querySelectorAll('.weight-slider input').forEach(input => {
