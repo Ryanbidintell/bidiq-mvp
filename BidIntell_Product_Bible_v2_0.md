@@ -1,11 +1,11 @@
-# BidIntell Product Bible v1.9
+# BidIntell Product Bible v2.0
 
-**Version:** 1.9 (revised)
+**Version:** 2.0
 **Date:** April 8, 2026
 **Status:** LOCKED — This is the definitive product roadmap and strategy
 **Owner:** Ryan Elder
 
-**What changed in this revision (April 8, 2026):**
+**What changed from v1.9:**
 - Moat-first strategy layer added — features ranked and sequenced by defensibility, not just usefulness
 - Full current-state audit — Phase 1, 1.5, and 2 are complete; roadmap updated accordingly
 - BidIndex scoring model updated — user-defined weights are now the core personalization mechanism; 5-dimension upgrade path specified
@@ -17,6 +17,7 @@
 - Build order added — canonical near-term sequence
 - Pricing updated to reflect live tiers (Solo $49 / Team $99 / Company $179)
 - Phase 2 (Team accounts) marked complete
+- BidIntell_Moat_Strategy_v1.md retired — fully absorbed into this document
 
 ---
 
@@ -444,8 +445,8 @@ Default answer to any feature request: "Not yet — that's Phase X."
 | v1.7 | Feb 6, 2026 | Full-page reports, county location |
 | v1.8 | Feb 7, 2026 | Phase restructure, validate before scale |
 | v1.9 | Feb 24, 2026 | Game Theory Intelligence Framework; Competitive Pressure Score; Bid Risk Flag; Client Relationship Intelligence module; Beta cold-start strategy; Two-sided market sequencing |
-| v1.9 (revised) | Apr 8, 2026 | **Moat-first strategy layer integrated. Full current-state audit. Phase 1+1.5+2 marked complete. Q2–Q4 moat-first roadmap. User-defined weights as core personalization. No-bid outcome. Weight presets + scoring profile. 5-dimension BidIndex upgrade path. Anti-roadmap added. Client language (replaces GC). BidIntell_Moat_Strategy_v1.md retired into this document.** |
+| **v2.0** | **Apr 8, 2026** | **Moat-first strategy layer integrated. Full current-state audit. Phase 1+1.5+2 marked complete. Q2–Q4 moat-first roadmap. User-defined weights as core personalization. No-bid outcome. Weight presets + scoring profile. 5-dimension BidIndex upgrade path. Anti-roadmap added. Client language (replaces GC). BidIntell_Moat_Strategy_v1.md retired into this document.** |
 
 ---
 
-**This is the Bible. One doc. One roadmap. Capture decisions. Build the moat. Validate before scale.**
+**This is the Bible. v2.0. One doc. One roadmap. Capture decisions. Build the moat. Validate before scale.**
