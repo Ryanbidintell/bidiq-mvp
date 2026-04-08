@@ -2110,7 +2110,7 @@
             <!-- Admin Tab -->
             <div class="tab-content" id="tab-admin">
                 <header class="page-header">
-                    <h2 class="page-title">🛡️ Admin Dashboard</h2>
+                    <h2 class="page-title">Admin Dashboard</h2>
                     <p class="page-subtitle">Beta feedback and system management</p>
                 </header>
                 <div class="page-content">
@@ -2118,18 +2118,18 @@
                     <!-- Beta Feedback Section -->
                     <div class="settings-card">
                         <div class="settings-card-header">
-                            <div class="settings-card-title">💬 Beta Feedback</div>
+                            <div class="settings-card-title">Beta Feedback</div>
                             <div class="settings-card-description">View and manage feedback from beta testers</div>
                         </div>
                         <div class="settings-card-body">
                             <div style="display: flex; gap: 12px; margin-bottom: 16px;">
-                                <button class="btn btn-secondary" onclick="loadAllFeedback()">🔄 Refresh</button>
+                                <button class="btn btn-secondary" onclick="loadAllFeedback()">Refresh</button>
                                 <select id="feedbackFilter" onchange="filterFeedback()" class="form-select" style="width: 200px;">
                                     <option value="all">All Feedback</option>
-                                    <option value="bug">🐛 Bugs Only</option>
-                                    <option value="feature">💡 Features Only</option>
-                                    <option value="ux">🎨 UX Issues Only</option>
-                                    <option value="general">💬 General Only</option>
+                                    <option value="bug">Bugs Only</option>
+                                    <option value="feature">Features Only</option>
+                                    <option value="ux">UX Issues Only</option>
+                                    <option value="general">General Only</option>
                                 </select>
                             </div>
                             <div id="feedbackList" style="max-height: 600px; overflow-y: auto;">
@@ -2141,11 +2141,11 @@
                     <!-- GC Alias Management -->
                     <div class="settings-card">
                         <div class="settings-card-header">
-                            <div class="settings-card-title">🔗 GC Alias Management</div>
+                            <div class="settings-card-title">GC Alias Management</div>
                             <div class="settings-card-description">Merge duplicate GC entries and manage aliases</div>
                         </div>
                         <div class="settings-card-body">
-                            <button class="btn btn-secondary" onclick="findDuplicateGCs()">🔍 Find Potential Duplicates</button>
+                            <button class="btn btn-secondary" onclick="findDuplicateGCs()">Find Potential Duplicates</button>
                             <div id="duplicateGCsList" style="margin-top: 16px;">
                                 <p style="color: var(--text-muted);">Click "Find Potential Duplicates" to scan for similar GC names</p>
                             </div>
@@ -2155,7 +2155,7 @@
                     <!-- System Stats -->
                     <div class="settings-card">
                         <div class="settings-card-header">
-                            <div class="settings-card-title">📊 System Statistics</div>
+                            <div class="settings-card-title">System Statistics</div>
                             <div class="settings-card-description">Platform health and usage metrics</div>
                         </div>
                         <div class="settings-card-body">
@@ -2171,7 +2171,7 @@
             <!-- Founder Metrics Tab -->
             <div class="tab-content" id="tab-metrics">
                 <header class="page-header">
-                    <h2 class="page-title">📊 Founder Metrics</h2>
+                    <h2 class="page-title">Founder Metrics</h2>
                     <p class="page-subtitle">Platform health, revenue, and activation data</p>
                 </header>
                 <div class="page-content">
@@ -6163,9 +6163,9 @@ ${fullText.substring(0, 40000)}`;
                                 <label class="form-label">Style</label>
                                 <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px;">
                                     ${[
-                                        { value: 'supportive', icon: '🤝', label: 'Detailed — Explains the reasoning behind each recommendation', desc: '' },
-                                        { value: 'straight_shooter', icon: '🎯', label: 'Direct — Straight to the point', desc: '' },
-                                        { value: 'data_nerd', icon: '📊', label: 'Analytical — Data-focused, includes score breakdowns', desc: '' }
+                                        { value: 'supportive', label: 'Detailed — Explains the reasoning behind each recommendation', desc: '' },
+                                        { value: 'straight_shooter', label: 'Direct — Straight to the point', desc: '' },
+                                        { value: 'data_nerd', label: 'Analytical — Data-focused, includes score breakdowns', desc: '' }
                                     ].map(opt => `
                                         <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.aiAdvisorTone === opt.value ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
                                             <input type="radio" name="onboarding_aiAdvisorTone" value="${opt.value}" ${onboardingData.aiAdvisorTone === opt.value ? 'checked' : ''} onchange="onboardingData.aiAdvisorTone = this.value; renderOnboardingStep(9);" style="margin-top: 4px; accent-color: var(--accent);">
@@ -15648,7 +15648,7 @@ Respond now:`;
             try {
                 // Fetch org info, members, and per-member project counts
                 const [orgRes, membersRes, projectsRes] = await Promise.all([
-                    supabaseClient.from('organizations').select('*').eq('id', settings.org_id).single(),
+                    supabaseClient.from('organizations').select('*').eq('id', settings.org_id).maybeSingle(),
                     supabaseClient.from('org_members').select('*').eq('org_id', settings.org_id).eq('is_active', true).order('created_at'),
                     supabaseClient.from('projects').select('user_id, recommendation').eq('org_id', settings.org_id)
                 ]);
