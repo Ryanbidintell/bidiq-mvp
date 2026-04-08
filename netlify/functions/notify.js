@@ -14,7 +14,7 @@ async function sendEmail({ to, subject, htmlBody }) {
         body: JSON.stringify({
             From: 'hello@bidintell.ai',
             To: to,
-            ...(isInternalOnly ? {} : { Bcc: 'ryan@bidintell.ai' }),
+            ...(isInternalOnly ? {} : { Bcc: 'ryan@fsikc.com' }),
             Subject: subject,
             HtmlBody: htmlBody,
             MessageStream: 'outbound'

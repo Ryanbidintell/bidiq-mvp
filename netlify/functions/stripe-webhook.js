@@ -118,7 +118,7 @@ async function sendWelcomeEmail(subscription) {
             body: JSON.stringify({
                 From: 'Ryan at BidIntell <hello@bidintell.ai>',
                 To: userEmail,
-                Bcc: 'ryan@bidintell.ai',
+                Bcc: 'ryan@fsikc.com',
                 Subject: `Welcome to BidIntell — you're in`,
                 HtmlBody: htmlBody,
                 MessageStream: 'outbound'
@@ -189,6 +189,87 @@ async function handleSubscription(subscription) {
     }
 
     console.log(`✅ Synced subscription ${subscription.id}: $${mrr}/mo (${status})`);
+}
+
+/**
+ * Send trial-ending reminder (fires 3 days before trial ends via customer.subscription.trial_will_end)
+ */
+async function sendTrialEndingEmail(subscription) {
+    try {
+        const userId = await getUserFromStripeCustomer(subscription.customer);
+        if (!userId) { console.warn('sendTrialEndingEmail: no user_id found'); return; }
+
+        const { data: authData } = await supabase.auth.admin.getUserById(userId);
+        const userEmail = authData?.user?.email;
+        if (!userEmail) { console.warn('sendTrialEndingEmail: no email for user', userId); return; }
+
+        // Dedup — only send once
+        const { data: existing } = await supabase
+            .from('admin_events')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('event_type', 'trial_ending_email')
+            .limit(1);
+        if (existing && existing.length > 0) { console.log('Trial ending email already sent for', userId); return; }
+
+        const firstName = userEmail.split('@')[0].split('.')[0];
+        const name = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+        const trialEnd = subscription.trial_end
+            ? new Date(subscription.trial_end * 1000).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+            : 'in 3 days';
+        const planName = subscription.items?.data[0]?.plan?.nickname || 'BidIntell';
+
+        const htmlBody = `
+<div style="background:#ffffff; font-family:'Helvetica Neue',sans-serif; max-width:560px; margin:0 auto; padding:40px 32px; color:#0B0F14;">
+    <div style="margin-bottom:28px;">
+        <span style="font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#F26522;">BIDINTELL</span>
+    </div>
+    <h2 style="font-size:22px; font-weight:700; margin:0 0 16px;">Your free trial ends ${trialEnd}, ${name}.</h2>
+    <p style="font-size:15px; line-height:1.6; color:#374151; margin:0 0 16px;">
+        Your card will be charged on ${trialEnd} for your ${planName} subscription. Nothing you need to do if you want to keep going.
+    </p>
+    <p style="font-size:15px; line-height:1.6; color:#374151; margin:0 0 24px;">
+        If BidIntell hasn't clicked yet — reply to this email and tell me what's missing. I read every response personally and I'd rather fix it than lose you.
+    </p>
+    <div style="background:#f9fafb; border-left:3px solid #F26522; padding:16px 20px; margin:0 0 24px; border-radius:4px;">
+        <p style="margin:0 0 6px; font-size:14px; font-weight:700; color:#0B0F14;">To get the most out of BidIntell before your trial ends:</p>
+        <p style="margin:0 0 4px; font-size:14px; color:#374151;">1. Score at least one real bid — upload a PDF in the Analyze tab</p>
+        <p style="margin:0 0 4px; font-size:14px; color:#374151;">2. Rate your top 3 clients in the Clients tab</p>
+        <p style="margin:0; font-size:14px; color:#374151;">3. Log the outcome on any past bid — even a quick win/loss teaches the AI</p>
+    </div>
+    <p style="font-size:14px; line-height:1.6; color:#6b7280; margin:0 0 24px;">
+        To cancel before ${trialEnd}: Settings → Subscription &amp; Billing → Manage Billing.
+    </p>
+    <a href="https://bidintell.ai/app" style="display:inline-block; background:#F26522; color:#ffffff; font-weight:700; font-size:15px; padding:14px 28px; border-radius:6px; text-decoration:none; margin-bottom:28px;">
+        Open BidIntell →
+    </a>
+    <hr style="border:none; border-top:1px solid #e5e7eb; margin:28px 0;">
+    <p style="font-size:14px; color:#6b7280; margin:0;">— Ryan<br><span style="color:#9ca3af;">Founder, BidIntell · Reply any time</span></p>
+</div>`;
+
+        await fetch('https://api.postmarkapp.com/email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Postmark-Server-Token': POSTMARK_API_KEY },
+            body: JSON.stringify({
+                From: 'Ryan at BidIntell <hello@bidintell.ai>',
+                To: userEmail,
+                Bcc: 'ryan@fsikc.com',
+                Subject: `Your BidIntell trial ends ${trialEnd}`,
+                HtmlBody: htmlBody,
+                MessageStream: 'outbound'
+            })
+        });
+
+        await supabase.from('admin_events').insert({
+            user_id: userId,
+            event_type: 'trial_ending_email',
+            event_data: { email: userEmail, plan: planName, trial_end: trialEnd, sent_at: new Date().toISOString() }
+        });
+
+        console.log(`✅ Trial ending email sent to ${userEmail}`);
+    } catch (err) {
+        console.error('❌ sendTrialEndingEmail failed:', err.message);
+    }
 }
 
 /**
@@ -284,6 +365,10 @@ exports.handler = async function(event, context) {
 
             case 'customer.subscription.updated':
                 await handleSubscription(stripeEvent.data.object);
+                break;
+
+            case 'customer.subscription.trial_will_end':
+                await sendTrialEndingEmail(stripeEvent.data.object);
                 break;
 
             case 'customer.subscription.deleted':
