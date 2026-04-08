@@ -4521,7 +4521,8 @@ ${fullText.substring(0, 40000)}`;
                     rating: c.rating,
                     bids: c.bids || 0,
                     wins: c.wins || 0,
-                    riskTags: c.risk_tags || []
+                    riskTags: c.risk_tags || [],
+                    notes: c.notes || ''
                 }));
 
                 if (!clientType) {
@@ -4566,6 +4567,7 @@ ${fullText.substring(0, 40000)}`;
                     bids: client.bids || 0,
                     wins: client.wins || 0,
                     risk_tags: client.riskTags || [],
+                    notes: client.notes || null,
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'id' }).select().single();
 
@@ -13475,14 +13477,16 @@ Respond now:`;
                         return `<span style="font-size:10px;padding:2px 6px;background:${bg};color:${color};border-radius:4px;">${GC_TAG_LABELS[t] || t}</span>`;
                     }).join('')}</div>`
                     : '';
+                const notesHtml = gc.notes ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;font-style:italic;">${gc.notes}</div>` : '';
                 return `<div class="gc-item">
                     <div class="gc-item-info">
                         <div class="gc-item-name">${gc.name}</div>
                         <div class="gc-item-stats">${gc.bids || 0} bids${rate !== null ? ' • ' + rate + '% win rate' : ''}</div>
                         ${tagsHtml}
+                        ${notesHtml}
                     </div>
                     <div class="gc-item-rating">${[1, 2, 3, 4, 5].map(i => `<span class="star ${i <= gc.rating ? 'filled' : ''}" onclick="rateGC('${gc.name.replace(/'/g, "\\'")}', ${i})">★</span>`).join('')}</div>
-                    <button class="btn btn-sm btn-secondary" onclick="editGCTags('${gc.name.replace(/'/g, "\\'")}')" style="margin-left:8px;">Tags</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editGCTags('${gc.name.replace(/'/g, "\\'")}')" style="margin-left:8px;">Edit</button>
                     <button class="btn btn-sm btn-secondary" onclick="deleteGCUI('${gc.name.replace(/'/g, "\\'")}')" style="color:var(--danger);margin-left:4px;">×</button>
                 </div>`;
             }).join('');
@@ -13531,24 +13535,24 @@ Respond now:`;
             modal.id = 'editTagsModal';
             modal.innerHTML = `
                 <div class="modal" style="max-width:500px;">
-                    <div class="modal-header"><h3 class="modal-title">Edit Tags: ${name}</h3><button class="modal-close" onclick="closeModal('editTagsModal');document.getElementById('editTagsModal').remove();">×</button></div>
+                    <div class="modal-header"><h3 class="modal-title">Edit Client: ${name}</h3><button class="modal-close" onclick="closeModal('editTagsModal');document.getElementById('editTagsModal').remove();">×</button></div>
                     <div class="modal-body">
                         <div style="margin-bottom:16px;">
-                            <div style="font-weight:600;margin-bottom:8px;color:var(--success);display:flex;align-items:center;gap:6px;">
-                                ✓ Positive Tags
-                            </div>
+                            <div style="font-weight:600;margin-bottom:8px;color:var(--success);display:flex;align-items:center;gap:6px;">✓ Positive Tags</div>
                             <div style="display:flex;flex-wrap:wrap;gap:8px;">${positiveTagsHtml}</div>
                         </div>
-                        <div>
-                            <div style="font-weight:600;margin-bottom:8px;color:var(--danger);display:flex;align-items:center;gap:6px;">
-                                ⚠️ Risk Tags
-                            </div>
+                        <div style="margin-bottom:16px;">
+                            <div style="font-weight:600;margin-bottom:8px;color:var(--danger);display:flex;align-items:center;gap:6px;">⚠ Risk Tags</div>
                             <div style="display:flex;flex-wrap:wrap;gap:8px;">${negativeTagsHtml}</div>
+                        </div>
+                        <div>
+                            <div style="font-weight:600;margin-bottom:6px;color:var(--text-primary);">Relationship Notes</div>
+                            <textarea id="editClientNotes" class="form-input" rows="3" placeholder="Payment history, communication style, anything useful..." style="resize:vertical;font-size:13px;">${gc.notes || ''}</textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-secondary" onclick="closeModal('editTagsModal');document.getElementById('editTagsModal').remove();">Cancel</button>
-                        <button class="btn btn-primary" onclick="saveGCTags('${name.replace(/'/g, "\\'")}')">Save Tags</button>
+                        <button class="btn btn-primary" onclick="saveGCTags('${name.replace(/'/g, "\\'")}')">Save</button>
                     </div>
                 </div>`;
             document.body.appendChild(modal);
@@ -13558,10 +13562,11 @@ Respond now:`;
             const gcs = await getGCs();
             const gc = gcs.find(g => g.name === name);
             if (!gc) return;
-            
+
             gc.riskTags = Array.from(document.querySelectorAll('.editGCTag:checked')).map(cb => cb.value);
+            gc.notes = document.getElementById('editClientNotes')?.value?.trim() || '';
             await saveGC(gc);
-            
+
             document.getElementById('editTagsModal')?.remove();
             await loadGCDatabase();
         }
