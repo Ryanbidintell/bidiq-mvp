@@ -118,7 +118,7 @@ async function sendWelcomeEmail(subscription) {
             body: JSON.stringify({
                 From: 'Ryan at BidIntell <hello@bidintell.ai>',
                 To: userEmail,
-                Bcc: 'ryan@fsikc.com',
+                Bcc: 'ryan@bidintell.ai',
                 Subject: `Welcome to BidIntell — you're in`,
                 HtmlBody: htmlBody,
                 MessageStream: 'outbound'
@@ -253,7 +253,7 @@ async function sendTrialEndingEmail(subscription) {
             body: JSON.stringify({
                 From: 'Ryan at BidIntell <hello@bidintell.ai>',
                 To: userEmail,
-                Bcc: 'ryan@fsikc.com',
+                Bcc: 'ryan@bidintell.ai',
                 Subject: `Your BidIntell trial ends ${trialEnd}`,
                 HtmlBody: htmlBody,
                 MessageStream: 'outbound'
