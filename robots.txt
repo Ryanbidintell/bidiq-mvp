@@ -9,5 +9,9 @@ Sitemap: https://bidintell.ai/sitemap.xml
 
 # Disallow admin and internal pages
 Disallow: /app.html
+Disallow: /admin.html
+Disallow: /auth.html
 Disallow: /.claude/
 Disallow: /supabase/
+Disallow: /scripts/
+Disallow: /migrations/

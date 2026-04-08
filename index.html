@@ -8,14 +8,14 @@
 <title>BidIntell – Bid Scoring for Construction Subcontractors | Know Which Bids to Chase</title>
 <meta name="title" content="BidIntell – Bid Scoring for Construction Subcontractors | Know Which Bids to Chase">
 <meta name="description" content="Stop wasting 80% of estimating time on unwinnable bids. BidIntell scores every opportunity 0-100 with our BidIndex algorithm — personalized to YOUR business. Built for subs. Solo, Team, and Company plans from $49/mo.">
-<meta name="keywords" content="construction bid software, subcontractor bidding, AI construction software, bid analysis tool, construction estimating, GC tracking, contract risk detection">
+<meta name="keywords" content="construction bid software, subcontractor bidding, AI construction software, bid analysis tool, construction estimating, bid scoring, contract risk detection, BidIndex, specialty contractor software">
 <link rel="canonical" href="https://bidintell.ai/">
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://bidintell.ai">
 <meta property="og:title" content="BidIntell – AI Bid Scoring for Construction Subcontractors">
-<meta property="og:description" content="Score every bid opportunity 0-100 with BidIndex. Personalized to your trade, region, and GC history. Solo, Team, and Company plans from $49/mo.">
+<meta property="og:description" content="Score every bid opportunity 0-100 with BidIndex. Personalized to your trade, region, and client history. Solo, Team, and Company plans from $49/mo.">
 <meta property="og:image" content="https://bidintell.ai/og-image.png">
 
 <!-- Twitter -->
@@ -52,40 +52,49 @@
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "WebApplication",
+      "@type": "SoftwareApplication",
       "name": "BidIntell",
       "url": "https://bidintell.ai",
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "Web",
-      "description": "AI-powered bid scoring platform for construction subcontractors. BidIndex scores bid opportunities 0-100 based on location, trade match, GC relationship, and keywords.",
+      "description": "AI-powered bid scoring platform for construction subcontractors. BidIndex scores bid opportunities 0-100 based on location, trade match, client relationship, and contract risk.",
       "offers": [
         {
           "@type": "Offer",
           "name": "Solo",
           "price": "49.00",
           "priceCurrency": "USD",
-          "billingIncrement": "P1M"
+          "billingIncrement": "P1M",
+          "description": "1 seat — individual subcontractor"
         },
         {
           "@type": "Offer",
           "name": "Team",
           "price": "99.00",
           "priceCurrency": "USD",
-          "billingIncrement": "P1M"
+          "billingIncrement": "P1M",
+          "description": "Up to 3 seats"
         },
         {
           "@type": "Offer",
           "name": "Company",
           "price": "179.00",
           "priceCurrency": "USD",
-          "billingIncrement": "P1M"
+          "billingIncrement": "P1M",
+          "description": "Up to 8 seats"
         }
       ]
     },
     {
       "@type": "Organization",
       "name": "BidIntell",
-      "url": "https://bidintell.ai"
+      "url": "https://bidintell.ai",
+      "logo": "https://bidintell.ai/og-image.png",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "hello@bidintell.ai",
+        "contactType": "customer support"
+      }
     },
     {
       "@type": "FAQPage",
@@ -95,15 +104,7 @@
           "name": "Is BidIntell easy to use if I'm not great with technology?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. Setup takes about 5 minutes — enter your trade, service area, and the GCs you work with. After that, upload a bid and get a score. No training required."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How is my data kept private?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Your bid data is private to your account and never shared with other users, GCs, or third parties."
+            "text": "Yes. Setup takes about 5 minutes — enter your trade, service area, and the clients you work with. After that, upload a bid and get a score. No training required."
           }
         },
         {
@@ -119,7 +120,47 @@
           "name": "How long does setup take?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "About 5 minutes. Enter your trade, service area, and preferred GCs. Then upload your first bid and see your BidIndex score."
+            "text": "About 5 minutes. Enter your trade, service area, and preferred clients. Then upload your first bid and see your BidIndex score."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Will BidIntell replace my estimating software?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No — and it's not trying to. BidIntell helps you decide which bids to pursue before your estimators invest time on takeoffs. Think of it as the filter before the funnel."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the BidIndex Score work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The BidIndex Score is a 0–100 fit score — not a win probability. It measures how well a bid matches your business across four factors: location, scope and contract terms, client relationship, and trade match. Each factor is weighted and personalized to your settings."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can my competitors see what bids I'm analyzing?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Your data is completely private to your account. We use row-level security — meaning the database itself enforces that no other user can ever access your projects, client relationships, or bid history."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can BidIntell see my bid documents?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Your bid PDFs are processed to extract project details and then scored. We don't read them, share them, or use them to train any models. Your documents are yours."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do you sell my data or share it with clients?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Never. We don't sell data, share it with clients, or let anyone outside your account see your activity. Your client ratings, win rates, and bid decisions stay private."
           }
         }
       ]
@@ -1852,7 +1893,7 @@ img { max-width: 100%; display: block; }
         </button>
         <div class="sc-body">
           <div class="sc-body-inner">
-            <p>Looks up the GC, owner, or client named in the bid against your Clients list. If you've worked with them before, this factor uses your actual win rate with that client. If you've only rated them by stars, it uses that rating. If they're new to you, it falls back to your default rating for unknown clients.</p>
+            <p>Looks up the client named in the bid against your Clients list. If you've worked with them before, this factor uses your actual win rate with that client. If you've only rated them by stars, it uses that rating. If they're new to you, it falls back to your default rating for unknown clients.</p>
             <p style="margin-top:10px;">BidIntell supports all client types — general contractors, building owners, municipalities, distributors, manufacturer reps, and more. Your ratings and win/loss history are private to your account and never shared with or visible to other users.</p>
             <div class="sc-signals">
               <span class="sc-signal">GC / client name match</span>
@@ -1936,7 +1977,7 @@ img { max-width: 100%; display: block; }
             What's the fastest way to improve my scores?
             <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
-          <div class="faq-answer"><div class="faq-answer-inner">Complete your profile in Settings. Set your service area, add your CSI trade sections, enter a few good and bad keywords, and rate the GCs you work with most. Each of those inputs directly feeds one of the four score factors. Incomplete profiles produce neutral 50-point scores on most factors — which tells you nothing.</div></div>
+          <div class="faq-answer"><div class="faq-answer-inner">Complete your profile in Settings. Set your service area, add your CSI trade sections, enter a few good and bad keywords, and rate the clients you work with most. Each of those inputs directly feeds one of the four score factors. Incomplete profiles produce neutral 50-point scores on most factors — which tells you nothing.</div></div>
         </div>
 
         <div class="faq-item">
@@ -2214,7 +2255,7 @@ img { max-width: 100%; display: block; }
           Is BidIntell easy to use if I'm not great with technology?
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <div class="faq-answer"><div class="faq-answer-inner">Yes. Setup takes about 5 minutes — enter your trade, service area, and the GCs you work with. After that, upload a bid and get a score. No training required.</div></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Yes. Setup takes about 5 minutes — enter your trade, service area, and the clients you work with. After that, upload a bid and get a score. No training required.</div></div>
       </div>
       <div class="faq-item">
         <button class="faq-question" aria-expanded="false">
@@ -2228,7 +2269,7 @@ img { max-width: 100%; display: block; }
           How long does setup take?
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <div class="faq-answer"><div class="faq-answer-inner">About 5 minutes. Enter your trade, service area, and preferred GCs. Then upload your first bid and see your BidIndex score.</div></div>
+        <div class="faq-answer"><div class="faq-answer-inner">About 5 minutes. Enter your trade, service area, and your key clients. Then upload your first bid and see your BidIndex score.</div></div>
       </div>
       <div class="faq-item">
         <button class="faq-question" aria-expanded="false">
@@ -2260,17 +2301,17 @@ img { max-width: 100%; display: block; }
       </div>
       <div class="faq-item">
         <button class="faq-question" aria-expanded="false">
-          Do you sell my data or share it with GCs?
+          Do you sell my data or share it with clients or GCs?
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <div class="faq-answer"><div class="faq-answer-inner">Never. We don't sell data, share it with GCs, or let anyone outside your account see your activity. Your client ratings, win rates, and bid decisions stay private.</div></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Never. We don't sell data, share it with clients or GCs, or let anyone outside your account see your activity. Your client ratings, win rates, and bid decisions stay private.</div></div>
       </div>
       <div class="faq-item">
         <button class="faq-question" aria-expanded="false">
           How is my data kept private?
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <div class="faq-answer"><div class="faq-answer-inner">Your bid data is private to your account and never shared with other users, GCs, or third parties. We use magic link login — no passwords to steal or forget.</div></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Your bid data is private to your account and never shared with other users, clients, or third parties. We use magic link login — no passwords to steal or forget.</div></div>
       </div>
       <div class="faq-item">
         <button class="faq-question" aria-expanded="false">
