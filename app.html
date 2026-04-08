@@ -5805,6 +5805,14 @@ ${fullText.substring(0, 40000)}`;
 
         function renderOnboardingStep(step) {
             onboardingStep = step;
+            // GA4: track which onboarding step was reached
+            const stepNames = {
+                0: 'org_setup', 1: 'company_type', 2: 'plan_rooms', 3: 'office_address',
+                4: 'acquisition_source', 5: 'csi_sections', 6: 'location_importance',
+                7: 'risk_tolerance', 8: 'capacity', 9: 'ai_advisor',
+                10: 'client_types', 11: 'client_addition', 12: 'email_alias', 13: 'summary'
+            };
+            if (typeof gtag !== 'undefined') gtag('event', 'onboarding_step_viewed', { step_number: step, step_name: stepNames[step] || 'unknown' });
             const body = document.getElementById('onboardingBody');
             const backBtn = document.getElementById('onboardingBackBtn');
             const nextBtn = document.getElementById('onboardingNextBtn');
@@ -6948,6 +6956,7 @@ ${fullText.substring(0, 40000)}`;
         }
 
         async function skipOnboarding() {
+            if (typeof gtag !== 'undefined') gtag('event', 'onboarding_skipped', { at_step: onboardingStep });
             if (confirm('Are you sure you want to skip setup? You can configure settings later, but BidIntell won\'t be fully optimized for your business yet.')) {
                 try {
                     console.log('🚀 Skipping onboarding...');
