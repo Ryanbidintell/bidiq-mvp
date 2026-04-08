@@ -1887,7 +1887,7 @@
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <div class="settings-card-title">Score Weights</div>
-                            <div class="settings-card-description">These weights make BidIntell's scoring personal to your business. A relationship-focused sub weights GC score heavily. A risk-averse shop weights contract terms heavily. Adjust until the GO/PASS recommendations match how you actually decide. Must total 100%.</div>
+                            <div class="settings-card-description">These weights make BidIntell's scoring personal to your business. A relationship-focused sub weights client score heavily. A risk-averse shop weights contract terms heavily. Adjust until the GO/PASS recommendations match how you actually decide. Must total 100%.</div>
                         </div>
                         <div class="settings-card-body">
                             <!-- Presets -->
@@ -1923,7 +1923,7 @@
                                         <span class="weight-slider-value">25%</span>
                                     </div>
                                     <input type="range" min="0" max="70" value="25">
-                                    <div class="weight-slider-hint">How much does your relationship with the GC — and how many subs are bidding — drive your decision?</div>
+                                    <div class="weight-slider-hint">How much does your relationship with the client — and how many subs are bidding — drive your decision?</div>
                                 </div>
                                 <div class="weight-slider" id="weightTrade">
                                     <div class="weight-slider-header">
@@ -2009,7 +2009,7 @@
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label">Default GC Rating</label>
+                                    <label class="form-label">Default Client Rating</label>
                                     <select class="form-select" id="settingDefaultStars">
                                         <option value="1">1 star</option>
                                         <option value="2">2 stars</option>
@@ -2017,7 +2017,7 @@
                                         <option value="4">4 stars</option>
                                         <option value="5">5 stars</option>
                                     </select>
-                                    <div class="form-hint">When you add a new GC, what's their default rating?</div>
+                                    <div class="form-hint">When you add a new client, what's their default rating?</div>
                                 </div>
                             </div>
                         </div>
@@ -2152,13 +2152,13 @@
                     <!-- GC Alias Management -->
                     <div class="settings-card">
                         <div class="settings-card-header">
-                            <div class="settings-card-title">GC Alias Management</div>
-                            <div class="settings-card-description">Merge duplicate GC entries and manage aliases</div>
+                            <div class="settings-card-title">Client Alias Management</div>
+                            <div class="settings-card-description">Merge duplicate client entries and manage aliases</div>
                         </div>
                         <div class="settings-card-body">
                             <button class="btn btn-secondary" onclick="findDuplicateGCs()">Find Potential Duplicates</button>
                             <div id="duplicateGCsList" style="margin-top: 16px;">
-                                <p style="color: var(--text-muted);">Click "Find Potential Duplicates" to scan for similar GC names</p>
+                                <p style="color: var(--text-muted);">Click "Find Potential Duplicates" to scan for similar client names</p>
                             </div>
                         </div>
                     </div>
@@ -2258,13 +2258,13 @@
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label">General Contractors</label>
+                                    <label class="form-label">Clients</label>
                                     <div id="reportGCList" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; min-height: 40px; padding: 8px; background: var(--bg-secondary); border-radius: 6px;"></div>
                                     <div style="display: flex; gap: 8px;">
-                                        <input type="text" class="form-input" id="reportGCInput" placeholder="Add GC name" style="flex: 1;">
-                                        <button class="btn btn-sm btn-secondary" onclick="addGCFromReport()">+ Add GC</button>
+                                        <input type="text" class="form-input" id="reportGCInput" placeholder="Add client name" style="flex: 1;">
+                                        <button class="btn btn-sm btn-secondary" onclick="addGCFromReport()">+ Add Client</button>
                                     </div>
-                                    <div class="form-hint">Add or remove GCs. New GCs will be added to your database.</div>
+                                    <div class="form-hint">Add or remove clients. New clients will be added to your database.</div>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Analysis Date</label>
@@ -2317,9 +2317,9 @@
             <div class="modal-body">
                 <input type="hidden" id="outcomeProjectId">
                 <div class="form-group" id="outcomeGCSelectorGroup" style="display:none;">
-                    <label class="form-label">Which GC is this outcome for?</label>
+                    <label class="form-label">Which client is this outcome for?</label>
                     <select class="form-select" id="outcomeGCSelector"></select>
-                    <div class="form-hint">For "Won" — the winning GC's score counts; other GCs on this project are marked as not applicable.</div>
+                    <div class="form-hint">For "Won" — the winning client's score counts; other clients on this project are marked as not applicable.</div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">What happened with this bid?</label>
@@ -2327,7 +2327,7 @@
                         <option value="">Select outcome...</option>
                         <option value="won">Won — We got the job</option>
                         <option value="lost">Lost — Someone else got it</option>
-                        <option value="ghost">Ghosted — No response from GC</option>
+                        <option value="ghost">Ghosted — No response from client</option>
                         <option value="declined">Passed — Was invited, chose not to bid</option>
                         <option value="no_bid">No Bid — Saw it, didn't pursue an invitation</option>
                     </select>
