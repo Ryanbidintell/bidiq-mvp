@@ -1,320 +1,451 @@
-# 🎯 BidIntell Product Bible v1.9
+# BidIntell Product Bible v1.9
 
-**Version:** 1.9  
-**Date:** February 24, 2026  
-**Status:** LOCKED - This is the definitive product roadmap  
+**Version:** 1.9 (revised)
+**Date:** April 8, 2026
+**Status:** LOCKED — This is the definitive product roadmap and strategy
+**Owner:** Ryan Elder
 
-**Major Changes from v1.8:**
-- **Added Game Theory Intelligence Framework** - formal strategic decision science layer embedded throughout the product
-- **Competitive Pressure Score** - new Phase 1.5 scoring component based on Nash Equilibrium bid shading logic
-- **Winner's Curse Risk Flag** - new risk detection module for high-uncertainty, high-competition bids
-- **GC Relationship Intelligence** - repeated game dynamics formalized into the relationship scoring model
-- **Data flywheel seeding strategy** - coordination game solution for beta cold-start problem
-- **Two-sided market sequencing** - locked GC monetization to Phase 3+ with clear trigger conditions
+**What changed in this revision (April 8, 2026):**
+- Moat-first strategy layer added — features ranked and sequenced by defensibility, not just usefulness
+- Full current-state audit — Phase 1, 1.5, and 2 are complete; roadmap updated accordingly
+- BidIndex scoring model updated — user-defined weights are now the core personalization mechanism; 5-dimension upgrade path specified
+- Bid Risk replaces Winner's Curse terminology throughout (construction-native language)
+- Client replaces GC throughout (platform supports 7 client types, not GC-only)
+- No-bid outcome added as first-class outcome type (distinct from Passed)
+- Weight presets and scoring profile label added to Settings
+- Anti-roadmap added — explicit list of what not to build
+- Build order added — canonical near-term sequence
+- Pricing updated to reflect live tiers (Solo $49 / Team $99 / Company $179)
+- Phase 2 (Team accounts) marked complete
 
 ---
 
 ## THE PRODUCT
 
-BidIntell is an AI-powered bid intelligence platform that saves subcontractors 18+ hours per week by automating bid analysis, follow-up communications, and building a database of which general contractors are worth pursuing.
+BidIntell is an AI-powered bid intelligence platform for subcontractors and specialty contractors. It analyzes bid documents, scores each opportunity against your business profile, and — over time — learns from your outcomes to give you better recommendations than any generic AI ever could.
 
-**Core Philosophy:** BidIntell captures *decisions*, not just documents. The platform resolves the information asymmetry that currently favors GCs over subcontractors — and turns that advantage into a compounding data moat.
+**Core philosophy:** BidIntell captures *decisions*, not just documents. Every bid you score, every outcome you log, every client relationship you rate — that data compounds into an intelligence layer that reflects how *your* company actually wins. That is the moat. Not the AI. The data.
+
+**The fundamental problem we solve:** Construction bidding is a multi-player game with asymmetric information. Subs know their own costs but not competitors'. Clients know who's bidding but subs do not. BidIntell systematically closes that information gap — and turns the closing of it into a compounding advantage for every user.
 
 ---
 
 ## THE THREE-LAYER SYSTEM
 
-**Layer 1: AI Bid Analysis (The Hook)** — *Phase 1 / Active*
-- Upload bid documents → AI extracts project details → Personalized BidIndex Score (0-100)
-- GO/NO-GO recommendation tailored to each user's business and capacity
-- Risk warnings: contract clauses, GC reputation flags, Winner's Curse alerts *(new)*
-- Competitive Pressure Score component *(new - Phase 1.5)*
+**Layer 1: AI Bid Scoring (The Hook)** — *Complete*
+- Upload or forward bid documents → AI extracts project details → Personalized BidIndex Score (0–100)
+- GO / REVIEW / PASS recommendation calibrated to each user's weights, trade, location, and client relationships
+- Bid Risk flag (scope gaps, rushed timeline, competitive pressure, contract risk density)
+- Competitive Pressure Score (activates when ≥3 outcomes logged per client)
 
-**Layer 2: Automated Follow-Up (The Stickiness)** — *Phase 4*
-- AI sends follow-up sequence to GCs after bid submission
-- User-configurable timing (large projects need longer review cycles)
-- AI parses GC responses and auto-updates outcomes
-- Value: Save 3 hours/week + capture critical outcome data
+**Layer 2: Decision Intelligence (The Moat)** — *In progress — Q2–Q3 2026*
+- Outcome corpus: win/loss/no-bid/ghost data that trains recommendations over time
+- Client behavior profiles: win rate, ghost rate, RFI responsiveness, payment notes per client
+- Estimator override loop: captures why users disagree with AI → feeds back into weight calibration
+- Project twin finder: surfaces similar past bids and their outcomes at decision time
 
-**Layer 3: GC Intelligence Database (The Moat)** — *Phase 3 - PRIORITY*
-- Personal intelligence: Your win rate, response rate, history with each GC
-- Crowdsourced intelligence: GC reputation, ghost rates, responsiveness from all users
-- Competitor tracking: Who beats you and on which project types
-- Value: Stop wasting estimating resources on GCs who will never award you work
-
----
-
-## GAME THEORY INTELLIGENCE FRAMEWORK (NEW - v1.9)
-
-*This section formalizes the strategic decision science embedded in BidIntell's scoring and intelligence layers. These aren't abstract concepts — they map directly to features already partially built or trivially buildable.*
-
-### The Fundamental Insight
-
-Construction bidding is a **multi-player auction game with asymmetric information**. Each sub knows their own costs but not competitors'. GCs know which subs are bidding but subs do not. This information gap is BidIntell's entire reason to exist — and every feature should be evaluated against whether it reduces that gap.
+**Layer 3: Networked Intelligence (The Network Effect)** — *Phase 3 — Q3–Q4 2026*
+- Cross-user win-rate benchmarks: anonymous aggregate data per client × trade × market
+- Portfolio management: capacity vs. pursuit, pipeline view, team analytics
+- Two-sided market (Phase 4+): GC network access — only after 500+ subs and 2,000+ GC data points
 
 ---
 
-### Module 1: Competitive Pressure Score *(Phase 1.5 — Build Next)*
+## CURRENT STATE (April 8, 2026)
 
-**Game Theory Basis:** Nash Equilibrium bid shading. In sealed-bid auctions, the optimal strategy is NOT to bid at true cost — it's to shade based on expected competitor count. More competitors = tighten margin; fewer = price up.
+### Completed
 
-**What It Does:**
-- Tracks how many subs typically bid each GC by trade (captured via user reports and outcome tracking)
-- Calculates a "bid competition density" for each GC × trade × project type combination
-- Surfaces a Competitive Pressure indicator on each analyzed bid: Low / Medium / High / Extreme
+**Infrastructure**
+- ✅ Supabase (Postgres + Edge Functions + RLS)
+- ✅ Netlify (hosting + serverless functions, auto-deploy from main)
+- ✅ Stripe billing (Solo $49/mo · Team $99/mo · Company $179/mo · 7-day trial)
+- ✅ Postmark email (outbound notifications + inbound email forwarding)
+- ✅ Claude API (AI extraction + scoring)
+- ✅ GA4 analytics
 
-**Display Logic:**
+**Core Product**
+- ✅ Authentication (magic link via Supabase)
+- ✅ Onboarding wizard (12 steps, company type, trades, location, GC list)
+- ✅ PDF upload + AI extraction (Claude, project details, scope, deadline, GC names)
+- ✅ Inbound email forwarding — forward bid invites to {slug}@bids.bidintell.ai, auto-scores and replies
+- ✅ BidIndex Score (4 components: location, contract terms, client relationship, trade match)
+- ✅ User-defined score weights — sliders in Settings, saved per account (core personalization mechanism)
+- ✅ Weight presets (Relationship-First · Risk-Averse · Market-Volume · Trade Specialist)
+- ✅ Scoring profile label (live feedback: "Relationship-First — You win on trust and track record")
+- ✅ Bid Risk flag (scope gaps, rushed timeline, competition pressure, contract risk density)
+- ✅ Competitive Pressure Score (gc_competition_density table, activates at ≥3 outcomes per client)
+- ✅ Contract risk detection (AI-powered clause identification + penalty scoring)
+- ✅ CSI section-level trade matching (6-digit section codes, not just division-level)
+- ✅ Full-page bid report with score breakdown, extracted data, contract risks, deadline chip
+- ✅ Dashboard with project list, analysis date, bid economics stats
+- ✅ Outcome tracking: Won / Lost / Ghosted / Passed / No Bid (all 5 types with structured data)
+- ✅ Outcome data: win amount, margin, bidder count, competitor names, no-bid reasons, hours spent
+- ✅ AI learning progress indicator (outcome-based)
+
+**Client Intelligence**
+- ✅ Client database (7 types: GC, Subcontractor, End User, Building Owner, Municipality, Distributor, Mfg Rep)
+- ✅ Client ratings (1–5 stars), tags, bid history, win/loss tracking
+- ✅ Client normalization agent (fuzzy matching, alias management, dedup detection)
+- ✅ Extracted client suggestions — post-analysis chips for one-click add of clients found in bid doc
+- ✅ Client search / filter in Clients tab
+
+**Team & Billing**
+- ✅ Organizations + org_members schema
+- ✅ Team tab: member list, invite flow, bid count + GO rate per member
+- ✅ Stripe checkout with 7-day trial, FOUNDING30 and FOUNDER30 coupons
+- ✅ Stripe billing portal
+- ✅ Subscription gate (bypassed for @fsikc.com)
+
+**Admin**
+- ✅ Admin dashboard: beta feedback, client alias management, system stats
+- ✅ Founder Metrics tab: user activity, ROI leads, activation data
+- ✅ BuildingConnected OAuth sync (internal only — ryan@fsikc.com)
+
+### Pricing Tiers (Live)
+
+| Tier | Seats | Monthly | Annual |
+|------|-------|---------|--------|
+| Solo | 1 | $49 | $490 |
+| Team | up to 3 | $99 | $990 |
+| Company | up to 8 | $179 | $1,790 |
+| Enterprise | 9+ | Custom | Contract |
+
+Trial: 7 days. Coupons: FOUNDING30 and FOUNDER30 (both 30% off).
+
+---
+
+## THE MOAT: WHY THIS BEATS GENERIC AI
+
+Any LLM can score a bid. ChatGPT can read a PDF and say "looks risky." That's not the moat.
+
+The moat is the proprietary data layer that accumulates with every decision:
+
+1. **The outcome corpus** — win rates, margins, decline reasons, bidder counts per client. Nobody else has this data for subcontractors.
+2. **Personalized scoring weights** — a score calibrated to *your* company's risk tolerance, relationships, and margin targets. No two BidIntell accounts score the same bid the same way.
+3. **Client behavior dossiers** — years of ghost rates, RFI responsiveness, payment history, scope clarity per client. Irreplaceable after 12 months.
+4. **The override loop** — when an estimator disagrees with AI, that's a labeled training example. 50+ overrides = a recalibrated model no competitor can reconstruct.
+5. **The benchmark network** — anonymized cross-user intelligence that improves as users join. Only possible with proprietary outcome data.
+
+After 12 months of active use, a BidIntell account cannot be reproduced on any competitor's platform — not in a week, not in a year.
+
+---
+
+## BIDINDEX SCORING MODEL
+
+### The Core Principle: Weights Are User-Defined
+
+This is the most important architectural decision in BidIntell. A flooring sub in a dense metro market weights location differently than a specialty mechanical contractor working nationally. A company with deep client relationships weights client score higher than a startup chasing any open bid.
+
+**No fixed weight set is right for all users.** The power of BidIntell is that the score means something specific to *this company's* risk tolerance and business model.
+
+**Today:** 4 components, user-adjustable sliders in Settings, saved per account in `user_settings.weights`.
+
+### Current Components
+
 ```
-Competitive Pressure: HIGH
-Based on 23 BidIntell users tracking this GC:
-→ 6-8 electrical subs typically bid Turner's commercial work
-→ Average win rate at this competition level: 14%
-→ Recommended: Tighten scope assumptions, or pass
-```
+BidIndex = (Location Fit      × W1)
+         + (Contract Terms    × W2)
+         + (Client Rel.       × W3)
+         + (Trade Match       × W4)
 
-**Data Requirement:** Requires outcome tracking data from multiple users. Gate display behind minimum 5 data points per GC/trade combo. Show "Insufficient data" below threshold — never fake confidence.
-
-**Why This Fits Phase 1.5:** The scoring infrastructure is built. This adds one new component to the existing BidIndex calculation. Data starts accumulating on day one of beta; display logic activates as data matures.
-
----
-
-### Module 2: Winner's Curse Risk Flag *(Phase 1.5 — Build Next)*
-
-**Game Theory Basis:** In common-value auctions where true project difficulty is uncertain, the winner is often whoever *underestimated* costs most. This is rampant in construction — the sub who wins was frequently the one who missed something.
-
-**What It Does:**
-- Analyzes bid documents for Winner's Curse risk indicators:
-  - Vague or incomplete scope definition
-  - Aggressive timeline requirements
-  - New GC relationship (no historical data)
-  - High competition density (many bidders)
-  - Unfamiliar geography or building type
-  - Unusual contract risk clause density
-- Generates a Winner's Curse Risk rating: Low / Moderate / Elevated / High
-
-**Display Logic:**
-```
-⚠️ Winner's Curse Risk: ELEVATED
-This bid has 3 of 5 risk indicators:
-→ Scope: Drawings reference "specs TBD" in 4 sections
-→ Timeline: 14-week schedule for project type typically requiring 20 weeks
-→ Competition: High — 7+ subs likely bidding
-Recommendation: Add 12-15% contingency to scope assumptions, or pass.
-```
-
-**Why This Is Differentiated:** No competitor tells subs *not* to chase a bid. This is contrarian, trust-building, and directly serves the "decision intelligence" positioning. A sub who avoids one bad win per quarter saves more than their annual subscription cost.
-
-**Implementation:** Primarily a prompt engineering task on the existing Claude API extraction call. Add Winner's Curse risk analysis to the extraction prompt. Low build cost, high value.
-
----
-
-### Module 3: GC Relationship Intelligence *(Phase 3 — Already Partially Scoped)*
-
-**Game Theory Basis:** Repeated game dynamics. A sub's optimal strategy with a GC they've worked with 10 times differs fundamentally from a new relationship. In one-shot games, defection (ghosting, low-balling) dominates. In repeated games, cooperation (fair awards, honest feedback) emerges because reputation matters.
-
-**What It Adds to Existing GC Intelligence:**
-- **Relationship Score** between each sub and each GC: derived from bid history, win rate, project completions, any reported issues
-- **Game Classification:** Flag GCs as "Repeat Game Partners" (long relationship, mutual benefit) vs "One-Shot Behavior" (ghost frequently, shop bids, rarely award)
-- **Strategy Recommendation:** "You've completed 3 projects with Turner — they're a reliable repeat partner. Prioritize this bid." vs "This GC has one-shot behavior patterns — price accordingly or pass."
-
-**Data Sources:** Outcome tracking (already built), GC responsiveness capture (already built), user GC tags (already built). This is aggregation and display logic, not new data collection.
-
-**Why This Matters:** Helps subs allocate estimating time intelligently across their GC portfolio — not just on a per-bid basis.
-
----
-
-### Module 4: Beta Cold-Start Strategy *(Phase 0/1 — Implement Now)*
-
-**Game Theory Basis:** Coordination problem. Every sub wants GC intelligence data but hesitates to contribute first. This creates a coordination failure — everyone waits for someone else to move, so nobody moves.
-
-**Solution: Pre-seed + Asymmetric Early Rewards**
-
-**Pre-seed the data (remove blank slate problem):**
-- Before launching to beta users, populate GC profiles with:
-  - Public bid results (state procurement databases, Dodge Data free tier)
-  - AGC and trade association published data
-  - Ryan's 10 years of FSI data (anonymized) as founding dataset
-- Users arrive to a platform that already *has something*, not an empty page
-
-**Give early users asymmetric value:**
-- Beta users get "Founding Member" status — permanent access to competitive intelligence features even at lower tiers
-- Founding Members see their own data reflected back immediately (personal intelligence available day one)
-- Crowdsourced intelligence unlocks as data accumulates — creates natural anticipation
-
-**Lower contribution friction to minimum viable action:**
-- After every bid: ONE question. "Did you win this?" That's it.
-- Build the habit before asking for more
-- Advanced data (outcome details, GC ratings) comes after trust is established
-
-**Create momentum signals:**
-- "47 Kansas City subs tracking bids this week" — even small numbers create momentum perception
-- Geographic leaderboards showing data density by market
-
----
-
-### Module 5: Two-Sided Market Sequencing *(Phase 3+ — DO NOT BUILD EARLY)*
-
-**Game Theory Basis:** Two-sided market platform dynamics. GCs have a complementary problem — they need quality subs, face flaky bidders, and increasingly face compliance pressure to document fair bidding practices.
-
-**The Strategic Sequence (DO NOT SKIP STEPS):**
-
-Phase 1-2: Build entirely for subs. Do not approach GCs. Let reputation data accumulate.
-
-Phase 3 trigger condition: 500+ subs using the platform, 2,000+ GC data points. At this scale, approach GCs with:
-- "We have 200 verified electrical subs in KC actively tracking your bids"
-- "Your responsiveness score is 67% — here's how to improve sub participation on your projects"
-
-Phase 4+: GCs pay for verified sub network access and responsiveness reporting. Subs stay free or discounted as network contributors.
-
-**CRITICAL WARNING:** Do not flip to GC monetization before subs feel the platform is *theirs*. The moment subs perceive BidIntell as working for GCs, trust collapses and the network effect reverses. Sequence is everything.
-
----
-
-## UPDATED BIDINDEX SCORE COMPONENTS (v1.9)
-
-The BidIndex Score (0-100) now has 5 components, phased in as data matures:
-
-| Component | Weight | Phase | Status |
-|-----------|--------|-------|--------|
-| Location Fit | 25% | 1 | ✅ Built |
-| Trade Match | 20% | 1 | ✅ Built |
-| GC Relationship | 25% | 1 | ✅ Built |
-| Keyword/Scope Match | 20% | 1 | ✅ Built |
-| Competitive Pressure | 10% | 1.5 | 🔨 Build Next |
-
-**Winner's Curse Risk** is a separate flag (not a score component) — it's a binary alert, not a percentage penalty.
-
----
-
-## WHAT'S BUILT (Phase 1 Complete)
-
-- ✅ User authentication (Supabase)
-- ✅ PDF upload and AI extraction (Claude API)
-- ✅ 4-component personalized BidIndex Score
-- ✅ Plain-English report with source linking
-- ✅ Full-page report view with editable fields
-- ✅ "How to Improve Your Chances" section
-- ✅ Manual outcome tracking (Won/Lost/Ghost/Didn't Bid)
-- ✅ Decision confidence scoring (1-5 scale)
-- ✅ GC responsiveness capture
-- ✅ Competitor presence capture
-- ✅ GC risk tags (user-created, admin-promoted)
-- ✅ GC name normalization (AI-powered matching)
-- ✅ Passive ghost trigger (auto-marks stale projects)
-- ✅ Dashboard with stats and bid counter
-- ✅ Beta feedback widget
-- ✅ Cloud persistence (Supabase with RLS)
-
----
-
-## PHASE 1.5: BETA VALIDATION + GAME THEORY MODULES (Updated)
-
-**Timeline:** Weeks 9-16  
-**Cost:** $0-2K  
-**Goal:** Validate scoring accuracy AND add Competitive Pressure Score + Winner's Curse Risk Flag
-
-### Build List (Addition to existing Phase 1.5)
-
-**Competitive Pressure Score:**
-- [ ] Add `gc_competition_density` table to Supabase (gc_id, trade, project_type, avg_bidder_count, sample_size)
-- [ ] Update outcome tracking to capture "How many subs do you estimate bid this?" (optional field)
-- [ ] Add aggregation logic (cron or edge function) to calculate competition density per GC/trade
-- [ ] Add Competitive Pressure component to BidIndex calculation (10% weight, gates on min 5 data points)
-- [ ] Display Competitive Pressure indicator on bid report
-
-**Winner's Curse Risk Flag:**
-- [ ] Add winner's curse risk analysis to Claude extraction prompt
-- [ ] Define 5 risk indicators (scope vagueness, timeline aggression, competition density, GC newness, contract clause density)
-- [ ] Add `winners_curse_risk` field to bids table (low/moderate/elevated/high + contributing_factors JSON)
-- [ ] Display risk flag on bid report with plain-English explanation
-
-**Beta Cold-Start (Implement Immediately):**
-- [ ] Pre-populate GC profiles with Ryan's FSI historical data (anonymized)
-- [ ] Add "Founding Member" badge to first 20 beta users (permanent feature unlock)
-- [ ] Reduce outcome tracking to single-question flow after bid submission
-- [ ] Add data density indicator ("X subs tracking this GC in your market")
-
----
-
-## PHASE 3: GC INTELLIGENCE LAYER (Updated with Relationship Intelligence)
-
-**Timeline:** Weeks 25-38  
-**Cost:** $12-16K  
-**Goal:** Build the data moat — crowdsourced GC intelligence + relationship dynamics
-
-### Addition: GC Relationship Intelligence Module
-
-**Database additions:**
-```sql
--- GC relationship profiles (per user)
-gc_relationship_profiles (
-  user_id, gc_id,
-  bids_submitted, bids_won, projects_completed,
-  avg_win_rate, relationship_score (0-100),
-  game_classification ('repeat_partner' | 'one_shot' | 'unknown'),
-  last_interaction_date, created_at
-)
+Default weights: W1=25, W2=30, W3=25, W4=20
+User presets: Relationship-First · Risk-Averse · Market-Volume · Trade Specialist
+Constraint: W1 + W2 + W3 + W4 = 100 (enforced by UI)
 ```
 
-**Aggregation logic:**
-- Calculate relationship_score from: win rate, project completions, outcome confidence, reported issues
-- Classify game type based on GC behavior patterns (ghost frequency, feedback rate, repeat awards)
-- Surface on bid report: "Relationship: Strong Repeat Partner (3 projects completed, 38% win rate)"
+Competitive Pressure runs as an additional signal (weight=10, activates when ≥3 outcomes exist per client).
+
+### 5-Dimension Upgrade Path (Q2–Q3 2026)
+
+As outcome data accumulates, expand to 5 explicit dimensions — each user-adjustable:
+
+| Dimension | Default Weight | What It Measures | Activates |
+|---|---|---|---|
+| Strategic Fit | 30% | Trade match + location + building type history | Day 1 |
+| Execution Risk | 25% | Scope completeness + contract risk + timeline | Day 1 |
+| Commercial Risk | 20% | Contract terms + bid shopping + retainage | Day 1 |
+| Win Likelihood | 15% | Client relationship + competitive pressure + past win rate with this client | ≥3 outcomes |
+| Margin Posture | 10% | Historical margin on similar won bids | ≥5 WON outcomes with margin captured |
+
+**Migration:** Auto-migrate legacy 4-component weights → 5-dimension defaults on first load. Show one-time "We upgraded your scoring model — review your weights" banner.
+
+### Estimator Override Loop (Q2 2026)
+
+When a user changes the AI recommendation (PASS → GO or GO → PASS), capture:
+- Override direction
+- Reason category (relationship, capacity, margin, scope, market, other)
+- Free text note
+
+Store in `projects.estimator_override` JSONB. Over time, surface patterns: "You override PASS→GO on high-client-score bids 8x more than average — consider raising your Client Relationship weight."
 
 ---
 
-## PHASE 2: TEAM ACCOUNTS (Post-Launch)
+## GAME THEORY INTELLIGENCE FRAMEWORK
 
-**Trigger:** First paying customer requests team access, OR 10+ paying subscribers.
-**Goal:** Support estimating teams — shared projects, shared GC intelligence, role-based access.
+*These modules formalize the strategic decision science embedded in BidIntell's scoring. They are not abstract — each maps directly to built or near-term features.*
 
-### What this requires:
-- `organizations` table — company account as the root entity
-- `org_members` table — user → org mapping with role (`admin` | `member`)
-- All `projects`, `clients`, `user_keywords`, `user_settings` re-scoped from `user_id` → `org_id`
-- Invite-by-email flow (admin sends invite → magic link → member joins org)
-- RLS rewrite — data visible to all org members, not just owner
-- Stripe: seat-based billing or per-org flat rate (decide at build time)
+### Module 1: Competitive Pressure Score *(Complete)*
 
-### Pricing implication:
-- Starter: 1 seat (current)
-- Pro: up to 3 seats
-- Team tier (new): 5–10 seats, ~$199/mo
+**Basis:** Nash Equilibrium bid shading. In sealed-bid auctions, optimal strategy is not to bid at true cost — it's to shade based on expected competitor count. More competitors = tighten margin; fewer = price up.
 
-### DO NOT build before April 1 launch. Build only when a paying customer asks.
+**What it does:** Tracks how many subs typically bid each client by trade. Surfaces a Competitive Pressure score (0–100) on each bid. Requires ≥3 data points per client before activating — never fakes confidence.
+
+**Status:** Built. `gc_competition_density` table live. Activates when outcome bidder count data accumulates.
+
+### Module 2: Bid Risk Flag *(Complete)*
+
+**Basis:** Winner's Curse. In common-value auctions with uncertain project difficulty, the winner is often whoever underestimated costs most. The sub who wins a bad bid is worse off than the one who passed.
+
+**What it does:** Analyzes bid docs for risk indicators — vague scope, rushed timeline, high competition, unfavorable contract clause density, bid shopping language. Returns Moderate / Elevated / High with contributing factors.
+
+**Status:** Built. `calculateBidRisk()` runs on every analysis.
+
+### Module 3: Client Relationship Intelligence *(Q3 2026)*
+
+**Basis:** Repeated game dynamics. Optimal strategy with a client seen 10 times differs fundamentally from a first interaction. In one-shot games, defection dominates. In repeated games, cooperation emerges because reputation matters.
+
+**What it adds:**
+- Relationship score per client (derived from bid history, win rate, ghost rate, project completions)
+- Game classification: Repeat Partner vs. One-Shot Behavior
+- Strategy recommendation: "3 projects completed with this client — reliable repeat partner. Prioritize." vs. "One-shot behavior pattern — price accordingly or pass."
+
+**Data:** Outcome tracking (built) + ghost capture (built) + client tags (built). This is aggregation and display logic, not new data collection.
+
+### Module 4: Two-Sided Market *(Phase 4+ — DO NOT BUILD EARLY)*
+
+**Basis:** Two-sided platform dynamics. GCs have a complementary problem — they need quality subs and face compliance pressure around fair bidding documentation.
+
+**Sequence (do not skip steps):**
+- Phase 1–3: Build entirely for subs. Do not approach GCs.
+- Phase 4 trigger: 500+ subs, 2,000+ client data points. Then approach GCs with: "We have 200 verified electrical subs in KC actively tracking your bids."
+- Phase 4+: GCs pay for verified sub network access. Subs stay free or discounted as network contributors.
+
+**Critical warning:** Do not flip to GC monetization before subs feel the platform is *theirs*. The moment subs perceive BidIntell as working for GCs, trust collapses and the network effect reverses. Sequence is everything.
 
 ---
 
-## DECISION FRAMEWORK (Unchanged)
+## FEATURE MOAT SCORES
+
+Features ranked by defensibility. Score 1–5 across: Data Moat · Workflow Lock-in · Network Effect · Domain Depth · Revenue/Retention.
+
+| Feature | Composite | Tag |
+|---|---|---|
+| Client behavior profiles (win rate, ghost rate, RFI, payment) | 4.6 | **Moat** |
+| Outcome capture (win/loss/no-bid) | 4.4 | **Moat** |
+| Competitive Pressure Score | 4.4 | **Moat** |
+| AI learning / outcome-trained recs | 4.4 | **Moat** |
+| No-bid reason capture | 4.2 | **Moat** |
+| Estimator override loop | 4.2 | **Moat** |
+| Project twin finder | 4.2 | **Moat** |
+| Win/loss analytics dashboard | 4.2 | **Moat** |
+| Cross-user win-rate benchmarks | 4.0 | **Moat** |
+| Personalized scoring weights | 4.0 | **Moat** |
+| Client relationship score | 3.6 | **Moat** |
+| Capacity vs. pursuit portfolio view | 3.6 | **Moat** |
+| Inbound email forwarding | 3.2 | **Moat** |
+| CSI section picker / trade match | 3.2 | **Moat** |
+| AI bid scoring (GO/REVIEW/PASS) | 3.0 | Parity |
+| Contract risk detection | 2.8 | Parity |
+| Bid Risk flag | 2.8 | Parity |
+| Team tab / multi-user | 2.6 | Parity |
+| Bid report (display) | 2.2 | Parity |
+| BuildingConnected sync | 2.4 | Parity |
+| Works-with SEO pages | 1.2 | Commodity |
+
+---
+
+## MOAT-FIRST ROADMAP (Q2–Q4 2026)
+
+### Phase 1 — Core Decision Substrate *(Q2: April–May — Mostly Complete)*
+
+**Goal:** Every bid scored reliably. Every recommendation explainable. Users trust the score.
+
+**Remaining:**
+- Inbound email forwarding: resolve PDF size limit (>6MB fails)
+- Outcome modal surfaced consistently after every bid closes
+- 5-dimension weight migration when data is sufficient
+
+**Success metrics:**
+- ≥80% of uploaded bids produce a valid GO/REVIEW/PASS
+- ≥3 bids scored per active user per month
+
+---
+
+### Phase 2 — Proprietary Data Capture & Feedback Loops *(Q2–Q3: May–July)*
+
+**Goal:** BidIntell learns from every decision you make.
+
+**Build list:**
+- [ ] **Estimator override capture** — "Override Decision" button on report; saves direction + reason to `projects.estimator_override`
+- [ ] **Client behavior card fields** — Add RFI responsiveness (1–5) and payment flag to outcome form; display on client card
+- [ ] **Win/loss analytics dashboard** — Win rate by client, building type, trade; score vs. outcome correlation chart
+- [ ] **Outcome completeness nudges** — Require margin on WON; require "how high" on LOST; surface completion % in dashboard
+- [ ] **Competitive Pressure explainer** — Expand the card: show which past projects feed the score, plain-language guidance, activation progress
+
+**Why it increases defensibility:**
+After 50 logged outcomes, BidIntell knows things about a sub's business that no competitor can reconstruct. Every override is a labeled training example. Every no-bid reason is a strategic filter no generic AI has.
+
+**Success metrics:**
+- ≥60% of PASS decisions have a logged decline reason (90 days)
+- ≥50% of WON outcomes have margin captured
+- ≥80% of active accounts have ≥5 outcomes logged (90 days)
+
+---
+
+### Phase 3 — Networked & Behavioral Intelligence *(Q3: July–September)*
+
+**Goal:** Client behavior is a first-class data object. Cross-user signals begin.
+
+**Build list:**
+- [ ] **Client behavior cards** — Per-client profile: avg bidder count, ghost rate, win rate, RFI responsiveness, payment flag, scope clarity history
+- [ ] **Project twin finder** — Surface 2–3 most similar past bids (by client, building type, trade, location) + their outcomes and margins
+- [ ] **Anonymous cross-user benchmarks** — "Subs in your trade typically see X bidders on this client's jobs" — activates at ≥10 contributing users per bucket; `benchmark_cache` table populated nightly
+- [ ] **AI recalibration from overrides** — Detect per-user calibration patterns; surface weight adjustment suggestions in Settings
+- [ ] **5-dimension BidIndex migration** — Activate Win Likelihood and Margin Posture dimensions when sufficient outcome data exists
+
+**Why it increases defensibility:**
+Client behavior cards are irreplaceable after 12 months. Cross-user benchmarks are the first true network effect — the product gets better as users join. Project twins surface institutional memory that lives nowhere else.
+
+**Success metrics:**
+- ≥5 client behavior cards populated per active account
+- Twin finder surfaced on ≥30% of bid reports after ship
+- At least 1 trade vertical with ≥10 users contributing to cross-user benchmarks
+
+---
+
+### Phase 4 — Portfolio & Management Layer *(Q4: October–December)*
+
+**Goal:** BidIntell moves from estimator tool to pursuit management system. Owner/principal retention.
+
+**Build list:**
+- [ ] **Capacity vs. pursuit view** — Open bids in flight, estimated hours, capacity headroom, overbidding flag
+- [ ] **Pursuit pipeline** — Status board replacing flat project list (scoring → submitted → awarded/lost)
+- [ ] **Team win/loss visibility** — Org-level outcome rollup for Company plan
+- [ ] **Monthly summary email** — Auto-generated: bids scored, won, lost, total contract value, win rate trend
+- [ ] **Win rate analytics Phase 2** — Score vs. outcome correlation chart; bid economics by decision type
+
+**Why it increases defensibility:**
+The management layer creates org-level lock-in. When the owner uses BidIntell for the weekly pipeline meeting, churn becomes very hard. This is the transition from individual tool to company OS.
+
+**Success metrics:**
+- ≥50% of Company accounts use capacity view in first 30 days
+- Monthly email open rate ≥40%
+- Company-plan churn ≤5% quarterly
+
+---
+
+### Phase 5 — Adoption Parity *(Q4+, only if blocking growth)*
+
+Build only if named users or prospects cite these as blockers to paying:
+- Mobile/Safari responsive polish
+- BuildingConnected auto-import (only if Autodesk ISV approved)
+- Bulk CSV bid history import
+- SSO/SAML (Enterprise only, on-demand)
+
+---
+
+## BUILD ORDER (Near-Term)
+
+### Now
+1. Estimator override capture — 3 hours
+2. Client behavior card fields (RFI responsiveness, payment flag) on outcome form — 4 hours
+3. Win/loss analytics dashboard — 4 hours
+
+### Q2 (May–June)
+4. Outcome completeness nudges
+5. Competitive Pressure explainer
+6. Inbound email PDF size limit fix
+
+### Q3 (July–August)
+7. Project twin finder (needs ≥20 outcomes to be useful)
+8. Client behavior cards full display
+9. Anonymous cross-user benchmarks (build schema now; UI activates at threshold)
+
+### Q4
+10. Portfolio / capacity vs. pursuit view
+11. Two-sided market prep (schema only — no GC-facing features yet)
+
+### Hard dependency chain
+```
+User-defined weights + outcome completeness
+        ↓
+≥3 outcomes per client → Competitive Pressure activates
+≥20 total outcomes → Twin finder is useful
+≥50 total outcomes → Override calibration is meaningful
+≥10 active accounts → Cross-user benchmarks activate
+```
+
+---
+
+## ANTI-ROADMAP
+
+Explicit list of what not to build, and why.
+
+| Feature | Problem | Decision |
+|---|---|---|
+| BuildingConnected auto-sync | Autodesk ISV approval unresolved. BC data available to any tool that integrates — no proprietary data advantage. | **Push to Phase 5 or cut.** Don't block moat work on it. |
+| Works-with SEO pages | Pure marketing. Zero product moat. | **Already built — do not expand.** No further investment. |
+| AI advisor personality / tone picker | Users don't care after week 1. Onboarding friction, zero moat. | **Remove from onboarding.** Keep buried in Settings for power users only. |
+| Contract risk as standalone feature | Generic LLMs do contract review. Competing with Harvey, Ironclad, ChatGPT. No proprietary data. | **Keep as scoring signal only.** Do not market or build as standalone surface. |
+| Custom report PDF export | Every user asks, zero churn over it. | **Push to Q4.** Only build if Enterprise deal requires it. |
+| SSO / SAML | Only matters for 50+ seat Enterprise. Current plan is 1–8 seats. | **Do not build until real Enterprise prospect demands it.** |
+| Bulk CSV import | High data quality risk. Parity with any SaaS tool. | **Push to Q4.** Only if 3+ paying prospects cite as blocker. |
+| Two-sided GC monetization | Trust collapses if subs feel platform works for GCs. Sequence is everything. | **Locked to Phase 4+.** Trigger: 500+ subs, 2,000+ client data points. |
+
+---
+
+## THE DEFENSIBILITY FLYWHEEL
+
+```
+User scores a bid
+        ↓
+BidIndex gives personalized recommendation (their weights, their clients)
+        ↓
+User logs outcome (won/lost/no-bid/override)
+        ↓
+Client behavior profiles get smarter
+Competitive Pressure activates (≥3 outcomes per client)
+Project twin finder finds better matches
+Margin Posture dimension activates
+        ↓
+Next recommendation is more accurate
+        ↓
+User trusts the score more → logs outcomes more
+        ↓
+Moat compounds.
+```
+
+---
+
+## DECISION FRAMEWORK
 
 Before building any feature, ask:
-1. Does this serve one of the three core layers?
-2. Is this the right phase for this feature?
-3. Does this help hit current phase success metrics?
-4. Can we prove this without building it first?
 
-Default: "Not yet — that's Phase X."
+1. **Does this increase defensibility?** Check the moat scores table. Composite < 3.0 = parity feature. Build only if it unblocks adoption.
+2. **Is this the right phase?** Phases are sequenced by dependency. Don't build Phase 3 features before Phase 2 data exists.
+3. **Is there a simpler version?** v1 of anything is always smaller than you think it needs to be.
+4. **Is it on the anti-roadmap?** If yes, the answer is no.
+
+Default answer to any feature request: "Not yet — that's Phase X."
 
 ---
 
 ## VERSION HISTORY
 
-- **v1.0** — January 13, 2026 — Initial roadmap
-- **v1.1** — January 22, 2026 — Personalized scoring engine
-- **v1.2** — January 26, 2026 — 4-component scoring
-- **v1.3** — January 26, 2026 — Multi-GC support
-- **v1.4** — January 29, 2026 — Trust features + data moat
-- **v1.5** — February 3, 2026 — Intelligence Layer Framework
-- **v1.6** — February 5, 2026 — Company types, multi-signal detection
-- **v1.7** — February 6, 2026 — Full-page reports, county location
-- **v1.8** — February 7, 2026 — Phase restructure, validate before scale
-- **v1.9** — February 24, 2026 — **Game Theory Intelligence Framework:**
-  - Competitive Pressure Score (Phase 1.5)
-  - Winner's Curse Risk Flag (Phase 1.5)
-  - GC Relationship Intelligence module (Phase 3)
-  - Beta cold-start coordination strategy (immediate)
-  - Two-sided market sequencing (locked to Phase 3+)
+| Version | Date | Summary |
+|---|---|---|
+| v1.0 | Jan 13, 2026 | Initial roadmap |
+| v1.1 | Jan 22, 2026 | Personalized scoring engine |
+| v1.2 | Jan 26, 2026 | 4-component scoring |
+| v1.3 | Jan 26, 2026 | Multi-client support |
+| v1.4 | Jan 29, 2026 | Trust features + data moat |
+| v1.5 | Feb 3, 2026 | Intelligence Layer Framework |
+| v1.6 | Feb 5, 2026 | Company types, multi-signal detection |
+| v1.7 | Feb 6, 2026 | Full-page reports, county location |
+| v1.8 | Feb 7, 2026 | Phase restructure, validate before scale |
+| v1.9 | Feb 24, 2026 | Game Theory Intelligence Framework; Competitive Pressure Score; Bid Risk Flag; Client Relationship Intelligence module; Beta cold-start strategy; Two-sided market sequencing |
+| v1.9 (revised) | Apr 8, 2026 | **Moat-first strategy layer integrated. Full current-state audit. Phase 1+1.5+2 marked complete. Q2–Q4 moat-first roadmap. User-defined weights as core personalization. No-bid outcome. Weight presets + scoring profile. 5-dimension BidIndex upgrade path. Anti-roadmap added. Client language (replaces GC). BidIntell_Moat_Strategy_v1.md retired into this document.** |
 
 ---
 
-**This is the Bible. Capture decisions. Build the moat. Validate before scale.**
+**This is the Bible. One doc. One roadmap. Capture decisions. Build the moat. Validate before scale.**
