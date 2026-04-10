@@ -495,6 +495,46 @@ const additionalRevenue = additionalWins * avgProjectSize;
 
 **callClaude() pattern:** accepts optional `extraHeaders` param — required for PDF: `{ 'anthropic-beta': 'pdfs-2024-09-25' }`
 
+### Terminology: Always "Client", Never "GC" in User-Facing Copy (Apr 2026)
+
+**Rule:** All user-facing labels use "Client Relationship" — never "GC Relationship" or "GC score."
+**Technical identifiers** (`gc_name`, `gc_bids`, `getGCs()`, etc.) stay as-is — don't rename those.
+
+**When doing any future copy rename, check all 4 live locations:**
+1. `app.html` — `renderComponent()` calls + weight slider labels + outcome modal + improvement tips
+2. `netlify/functions/inbound-email-background.js` — score breakdown in reply email
+3. `supabase/functions/inbound-email/index.ts` — same, edge function copy
+4. `works-with-crm.html` — SEO page title/meta
+
+**Lesson:** Partial renames are worse than no rename. When renaming a term, grep the entire repo and fix every live file in one commit.
+
+### Scoring Components — Correct Labels (Apr 2026, verified against live code)
+
+**Score breakdown UI** (`renderComponent()` calls):
+- `Location Fit`
+- `Keywords & Contract`
+- `Client Relationship` (formerly "GC Relationship" — fully renamed Apr 10)
+- `Trade Match` (subcontractors) / `Product Match` (distributors, reps)
+- `Competitive Pressure` — 5th component, weight=10, **activates automatically after 3+ outcomes logged**. Do NOT say "coming soon."
+
+**Weight slider labels in Settings** (different from above — same underlying scores):
+- "Location Fit" / "Contract Terms & Risk" / "Client Relationship & Competition" / Trade
+
+### Brand Identity — Verified (Apr 2026)
+
+- **Accent color:** Orange `#F26522` — NOT teal/cyan. Never describe it as teal.
+- **ICP:** Subcontractors · Distributors & suppliers · Manufacturers' reps (all three, not subs only)
+- **Annual pricing:** $470 / $950 / $1,720 per year (Save 20%). NOT $490/$990/$1790.
+- **Founding member:** pricing locks in for the life of the subscription.
+
+### Outcome Nudge Function — Migration Required (Apr 2026)
+
+**Function:** `netlify/functions/weekly-outcome-nudge.js` — bi-weekly plain-text re-engagement email
+**Schedule:** `0 23 * * 0` (every Sunday 11pm UTC = 6pm CT). Bi-weekly gate via ISO week parity inside the function.
+**Migration:** `migrations/009_outcome_nudge.sql` — must be run in Supabase SQL Editor before function goes live.
+**New columns:** `projects.outcome_nudge_count` (int, default 0) · `projects.last_nudge_sent_at` (timestamptz) · `user_settings.outcome_reminder_days` (int, default 21, null = Never)
+**Reset:** `updateProjectOutcome()` resets `outcome_nudge_count` to 0 when any outcome is saved.
+
 ---
 
 ## 🚫 ABSOLUTE PROHIBITIONS
