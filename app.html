@@ -3129,6 +3129,7 @@
             sampleBidUploaded: false,
             acquisition_source: null,  // How user heard about BidIntell
             plan_rooms: [],  // Which plan rooms they use to receive bid invitations
+            outcome_reminder_days: 21, // Days after bid before sending nudge (null = Never)
             // Company setup (team/company tier)
             orgName: '',
             ownerName: '',
@@ -4902,6 +4903,7 @@ ${fullText.substring(0, 40000)}`;
                     outcome,
                     outcome_data: outcomeData,
                     outcome_confidence: outcomeData.confidence || null,
+                    outcome_nudge_count: 0,
                     updated_at: new Date().toISOString()
                 }).eq('id', id).select().single();
 
@@ -6198,6 +6200,16 @@ ${fullText.substring(0, 40000)}`;
                                     `).join('')}
                                 </div>
                             </div>
+                            <div class="form-group" style="margin-top: 24px;">
+                                <label class="form-label">Remind me about open bids after</label>
+                                <select class="form-select" onchange="onboardingData.outcome_reminder_days = this.value === 'never' ? null : parseInt(this.value);" style="margin-top: 8px;">
+                                    <option value="14" ${onboardingData.outcome_reminder_days === 14 ? 'selected' : ''}>14 days</option>
+                                    <option value="21" ${(onboardingData.outcome_reminder_days === 21 || onboardingData.outcome_reminder_days === undefined) ? 'selected' : ''}>21 days (default)</option>
+                                    <option value="30" ${onboardingData.outcome_reminder_days === 30 ? 'selected' : ''}>30 days</option>
+                                    <option value="never" ${onboardingData.outcome_reminder_days === null ? 'selected' : ''}>Never</option>
+                                </select>
+                                <div class="form-hint">We'll send a short check-in when bids are still open past this window</div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -6762,6 +6774,7 @@ ${fullText.substring(0, 40000)}`;
                 ai_advisor_tone: onboardingData.aiAdvisorTone,
                 acquisition_source: onboardingData.acquisition_source || null,  // How user heard about BidIntell
                 plan_rooms: onboardingData.plan_rooms || [],
+                outcome_reminder_days: onboardingData.outcome_reminder_days !== undefined ? onboardingData.outcome_reminder_days : 21,
                 weights: {
                     location: locationWeight,
                     keywords: keywordsWeight,

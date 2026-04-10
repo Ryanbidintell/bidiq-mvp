@@ -9,6 +9,9 @@
 [functions."inbound-email-background"]
   timeout = 900
 
+[functions."weekly-outcome-nudge"]
+  schedule = "0 23 * * 0"
+
 [functions."weekly-health-check"]
   schedule = "0 9 * * 1"
 
