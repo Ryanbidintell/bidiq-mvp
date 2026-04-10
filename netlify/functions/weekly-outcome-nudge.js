@@ -132,7 +132,7 @@ exports.handler = async (event, context) => {
         // pending + older than reminderDays + nudge count below MAX
         const { data: bids, error: bidsErr } = await supabase
             .from('projects')
-            .select('id, extracted_data, gcs, outcome_nudge_count')
+            .select('id, extracted_data, gcs, scores, outcome_nudge_count')
             .eq('user_id', user_id)
             .eq('outcome', 'pending')
             .lt('created_at', bidAgeCutoff.toISOString())
@@ -156,7 +156,8 @@ exports.handler = async (event, context) => {
         const bidLines = bids.map(bid => {
             const name = bid.extracted_data?.project_name || 'Unnamed bid';
             const gcName = bid.gcs?.[0]?.name || null;
-            return gcName ? `  • ${name} — ${gcName}` : `  • ${name}`;
+            const score = bid.scores?.final != null ? ` (BidIndex: ${bid.scores.final})` : '';
+            return gcName ? `  • ${name} — ${gcName}${score}` : `  • ${name}${score}`;
         }).join('\n');
 
         const textBody =
