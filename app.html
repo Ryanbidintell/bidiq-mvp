@@ -7794,7 +7794,7 @@ ${truncatedText}`;
             if (panel) panel.style.display = 'block';
         }
 
-        // Module 3: GC Relationship Classification
+        // Module 3: Client Relationship Classification
         function classifyGCRelationship(gc) {
             if (!gc || (gc.bids || 0) === 0) return { type: 'unknown', label: '❓ No History', color: 'var(--text-muted)' };
             const bids = gc.bids || 0;
@@ -9654,7 +9654,7 @@ ${truncatedText}`;
                     ${await renderProfileWarningHtml(settings)}
                     ${renderComponent('📍', 'Location Fit', analysis.scores.components.location)}
                     ${renderComponent('🔑', 'Keywords & Contract', analysis.scores.components.keywords)}
-                    ${renderComponent('🏢', 'GC Relationship', analysis.scores.components.gc)}
+                    ${renderComponent('🏢', 'Client Relationship', analysis.scores.components.gc)}
                     ${renderComponent(settings.companyType === 'subcontractor' ? '🔧' : '📦', settings.companyType === 'subcontractor' ? 'Trade Match' : 'Product Match', analysis.scores.components.trade)}
                     ${(analysis.scores.components.trade?.score < 50 && !((settings.preferred_csi_sections||[]).length > 0) && !((settings.trades||[]).length > 0)) ? `<div class="profile-incomplete-callout" style="margin:0 0 2px;">No trade types configured — this score is a rough estimate. <span class="link" onclick="switchTab('settings')">Set your trade types →</span></div>` : ''}
                     ${analysis.scores.components.competitive?.weight > 0 ? renderComponent('⚔️', 'Competitive Pressure', analysis.scores.components.competitive) : ''}
@@ -9875,7 +9875,7 @@ ${truncatedText}`;
             }
             
             // GC details
-            if (title === 'GC Relationship' && comp.details?.bestGC) {
+            if (title === 'Client Relationship' && comp.details?.bestGC) {
                 const b = comp.details.bestGC;
                 // Show better messaging when no history exists
                 let relationshipText = '';
@@ -10057,7 +10057,7 @@ ${truncatedText}`;
                     tips.push('🏢 <strong>GC History:</strong> Your win rate with ' + c.gc.details.bestGC.name + ' is low. Consider building the relationship before bidding more work.');
                 }
                 if (!c.gc.details?.bestGC || c.gc.details.bestGC.rating <= 2) {
-                    tips.push('🏢 <strong>GC Relationship:</strong> You have no strong relationship with these GCs. Research their reputation before investing time.');
+                    tips.push('🏢 <strong>Client Relationship:</strong> You have no strong relationship with these GCs. Research their reputation before investing time.');
                 }
             }
             
@@ -10566,7 +10566,7 @@ ${truncatedText}`;
                                     <td>${a.scores.components.keywords.reason}</td>
                                 </tr>
                                 <tr>
-                                    <td>🏢 GC Relationship</td>
+                                    <td>🏢 Client Relationship</td>
                                     <td class="weight-cell">${a.scores.components.gc.weight}%</td>
                                     <td class="score-cell">${a.scores.components.gc.score}</td>
                                     <td>${a.scores.components.gc.reason}</td>
@@ -11553,7 +11553,7 @@ ${truncatedText}`;
                         ${profileWarningHtml}
                         ${p.scores?.components?.location ? renderComponent('📍', 'Location Fit', p.scores.components.location) : ''}
                         ${p.scores?.components?.keywords ? renderComponent('🔑', 'Keywords & Contract', p.scores.components.keywords) : ''}
-                        ${p.scores?.components?.gc ? renderComponent('🏢', 'GC Relationship', p.scores.components.gc) : ''}
+                        ${p.scores?.components?.gc ? renderComponent('🏢', 'Client Relationship', p.scores.components.gc) : ''}
                         ${p.scores?.components?.trade ? renderComponent(tradeIcon, tradeLabel, p.scores.components.trade) : ''}
                         ${tradeNudgeHtml}
                         ${p.scores?.components?.competitive?.weight > 0 ? renderComponent('⚔️', 'Competitive Pressure', p.scores.components.competitive) : ''}
@@ -11696,7 +11696,7 @@ ${truncatedText}`;
                     const insights = [];
                     if (loc)  insights.push(`<li><strong>Location:</strong> ${loc.reason}</li>`);
                     if (tr)   insights.push(`<li><strong>Trade Match:</strong> ${tr.reason}</li>`);
-                    if (gc)   insights.push(`<li><strong>GC Relationship:</strong> ${gc.reason}</li>`);
+                    if (gc)   insights.push(`<li><strong>Client Relationship:</strong> ${gc.reason}</li>`);
                     if (kw)   insights.push(`<li><strong>Keywords:</strong> ${kw.reason}</li>`);
                     if (cr?.riskSummary) insights.push(`<li><strong>Contract Risks:</strong> ${cr.riskSummary}</li>`);
                     if (insights.length > 0) {
@@ -12562,7 +12562,7 @@ BID CONTEXT:
 - Score Breakdown:
   • Location: ${context.score_components.location}/100
   • Keywords & Contract: ${context.score_components.keywords}/100
-  • GC Relationship: ${context.score_components.gc}/100
+  • Client Relationship: ${context.score_components.gc}/100
   • Trade/Product Match: ${context.score_components.trade}/100
 - GCs Bidding: ${context.gcs.map(gc => `${gc.name} (${gc.rating}★)`).join(', ') || 'None'}
 - Contract Risks: ${context.contract_risks}
