@@ -9683,6 +9683,20 @@ ${truncatedText}`;
                             ${deadlineChip}
                             ${analyzedChip}
                         </div>
+                        <details style="margin-top:12px;">
+                            <summary style="font-size:12px;color:rgba(255,255,255,0.5);cursor:pointer;list-style:none;outline:none;user-select:none;">ℹ How is this score calculated?</summary>
+                            <div style="margin-top:8px;font-size:12px;line-height:1.7;background:rgba(0,0,0,0.2);padding:12px;border-radius:6px;color:rgba(255,255,255,0.75);text-align:left;">
+                                BidIndex™ scores bid fit on a 0–100 scale across five weighted factors. ≥80 = GO · 60–79 = REVIEW · &lt;60 = PASS.
+                                <div style="margin-top:8px;display:grid;gap:5px;">
+                                    <div>📍 <strong>Location Fit</strong> — Distance from your office to the job site.</div>
+                                    <div>🔑 <strong>Keywords &amp; Contract</strong> — Your preferred project types found in the specs, minus contract risk terms.</div>
+                                    <div>🏢 <strong>Client Relationship</strong> — Your star rating, bid count, and win rate with the specific client inviting you.</div>
+                                    <div>🔧 <strong>Trade / Product Match</strong> — Whether your CSI divisions or product lines appear in the spec.</div>
+                                    <div>⚔️ <strong>Competitive Pressure</strong> — How many subs typically bid this client's jobs. Unlocks after 3 logged outcomes.</div>
+                                </div>
+                                <div style="margin-top:8px;font-size:11px;opacity:0.6;">Each component's weight is adjustable in Settings → Score Weights.</div>
+                            </div>
+                        </details>
                         ${capMsg}
                         ${duplicateHtml}
                         ${similarBidHtml}
@@ -9919,7 +9933,9 @@ ${truncatedText}`;
             }
             
             // GC details
-            if (title === 'Client Relationship' && comp.details?.bestGC) {
+            if (title === 'Client Relationship' && !comp.details?.bestGC) {
+                details = `<div class="score-component-details" style="color:var(--text-muted);">Measures your star rating, bid history, and win rate with the client who invited you. Add clients in the Clients tab and log outcomes to build an accurate history over time.</div>`;
+            } else if (title === 'Client Relationship' && comp.details?.bestGC) {
                 const b = comp.details.bestGC;
                 // Show better messaging when no history exists
                 let relationshipText = '';
@@ -11653,6 +11669,20 @@ ${truncatedText}`;
                                 <div class="rec-pill ${recClassSaved}">${p.scores.recommendation}${recTextSaved ? ` — ${recTextSaved}` : ''}</div>
                             </div>
                             ${(locStrSaved || btSaved) ? `<div class="meta-chips-row">${locStrSaved ? `<span class="meta-chip">📍 ${locStrSaved}</span>` : ''}${btSaved ? `<span class="meta-chip">🏗️ ${btSaved}</span>` : ''}</div>` : ''}
+                            <details style="margin-top:12px;">
+                                <summary style="font-size:12px;color:rgba(255,255,255,0.5);cursor:pointer;list-style:none;outline:none;user-select:none;">ℹ How is this score calculated?</summary>
+                                <div style="margin-top:8px;font-size:12px;line-height:1.7;background:rgba(0,0,0,0.2);padding:12px;border-radius:6px;color:rgba(255,255,255,0.75);text-align:left;">
+                                    BidIndex™ scores bid fit on a 0–100 scale across five weighted factors. ≥80 = GO · 60–79 = REVIEW · &lt;60 = PASS.
+                                    <div style="margin-top:8px;display:grid;gap:5px;">
+                                        <div>📍 <strong>Location Fit</strong> — Distance from your office to the job site.</div>
+                                        <div>🔑 <strong>Keywords &amp; Contract</strong> — Your preferred project types found in the specs, minus contract risk terms.</div>
+                                        <div>🏢 <strong>Client Relationship</strong> — Your star rating, bid count, and win rate with the specific client inviting you.</div>
+                                        <div>🔧 <strong>Trade / Product Match</strong> — Whether your CSI divisions or product lines appear in the spec.</div>
+                                        <div>⚔️ <strong>Competitive Pressure</strong> — How many subs typically bid this client's jobs. Unlocks after 3 logged outcomes.</div>
+                                    </div>
+                                    <div style="margin-top:8px;font-size:11px;opacity:0.6;">Each component's weight is adjustable in Settings → Score Weights.</div>
+                                </div>
+                            </details>
                             ${contractRisksHtml}
                             ${bidRisk ? renderBidRiskCard(bidRisk) : ''}
                             ${winnersCurseRisk ? renderWinnersCurseCard(winnersCurseRisk) : ''}
