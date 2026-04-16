@@ -276,15 +276,25 @@
                 </table>
             </div>
 
-            <!-- SECTION F: Phase Gate Checklist -->
+            <!-- SECTION F: Email Tools -->
             <div class="section" id="email-tool-section">
-                <h2 class="section-title">📧 Beta-to-Paid Transition Emails</h2>
-                <p style="color:#666;margin-bottom:16px;font-size:14px;">Send the billing start warning email to users before April 1. User data loads from <code>user_settings</code>. Click "Preview" to see who will receive it, then "Send All" to fire.</p>
-                <div style="display:flex;gap:10px;margin-bottom:16px;">
+                <h2 class="section-title">📧 Email Tools</h2>
+                <p style="color:#555;margin-bottom:4px;font-size:12px;background:#fff8ed;border:1px solid #f26522;border-radius:4px;padding:6px 10px;">BCC copies go to <strong>ryan@bidintell.ai</strong> — not ryan@fsikc.com. Check that inbox for copies.</p>
+
+                <h3 style="font-size:15px;margin:20px 0 8px;color:#333;">Founding Member Coupon (FOUNDING30)</h3>
+                <p style="color:#666;margin-bottom:12px;font-size:13px;">Send the 30% off coupon code to beta users who haven't subscribed yet. Load users first, then send.</p>
+                <div style="display:flex;gap:10px;margin-bottom:12px;">
                     <button onclick="loadUsersForEmail()" style="background:#4F46E5;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;">Load Users</button>
-                    <button onclick="sendAllTransitionEmails()" id="sendAllBtn" disabled style="background:#DC2626;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;opacity:0.5;">Send All Warning Emails</button>
+                    <button onclick="sendAllCouponEmails()" id="sendCouponBtn" disabled style="background:#F26522;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;opacity:0.5;">Send FOUNDING30 Emails</button>
                 </div>
                 <div id="email-user-list" style="font-size:13px;"></div>
+                <div id="coupon-send-log" style="font-size:12px;color:#666;margin-top:12px;max-height:200px;overflow-y:auto;"></div>
+
+                <h3 style="font-size:15px;margin:24px 0 8px;color:#333;">Beta-to-Paid Transition (April 1 Warning)</h3>
+                <p style="color:#666;margin-bottom:12px;font-size:13px;">Billing start warning email. Load users above, then send.</p>
+                <div style="display:flex;gap:10px;margin-bottom:12px;">
+                    <button onclick="sendAllTransitionEmails()" id="sendAllBtn" disabled style="background:#DC2626;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;opacity:0.5;">Send All Warning Emails</button>
+                </div>
                 <div id="email-send-log" style="font-size:12px;color:#666;margin-top:12px;max-height:200px;overflow-y:auto;"></div>
             </div>
 
@@ -803,7 +813,57 @@
                 </table>
             `;
             const sendBtn = document.getElementById('sendAllBtn');
-            if (withEmail.length > 0) { sendBtn.disabled = false; sendBtn.style.opacity = '1'; }
+            const couponBtn = document.getElementById('sendCouponBtn');
+            if (withEmail.length > 0) {
+                sendBtn.disabled = false; sendBtn.style.opacity = '1';
+                if (couponBtn) { couponBtn.disabled = false; couponBtn.style.opacity = '1'; }
+            }
+        }
+
+        function appendLogEntry(logEl, message, isError) {
+            const div = document.createElement('div');
+            div.style.color = isError ? 'red' : 'green';
+            div.textContent = message;
+            logEl.appendChild(div);
+        }
+
+        async function sendAllCouponEmails() {
+            if (!emailUserData.length) { alert('Load users first'); return; }
+            if (!confirm('Send FOUNDING30 coupon email to ' + emailUserData.length + ' users? This cannot be undone.')) return;
+            const log = document.getElementById('coupon-send-log');
+            const btn = document.getElementById('sendCouponBtn');
+            btn.disabled = true; btn.textContent = 'Sending...'; btn.style.opacity = '0.5';
+            while (log.firstChild) log.removeChild(log.firstChild);
+            let sent = 0, failed = 0;
+            for (const user of emailUserData) {
+                try {
+                    const res = await fetch('/.netlify/functions/notify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            emailType: 'founding_coupon',
+                            fullName: user.user_name || user.company_name || 'there',
+                            userEmail: user.user_email
+                        })
+                    });
+                    if (res.ok) {
+                        sent++;
+                        appendLogEntry(log, '\u2705 Sent to ' + user.user_email, false);
+                    } else {
+                        throw new Error(await res.text());
+                    }
+                } catch (e) {
+                    failed++;
+                    appendLogEntry(log, '\u274c Failed: ' + user.user_email + ' \u2014 ' + e.message, true);
+                }
+                await new Promise(r => setTimeout(r, 300));
+            }
+            const summary = document.createElement('div');
+            summary.style.fontWeight = '600';
+            summary.style.marginTop = '8px';
+            summary.textContent = 'Done: ' + sent + ' sent, ' + failed + ' failed.';
+            log.appendChild(summary);
+            btn.textContent = 'Sent ' + sent + '/' + emailUserData.length;
         }
 
         async function sendAllTransitionEmails() {

@@ -27,7 +27,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const CLAUDE_API_KEY      = process.env.CLAUDE_API_KEY;
 const POSTMARK_API_KEY    = process.env.POSTMARK_API_KEY;
 
-const MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_ATTACHMENT_SIZE_BYTES = 4 * 1024 * 1024; // 4MB — Netlify hard-rejects payloads >6MB; 4MB raw = ~5.3MB base64, safe headroom
 const MAX_ATTACHMENTS = 3;
 
 // ── Supabase admin client (bypasses RLS) ─────────────────────────────────────
@@ -569,7 +569,7 @@ exports.handler = async (event) => {
         topRisk ? `\u26A0\uFE0F  ${topRisk.clause_type || topRisk.plain_english || 'Contract risk flag'}` : null,
         extracted.bond_required === true ? `\u26A0\uFE0F  Bond required` : null,
         skippedFiles.length > 0
-            ? `\u26A0\uFE0F  ${skippedFiles.join(', ')} exceeded the 10MB limit and was skipped.\n   Score based on email content only — upload manually for full contract analysis.`
+            ? `\u26A0\uFE0F  ${skippedFiles.join(', ')} was too large to process via email (4MB limit).\n   For full contract analysis, upload the PDF directly at bidintell.ai/app.`
             : null,
         ``,
         `─────────────────────────────────`,

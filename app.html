@@ -1539,6 +1539,8 @@
                         </div>
                     </div>
 
+                    <div id="pendingOutcomesBanner" style="display:none;"></div>
+
                     <div class="card">
                         <div class="card-header"><h3 class="card-title">All Projects <span id="projectCount" style="color: var(--text-muted); font-size: 14px;"></span></h3><button class="btn btn-secondary btn-sm" onclick="exportProjectsCSV()">📥 Export CSV</button></div>
                         <div class="card-body" style="padding: 0;" id="projectsList"></div>
@@ -1626,6 +1628,17 @@
                         </div>
                         <div class="card-body">
                             <div id="clientTypePerformance"></div>
+                        </div>
+                    </div>
+
+                    <!-- Score vs Outcome correlation -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Score vs. Outcome</h3>
+                            <div class="form-hint">How well do your scores predict wins? Needs at least 5 outcomes.</div>
+                        </div>
+                        <div class="card-body">
+                            <div id="scoreOutcomeChart"></div>
                         </div>
                     </div>
 
@@ -9970,9 +9983,29 @@ ${truncatedText}`;
             if (title === 'Competitive Pressure') {
                 const d = comp.details;
                 if (d?.status === 'insufficient_data') {
-                    details = `<div class="score-component-details" style="color:var(--text-muted);">Track ${3 - (d.count || 0)} more bid outcomes to activate this score.</div>`;
+                    const logged = d.count || 0;
+                    const needed = 3;
+                    const pct = Math.round((logged / needed) * 100);
+                    details = `<div class="score-component-details">
+                        <div style="margin-bottom:8px;font-size:13px;color:var(--text-muted);">Activates after you log outcomes on <strong style="color:var(--text-primary)">3 bids with this client.</strong> Once active, BidIntell uses your actual competition history — avg bidder count per client — to predict how competitive this job will be.</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">${logged} of ${needed} outcomes logged with this client</div>
+                        <div style="height:6px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden;">
+                            <div style="height:100%;width:${pct}%;background:#F26522;border-radius:3px;transition:width 0.3s;"></div>
+                        </div>
+                    </div>`;
                 } else if (d?.status === 'active') {
-                    details = `<div class="score-component-details"><strong>Based on ${d.count} past bids</strong><br><span style="color:var(--text-muted)">Avg ${d.avgBidders?.toFixed(1)} bidders competing for your trade on similar jobs</span></div>`;
+                    const avg = d.avgBidders?.toFixed(1) || '?';
+                    const competitiveness = d.avgBidders <= 2 ? 'Low competition — you typically have the field mostly to yourself on these jobs.' :
+                                           d.avgBidders <= 4 ? 'Moderate competition — a few subs typically bid on these jobs.' :
+                                           d.avgBidders <= 7 ? 'Competitive — expect 5–7 bidders, margin discipline matters.' :
+                                           'High competition — 8+ subs typically bid. Price carefully, every point of margin counts.';
+                    details = `<div class="score-component-details">
+                        <div style="display:flex;gap:16px;margin-bottom:10px;">
+                            <div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:var(--text-primary);">${avg}</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">avg bidders</div></div>
+                            <div style="font-size:13px;color:var(--text-muted);line-height:1.5;padding-top:2px;">${competitiveness}</div>
+                        </div>
+                        <div style="font-size:12px;color:var(--text-muted);">Based on ${d.count} past outcomes with this client. Score updates automatically as you log more.</div>
+                    </div>`;
                 }
             }
 
@@ -11350,7 +11383,50 @@ ${truncatedText}`;
             if (projects.length === 0) {
                 document.getElementById('projectsList').innerHTML = '<div class="empty-state" style="padding:40px;"><h3>No projects yet</h3><p>Analyze your first bid to see it here</p></div>';
                 document.getElementById('projectCount').textContent = '';
+                document.getElementById('pendingOutcomesBanner').style.display = 'none';
                 return;
+            }
+
+            // Banner: surface bids past deadline (or 30+ days old) still awaiting outcome
+            const now = new Date();
+            const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+            const needsOutcome = projects.filter(p => {
+                if (p.outcome && p.outcome !== 'pending') return false;
+                const deadline = p.extracted?.bid_deadline ? new Date(p.extracted.bid_deadline) : null;
+                const analyzedAt = p.created_at ? new Date(p.created_at) : null;
+                return (deadline && !isNaN(deadline) && deadline < now) ||
+                       (analyzedAt && analyzedAt < thirtyDaysAgo);
+            });
+            const banner = document.getElementById('pendingOutcomesBanner');
+            if (needsOutcome.length > 0) {
+                banner.style.display = 'block';
+                const count = needsOutcome.length;
+                const firstId = needsOutcome[0].id; // UUID — safe for event listener
+                const wrap = document.createElement('div');
+                wrap.style.cssText = 'background:rgba(242,101,34,0.1);border:1px solid rgba(242,101,34,0.3);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;';
+                const left = document.createElement('div');
+                left.style.cssText = 'display:flex;align-items:center;gap:10px;';
+                const textDiv = document.createElement('div');
+                const titleEl = document.createElement('div');
+                titleEl.style.cssText = 'font-weight:600;color:var(--text-primary);font-size:14px;';
+                titleEl.textContent = count + ' bid' + (count !== 1 ? 's' : '') + ' waiting for an outcome';
+                const subEl = document.createElement('div');
+                subEl.style.cssText = 'font-size:12px;color:var(--text-muted);margin-top:2px;';
+                subEl.textContent = 'Logging outcomes trains the AI and improves your score accuracy.';
+                textDiv.appendChild(titleEl);
+                textDiv.appendChild(subEl);
+                left.appendChild(textDiv);
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-sm';
+                btn.style.cssText = 'background:#F26522;color:white;white-space:nowrap;';
+                btn.textContent = 'Log Outcome \u2192';
+                btn.addEventListener('click', () => showOutcome(firstId));
+                wrap.appendChild(left);
+                wrap.appendChild(btn);
+                banner.innerHTML = '';
+                banner.appendChild(wrap);
+            } else {
+                banner.style.display = 'none';
             }
 
             // Apply filters (will render the table)
@@ -12944,9 +13020,9 @@ Respond now:`;
                         <div class="form-hint">Track each alternate with its bid amount and margin</div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Base Bid Margin (%)</label>
-                        <input type="number" class="form-input" id="outcomeMargin" step="0.1" placeholder="12.5">
-                        <div class="form-hint">Margin on the base bid (not including alternates)</div>
+                        <label class="form-label">Base Bid Margin (%) <span style="color:#ef4444;font-size:12px;">Required</span></label>
+                        <input type="number" class="form-input" id="outcomeMargin" step="0.1" placeholder="12.5" required>
+                        <div class="form-hint">Margin on the base bid. Required — this is the most valuable data point for your Bid Economics.</div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">How competitive was your pricing?</label>
@@ -12976,6 +13052,28 @@ Respond now:`;
                         <label class="form-label">How many sub-bids were collected for your trade?</label>
                         <input type="number" class="form-input" id="outcomeBidderCount" min="1" max="50" placeholder="e.g. 4">
                         <div class="form-hint">Including yours. This trains AI to predict competition on future bids.</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Client RFI responsiveness <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional — builds client profile over time</span></label>
+                        <select class="form-select" id="outcomeRfiResponsiveness">
+                            <option value="">Not sure / N/A</option>
+                            <option value="1">1 — Unresponsive, questions went unanswered</option>
+                            <option value="2">2 — Slow, answered eventually</option>
+                            <option value="3">3 — Average</option>
+                            <option value="4">4 — Responsive, good communication</option>
+                            <option value="5">5 — Excellent, proactive</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Client payment reliability <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional — builds client profile over time</span></label>
+                        <select class="form-select" id="outcomePaymentReliability">
+                            <option value="">Unknown</option>
+                            <option value="prompt">Prompt payer</option>
+                            <option value="net30">Net-30</option>
+                            <option value="net60">Net-60</option>
+                            <option value="net90">Net-90+</option>
+                            <option value="poor">Poor / slow pay / disputes</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Hours spent estimating (optional)</label>
@@ -13026,6 +13124,28 @@ Respond now:`;
                         <label class="form-label">How many sub-bids were collected for your trade?</label>
                         <input type="number" class="form-input" id="outcomeBidderCount" min="1" max="50" placeholder="e.g. 4">
                         <div class="form-hint">Including yours. This trains AI to predict competition on future bids.</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Client RFI responsiveness <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional — builds client profile over time</span></label>
+                        <select class="form-select" id="outcomeRfiResponsiveness">
+                            <option value="">Not sure / N/A</option>
+                            <option value="1">1 — Unresponsive, questions went unanswered</option>
+                            <option value="2">2 — Slow, answered eventually</option>
+                            <option value="3">3 — Average</option>
+                            <option value="4">4 — Responsive, good communication</option>
+                            <option value="5">5 — Excellent, proactive</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Client payment reliability <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional — builds client profile over time</span></label>
+                        <select class="form-select" id="outcomePaymentReliability">
+                            <option value="">Unknown</option>
+                            <option value="prompt">Prompt payer</option>
+                            <option value="net30">Net-30</option>
+                            <option value="net60">Net-60</option>
+                            <option value="net90">Net-90+</option>
+                            <option value="poor">Poor / slow pay / disputes</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Hours spent estimating (optional)</label>
@@ -13278,11 +13398,20 @@ Respond now:`;
             const outcomeGCName = (document.getElementById('outcomeGCSelector')?.value || '').trim() || null;
 
             if (type === 'won') {
+                const marginVal = document.getElementById('outcomeMargin')?.value;
+                if (!marginVal || marginVal.trim() === '') {
+                    alert('Please enter your base bid margin. This is required for won bids — it\'s the most valuable data point for your Bid Economics.');
+                    return;
+                }
                 outcomeData.amount = document.getElementById('outcomeAmount')?.value;
                 outcomeData.alternates = outcomeAlternates.filter(alt => alt.description || alt.amount); // Only save non-empty alternates
-                outcomeData.margin = document.getElementById('outcomeMargin')?.value;
+                outcomeData.margin = marginVal;
                 outcomeData.howCompetitive = document.getElementById('outcomeHowCompetitive')?.value;
                 outcomeData.pricingFeedback = document.getElementById('outcomePricingFeedback')?.value;
+                const rfiWon = document.getElementById('outcomeRfiResponsiveness')?.value;
+                if (rfiWon) outcomeData.rfi_responsiveness = parseInt(rfiWon);
+                const paymentWon = document.getElementById('outcomePaymentReliability')?.value;
+                if (paymentWon) outcomeData.payment_reliability = paymentWon;
                 const hoursSpentWon = parseFloat(document.getElementById('outcomeHoursSpent')?.value);
                 if (hoursSpentWon > 0) outcomeData.hours_spent = hoursSpentWon;
 
@@ -13322,6 +13451,10 @@ Respond now:`;
                 outcomeData.winner = document.getElementById('outcomeWinner')?.value;
                 outcomeData.otherCompetitors = document.getElementById('outcomeOtherCompetitors')?.value?.split(',').map(s => s.trim()).filter(Boolean) || [];
                 outcomeData.pricingFeedback = document.getElementById('outcomePricingFeedback')?.value;
+                const rfiLost = document.getElementById('outcomeRfiResponsiveness')?.value;
+                if (rfiLost) outcomeData.rfi_responsiveness = parseInt(rfiLost);
+                const paymentLost = document.getElementById('outcomePaymentReliability')?.value;
+                if (paymentLost) outcomeData.payment_reliability = paymentLost;
                 const hoursSpentLost = parseFloat(document.getElementById('outcomeHoursSpent')?.value);
                 if (hoursSpentLost > 0) outcomeData.hours_spent = hoursSpentLost;
 
@@ -15478,6 +15611,61 @@ Respond now:`;
             });
         }
 
+        function renderScoreOutcomeChart(projects) {
+            const el = document.getElementById('scoreOutcomeChart');
+            if (!el) return;
+
+            // Only include projects with an outcome and a final score
+            const withOutcome = projects.filter(p =>
+                p.outcome && p.outcome !== 'pending' && p.scores?.final != null
+            );
+
+            if (withOutcome.length < 5) {
+                el.innerHTML = '<div class="help-text">Log at least 5 bid outcomes to see score correlation.</div>';
+                return;
+            }
+
+            // Group into score buckets: 0-39, 40-59, 60-79, 80-100
+            const buckets = [
+                { label: '0-39 (PASS)', min: 0, max: 39, won: 0, total: 0 },
+                { label: '40-59 (PASS)', min: 40, max: 59, won: 0, total: 0 },
+                { label: '60-79 (REVIEW)', min: 60, max: 79, won: 0, total: 0 },
+                { label: '80-100 (GO)', min: 80, max: 100, won: 0, total: 0 }
+            ];
+
+            withOutcome.forEach(p => {
+                const score = p.scores.final;
+                const bucket = buckets.find(b => score >= b.min && score <= b.max);
+                if (!bucket) return;
+                bucket.total++;
+                if (p.outcome === 'won') bucket.won++;
+            });
+
+            const activeBuckets = buckets.filter(b => b.total > 0);
+
+            if (activeBuckets.length === 0) {
+                el.innerHTML = '<div class="help-text">No scored outcomes yet.</div>';
+                return;
+            }
+
+            const rows = activeBuckets.map(b => {
+                const winRate = b.total > 0 ? Math.round((b.won / b.total) * 100) : 0;
+                const barPct = winRate;
+                const color = b.label.includes('GO') ? '#22c55e' : b.label.includes('REVIEW') ? '#eab308' : '#94a3b8';
+                return `<div style="margin-bottom:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+                        <span style="font-size:13px;font-weight:600;color:var(--text-primary);">${b.label}</span>
+                        <span style="font-size:13px;color:var(--text-muted);">${b.won} won / ${b.total} total — <strong style="color:var(--text-primary);">${winRate}%</strong></span>
+                    </div>
+                    <div style="height:10px;background:var(--bg-tertiary);border-radius:5px;overflow:hidden;">
+                        <div style="height:100%;width:${barPct}%;background:${color};border-radius:5px;transition:width 0.3s;"></div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            el.innerHTML = `<div style="margin-bottom:4px;">${rows}</div><div style="font-size:12px;color:var(--text-muted);">Win rate by score range — the further GO bids outpace PASS bids, the better calibrated your scoring is.</div>`;
+        }
+
         async function renderAnalytics() {
             const projects = await getProjects();
             if (!projects || projects.length === 0) {
@@ -15502,6 +15690,7 @@ Respond now:`;
 
                 document.getElementById('topGCsTable').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('worstGCsTable').innerHTML = '<div class="help-text">No data available yet.</div>';
+                document.getElementById('scoreOutcomeChart').innerHTML = '<div class="help-text">No data available yet.</div>';
                 const bidROICardEl = document.getElementById('bidROICard');
                 if (bidROICardEl) bidROICardEl.style.display = 'none';
 
@@ -15515,6 +15704,7 @@ Respond now:`;
             await renderClientTypePerformance(projects);
             renderBuildingTypeChart(projects);
             renderBidROIAnalytics(projects);
+            renderScoreOutcomeChart(projects);
 
             // Calculate metrics
             const accuracy = calculatePredictionAccuracy(projects);

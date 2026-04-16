@@ -200,6 +200,47 @@ exports.handler = async function(event, context) {
             return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
         }
 
+        // ── Founding member coupon ───────────────────────────────────────────
+        if (emailType === 'founding_coupon') {
+            const { fullName, userEmail } = body;
+            const firstName = (fullName || 'there').split(' ')[0];
+
+            await sendEmail({
+                to: userEmail,
+                subject: `Your founding member discount — BidIntell`,
+                htmlBody: `
+                    <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #1a1a2e;">
+                        <div style="background: #0B0F14; padding: 24px; border-radius: 8px 8px 0 0; border-bottom: 2px solid #F26522;">
+                            <div style="font-weight: 700; font-size: 20px; color: #F8FAFC;">BidIntell</div>
+                        </div>
+                        <div style="padding: 32px 24px; background: #141A23; border-radius: 0 0 8px 8px;">
+                            <h2 style="color: #F8FAFC; margin-bottom: 16px;">Hey ${firstName} — your founding member discount</h2>
+                            <p style="color: #CBD5E1; line-height: 1.7;">You're one of a small group of founding members who helped shape BidIntell during beta. As a thank-you, I want to give you 30% off your first year.</p>
+
+                            <div style="background: #1C2533; border: 1px solid #384254; border-left: 3px solid #F26522; border-radius: 6px; padding: 20px; margin: 24px 0; text-align: center;">
+                                <div style="font-size: 12px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Your discount code</div>
+                                <div style="font-size: 28px; font-weight: 800; color: #F26522; letter-spacing: 0.1em; font-family: monospace;">FOUNDING30</div>
+                                <div style="font-size: 13px; color: #CBD5E1; margin-top: 8px;">30% off — applies at checkout</div>
+                            </div>
+
+                            <p style="color: #CBD5E1; line-height: 1.7;">Enter the code when you subscribe and you'll lock in founding member pricing for the life of your subscription.</p>
+
+                            <div style="text-align: center; margin: 28px 0;">
+                                <a href="https://bidintell.ai/app" style="background: #F26522; color: white; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: 700; display: inline-block;">Subscribe Now →</a>
+                            </div>
+
+                            <p style="color: #94A3B8; font-size: 14px; line-height: 1.7;">Questions? Just reply to this email.</p>
+
+                            <p style="color: #94A3B8; margin-top: 24px; font-size: 14px;">— Ryan<br><em>Founder, BidIntell</em></p>
+                        </div>
+                        <p style="font-size: 11px; color: #5A6A7E; text-align: center; margin-top: 16px;">BidIntell · <a href="https://bidintell.ai" style="color: #5A6A7E;">bidintell.ai</a> · <a href="https://bidintell.ai/legal" style="color: #5A6A7E;">Privacy & Terms</a></p>
+                    </div>
+                `
+            });
+
+            return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+        }
+
         // ── ROI calculator breakdown ─────────────────────────────────────────
         if (emailType === 'roi_breakdown') {
             const { userEmail, bids, hours, winRate, avgValue, margin, hoursSaved, addlMargin } = body;
