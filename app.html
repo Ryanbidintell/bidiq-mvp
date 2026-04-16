@@ -9689,9 +9689,8 @@ ${truncatedText}`;
                                 BidIndex™ scores bid fit on a 0–100 scale across five weighted factors. ≥80 = GO · 60–79 = REVIEW · &lt;60 = PASS.
                                 <div style="margin-top:8px;display:grid;gap:5px;">
                                     <div>📍 <strong>Location Fit</strong> — Distance from your office to the job site.</div>
-                                    <div>🔑 <strong>Keywords &amp; Contract</strong> — Your preferred project types found in the specs, minus contract risk terms.</div>
+                                    <div>🔑 <strong>Keywords &amp; Trade Scope</strong> — Finds your preferred work types and CSI spec sections in the documents. On drawings without a spec book, keyword matches serve as the trade scope signal. Contract risk terms are penalized.</div>
                                     <div>🏢 <strong>Client Relationship</strong> — Your star rating, bid count, and win rate with the specific client inviting you.</div>
-                                    <div>🔧 <strong>Trade / Product Match</strong> — Whether your CSI divisions or product lines appear in the spec.</div>
                                     <div>⚔️ <strong>Competitive Pressure</strong> — How many subs typically bid this client's jobs. Unlocks after 3 logged outcomes.</div>
                                 </div>
                                 <div style="margin-top:8px;font-size:11px;opacity:0.6;">Each component's weight is adjustable in Settings → Score Weights.</div>
@@ -9959,7 +9958,7 @@ ${truncatedText}`;
             // Trade Match details (for subcontractors)
             if (title === 'Trade Match' && comp.details?.found !== undefined) {
                 if (comp.details.scoring_mode === 'keyword_fallback') {
-                    details = `<div class="score-component-details"><span style="color:var(--text-muted)">No spec sections or CSI division codes found — score estimated from keyword matches.</span></div>`;
+                    details = `<div class="score-component-details"><span style="color:var(--text-muted)">No spec sections found (drawings-only bid). Trade scope estimated from keyword matches — if your keywords appear, it indicates your work is likely included. Upload a spec book for section-level confirmation.</span></div>`;
                 } else if (comp.details.scoring_mode === 'section' && comp.details.allSections) {
                     const found = comp.details.foundSections || [];
                     const notFound = comp.details.allSections.filter(s => !found.includes(s));
