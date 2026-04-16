@@ -2232,7 +2232,7 @@
                                 <button class="btn btn-sm btn-secondary" onclick="showReuploadModal()" id="reuploadBtn">📤 Upload New Documents</button>
                                 <button class="btn btn-sm btn-secondary" onclick="showAddClientToProjectModal()">+ Add Client</button>
                                 <button class="btn btn-sm btn-secondary" onclick="showOutcomeFromReport()">+ Add Outcome</button>
-                                <button class="btn btn-sm btn-secondary" onclick="showOverrideModal()" id="overrideDecisionBtn">📝 Override Decision</button>
+                                <button class="btn btn-sm btn-secondary" onclick="showOverrideModal()" id="overrideDecisionBtn" title="Record your decision when your judgment differs from the AI score. Won't change the score — tracks where you disagreed.">📝 Override Decision</button>
                                 <button class="btn btn-sm btn-secondary" onclick="printReport()">🖨 Print Report</button>
                                 <button class="btn btn-sm btn-primary" onclick="saveReportEdits()">💾 Save Changes</button>
                             </div>
@@ -9707,7 +9707,10 @@ ${truncatedText}`;
                     ${renderImprovementTips(analysis.scores)}
                     
                     <div class="manual-override" style="margin-top:20px;padding:16px;background:var(--bg-tertiary);border-radius:var(--radius);border:1px solid var(--border-color);">
-                        <div style="font-weight:600;margin-bottom:12px;color:var(--text-primary);">📋 Do you agree with this recommendation?</div>
+                        <div style="margin-bottom:10px;">
+                            <div style="font-weight:600;color:var(--text-primary);">📊 Score Feedback</div>
+                            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Did the score feel right? This trains the AI — it doesn't change your report.</div>
+                        </div>
                         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
                             <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);border:2px solid transparent;" class="override-option">
                                 <input type="radio" name="userAgreement" value="agree" checked style="accent-color:var(--success);"> 
@@ -11665,7 +11668,10 @@ ${truncatedText}`;
                     </div>
 
                     <div class="manual-override" style="margin-top:20px;padding:16px;background:var(--bg-tertiary);border-radius:var(--radius);border:1px solid var(--border-color);">
-                        <div style="font-weight:600;margin-bottom:12px;color:var(--text-primary);">📋 Do you agree with this recommendation?</div>
+                        <div style="margin-bottom:10px;">
+                            <div style="font-weight:600;color:var(--text-primary);">📊 Score Feedback</div>
+                            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Did the score feel right? This trains the AI — it doesn't change your report.</div>
+                        </div>
                         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
                             <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);border:2px solid transparent;" class="override-option">
                                 <input type="radio" name="reportUserAgreement" value="agree" ${!p.user_agreement || p.user_agreement === 'agree' ? 'checked' : ''} style="accent-color:var(--success);">
