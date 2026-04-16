@@ -2232,6 +2232,7 @@
                                 <button class="btn btn-sm btn-secondary" onclick="showReuploadModal()" id="reuploadBtn">📤 Upload New Documents</button>
                                 <button class="btn btn-sm btn-secondary" onclick="showAddClientToProjectModal()">+ Add Client</button>
                                 <button class="btn btn-sm btn-secondary" onclick="showOutcomeFromReport()">+ Add Outcome</button>
+                                <button class="btn btn-sm btn-secondary" onclick="showOverrideModal()" id="overrideDecisionBtn">📝 Override Decision</button>
                                 <button class="btn btn-sm btn-secondary" onclick="printReport()">🖨 Print Report</button>
                                 <button class="btn btn-sm btn-primary" onclick="saveReportEdits()">💾 Save Changes</button>
                             </div>
@@ -2351,6 +2352,33 @@
         </div>
     </div>
     
+    <!-- Estimator Override Modal -->
+    <div class="modal-overlay" id="overrideModal">
+        <div class="modal">
+            <div class="modal-header"><h3 class="modal-title">Override Decision</h3><button class="modal-close" onclick="closeModal('overrideModal')">×</button></div>
+            <div class="modal-body">
+                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">The AI scored this bid. Use this to record your own judgment — it won't change the score, but it will track where you disagreed.</p>
+                <div class="form-group">
+                    <label class="form-label">Your Decision</label>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-sm" id="overrideBtnGo" onclick="selectOverrideDirection('go')" style="flex:1;">GO</button>
+                        <button class="btn btn-sm" id="overrideBtnReview" onclick="selectOverrideDirection('review')" style="flex:1;">REVIEW</button>
+                        <button class="btn btn-sm" id="overrideBtnPass" onclick="selectOverrideDirection('pass')" style="flex:1;">PASS</button>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:12px;">
+                    <label class="form-label">Reason <span style="color:var(--text-muted);font-weight:400;">(Optional)</span></label>
+                    <textarea class="form-input" id="overrideReason" rows="3" placeholder="Why are you overriding the score?" style="resize:vertical;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('overrideModal')">Cancel</button>
+                <button class="btn btn-danger" id="overrideClearBtn" onclick="clearOverride()" style="display:none;">Clear Override</button>
+                <button class="btn btn-primary" onclick="saveOverride()">Save Override</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Merge Review Modal -->
     <div class="modal-overlay" id="mergeReviewModal">
         <div class="modal" style="max-width:720px;">
@@ -11613,6 +11641,7 @@ ${truncatedText}`;
 
                 const scoreHTML = `
                     ${multiGCHtml}
+                    <div id="estimatorOverrideBanner"></div>
                     <div class="score-report">
                         <div class="score-report-header rec-${recClassSaved}">
                             <div class="report-header-tag">BidIndex™ Intelligence Report</div>
@@ -11655,6 +11684,9 @@ ${truncatedText}`;
                     </div>
                 `;
                 document.getElementById('reportScoreContent').innerHTML = scoreHTML;
+
+                // Render estimator override banner using DOM methods (security-safe — no innerHTML with user data)
+                renderEstimatorOverrideBanner(p.estimator_override || null);
 
                 // Contract tab
                 let contractTabHtml = '';
@@ -12721,6 +12753,118 @@ Respond now:`;
             const projectId = document.getElementById('reportProjectId').value;
             if (projectId) {
                 showOutcome(projectId);
+            }
+        }
+
+        // Estimator Override
+        let _overrideSelectedDirection = null;
+
+        function showOverrideModal() {
+            const p = window.currentReportProject;
+            if (!p) return;
+            const existing = p.estimator_override;
+            _overrideSelectedDirection = existing?.direction || null;
+            const reasonEl = document.getElementById('overrideReason');
+            if (reasonEl) reasonEl.value = existing?.reason || '';
+            updateOverrideDirectionButtons(_overrideSelectedDirection);
+            const clearBtn = document.getElementById('overrideClearBtn');
+            if (clearBtn) clearBtn.style.display = existing?.direction ? 'inline-flex' : 'none';
+            openModal('overrideModal');
+        }
+
+        function selectOverrideDirection(dir) {
+            _overrideSelectedDirection = dir;
+            updateOverrideDirectionButtons(dir);
+        }
+
+        function updateOverrideDirectionButtons(selected) {
+            const activeStyles = {
+                go: 'background:#16a34a;color:#fff;border-color:#16a34a;',
+                review: 'background:#d97706;color:#fff;border-color:#d97706;',
+                pass: 'background:#dc2626;color:#fff;border-color:#dc2626;'
+            };
+            ['go', 'review', 'pass'].forEach(dir => {
+                const btn = document.getElementById('overrideBtn' + dir.charAt(0).toUpperCase() + dir.slice(1));
+                if (btn) btn.style.cssText = selected === dir ? activeStyles[dir] : '';
+            });
+        }
+
+        async function saveOverride() {
+            if (!_overrideSelectedDirection) {
+                alert('Please select a decision (GO, REVIEW, or PASS).');
+                return;
+            }
+            const p = window.currentReportProject;
+            if (!p) return;
+            const reason = (document.getElementById('overrideReason')?.value || '').trim();
+            const override = { direction: _overrideSelectedDirection, reason: reason, timestamp: new Date().toISOString() };
+            const { error } = await supabaseClient
+                .from('projects')
+                .update({ estimator_override: override })
+                .eq('id', p.id)
+                .eq('user_id', currentUser.id);
+            if (error) { alert('Failed to save override: ' + error.message); return; }
+            window.currentReportProject.estimator_override = override;
+            renderEstimatorOverrideBanner(override);
+            closeModal('overrideModal');
+        }
+
+        async function clearOverride() {
+            const p = window.currentReportProject;
+            if (!p) return;
+            const { error } = await supabaseClient
+                .from('projects')
+                .update({ estimator_override: null })
+                .eq('id', p.id)
+                .eq('user_id', currentUser.id);
+            if (error) { alert('Failed to clear override: ' + error.message); return; }
+            window.currentReportProject.estimator_override = null;
+            renderEstimatorOverrideBanner(null);
+            closeModal('overrideModal');
+        }
+
+        function renderEstimatorOverrideBanner(override) {
+            const el = document.getElementById('estimatorOverrideBanner');
+            if (!el) return;
+            while (el.firstChild) el.removeChild(el.firstChild);
+            el.style.cssText = '';
+            if (!override || !override.direction) return;
+            const dir = override.direction.toUpperCase();
+            const colors = { GO: '#16a34a', REVIEW: '#d97706', PASS: '#dc2626' };
+            const bgColors = { GO: 'rgba(22,163,74,0.1)', REVIEW: 'rgba(217,119,6,0.1)', PASS: 'rgba(220,38,38,0.1)' };
+            const color = colors[dir] || '#6b7280';
+            const bg = bgColors[dir] || 'rgba(0,0,0,0.05)';
+            el.style.cssText = 'margin-bottom:12px;padding:12px 16px;background:' + bg + ';border:1px solid ' + color + ';border-radius:var(--radius);';
+            const headerDiv = document.createElement('div');
+            headerDiv.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:4px;';
+            const pill = document.createElement('span');
+            pill.style.cssText = 'background:' + color + ';color:#fff;font-weight:700;font-size:12px;padding:2px 10px;border-radius:20px;';
+            pill.textContent = dir;
+            const label = document.createElement('span');
+            label.style.cssText = 'font-weight:600;font-size:13px;color:var(--text-primary);';
+            label.textContent = 'Estimator Override';
+            const editLink = document.createElement('span');
+            editLink.style.cssText = 'font-size:12px;color:var(--accent);cursor:pointer;margin-left:auto;';
+            editLink.textContent = 'Edit';
+            editLink.addEventListener('click', showOverrideModal);
+            headerDiv.appendChild(pill);
+            headerDiv.appendChild(label);
+            headerDiv.appendChild(editLink);
+            el.appendChild(headerDiv);
+            if (override.reason) {
+                const reasonDiv = document.createElement('div');
+                reasonDiv.style.cssText = 'font-size:13px;color:var(--text-secondary);';
+                reasonDiv.textContent = override.reason;
+                el.appendChild(reasonDiv);
+            }
+            if (override.timestamp) {
+                const ts = new Date(override.timestamp);
+                if (!isNaN(ts.getTime())) {
+                    const timeDiv = document.createElement('div');
+                    timeDiv.style.cssText = 'font-size:11px;color:var(--text-muted);margin-top:4px;';
+                    timeDiv.textContent = 'Set ' + ts.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    el.appendChild(timeDiv);
+                }
             }
         }
 
