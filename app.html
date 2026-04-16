@@ -1620,6 +1620,28 @@
                         </div>
                     </div>
 
+                    <!-- Win Rate by Building Type -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Win Rate by Building Type</h3>
+                            <div class="form-hint">Where do you win most? Building types with fewer than 2 tracked outcomes are excluded.</div>
+                        </div>
+                        <div class="card-body">
+                            <div id="winRateByBuildingType"></div>
+                        </div>
+                    </div>
+
+                    <!-- Win Rate by Trade -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Win Rate by Trade</h3>
+                            <div class="form-hint">Which scope types do you win most often when they appear in the bid?</div>
+                        </div>
+                        <div class="card-body">
+                            <div id="winRateByTrade"></div>
+                        </div>
+                    </div>
+
                     <!-- Client Type Performance -->
                     <div class="card">
                         <div class="card-header">
@@ -15845,8 +15867,126 @@ Respond now:`;
             el.innerHTML = `<div style="margin-bottom:4px;">${rows}</div><div style="font-size:12px;color:var(--text-muted);">Win rate by score range — the further GO bids outpace PASS bids, the better calibrated your scoring is.</div>`;
         }
 
+        function renderWinRateByBuildingType(projects) {
+            const el = document.getElementById('winRateByBuildingType');
+            if (!el) return;
+
+            const withOutcome = projects.filter(p =>
+                (p.outcome === 'won' || p.outcome === 'lost') && p.extracted
+            );
+
+            if (withOutcome.length < 3) {
+                el.innerHTML = '<div class="help-text">Log at least 3 outcomes to see building type performance.</div>';
+                return;
+            }
+
+            const map = {};
+            withOutcome.forEach(p => {
+                const bt = (typeof p.extracted?.building_type === 'object'
+                    ? p.extracted?.building_type?.type
+                    : p.extracted?.building_type) || 'Unknown';
+                if (!map[bt]) map[bt] = { won: 0, total: 0 };
+                map[bt].total++;
+                if (p.outcome === 'won') map[bt].won++;
+            });
+
+            const entries = Object.entries(map)
+                .filter(([, v]) => v.total >= 2)
+                .sort((a, b) => (b[1].won / b[1].total) - (a[1].won / a[1].total));
+
+            if (entries.length === 0) {
+                el.innerHTML = '<div class="help-text">Need at least 2 outcomes per building type to compare. Keep logging outcomes.</div>';
+                return;
+            }
+
+            let html = '';
+            entries.forEach(([label, v]) => {
+                const winRate = Math.round((v.won / v.total) * 100);
+                const color = winRate >= 50 ? '#22c55e' : winRate >= 25 ? '#eab308' : '#94a3b8';
+                html += `<div style="margin-bottom:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+                        <span style="font-size:13px;font-weight:600;color:var(--text-primary);">${label}</span>
+                        <span style="font-size:13px;color:var(--text-muted);">${v.won} won / ${v.total} total &mdash; <strong style="color:var(--text-primary);">${winRate}%</strong></span>
+                    </div>
+                    <div style="height:10px;background:var(--bg-tertiary);border-radius:5px;overflow:hidden;">
+                        <div style="height:100%;width:${winRate}%;background:${color};border-radius:5px;"></div>
+                    </div>
+                </div>`;
+            });
+            html += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Sorted by win rate. Types with fewer than 2 outcomes are excluded.</div>';
+            el.innerHTML = html;
+        }
+
+        function renderWinRateByTrade(projects, settings) {
+            const el = document.getElementById('winRateByTrade');
+            if (!el) return;
+
+            if (settings.companyType !== 'subcontractor') {
+                el.innerHTML = '<div class="help-text">Trade win rate is available for subcontractors. Configure your company type in Settings.</div>';
+                return;
+            }
+
+            const withOutcome = projects.filter(p =>
+                (p.outcome === 'won' || p.outcome === 'lost') && p.scores?.components?.trade?.details
+            );
+
+            if (withOutcome.length < 3) {
+                el.innerHTML = '<div class="help-text">Log at least 3 outcomes to see trade performance.</div>';
+                return;
+            }
+
+            const hasSections = (settings.preferred_csi_sections || []).length > 0;
+            const map = {};
+
+            withOutcome.forEach(p => {
+                const td = p.scores.components.trade.details;
+                const codes = hasSections ? (td.foundSections || []) : (td.found || []);
+                if (codes.length === 0) return;
+
+                // Deduplicate divisions within this project — count each division once per bid
+                const divsSeen = new Set();
+                codes.forEach(code => {
+                    const divCode = String(code).trim().substring(0, 2);
+                    if (divsSeen.has(divCode)) return;
+                    divsSeen.add(divCode);
+                    const divEntry = CSI_DIVISIONS_FLAT.find(d => d[0] === divCode);
+                    const label = divEntry ? `Div ${divCode} — ${divEntry[1]}` : `Div ${divCode}`;
+                    if (!map[label]) map[label] = { won: 0, total: 0 };
+                    map[label].total++;
+                    if (p.outcome === 'won') map[label].won++;
+                });
+            });
+
+            const entries = Object.entries(map)
+                .filter(([, v]) => v.total >= 2)
+                .sort((a, b) => (b[1].won / b[1].total) - (a[1].won / a[1].total));
+
+            if (entries.length === 0) {
+                el.innerHTML = '<div class="help-text">Need at least 2 outcomes where your trade scope was found to compare. Keep logging outcomes.</div>';
+                return;
+            }
+
+            let html = '';
+            entries.forEach(([label, v]) => {
+                const winRate = Math.round((v.won / v.total) * 100);
+                const color = winRate >= 50 ? '#22c55e' : winRate >= 25 ? '#eab308' : '#94a3b8';
+                html += `<div style="margin-bottom:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+                        <span style="font-size:13px;font-weight:600;color:var(--text-primary);">${label}</span>
+                        <span style="font-size:13px;color:var(--text-muted);">${v.won} won / ${v.total} total &mdash; <strong style="color:var(--text-primary);">${winRate}%</strong></span>
+                    </div>
+                    <div style="height:10px;background:var(--bg-tertiary);border-radius:5px;overflow:hidden;">
+                        <div style="height:100%;width:${winRate}%;background:${color};border-radius:5px;"></div>
+                    </div>
+                </div>`;
+            });
+            html += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Win rate when your scope was found in the bid documents. Divisions with fewer than 2 outcomes are excluded.</div>';
+            el.innerHTML = html;
+        }
+
         async function renderAnalytics() {
             const projects = await getProjects();
+            const settings = await getSettings();
             if (!projects || projects.length === 0) {
                 document.getElementById('accuracyMetrics').innerHTML = '<div class="help-text">📊 No projects yet. Start analyzing bids to see AI learning insights.</div>';
                 document.getElementById('feedbackAnalysis').innerHTML = '';
@@ -15870,6 +16010,8 @@ Respond now:`;
                 document.getElementById('topGCsTable').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('worstGCsTable').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('scoreOutcomeChart').innerHTML = '<div class="help-text">No data available yet.</div>';
+                document.getElementById('winRateByBuildingType').innerHTML = '<div class="help-text">No data available yet.</div>';
+                document.getElementById('winRateByTrade').innerHTML = '<div class="help-text">No data available yet.</div>';
                 const bidROICardEl = document.getElementById('bidROICard');
                 if (bidROICardEl) bidROICardEl.style.display = 'none';
 
@@ -15884,6 +16026,8 @@ Respond now:`;
             renderBuildingTypeChart(projects);
             renderBidROIAnalytics(projects);
             renderScoreOutcomeChart(projects);
+            renderWinRateByBuildingType(projects);
+            renderWinRateByTrade(projects, settings);
 
             // Calculate metrics
             const accuracy = calculatePredictionAccuracy(projects);
