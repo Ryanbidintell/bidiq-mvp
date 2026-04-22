@@ -7876,7 +7876,7 @@ ${truncatedText}`;
             try {
                 const { data } = await supabaseClient
                     .from('gc_competition_density')
-                    .select('bidder_count, outcome')
+                    .select('bidder_count, outcome, project_id')
                     .eq('user_id', currentUser.id)
                     .in('gc_name', gcNames);
                 if (!data || data.length < 3) {
@@ -7884,11 +7884,16 @@ ${truncatedText}`;
                 }
                 const avg = data.reduce((sum, r) => sum + r.bidder_count, 0) / data.length;
                 const score = avg <= 2 ? 90 : avg <= 4 ? 75 : avg <= 7 ? 55 : avg <= 10 ? 40 : 25;
+                const sourceProjects = data.slice(0, 5).map(r => {
+                    const proj = allProjectsCache?.find(p => p.id === r.project_id);
+                    const name = proj?.extracted?.project_name || proj?.project_name || 'Unknown project';
+                    return { name, bidderCount: r.bidder_count, outcome: r.outcome };
+                });
                 return {
                     score,
                     weight: 10,
                     reason: `Avg ${avg.toFixed(1)} bidders on similar ${gcNames[0]} jobs`,
-                    details: { avgBidders: avg, count: data.length, status: 'active' }
+                    details: { avgBidders: avg, count: data.length, status: 'active', sourceProjects }
                 };
             } catch (e) {
                 return { score: 50, weight: 0, reason: 'Competition data unavailable', details: { status: 'error' } };
@@ -10067,12 +10072,22 @@ ${truncatedText}`;
                                            d.avgBidders <= 4 ? 'Moderate competition — a few subs typically bid on these jobs.' :
                                            d.avgBidders <= 7 ? 'Competitive — expect 5–7 bidders, margin discipline matters.' :
                                            'High competition — 8+ subs typically bid. Price carefully, every point of margin counts.';
+                    const projectRows = (d.sourceProjects || []).map(p =>
+                        `<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <span style="color:var(--text-muted);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">${p.name}</span>
+                            <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">
+                                <span style="font-size:11px;color:var(--text-primary);font-weight:600;">${p.bidderCount} bidders</span>
+                                <span style="font-size:10px;padding:1px 5px;border-radius:3px;background:${p.outcome==='won'?'rgba(34,197,94,0.15)':'rgba(239,68,68,0.15)'};color:${p.outcome==='won'?'var(--success)':'var(--danger)'};">${p.outcome}</span>
+                            </div>
+                        </div>`
+                    ).join('');
                     details = `<div class="score-component-details">
                         <div style="display:flex;gap:16px;margin-bottom:10px;">
-                            <div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:var(--text-primary);">${avg}</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">avg bidders</div></div>
+                            <div style="text-align:center;flex-shrink:0;"><div style="font-size:20px;font-weight:700;color:var(--text-primary);">${avg}</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">avg bidders</div></div>
                             <div style="font-size:13px;color:var(--text-muted);line-height:1.5;padding-top:2px;">${competitiveness}</div>
                         </div>
-                        <div style="font-size:12px;color:var(--text-muted);">Based on ${d.count} past outcomes with this client. Score updates automatically as you log more.</div>
+                        ${projectRows ? `<div style="margin-bottom:4px;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Source outcomes</div>${projectRows}` : ''}
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">Based on ${d.count} past outcomes with this client. Score updates automatically as you log more.</div>
                     </div>`;
                 }
             }
@@ -10981,8 +10996,14 @@ ${truncatedText}`;
 
             // AI Learning Progress (count of projects with outcomes - trains AI for better recommendations)
             const projectsWithOutcomes = projects.filter(p => p.outcome && p.outcome !== 'pending').length;
+            const outcomesWithKeyData = projects.filter(p => {
+                if (p.outcome === 'won') return !!(p.outcome_data?.margin);
+                if (p.outcome === 'lost') return !!(p.outcome_data?.howHigh);
+                return p.outcome && p.outcome !== 'pending';
+            }).length;
+            const completePct = projectsWithOutcomes > 0 ? Math.round((outcomesWithKeyData / projectsWithOutcomes) * 100) : 0;
             document.getElementById('statDataMoat').textContent = projectsWithOutcomes > 0 ? projectsWithOutcomes : '--';
-            document.getElementById('statOutcomeRate').textContent = `${projectsWithOutcomes} of ${projects.length}`;
+            document.getElementById('statOutcomeRate').textContent = projectsWithOutcomes > 0 ? `${completePct}% data complete` : '0 of 0';
 
             const recent = projects.slice(0, 5);
             if (recent.length === 0) {
@@ -13290,13 +13311,14 @@ Respond now:`;
                         <div class="form-hint">When was this bid analyzed? You can backdate if needed.</div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">How high were you?</label>
+                        <label class="form-label">How high were you? <span style="color:var(--danger);font-size:11px;">required</span></label>
                         <select class="form-select" id="outcomeHowHigh">
-                            <option value="">Unknown</option>
-                            <option>Within 5%</option>
-                            <option>5-10% high</option>
-                            <option>10-20% high</option>
-                            <option>Over 20% high</option>
+                            <option value="" disabled selected>— Select one —</option>
+                            <option value="Within 5%">Within 5%</option>
+                            <option value="5-10% high">5–10% high</option>
+                            <option value="10-20% high">10–20% high</option>
+                            <option value="Over 20% high">Over 20% high</option>
+                            <option value="unknown">Not sure / unknown</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -13648,7 +13670,12 @@ Respond now:`;
                     await supabaseClient.from('projects').update({ gc_bids: updatedGCBids }).eq('id', id);
                 }
             } else if (type === 'lost') {
-                outcomeData.howHigh = document.getElementById('outcomeHowHigh')?.value;
+                const howHighVal = document.getElementById('outcomeHowHigh')?.value;
+                if (!howHighVal) {
+                    alert('Please select how high you were. Even "Not sure" helps calibrate future pricing scores.');
+                    return;
+                }
+                outcomeData.howHigh = howHighVal;
                 outcomeData.winner = document.getElementById('outcomeWinner')?.value;
                 outcomeData.otherCompetitors = document.getElementById('outcomeOtherCompetitors')?.value?.split(',').map(s => s.trim()).filter(Boolean) || [];
                 outcomeData.pricingFeedback = document.getElementById('outcomePricingFeedback')?.value;
@@ -13702,6 +13729,28 @@ Respond now:`;
 
             try {
                 await updateProjectOutcome(id, type, outcomeData);
+
+                // Aggregate RFI + payment data back to client profile
+                if ((type === 'won' || type === 'lost') && (outcomeData.rfi_responsiveness || outcomeData.payment_reliability)) {
+                    const proj = allProjectsCache.find(x => x.id === id);
+                    const clientName = outcomeGCName || proj?.gcs?.[0]?.name;
+                    if (clientName) {
+                        const allGCs = await getGCs();
+                        const client = allGCs.find(g => g.name === clientName);
+                        if (client) {
+                            if (outcomeData.rfi_responsiveness) {
+                                const prevCount = client.rfi_count || 0;
+                                const prevAvg = client.avg_rfi || outcomeData.rfi_responsiveness;
+                                client.rfi_count = prevCount + 1;
+                                client.avg_rfi = Math.round(((prevAvg * prevCount) + outcomeData.rfi_responsiveness) / client.rfi_count * 10) / 10;
+                            }
+                            if (outcomeData.payment_reliability) {
+                                client.payment_flag = outcomeData.payment_reliability;
+                            }
+                            await saveGC(client);
+                        }
+                    }
+                }
 
                 // Module 1: Save submitted divisions
                 if (checkedDivs.length > 0) {
@@ -13825,11 +13874,18 @@ Respond now:`;
                     }).join('')}</div>`
                     : '';
                 const notesHtml = gc.notes ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;font-style:italic;">${gc.notes}</div>` : '';
+                const rfiHtml = gc.avg_rfi ? `<span style="font-size:10px;padding:2px 6px;background:rgba(79,70,229,0.12);color:var(--brand-primary);border-radius:4px;">RFI ${gc.avg_rfi}/5</span>` : '';
+                const payLabels = { prompt:'Prompt pay', net30:'Net-30', net60:'Net-60', net90:'Net-90+', poor:'Slow pay' };
+                const payColors = { prompt:'var(--success)', net30:'var(--text-muted)', net60:'var(--warning)', net90:'var(--danger)', poor:'var(--danger)' };
+                const payBg = { prompt:'rgba(34,197,94,0.12)', net30:'rgba(100,116,139,0.12)', net60:'rgba(234,179,8,0.12)', net90:'rgba(239,68,68,0.12)', poor:'rgba(239,68,68,0.12)' };
+                const payHtml = gc.payment_flag ? `<span style="font-size:10px;padding:2px 6px;background:${payBg[gc.payment_flag]||'rgba(100,116,139,0.12)'};color:${payColors[gc.payment_flag]||'var(--text-muted)'};border-radius:4px;">${payLabels[gc.payment_flag]||gc.payment_flag}</span>` : '';
+                const behaviorHtml = (rfiHtml || payHtml) ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">${rfiHtml}${payHtml}</div>` : '';
                 return `<div class="gc-item">
                     <div class="gc-item-info">
                         <div class="gc-item-name">${gc.name}</div>
                         <div class="gc-item-stats">${gc.bids || 0} bids${rate !== null ? ' • ' + rate + '% win rate' : ''}</div>
                         ${tagsHtml}
+                        ${behaviorHtml}
                         ${notesHtml}
                     </div>
                     <div class="gc-item-rating">${[1, 2, 3, 4, 5].map(i => `<span class="star ${i <= gc.rating ? 'filled' : ''}" onclick="rateGC('${gc.name.replace(/'/g, "\\'")}', ${i})">★</span>`).join('')}</div>
