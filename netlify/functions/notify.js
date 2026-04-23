@@ -1,26 +1,30 @@
 // Serverless function for sending notifications and emails
 // Deploys to Netlify as /.netlify/functions/notify
 
-const POSTMARK_API_KEY = process.env.POSTMARK_API_KEY;
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 
 async function sendEmail({ to, subject, htmlBody }) {
     const isInternalOnly = to === 'ryan@fsikc.com';
-    const response = await fetch('https://api.postmarkapp.com/email', {
+    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-Postmark-Server-Token': POSTMARK_API_KEY
+            'Authorization': `Bearer ${SENDGRID_API_KEY}`
         },
         body: JSON.stringify({
-            From: 'hello@bidintell.ai',
-            To: to,
-            ...(isInternalOnly ? {} : { Bcc: 'ryan@bidintell.ai' }),
-            Subject: subject,
-            HtmlBody: htmlBody,
-            MessageStream: 'outbound'
+            personalizations: [{
+                to: [{ email: to }],
+                ...(isInternalOnly ? {} : { bcc: [{ email: 'ryan@bidintell.ai' }] })
+            }],
+            from: { email: 'hello@bidintell.ai', name: 'BidIntell' },
+            subject,
+            content: [{ type: 'text/html', value: htmlBody }]
         })
     });
-    if (!response.ok) throw new Error(`Postmark API error: ${response.status}`);
+    if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`SendGrid API error: ${response.status} ${errText}`);
+    }
     return response;
 }
 

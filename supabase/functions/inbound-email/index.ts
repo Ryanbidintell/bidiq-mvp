@@ -1,22 +1,24 @@
 // supabase/functions/inbound-email/index.ts
 //
-// Postmark inbound webhook handler — Supabase Edge Function
+// SendGrid Inbound Parse webhook handler — Supabase Edge Function
 //
 // Replaces netlify/functions/inbound-email-background.js
 // Key improvements over the Netlify version:
-//   • No 6MB payload limit (Supabase Edge Functions handle large bodies)
-//   • Returns 200 to Postmark immediately via ctx.waitUntil()
-//   • Processes PDFs of any size that Postmark can receive (up to ~10MB)
+//   • No 6MB payload limit (Supabase Edge Functions handle large multipart bodies)
+//   • Returns 200 to SendGrid immediately via EdgeRuntime.waitUntil()
+//   • Processes PDFs up to ~25MB (SendGrid's inbound attachment limit)
 //   • Detects potential duplicate/related projects → creates merge_suggestions
 //   • Populates gc_bids[] on each saved project for multi-GC tracking
 //
-// Postmark webhook URL (update in Postmark dashboard):
+// SendGrid Inbound Parse webhook URL (set in SendGrid dashboard → Settings → Inbound Parse):
 //   https://szifhqmrddmdkgschkkw.supabase.co/functions/v1/inbound-email
+//
+// DNS: bids.bidintell.ai MX → mx.sendgrid.net (priority 10)
 //
 // Required Supabase secrets (set via: supabase secrets set KEY=value):
 //   CLAUDE_API_KEY
-//   POSTMARK_API_KEY
-//   SUPABASE_SERVICE_ROLE_KEY  (auto-available in Edge Functions as SUPABASE_SERVICE_ROLE_KEY)
+//   SENDGRID_API_KEY
+//   SUPABASE_SERVICE_ROLE_KEY  (auto-available in Edge Functions)
 //   SUPABASE_URL               (auto-available)
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -24,7 +26,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL         = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const CLAUDE_API_KEY       = Deno.env.get('CLAUDE_API_KEY')!;
-const POSTMARK_API_KEY     = Deno.env.get('POSTMARK_API_KEY')!;
+const SENDGRID_API_KEY     = Deno.env.get('SENDGRID_API_KEY')!;
 
 const MAX_ATTACHMENTS = 3;
 
@@ -34,6 +36,18 @@ function getSupabase() {
     return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
         auth: { persistSession: false }
     });
+}
+
+// ── Base64 helper (chunk to avoid stack overflow on large files) ─────────────
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 8192;
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
 }
 
 // ── Geo helpers ──────────────────────────────────────────────────────────────
@@ -661,10 +675,11 @@ async function processEmail(payload: Record<string, unknown>) {
 
     const qualifying = allAttachments
         .filter(att => {
-            if (!(att.ContentType || '').includes('pdf')) return false;
-            // Decode to check actual size
+            const isPdf = (att.ContentType || '').includes('pdf') || (att.Name || '').toLowerCase().endsWith('.pdf');
+            if (!isPdf) return false;
+            // Decode to check actual size (~25MB SendGrid ceiling)
             const bytes = atob(att.Content || '').length;
-            if (bytes > 10 * 1024 * 1024) { // 10MB hard ceiling (Postmark's own limit)
+            if (bytes > 25 * 1024 * 1024) {
                 skippedFiles.push(att.Name || 'attachment');
                 return false;
             }
@@ -854,7 +869,9 @@ async function processEmail(payload: Record<string, unknown>) {
         `Trade Match:      ${trComp.score}/100 (weight ${trComp.weight}%)`,
         `Client Relationship: ${gcComp.score}/100 (weight ${gcComp.weight}%)`,
         `Keywords:         ${kwComp.score}/100 (weight ${kwComp.weight}%) — neutral for email forwards`,
-        contractComp ? `Contract Terms:   ${contractComp.score}/100` : `Contract Terms:   Pending — upload documents for full analysis`,
+        contractRisks?.risksDetected?.length
+            ? `Contract Risks:   ${contractRisks.risksDetected.length} clause(s) detected — see full report`
+            : null,
         ``,
         topRisk ? `⚠️  ${topRisk.clause_type || 'Contract risk flag'}` : null,
         extracted.bond_required === true ? `⚠️  Bond required` : null,
@@ -872,20 +889,27 @@ async function processEmail(payload: Record<string, unknown>) {
 
     let replyStatus: Record<string, unknown> = {};
     try {
-        const replyRes = await fetch('https://api.postmarkapp.com/email', {
+        const replyRes = await fetch('https://api.sendgrid.com/v3/mail/send', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Postmark-Server-Token': POSTMARK_API_KEY },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SENDGRID_API_KEY}`
+            },
             body: JSON.stringify({
-                From: 'hello@bidintell.ai',
-                To: userEmail,
-                Bcc: 'ryan@bidintell.ai',
-                Subject: replySubject,
-                TextBody: replyLines,
-                MessageStream: 'outbound'
+                personalizations: [{
+                    to: [{ email: userEmail }],
+                    bcc: [{ email: 'ryan@bidintell.ai' }]
+                }],
+                from: { email: 'hello@bidintell.ai', name: 'BidIntell' },
+                subject: replySubject,
+                content: [{ type: 'text/plain', value: replyLines }]
             })
         });
-        const replyBody = await replyRes.json().catch(() => ({}));
-        replyStatus = { ok: replyRes.ok, status: replyRes.status, message: (replyBody as Record<string, string>).Message || (replyBody as Record<string, string>).ErrorCode || null };
+        replyStatus = { ok: replyRes.ok, status: replyRes.status };
+        if (!replyRes.ok) {
+            const errText = await replyRes.text().catch(() => '');
+            replyStatus.error = errText;
+        }
     } catch (e) {
         replyStatus = { ok: false, error: (e as Error).message };
     }
@@ -914,12 +938,43 @@ Deno.serve(async (req) => {
 
     let payload: Record<string, unknown>;
     try {
-        payload = await req.json();
+        const contentType = req.headers.get('content-type') || '';
+
+        if (contentType.includes('multipart/form-data')) {
+            // SendGrid Inbound Parse sends multipart/form-data
+            const formData = await req.formData();
+            const numAttachments = parseInt((formData.get('attachments') as string) || '0', 10);
+
+            const attachments: Array<{ ContentType: string; Content: string; Name: string }> = [];
+            for (let i = 1; i <= numAttachments; i++) {
+                const file = formData.get(`attachment${i}`) as File | null;
+                if (file) {
+                    const buffer = await file.arrayBuffer();
+                    attachments.push({
+                        ContentType: file.type || 'application/octet-stream',
+                        Content: arrayBufferToBase64(buffer),
+                        Name: file.name || `attachment${i}`
+                    });
+                }
+            }
+
+            payload = {
+                To:          (formData.get('to')      as string) || '',
+                From:        (formData.get('from')     as string) || '',
+                Subject:     (formData.get('subject')  as string) || '',
+                TextBody:    (formData.get('text')     as string) || '',
+                HtmlBody:    (formData.get('html')     as string) || '',
+                Attachments: attachments
+            };
+        } else {
+            // JSON fallback for local testing
+            payload = await req.json();
+        }
     } catch {
         return new Response('ok', { status: 200 });
     }
 
-    // Return 200 to Postmark immediately, process async in background
+    // Return 200 to SendGrid immediately, process async in background
     EdgeRuntime.waitUntil(processEmail(payload).catch(e => console.error('processEmail error:', e)));
     return new Response('ok', { status: 200 });
 });
