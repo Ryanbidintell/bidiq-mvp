@@ -9768,6 +9768,9 @@ ${truncatedText}`;
                 return `<span class="meta-chip">🗓️ Analyzed ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>`;
             })();
 
+            const tradeScore = analysis.scores.components.trade?.score ?? 100;
+            const tradeWarningBanner = (tradeScore === 0) ? '<div style="padding:10px 14px;background:rgba(239,68,68,0.07);border-bottom:1px solid rgba(239,68,68,0.15);font-size:13px;color:var(--danger);font-weight:500;">Trade scope not found in specs — this bid may not include your work type. Review Trade Match below.</div>' : '';
+
             document.getElementById('analysisResult').innerHTML = `
                 <div class="score-report">
                     <div class="score-report-header rec-${recClass}">
@@ -9775,6 +9778,15 @@ ${truncatedText}`;
                         <div class="score-hero">
                             <div class="score-report-value ${recClass}">${analysis.scores.final}</div>
                             <div class="rec-pill ${recClass}">${analysis.scores.recommendation} — ${recText}</div>
+                            <div style="margin-top:12px;display:flex;flex-direction:column;align-items:center;gap:6px;">
+                                <div style="font-size:10px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.06em;">Does this score feel right?</div>
+                                <div style="display:flex;gap:6px;">
+                                    <label class="override-option" style="display:flex;align-items:center;gap:4px;cursor:pointer;padding:4px 10px;background:rgba(255,255,255,0.05);border-radius:99px;border:1px solid rgba(255,255,255,0.12);font-size:11px;color:rgba(255,255,255,0.55);"><input type="radio" name="userAgreement" value="agree" checked style="accent-color:var(--success);"> Yes</label>
+                                    <label class="override-option" style="display:flex;align-items:center;gap:4px;cursor:pointer;padding:4px 10px;background:rgba(255,255,255,0.05);border-radius:99px;border:1px solid rgba(255,255,255,0.12);font-size:11px;color:rgba(255,255,255,0.55);"><input type="radio" name="userAgreement" value="too_high"> Too high</label>
+                                    <label class="override-option" style="display:flex;align-items:center;gap:4px;cursor:pointer;padding:4px 10px;background:rgba(255,255,255,0.05);border-radius:99px;border:1px solid rgba(255,255,255,0.12);font-size:11px;color:rgba(255,255,255,0.55);"><input type="radio" name="userAgreement" value="too_low"> Too low</label>
+                                </div>
+                                <input type="text" id="overrideNote" placeholder="Why? (optional — helps improve scoring)" style="display:none;font-size:11px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:var(--radius);padding:5px 10px;color:rgba(255,255,255,0.6);width:100%;max-width:240px;text-align:center;">
+                            </div>
                         </div>
                         <div class="report-project-name">${projectName}</div>
                         <div class="meta-chips-row">
@@ -9788,10 +9800,10 @@ ${truncatedText}`;
                             <div style="margin-top:8px;font-size:12px;line-height:1.7;background:rgba(0,0,0,0.2);padding:12px;border-radius:6px;color:rgba(255,255,255,0.75);text-align:left;">
                                 BidIndex™ scores bid fit on a 0–100 scale across five weighted factors. ≥80 = GO · 60–79 = REVIEW · &lt;60 = PASS.
                                 <div style="margin-top:8px;display:grid;gap:5px;">
-                                    <div>📍 <strong>Location Fit</strong> — Distance from your office to the job site.</div>
-                                    <div>🔑 <strong>Keywords &amp; Trade Scope</strong> — Finds your preferred work types and CSI spec sections in the documents. On drawings without a spec book, keyword matches serve as the trade scope signal. Contract risk terms are penalized.</div>
-                                    <div>🏢 <strong>Client Relationship</strong> — Your star rating, bid count, and win rate with the specific client inviting you.</div>
-                                    <div>⚔️ <strong>Competitive Pressure</strong> — How many subs typically bid this client's jobs. Unlocks after 3 logged outcomes.</div>
+                                    <div><strong>Location Fit</strong> — Distance from your office to the job site.</div>
+                                    <div><strong>Keywords &amp; Trade Scope</strong> — Finds your preferred work types and CSI spec sections in the documents. On drawings without a spec book, keyword matches serve as the trade scope signal. Contract risk terms are penalized.</div>
+                                    <div><strong>Client Relationship</strong> — Your star rating, bid count, and win rate with the specific client inviting you.</div>
+                                    <div><strong>Competitive Pressure</strong> — How many subs typically bid this client's jobs. Unlocks after 3 logged outcomes.</div>
                                 </div>
                                 <div style="margin-top:8px;font-size:11px;opacity:0.6;">Each component's weight is adjustable in Settings → Score Weights.</div>
                             </div>
@@ -9806,12 +9818,13 @@ ${truncatedText}`;
                         ${analysis.winnersCurseRisk ? renderWinnersCurseCard(analysis.winnersCurseRisk) : ''}
                     </div>
                     ${await renderProfileWarningHtml(settings)}
-                    ${renderComponent('📍', 'Location Fit', analysis.scores.components.location)}
-                    ${renderComponent('🔑', 'Keywords & Contract', analysis.scores.components.keywords)}
-                    ${renderComponent('🏢', 'Client Relationship', analysis.scores.components.gc)}
-                    ${renderComponent(settings.companyType === 'subcontractor' ? '🔧' : '📦', settings.companyType === 'subcontractor' ? 'Trade Match' : 'Product Match', analysis.scores.components.trade)}
+                    ${tradeWarningBanner}
+                    ${renderComponent('', 'Location Fit', analysis.scores.components.location)}
+                    ${renderComponent('', 'Keywords & Contract', analysis.scores.components.keywords)}
+                    ${renderComponent('', 'Client Relationship', analysis.scores.components.gc)}
+                    ${renderComponent('', settings.companyType === 'subcontractor' ? 'Trade Match' : 'Product Match', analysis.scores.components.trade)}
                     ${(analysis.scores.components.trade?.score < 50 && !((settings.preferred_csi_sections||[]).length > 0) && !((settings.trades||[]).length > 0)) ? `<div class="profile-incomplete-callout" style="margin:0 0 2px;">No trade types configured — this score is a rough estimate. <span class="link" onclick="switchTab('settings')">Set your trade types →</span></div>` : ''}
-                    ${analysis.scores.components.competitive?.weight > 0 ? renderComponent('⚔️', 'Competitive Pressure', analysis.scores.components.competitive) : ''}
+                    ${analysis.scores.components.competitive?.weight > 0 ? renderComponent('', 'Competitive Pressure', analysis.scores.components.competitive) : ''}
 
                     ${renderExtractedDataSection(analysis.extracted, analysis.gcs)}
 
@@ -9819,58 +9832,57 @@ ${truncatedText}`;
 
                     ${renderImprovementTips(analysis.scores)}
                     
-                    <div class="manual-override" style="margin-top:20px;padding:16px;background:var(--bg-tertiary);border-radius:var(--radius);border:1px solid var(--border-color);">
-                        <div style="margin-bottom:10px;">
-                            <div style="font-weight:600;color:var(--text-primary);">📊 Score Feedback</div>
-                            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Did the score feel right? This trains the AI — it doesn't change your report.</div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:16px;align-items:center;">
+                    <button class="btn btn-primary" onclick="showOutcomeFromReport()" style="flex:1;">+ Add Outcome</button>
+                    <button class="btn btn-secondary" onclick="resetAnalysis()">Re-analyze</button>
+                    <div style="position:relative;">
+                        <button class="btn btn-secondary" id="reportOverflowBtn" onclick="toggleReportOverflow()" style="padding:0 12px;font-size:18px;line-height:1;letter-spacing:1px;" title="More options">···</button>
+                        <div id="reportOverflowMenu" style="display:none;position:absolute;right:0;bottom:calc(100% + 4px);background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:var(--radius);padding:4px;min-width:160px;box-shadow:0 4px 16px rgba(0,0,0,0.5);z-index:100;">
+                            <button id="saveProjectBtn" onclick="saveProjectManually();toggleReportOverflow()" style="display:block;width:100%;text-align:left;padding:8px 12px;background:none;border:none;color:var(--text-primary);font-size:13px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='none'">Save to Projects</button>
+                            <button onclick="printReport()" style="display:block;width:100%;text-align:left;padding:8px 12px;background:none;border:none;color:var(--text-primary);font-size:13px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='none'">Print Report</button>
                         </div>
-                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);border:2px solid transparent;" class="override-option">
-                                <input type="radio" name="userAgreement" value="agree" checked style="accent-color:var(--success);"> 
-                                <span>✓ Yes, agree</span>
-                            </label>
-                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);border:2px solid transparent;" class="override-option">
-                                <input type="radio" name="userAgreement" value="too_high"> 
-                                <span>↑ Score too high</span>
-                            </label>
-                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);border:2px solid transparent;" class="override-option">
-                                <input type="radio" name="userAgreement" value="too_low"> 
-                                <span>↓ Score too low</span>
-                            </label>
-                        </div>
-                        <input type="text" class="form-input" id="overrideNote" placeholder="Optional: Why do you disagree? (helps improve scoring)" style="font-size:13px;">
                     </div>
                 </div>
-                <div style="display:flex;gap:12px;margin-top:20px;align-items:center;">
-                    <button id="saveProjectBtn" class="btn btn-primary" onclick="saveProjectManually()" style="flex:1;">💾 Save to Projects</button>
-                    <button class="btn btn-secondary" onclick="printReport()">🖨 Print Report</button>
-                    <button class="btn btn-secondary" onclick="resetAnalysis()">Start Over</button>
-                </div>
                 <script>
-                    // Add visual feedback for agreement radio buttons
                     setTimeout(() => {
-                        document.querySelectorAll('input[name="userAgreement"]').forEach(radio => {
+                        const radios = document.querySelectorAll('input[name="userAgreement"]');
+                        const note = document.getElementById('overrideNote');
+                        radios.forEach(radio => {
                             radio.addEventListener('change', function() {
                                 document.querySelectorAll('.override-option').forEach(label => {
-                                    label.style.borderColor = 'transparent';
-                                    label.style.background = 'var(--bg-secondary)';
+                                    label.style.borderColor = 'rgba(255,255,255,0.12)';
+                                    label.style.background = 'rgba(255,255,255,0.05)';
+                                    label.style.color = 'rgba(255,255,255,0.55)';
                                 });
                                 const selectedLabel = this.closest('.override-option');
                                 if (selectedLabel) {
-                                    selectedLabel.style.borderColor = 'var(--accent)';
-                                    selectedLabel.style.background = 'var(--accent-dim)';
+                                    selectedLabel.style.borderColor = 'rgba(255,255,255,0.45)';
+                                    selectedLabel.style.background = 'rgba(255,255,255,0.1)';
+                                    selectedLabel.style.color = 'rgba(255,255,255,0.85)';
                                 }
+                                if (note) note.style.display = this.value !== 'agree' ? 'block' : 'none';
                             });
                         });
-                        // Highlight the default checked option
-                        const checkedRadio = document.querySelector('input[name="userAgreement"]:checked');
-                        if (checkedRadio) {
-                            const selectedLabel = checkedRadio.closest('.override-option');
-                            if (selectedLabel) {
-                                selectedLabel.style.borderColor = 'var(--accent)';
-                                selectedLabel.style.background = 'var(--accent-dim)';
+                        const checked = document.querySelector('input[name="userAgreement"]:checked');
+                        if (checked) {
+                            const label = checked.closest('.override-option');
+                            if (label) {
+                                label.style.borderColor = 'rgba(255,255,255,0.45)';
+                                label.style.background = 'rgba(255,255,255,0.1)';
+                                label.style.color = 'rgba(255,255,255,0.85)';
                             }
                         }
+                        window.toggleReportOverflow = function() {
+                            const menu = document.getElementById('reportOverflowMenu');
+                            if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+                        };
+                        document.addEventListener('click', function closeOverflow(e) {
+                            if (!e.target.closest('#reportOverflowBtn') && !e.target.closest('#reportOverflowMenu')) {
+                                const menu = document.getElementById('reportOverflowMenu');
+                                if (menu) menu.style.display = 'none';
+                            }
+                        });
                     }, 100);
                 <\/script>
             `;
@@ -9905,7 +9917,7 @@ ${truncatedText}`;
 
             return `
                 <div style="margin-top:20px;padding:16px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);">
-                    <div style="font-weight:600;margin-bottom:12px;color:var(--text-primary);">📄 Extracted Data</div>
+                    <div style="font-weight:600;margin-bottom:12px;color:var(--text-primary);">Extracted Data</div>
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
                         <div>
                             <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Project Name</div>
@@ -9936,7 +9948,7 @@ ${truncatedText}`;
 
                 <!-- General Contractors Bidding -->
                 <div style="margin-top:20px;padding:16px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);">
-                    <div style="font-weight:600;margin-bottom:12px;color:var(--text-primary);">🏢 General Contractors Bidding</div>
+                    <div style="font-weight:600;margin-bottom:12px;color:var(--text-primary);">General Contractors Bidding</div>
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;">
                         ${(gcs || []).map(gc => {
                             const winRate = gc.bids > 0 ? Math.round((gc.wins / gc.bids) * 100) : 0;
@@ -10165,7 +10177,7 @@ ${truncatedText}`;
                 }
             }
 
-            return `<div class="score-component"><div class="score-component-inner ${fillClass}"><div class="component-section-label">${title.toUpperCase()} · ${comp.weight}% WEIGHT</div><div class="score-component-header"><div class="score-component-title">${icon} ${title}</div><div class="score-component-value score-${fillClass}">${comp.score}<span class="score-denom">/100</span></div></div><div class="score-component-bar"><div class="score-component-fill ${fillClass}" style="width:${comp.score}%"></div></div>${comp.reason ? `<div class="insight-quote">${comp.reason}</div>` : ''}${details}</div></div>`;
+            return `<div class="score-component"><div class="score-component-inner ${fillClass}"><div class="component-section-label">${title.toUpperCase()} · ${comp.weight}% WEIGHT</div><div class="score-component-header"><div class="score-component-title">${title}</div><div class="score-component-value score-${fillClass}">${comp.score}<span class="score-denom">/100</span></div></div><div class="score-component-bar"><div class="score-component-fill ${fillClass}" style="width:${comp.score}%"></div></div>${comp.reason ? `<div class="insight-quote">${comp.reason}</div>` : ''}${details ? `<details style="margin-top:8px;"><summary style="font-size:11px;color:var(--text-muted);cursor:pointer;user-select:none;outline:none;list-style:none;padding:2px 0;">Details</summary>${details}</details>` : ''}</div></div>`;
         }
 
         // Generate improvement tips based on scores
