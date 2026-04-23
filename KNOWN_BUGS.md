@@ -1,6 +1,12 @@
 # Known Bugs & Fixes
 
-**Last Updated:** April 7, 2026
+**Last Updated:** April 23, 2026
+
+---
+
+## ✅ FIXED THIS SESSION (Apr 23, 2026)
+
+- **saveSettings() resets onboarding_completed** — `s` object in `saveSettings()` was missing `onboarding_completed`, causing `saveSettingsStorage()` to always default it to `false`. Fixed by preserving `currentSettings.onboarding_completed`.
 
 ---
 
