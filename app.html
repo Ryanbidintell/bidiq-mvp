@@ -2373,7 +2373,65 @@
             <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('outcomeModal')">Cancel</button><button class="btn btn-primary" onclick="saveOutcome()">Save Outcome</button></div>
         </div>
     </div>
-    
+
+    <!-- Log Bid Submission Modal -->
+    <div class="modal-overlay" id="logBidModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Log Bid Submission</h3>
+                <button class="modal-close" onclick="closeModal('logBidModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Capture your bid details while they're fresh. You'll log the outcome (won/lost/ghosted) separately when you hear back.</p>
+                <input type="hidden" id="logBidProjectId">
+                <div class="form-group">
+                    <label class="form-label">What did you call this bid? <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional</span></label>
+                    <input type="text" class="form-input" id="logBidScopeLabel" placeholder="e.g. Toilet Compartments — Div 10/12">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Divisions submitted <span style="color:var(--text-muted);font-weight:400;font-size:12px;">(check all that apply)</span></label>
+                    <div id="logBidDivisions" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Bid Date</label>
+                    <input type="date" class="form-input" id="logBidDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Bid Amount ($)</label>
+                    <input type="number" class="form-input" id="logBidAmount" placeholder="500000" min="0">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Margin (%)</label>
+                    <input type="number" class="form-input" id="logBidMargin" step="0.1" placeholder="12.5" min="0" max="100">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Alternates <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional</span></label>
+                    <div id="logBidAlternatesList"></div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="addLogBidAlternate()" style="margin-top:8px;">+ Add Alternate</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Client RFI responsiveness <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional</span></label>
+                    <select class="form-select" id="logBidRfi">
+                        <option value="">Not sure / N/A</option>
+                        <option value="1">1 — Unresponsive</option>
+                        <option value="2">2 — Slow, eventually answered</option>
+                        <option value="3">3 — Average</option>
+                        <option value="4">4 — Responsive, good communication</option>
+                        <option value="5">5 — Excellent, proactive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional</span></label>
+                    <textarea class="form-input" id="logBidNotes" rows="2" placeholder="e.g. Included VE alternates, bid to Turner only"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('logBidModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveLogBid()">Log Bid Submission</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Estimator Override Modal -->
     <div class="modal-overlay" id="overrideModal">
         <div class="modal">
@@ -11396,7 +11454,9 @@ ${truncatedText}`;
                                     <td style="white-space: nowrap;">
                                         <div style="display: flex; gap: 6px; justify-content: flex-end;">
                                             <button class="btn btn-sm btn-secondary" onclick="viewReport('${p.id}')" style="padding:6px 12px;" title="View full report">👁️ View</button>
-                                            ${p.outcome === 'pending' ? `<button class="btn btn-sm btn-secondary" onclick="showOutcome('${p.id}')" style="padding:6px 12px;" title="Add outcome">📝 Outcome</button>` : ''}
+                                            ${p.outcome === 'pending' ? (p.outcomeData?.bid_decided
+                                                ? `<span style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;background:var(--accent-blue,#3b82f6);color:#fff;display:inline-flex;align-items:center;white-space:nowrap;">BID SUBMITTED</span><button class="btn btn-sm btn-primary" onclick="showOutcome('${p.id}')" style="padding:6px 12px;" title="Record outcome">📝 Record Outcome</button>`
+                                                : `<button class="btn btn-sm btn-secondary" onclick="showLogBid('${p.id}')" style="padding:6px 12px;" title="Log bid submission">📋 Log Bid</button><button class="btn btn-sm btn-secondary" onclick="showOutcome('${p.id}')" style="padding:6px 12px;" title="Add outcome">📝 Outcome</button>`) : ''}
                                             <button class="btn btn-sm" onclick="deleteProject('${p.id}')" style="padding:6px 10px; background:var(--danger); color:white;" title="Delete project">🗑️</button>
                                         </div>
                                     </td>
@@ -13158,6 +13218,164 @@ Respond now:`;
             }, 3000);
         }
 
+        // ── Log Bid Submission ──────────────────────────────────────────────
+        let logBidAlternates = [];
+
+        function _escAttr(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function renderLogBidAlternates() {
+            const container = document.getElementById('logBidAlternatesList');
+            if (!container) return;
+            const rows = logBidAlternates.map((alt, i) => {
+                const div = document.createElement('div');
+                div.style.cssText = 'display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center;';
+                const descInput = document.createElement('input');
+                descInput.type = 'text'; descInput.className = 'form-input'; descInput.placeholder = 'Alternate description'; descInput.value = alt.description || ''; descInput.style.fontSize = '13px';
+                descInput.addEventListener('input', function() { logBidAlternates[i].description = this.value; });
+                const amtInput = document.createElement('input');
+                amtInput.type = 'number'; amtInput.className = 'form-input'; amtInput.placeholder = 'Amount ($)'; amtInput.value = alt.amount || ''; amtInput.style.fontSize = '13px';
+                amtInput.addEventListener('input', function() { logBidAlternates[i].amount = this.value; });
+                const mrgInput = document.createElement('input');
+                mrgInput.type = 'number'; mrgInput.className = 'form-input'; mrgInput.placeholder = 'Margin (%)'; mrgInput.step = '0.1'; mrgInput.value = alt.margin || ''; mrgInput.style.fontSize = '13px';
+                mrgInput.addEventListener('input', function() { logBidAlternates[i].margin = this.value; });
+                const rmBtn = document.createElement('button');
+                rmBtn.type = 'button'; rmBtn.className = 'btn btn-sm'; rmBtn.textContent = '✕'; rmBtn.style.cssText = 'background:var(--danger);color:white;padding:8px 10px;';
+                rmBtn.addEventListener('click', function() { removeLogBidAlternate(i); });
+                div.appendChild(descInput); div.appendChild(amtInput); div.appendChild(mrgInput); div.appendChild(rmBtn);
+                return div;
+            });
+            container.replaceChildren(...rows);
+        }
+
+        function addLogBidAlternate() {
+            logBidAlternates.push({ description: '', amount: '', margin: '' });
+            renderLogBidAlternates();
+        }
+
+        function removeLogBidAlternate(index) {
+            logBidAlternates.splice(index, 1);
+            renderLogBidAlternates();
+        }
+
+        async function showLogBid(id) {
+            logBidAlternates = [];
+            document.getElementById('logBidProjectId').value = id;
+            document.getElementById('logBidScopeLabel').value = '';
+            document.getElementById('logBidDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('logBidAmount').value = '';
+            document.getElementById('logBidMargin').value = '';
+            document.getElementById('logBidRfi').value = '';
+            document.getElementById('logBidNotes').value = '';
+            renderLogBidAlternates();
+
+            // Pre-fill if re-opening after a previous log bid
+            const project = allProjectsCache.find(p => p.id === id);
+            const existing = project?.outcomeData?.bid_details;
+            if (existing) {
+                document.getElementById('logBidScopeLabel').value = existing.scope_label || '';
+                document.getElementById('logBidDate').value = existing.bid_date || new Date().toISOString().split('T')[0];
+                document.getElementById('logBidAmount').value = existing.amount || '';
+                document.getElementById('logBidMargin').value = existing.margin || '';
+                document.getElementById('logBidRfi').value = existing.rfi_responsiveness || '';
+                document.getElementById('logBidNotes').value = existing.notes || '';
+                logBidAlternates = existing.alternates ? existing.alternates.map(a => ({ ...a })) : [];
+                renderLogBidAlternates();
+            }
+
+            // Build division checkboxes from user settings using safe DOM methods
+            const settings = await getSettings();
+            const userDivisions = (settings.trades || []).map(String).sort((a,b) => parseInt(a)-parseInt(b));
+            const divisionNames = {
+                '03':'Concrete','05':'Metals','06':'Wood','07':'Thermal/Moisture','08':'Openings',
+                '09':'Finishes','21':'Fire Protection','22':'Plumbing','23':'HVAC',
+                '26':'Electrical','27':'Communications','28':'Electronic Safety','31':'Earthwork','32':'Exterior Improvements'
+            };
+            const checkedDivs = existing?.divisions || userDivisions;
+            const divContainer = document.getElementById('logBidDivisions');
+            if (userDivisions.length > 0) {
+                const labels = userDivisions.map(d => {
+                    const lbl = document.createElement('label');
+                    lbl.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:4px;cursor:pointer;';
+                    const cb = document.createElement('input');
+                    cb.type = 'checkbox'; cb.className = 'log-bid-div-checkbox'; cb.value = d; cb.checked = checkedDivs.includes(d);
+                    const span = document.createElement('span');
+                    span.textContent = 'Div ' + d + (divisionNames[d] ? ' — ' + divisionNames[d] : '');
+                    lbl.appendChild(cb); lbl.appendChild(span);
+                    return lbl;
+                });
+                divContainer.replaceChildren(...labels);
+            } else {
+                const msg = document.createElement('span');
+                msg.style.cssText = 'color:var(--text-muted);font-size:13px;';
+                msg.textContent = 'Complete onboarding to see your trade divisions here';
+                divContainer.replaceChildren(msg);
+            }
+
+            openModal('logBidModal');
+        }
+
+        async function saveLogBid() {
+            const id = document.getElementById('logBidProjectId').value;
+            const amount = document.getElementById('logBidAmount').value;
+            const margin = document.getElementById('logBidMargin').value;
+            const scopeLabel = document.getElementById('logBidScopeLabel').value.trim() || null;
+            const bidDate = document.getElementById('logBidDate').value || null;
+            const rfiVal = document.getElementById('logBidRfi').value;
+            const notes = document.getElementById('logBidNotes').value.trim() || null;
+            const divisions = Array.from(document.querySelectorAll('.log-bid-div-checkbox:checked')).map(cb => cb.value);
+            const alternates = logBidAlternates.filter(a => a.description || a.amount);
+
+            const bidDetails = {
+                scope_label: scopeLabel,
+                divisions,
+                bid_date: bidDate,
+                amount: amount ? parseFloat(amount) : null,
+                margin: margin ? parseFloat(margin) : null,
+                alternates,
+                rfi_responsiveness: rfiVal ? parseInt(rfiVal) : null,
+                notes
+            };
+
+            // Preserve existing non-bid outcome_data fields
+            const project = allProjectsCache.find(p => p.id === id);
+            const existingOutcomeData = project?.outcomeData || {};
+            const newOutcomeData = { ...existingOutcomeData, bid_decided: true, bid_details: bidDetails };
+
+            try {
+                await supabaseClient.from('projects').update({ outcome_data: newOutcomeData }).eq('id', id);
+
+                // Aggregate RFI to client profile
+                if (rfiVal && project?.gcs?.length > 0) {
+                    const allGCs = await getGCs();
+                    const clientName = project.gcs[0]?.name;
+                    const client = allGCs.find(g => g.name === clientName);
+                    if (client) {
+                        const prevCount = client.rfi_count || 0;
+                        const prevAvg = client.avg_rfi || parseInt(rfiVal);
+                        client.rfi_count = prevCount + 1;
+                        client.avg_rfi = Math.round(((prevAvg * prevCount) + parseInt(rfiVal)) / client.rfi_count * 10) / 10;
+                        await saveGC(client);
+                    }
+                }
+
+                // Save divisions to bid_divisions_submitted
+                if (divisions.length > 0) {
+                    await supabaseClient.from('projects').update({ bid_divisions_submitted: divisions }).eq('id', id);
+                }
+
+                closeModal('logBidModal');
+                dataCache.projects = null;
+                await loadProjects();
+                await loadDashboard();
+                console.log('✅ Bid submission logged');
+            } catch (error) {
+                console.error('❌ Failed to log bid:', error);
+                alert('Failed to save: ' + error.message);
+            }
+        }
+
         function showOutcome(id) {
             document.getElementById('outcomeProjectId').value = id;
             document.getElementById('outcomeType').value = '';
@@ -13193,36 +13411,13 @@ Respond now:`;
             const project = allProjectsCache.find(p => p.id === projectId);
             const currentDate = project?.created_at ? new Date(project.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
 
-            // Module 1: Build division checkboxes
-            const settings = await getSettings();
-            const userDivisions = (settings.trades || []).map(String);
-            const allDivisions = [...new Set(userDivisions)].sort((a,b) => parseInt(a)-parseInt(b));
-            const divisionNames = {
-                '03':'Concrete','05':'Metals','06':'Wood','07':'Thermal/Moisture','08':'Openings',
-                '09':'Finishes','21':'Fire Protection','22':'Plumbing','23':'HVAC',
-                '26':'Electrical','27':'Communications','28':'Electronic Safety','31':'Earthwork','32':'Exterior Improvements'
-            };
-            const divHtml = allDivisions.length > 0 ? allDivisions.map(d =>
-                `<label style="display:flex;align-items:center;gap:8px;margin-bottom:4px;cursor:pointer;">
-                    <input type="checkbox" class="div-checkbox" value="${d}" ${userDivisions.includes(d) ? 'checked' : ''}>
-                    <span>Div ${d}${divisionNames[d] ? ' — ' + divisionNames[d] : ''}</span>
-                </label>`).join('') : '<span style="color:var(--text-muted);font-size:13px;">Complete onboarding to see your trade divisions here</span>';
-            const scopeLabelHtml = `
-                <div class="form-group">
-                    <label class="form-label">What did you call this bid? <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional — helps track multiple scopes on one project</span></label>
-                    <input type="text" class="form-input" id="scopeLabel" placeholder="e.g. Toilet Compartments, Lockers &amp; Shades — Div 10/12">
-                </div>`;
-            const divisionFieldHtml = `
-                <div class="form-group">
-                    <label class="form-label">Which divisions did you submit? <span style="color:var(--text-muted);font-weight:400;">(check all that apply)</span></label>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;">
-                        ${divHtml}
-                    </div>
-                    <div class="form-hint">Used to track your win rate and bid volume by trade over time.</div>
-                </div>`;
+            // Pre-fill from bid_details if user already logged bid submission
+            const bidDetails = project?.outcomeData?.bid_details;
+            const prefillAmount = bidDetails?.amount || '';
+            const prefillMargin = bidDetails?.margin || '';
 
             if (type === 'won') {
-                html = `${scopeLabelHtml}${divisionFieldHtml}
+                html = `
                     <div class="form-group">
                         <label class="form-label">Bid Analysis Date</label>
                         <input type="date" class="form-input" id="outcomeDate" value="${currentDate}">
@@ -13230,7 +13425,7 @@ Respond now:`;
                     </div>
                     <div class="form-group">
                         <label class="form-label">Final Bid Amount ($)</label>
-                        <input type="number" class="form-input" id="outcomeAmount" placeholder="500000">
+                        <input type="number" class="form-input" id="outcomeAmount" placeholder="500000" value="${prefillAmount}">
                         <div class="form-hint">Your bid amount, not the final contract amount</div>
                     </div>
                     <div class="form-group">
@@ -13243,7 +13438,7 @@ Respond now:`;
                     </div>
                     <div class="form-group">
                         <label class="form-label">Base Bid Margin (%) <span style="color:#ef4444;font-size:12px;">Required</span></label>
-                        <input type="number" class="form-input" id="outcomeMargin" step="0.1" placeholder="12.5" required>
+                        <input type="number" class="form-input" id="outcomeMargin" step="0.1" placeholder="12.5" required value="${prefillMargin}">
                         <div class="form-hint">Margin on the base bid. Required — this is the most valuable data point for your Bid Economics.</div>
                     </div>
                     <div class="form-group">
@@ -13276,35 +13471,13 @@ Respond now:`;
                         <div class="form-hint">Including yours. This trains AI to predict competition on future bids.</div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Client RFI responsiveness <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional — builds client profile over time</span></label>
-                        <select class="form-select" id="outcomeRfiResponsiveness">
-                            <option value="">Not sure / N/A</option>
-                            <option value="1">1 — Unresponsive, questions went unanswered</option>
-                            <option value="2">2 — Slow, answered eventually</option>
-                            <option value="3">3 — Average</option>
-                            <option value="4">4 — Responsive, good communication</option>
-                            <option value="5">5 — Excellent, proactive</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Client payment reliability <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional — builds client profile over time</span></label>
-                        <select class="form-select" id="outcomePaymentReliability">
-                            <option value="">Unknown</option>
-                            <option value="prompt">Prompt payer</option>
-                            <option value="net30">Net-30</option>
-                            <option value="net60">Net-60</option>
-                            <option value="net90">Net-90+</option>
-                            <option value="poor">Poor / slow pay / disputes</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
                         <label class="form-label">Hours spent estimating (optional)</label>
                         <input type="number" class="form-input" id="outcomeHoursSpent" min="0.5" max="40" step="0.5" placeholder="e.g. 3.5">
                         <div class="form-hint">Actual hours to prepare this bid. Improves Bid Economics accuracy over time.</div>
                     </div>
                     `;
             } else if (type === 'lost') {
-                html = `${scopeLabelHtml}${divisionFieldHtml}
+                html = `
                     <div class="form-group">
                         <label class="form-label">Bid Analysis Date</label>
                         <input type="date" class="form-input" id="outcomeDate" value="${currentDate}">
@@ -13349,35 +13522,13 @@ Respond now:`;
                         <div class="form-hint">Including yours. This trains AI to predict competition on future bids.</div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Client RFI responsiveness <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional — builds client profile over time</span></label>
-                        <select class="form-select" id="outcomeRfiResponsiveness">
-                            <option value="">Not sure / N/A</option>
-                            <option value="1">1 — Unresponsive, questions went unanswered</option>
-                            <option value="2">2 — Slow, answered eventually</option>
-                            <option value="3">3 — Average</option>
-                            <option value="4">4 — Responsive, good communication</option>
-                            <option value="5">5 — Excellent, proactive</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Client payment reliability <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional — builds client profile over time</span></label>
-                        <select class="form-select" id="outcomePaymentReliability">
-                            <option value="">Unknown</option>
-                            <option value="prompt">Prompt payer</option>
-                            <option value="net30">Net-30</option>
-                            <option value="net60">Net-60</option>
-                            <option value="net90">Net-90+</option>
-                            <option value="poor">Poor / slow pay / disputes</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
                         <label class="form-label">Hours spent estimating (optional)</label>
                         <input type="number" class="form-input" id="outcomeHoursSpent" min="0.5" max="40" step="0.5" placeholder="e.g. 3.5">
                         <div class="form-hint">Actual hours to prepare this bid. Improves Bid Economics accuracy over time.</div>
                     </div>
                     `;
             } else if (type === 'ghost') {
-                html = `${scopeLabelHtml}${divisionFieldHtml}
+                html = `
                     <div class="form-group">
                         <label class="form-label">Bid Analysis Date</label>
                         <input type="date" class="form-input" id="outcomeDate" value="${currentDate}">
@@ -13413,7 +13564,7 @@ Respond now:`;
                     </div>
                     `;
             } else if (type === 'declined') {
-                html = `${scopeLabelHtml}${divisionFieldHtml}
+                html = `
                     <div class="form-group">
                         <label class="form-label">Bid Analysis Date</label>
                         <input type="date" class="form-input" id="outcomeDate" value="${currentDate}">
@@ -13462,7 +13613,7 @@ Respond now:`;
                     </div>
                     `;
             } else if (type === 'no_bid') {
-                html = `${scopeLabelHtml}
+                html = `
                     <div class="form-group">
                         <label class="form-label">Bid Analysis Date</label>
                         <input type="date" class="form-input" id="outcomeDate" value="${currentDate}">
@@ -13728,6 +13879,18 @@ Respond now:`;
             const updatedDate = document.getElementById('outcomeDate')?.value;
 
             try {
+                // Preserve bid_details from bid submission so updateProjectOutcome doesn't erase them
+                const cachedProj = allProjectsCache.find(x => x.id === id);
+                const existingBidDetails = cachedProj?.outcomeData?.bid_details;
+                if (existingBidDetails) {
+                    outcomeData.bid_decided = true;
+                    outcomeData.bid_details = existingBidDetails;
+                    // Fall back to bid scope_label if not separately captured
+                    if (!outcomeData.scope_label && existingBidDetails.scope_label) {
+                        outcomeData.scope_label = existingBidDetails.scope_label;
+                    }
+                }
+
                 await updateProjectOutcome(id, type, outcomeData);
 
                 // Aggregate RFI + payment data back to client profile
@@ -14968,7 +15131,8 @@ Respond now:`;
                 target_margin: parseFloat(document.getElementById('settingTargetMargin')?.value) || 15,
                 ai_advisor_name: document.getElementById('settingAiAdvisorName')?.value || dataCache.settings?.ai_advisor_name || 'Sam',
                 ai_advisor_tone: document.getElementById('settingAiAdvisorTone').value,
-                weights
+                weights,
+                onboarding_completed: currentSettings.onboarding_completed !== undefined ? currentSettings.onboarding_completed : false
             };
 
             // Add trades or product lines based on company type
