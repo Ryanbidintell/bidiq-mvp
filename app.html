@@ -1744,29 +1744,40 @@
 
             <!-- Keywords Tab -->
             <div class="tab-content" id="tab-keywords">
-                <header class="page-header"><h2 class="page-title">Keywords</h2><p class="page-subtitle">Configure contract terms to look for in bid documents</p></header>
+                <header class="page-header"><h2 class="page-title">Keywords</h2><p class="page-subtitle">Configure what BidIntell looks for in bid documents</p></header>
                 <div class="page-content">
                     <div class="help-text">
-                        <strong>BidIntell searches your uploaded documents for these terms.</strong><br>
-                        • <span style="color: var(--success)">Good terms</span> add +8 points each to your score<br>
-                        • <span style="color: var(--danger)">Risk terms</span> subtract points based on your risk tolerance setting (-5 to -15)<br><br>
-                        <strong>How to add keywords:</strong> Type a keyword in the box below and press Enter or click Add. To add multiple keywords at once, separate them with commas (e.g., "design-assist, negotiated, preferred").
+                        <strong>Keywords serve two different purposes — keep them separated.</strong><br>
+                        • <span style="color: var(--accent)">Scope keywords</span> confirm <em>your work is in this bid</em> — use work type terms like "roller shades", "resilient flooring", "fire alarm" (feeds Trade Match score)<br>
+                        • <span style="color: var(--success)">Favorable terms</span> signal good contract conditions — use phrases like "design-assist", "negotiated", "no retainage" (+8 pts each, feeds Contract Terms score)<br>
+                        • <span style="color: var(--danger)">Risk terms</span> flag contract red flags — "liquidated damages", "pay-if-paid", "no damage for delay" (penalty varies by risk tolerance, feeds Contract Terms score)<br><br>
+                        <strong>Tip:</strong> Separate by commas to add multiple at once.
                     </div>
-                    <div class="keywords-grid">
-                        <div class="keywords-section good">
-                            <div class="keywords-section-header"><h4>✓ Good Terms (+8 points each)</h4></div>
-                            <div class="keywords-list" id="goodKeywordsList"></div>
+                    <div class="keywords-grid" style="grid-template-columns:1fr;gap:16px;">
+                        <div class="keywords-section" style="border-color:var(--accent);background:rgba(242,101,34,0.04);">
+                            <div class="keywords-section-header"><h4 style="color:var(--accent);">Scope Keywords — confirms your work is in scope (feeds Trade Match)</h4></div>
+                            <div class="keywords-list" id="scopeKeywordsList"></div>
                             <div class="keywords-input-row">
-                                <input type="text" id="goodKeywordInput" placeholder="Type keyword(s) separated by commas..." onkeypress="if(event.key==='Enter'){event.preventDefault();addGoodKeyword();}">
-                                <button class="btn btn-sm btn-secondary" onclick="addGoodKeyword()">Add</button>
+                                <input type="text" id="scopeKeywordInput" placeholder='e.g. "roller shades, motorized blinds, window treatments"' onkeypress="if(event.key==='Enter'){event.preventDefault();addScopeKeyword();}">
+                                <button class="btn btn-sm btn-secondary" onclick="addScopeKeyword()">Add</button>
                             </div>
                         </div>
-                        <div class="keywords-section bad">
-                            <div class="keywords-section-header"><h4>⚠ Risk Terms (penalty varies by risk tolerance)</h4></div>
-                            <div class="keywords-list" id="badKeywordsList"></div>
-                            <div class="keywords-input-row">
-                                <input type="text" id="badKeywordInput" placeholder="Type keyword(s) separated by commas..." onkeypress="if(event.key==='Enter'){event.preventDefault();addBadKeyword();}">
-                                <button class="btn btn-sm btn-secondary" onclick="addBadKeyword()">Add</button>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                            <div class="keywords-section good">
+                                <div class="keywords-section-header"><h4>Favorable Terms (+8 pts each, feeds Contract Terms)</h4></div>
+                                <div class="keywords-list" id="goodKeywordsList"></div>
+                                <div class="keywords-input-row">
+                                    <input type="text" id="goodKeywordInput" placeholder='e.g. "design-assist, negotiated"' onkeypress="if(event.key==='Enter'){event.preventDefault();addGoodKeyword();}">
+                                    <button class="btn btn-sm btn-secondary" onclick="addGoodKeyword()">Add</button>
+                                </div>
+                            </div>
+                            <div class="keywords-section bad">
+                                <div class="keywords-section-header"><h4>Risk Terms (penalty, feeds Contract Terms)</h4></div>
+                                <div class="keywords-list" id="badKeywordsList"></div>
+                                <div class="keywords-input-row">
+                                    <input type="text" id="badKeywordInput" placeholder='e.g. "liquidated damages, pay-if-paid"' onkeypress="if(event.key==='Enter'){event.preventDefault();addBadKeyword();}">
+                                    <button class="btn btn-sm btn-secondary" onclick="addBadKeyword()">Add</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1965,7 +1976,7 @@
                                         <span class="weight-slider-value">30%</span>
                                     </div>
                                     <input type="range" min="0" max="70" value="30">
-                                    <div class="weight-slider-hint">How much do contract terms (liquidated damages, pay-if-paid, retainage) drive your PASS decisions?</div>
+                                    <div class="weight-slider-hint">How much do contract terms (liquidated damages, pay-if-paid, favorable conditions) drive your bid/no-bid decision?</div>
                                 </div>
                                 <div class="weight-slider" id="weightGC">
                                     <div class="weight-slider-header">
@@ -4582,8 +4593,8 @@ ${fullText.substring(0, 40000)}`;
 
         async function getKeywords() {
             if (dataCache.keywords) return dataCache.keywords;
-            if (!supabaseClient || !currentUser) return { good: [], bad: [] };
-            
+            if (!supabaseClient || !currentUser) return { scope: [], good: [], bad: [] };
+
             try {
                 const { data, error } = await supabaseClient
                     .from('user_keywords')
@@ -4595,31 +4606,34 @@ ${fullText.substring(0, 40000)}`;
                     // Create default keywords for new user
                     await supabaseClient.from('user_keywords').insert({
                         user_id: currentUser.id,
+                        scope_keywords: [],
                         good_keywords: [],
                         bad_keywords: []
                     });
-                    dataCache.keywords = { good: [], bad: [] };
+                    dataCache.keywords = { scope: [], good: [], bad: [] };
                     return dataCache.keywords;
                 }
-                
+
                 dataCache.keywords = {
+                    scope: data.scope_keywords || [],
                     good: data.good_keywords || [],
                     bad: data.bad_keywords || []
                 };
                 return dataCache.keywords;
             } catch (e) {
                 console.error('getKeywords error:', e);
-                return { good: [], bad: [] };
+                return { scope: [], good: [], bad: [] };
             }
         }
 
         async function saveKeywordsStorage(k) {
             dataCache.keywords = k;
             if (!supabaseClient || !currentUser) return;
-            
+
             try {
                 await supabaseClient.from('user_keywords').upsert({
                     user_id: currentUser.id,
+                    scope_keywords: k.scope || [],
                     good_keywords: k.good,
                     bad_keywords: k.bad,
                     updated_at: new Date().toISOString()
@@ -8865,6 +8879,7 @@ ${truncatedText}`;
 
                 const settings = await getSettings();
                 const keywords = await getKeywords();
+                const scopeFound = searchKeywords(allPages, keywords.scope || []);
                 const goodFound = searchKeywords(allPages, keywords.good);
                 const badFound = searchKeywords(allPages, keywords.bad);
 
@@ -8915,7 +8930,7 @@ ${truncatedText}`;
                 const bidRisk = calculateBidRisk(extracted);
                 const winnersCurseRisk = calculateWinnersCurseRisk(extracted, selectedGCs, contractRisks);
                 const gcNames = selectedGCs.map(g => g.name);
-                const scores = await calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks, tradeDetection, gcNames, foundSections);
+                const scores = await calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks, tradeDetection, gcNames, foundSections, scopeFound);
 
                 updateProgress(90, 'Running Intelligence Engine...');
 
@@ -9136,7 +9151,7 @@ ${truncatedText}`;
             return new RegExp(`${d1}[-\\s.]*${d2}[-\\s.]*${d3}`, 'i');
         }
 
-        async function calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks = null, tradeDetection = null, gcNames = [], foundSections = []) {
+        async function calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks = null, tradeDetection = null, gcNames = [], foundSections = [], scopeFound = []) {
             const components = {};
             let weights = { ...settings.weights };
 
@@ -9337,6 +9352,13 @@ ${truncatedText}`;
 
             const keywordsGoodScore = kwScore; // raw good score before bad-keyword/risk penalties
 
+            // Scope keyword score — used as Trade Match fallback when no CSI sections found
+            // Independent of contract terms; scores purely on work-type keyword matches
+            const scopeKeywordsScore = (() => {
+                if (!scopeFound || scopeFound.length === 0) return 30;
+                return Math.min(50 + scopeFound.length * 10, 80);
+            })();
+
             // Subtract points for bad keywords found
             const penalty = settings.riskTolerance === 'low' ? 15 : settings.riskTolerance === 'medium' ? 10 : 5;
             if (extracted.has_contract_language) {
@@ -9417,11 +9439,13 @@ ${truncatedText}`;
                     const foundSectionCount = foundSections.length;
 
                     if (foundSectionCount === 0) {
-                        // No sections matched — always fall back to keyword score.
-                        // Keywords found in drawings = trade is likely in scope.
-                        tradeScore = keywordsGoodScore;
+                        // No sections matched — fall back to scope keywords.
+                        // Scope keywords found in drawings = trade is likely in scope.
+                        tradeScore = scopeKeywordsScore;
                         scoringMode = 'keyword_fallback';
-                        tradeAnalysisNote = 'No spec sections detected — trade relevance estimated from keyword matches.';
+                        tradeAnalysisNote = scopeFound.length > 0
+                            ? `No spec sections detected — scope confirmed via ${scopeFound.length} scope keyword${scopeFound.length !== 1 ? 's' : ''} found in drawings.`
+                            : 'No spec sections or scope keywords detected — add scope keywords in the Keywords tab to improve this score.';
                     } else {
                         const bonus = (foundSectionCount - 1) * 5;
                         tradeScore = Math.min(65 + bonus, 100);
@@ -9446,13 +9470,11 @@ ${truncatedText}`;
                     if (totalTrades === 0) {
                         tradeScore = 50;
                     } else if (foundCount === 0) {
-                        if (foundSections.length === 0 && tradesFound.length === 0) {
-                            tradeScore = keywordsGoodScore;
-                            scoringMode = 'keyword_fallback';
-                            tradeAnalysisNote = 'No spec sections detected — trade relevance estimated from keyword matches. Upload spec book for section-level scoring.';
-                        } else {
-                            tradeScore = 0;
-                        }
+                        tradeScore = scopeKeywordsScore;
+                        scoringMode = 'keyword_fallback';
+                        tradeAnalysisNote = scopeFound.length > 0
+                            ? `No trade divisions detected — scope confirmed via ${scopeFound.length} scope keyword${scopeFound.length !== 1 ? 's' : ''} found in drawings.`
+                            : 'No trade divisions or scope keywords detected — add scope keywords in the Keywords tab to improve this score.';
                     } else {
                         const bonus = (foundCount - 1) * 5;
                         tradeScore = Math.min(65 + bonus, 100);
@@ -9486,6 +9508,7 @@ ${truncatedText}`;
                         tradeAnalysisNote: tradeAnalysisNote,
                         foundSections: hasSections ? foundSections : null,
                         allSections: hasSections ? settings.preferred_csi_sections : null,
+                        scopeKeywordsFound: scoringMode === 'keyword_fallback' ? scopeFound : null,
                         signals: tradeDetection?.signals_used || [],
                         confidence: tradeDetection?.highest_confidence || 0,
                         matches: tradeDetection?.matches || []
@@ -9800,7 +9823,8 @@ ${truncatedText}`;
                                 BidIndex™ scores bid fit on a 0–100 scale across five weighted factors. ≥80 = GO · 60–79 = REVIEW · &lt;60 = PASS.
                                 <div style="margin-top:8px;display:grid;gap:5px;">
                                     <div><strong>Location Fit</strong> — Distance from your office to the job site.</div>
-                                    <div><strong>Keywords &amp; Trade Scope</strong> — Finds your preferred work types and CSI spec sections in the documents. On drawings without a spec book, keyword matches serve as the trade scope signal. Contract risk terms are penalized.</div>
+                                    <div><strong>Contract Terms</strong> — Favorable terms you want to find (design-assist, negotiated, etc.) add points. Risk terms (liquidated damages, pay-if-paid) penalize based on your risk tolerance.</div>
+                                    <div><strong>Trade Match</strong> — Finds your CSI spec sections in the spec book. On drawings-only bids, falls back to your scope keywords to confirm your work type is included.</div>
                                     <div><strong>Client Relationship</strong> — Your star rating, bid count, and win rate with the specific client inviting you.</div>
                                     <div><strong>Competitive Pressure</strong> — How many subs typically bid this client's jobs. Unlocks after 3 logged outcomes.</div>
                                 </div>
@@ -9819,7 +9843,7 @@ ${truncatedText}`;
                     ${await renderProfileWarningHtml(settings)}
                     ${tradeWarningBanner}
                     ${renderComponent('', 'Location Fit', analysis.scores.components.location)}
-                    ${renderComponent('', 'Keywords & Contract', analysis.scores.components.keywords)}
+                    ${renderComponent('', 'Contract Terms', analysis.scores.components.keywords)}
                     ${renderComponent('', 'Client Relationship', analysis.scores.components.gc)}
                     ${renderComponent('', settings.companyType === 'subcontractor' ? 'Trade Match' : 'Product Match', analysis.scores.components.trade)}
                     ${(analysis.scores.components.trade?.score < 50 && !((settings.preferred_csi_sections||[]).length > 0) && !((settings.trades||[]).length > 0)) ? `<div class="profile-incomplete-callout" style="margin:0 0 2px;">No trade types configured — this score is a rough estimate. <span class="link" onclick="switchTab('settings')">Set your trade types →</span></div>` : ''}
@@ -9989,7 +10013,7 @@ ${truncatedText}`;
             }
             
             // Keywords details
-            if (title === 'Keywords & Contract' && comp.details?.length > 0) {
+            if (title === 'Contract Terms' && comp.details?.length > 0) {
                 const good = comp.details.filter(d => d.type === 'good');
                 const bad = comp.details.filter(d => d.type === 'bad');
 
@@ -10038,8 +10062,8 @@ ${truncatedText}`;
                 }
                 if (!comp.hasContract) details += '<p style="margin-top:10px;font-size:11px;color:var(--text-muted);">ℹ️ No contract language detected - risk terms not penalized</p>';
                 details += '</div>';
-            } else if (title === 'Keywords & Contract' && (!comp.details || comp.details.length === 0)) {
-                details = `<div class="score-component-details" style="color:var(--text-muted);">No keywords found. Add keywords in the Keywords tab to track terms that matter to you.</div>`;
+            } else if (title === 'Contract Terms' && (!comp.details || comp.details.length === 0)) {
+                details = `<div class="score-component-details" style="color:var(--text-muted);">No contract terms found. Add favorable and risk terms in the Keywords tab to track the contract language that matters to you.</div>`;
             }
             
             // GC details
@@ -10069,7 +10093,12 @@ ${truncatedText}`;
             // Trade Match details (for subcontractors)
             if (title === 'Trade Match' && comp.details?.found !== undefined) {
                 if (comp.details.scoring_mode === 'keyword_fallback') {
-                    details = `<div class="score-component-details"><span style="color:var(--text-muted)">No spec sections found (drawings-only bid). Trade scope estimated from keyword matches — if your keywords appear, it indicates your work is likely included. Upload a spec book for section-level confirmation.</span></div>`;
+                    const skFound = comp.details.scopeKeywordsFound || [];
+                    if (skFound.length > 0) {
+                        details = `<div class="score-component-details"><span style="color:var(--text-muted)">No spec sections found — scope confirmed via scope keywords in drawings.</span><div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">${skFound.map(k => `<span class="keyword-tag" style="background:rgba(242,101,34,0.12);border-color:rgba(242,101,34,0.3);color:var(--accent);">${k.keyword}</span>`).join('')}</div></div>`;
+                    } else {
+                        details = `<div class="score-component-details"><span style="color:var(--warning)">No spec sections or scope keywords found. Add scope keywords (your work types) in the Keywords tab to improve this score.</span></div>`;
+                    }
                 } else if (comp.details.scoring_mode === 'section' && comp.details.allSections) {
                     const found = comp.details.foundSections || [];
                     const notFound = comp.details.allSections.filter(s => !found.includes(s));
@@ -10760,7 +10789,7 @@ ${truncatedText}`;
                                     <td>${a.scores.components.location.reason}</td>
                                 </tr>
                                 <tr>
-                                    <td>🔑 Keywords & Contract</td>
+                                    <td>Contract Terms</td>
                                     <td class="weight-cell">${a.scores.components.keywords.weight}%</td>
                                     <td class="score-cell">${a.scores.components.keywords.score}</td>
                                     <td>${a.scores.components.keywords.reason}</td>
@@ -11803,7 +11832,7 @@ ${truncatedText}`;
                                     BidIndex™ scores bid fit on a 0–100 scale across five weighted factors. ≥80 = GO · 60–79 = REVIEW · &lt;60 = PASS.
                                     <div style="margin-top:8px;display:grid;gap:5px;">
                                         <div>📍 <strong>Location Fit</strong> — Distance from your office to the job site.</div>
-                                        <div>🔑 <strong>Keywords &amp; Contract</strong> — Your preferred project types found in the specs, minus contract risk terms.</div>
+                                        <div><strong>Contract Terms</strong> — Favorable terms you want (design-assist, negotiated) add points. Risk terms (liquidated damages, pay-if-paid) subtract based on your tolerance.</div>
                                         <div>🏢 <strong>Client Relationship</strong> — Your star rating, bid count, and win rate with the specific client inviting you.</div>
                                         <div>🔧 <strong>Trade / Product Match</strong> — Whether your CSI divisions or product lines appear in the spec.</div>
                                         <div>⚔️ <strong>Competitive Pressure</strong> — How many subs typically bid this client's jobs. Unlocks after 3 logged outcomes.</div>
@@ -11818,7 +11847,7 @@ ${truncatedText}`;
                         </div>
                         ${profileWarningHtml}
                         ${p.scores?.components?.location ? renderComponent('📍', 'Location Fit', p.scores.components.location) : ''}
-                        ${p.scores?.components?.keywords ? renderComponent('🔑', 'Keywords & Contract', p.scores.components.keywords) : ''}
+                        ${p.scores?.components?.keywords ? renderComponent('', 'Contract Terms', p.scores.components.keywords) : ''}
                         ${p.scores?.components?.gc ? renderComponent('🏢', 'Client Relationship', p.scores.components.gc) : ''}
                         ${p.scores?.components?.trade ? renderComponent(tradeIcon, tradeLabel, p.scores.components.trade) : ''}
                         ${tradeNudgeHtml}
@@ -12833,7 +12862,7 @@ BID CONTEXT:
 - BidIndex Score: ${context.score}/100 (${context.recommendation})
 - Score Breakdown:
   • Location: ${context.score_components.location}/100
-  • Keywords & Contract: ${context.score_components.keywords}/100
+  • Contract Terms: ${context.score_components.keywords}/100
   • Client Relationship: ${context.score_components.gc}/100
   • Trade/Product Match: ${context.score_components.trade}/100
 - GCs Bidding: ${context.gcs.map(gc => `${gc.name} (${gc.rating}★)`).join(', ') || 'None'}
@@ -14273,8 +14302,27 @@ Respond now:`;
         // Keywords - FIXED
         async function loadKeywords() {
             const kw = await getKeywords();
-            document.getElementById('goodKeywordsList').innerHTML = kw.good.map(k => `<span class="keyword-tag good">${k}<span class="remove" onclick="removeKeyword('good','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No good keywords yet</span>';
-            document.getElementById('badKeywordsList').innerHTML = kw.bad.map(k => `<span class="keyword-tag bad">${k}<span class="remove" onclick="removeKeyword('bad','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No risk keywords yet</span>';
+            document.getElementById('scopeKeywordsList').innerHTML = (kw.scope || []).map(k => `<span class="keyword-tag" style="background:rgba(242,101,34,0.12);border-color:rgba(242,101,34,0.3);color:var(--accent);">${k}<span class="remove" onclick="removeKeyword('scope','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No scope keywords yet</span>';
+            document.getElementById('goodKeywordsList').innerHTML = kw.good.map(k => `<span class="keyword-tag good">${k}<span class="remove" onclick="removeKeyword('good','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No favorable terms yet</span>';
+            document.getElementById('badKeywordsList').innerHTML = kw.bad.map(k => `<span class="keyword-tag bad">${k}<span class="remove" onclick="removeKeyword('bad','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No risk terms yet</span>';
+        }
+
+        // Add scope keyword(s) - supports comma-separated input
+        async function addScopeKeyword() {
+            const input = document.getElementById('scopeKeywordInput');
+            const rawVal = input.value.trim();
+            if (!rawVal) { alert('Please enter a keyword'); return; }
+            const keywords = rawVal.split(',').map(k => k.trim().toLowerCase()).filter(k => k.length > 0);
+            if (keywords.length === 0) { alert('Please enter a keyword'); return; }
+            const kw = await getKeywords();
+            if (!kw.scope) kw.scope = [];
+            let added = 0;
+            for (const val of keywords) {
+                if (!kw.scope.includes(val)) { kw.scope.push(val); added++; }
+            }
+            if (added > 0) { await saveKeywordsStorage(kw); await loadKeywords(); }
+            input.value = '';
+            input.focus();
         }
 
         // Add good keyword(s) - supports comma-separated input
