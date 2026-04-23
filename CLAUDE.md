@@ -535,6 +535,51 @@ const additionalRevenue = additionalWins * avgProjectSize;
 **New columns:** `projects.outcome_nudge_count` (int, default 0) · `projects.last_nudge_sent_at` (timestamptz) · `user_settings.outcome_reminder_days` (int, default 21, null = Never)
 **Reset:** `updateProjectOutcome()` resets `outcome_nudge_count` to 0 when any outcome is saved.
 
+### Email Routing Rule — Always Use ryan@bidintell.ai (Apr 23, 2026)
+
+**Rule:** ALL system/agent emails (daily digest, weekly health check, alerts, nudges) must go to `ryan@bidintell.ai`.
+
+**Never use:**
+- `ryan@fsikc.com` — M365 spam-filters BidIntell system emails silently. They never arrive.
+- `hello@bidintell.ai` — Postmark From address; no monitored inbox behind it.
+
+**Postmark sandbox restriction:** Until the Postmark account is fully approved at postmarkapp.com, outbound email can only be delivered to addresses at the same domain as the From address (`@bidintell.ai`). Sending to `@fsikc.com`, `@fdccontract.com`, etc. returns 422. To send to real users, complete approval at postmarkapp.com first.
+
+**Diagnosis pattern:** If system emails aren't arriving, check: (1) To address — must be @bidintell.ai; (2) Postmark account status — sandbox vs approved; (3) Netlify function logs for 422 errors.
+
+### Inbound Email — user_email Must Not Be Null (Apr 23, 2026)
+
+**Problem:** `inbound-email-background.js` looks up `user_email` from `user_settings`. If null, falls back to the auth email (`ryan@fsikc.com`). Postmark 422s on that address (M365 + sandbox restriction).
+
+**Fix:** Ensure `user_email` is set for every real user in `user_settings`. Check with:
+```sql
+SELECT user_id, email_alias, user_email FROM user_settings WHERE user_email IS NULL;
+```
+If null, update: `UPDATE user_settings SET user_email = 'ryan@bidintell.ai' WHERE user_id = '...'`
+
+### Client Behavior Aggregation — avg_rfi + payment_flag (Apr 23, 2026)
+
+**Fields on GC/client objects:** `avg_rfi` (running average 1–5), `rfi_count` (denominator), `payment_flag` ('reliable'|'slow'|'disputed')
+**Where written:** `saveOutcome()` in app.html — after `updateProjectOutcome()`, reads current client via `getGCs()`, updates running average, saves back via `saveGC()`.
+**Where displayed:** `renderClientRows()` — reads `client.avg_rfi` and `client.payment_flag`, renders colored badge chips below the tag row.
+**Running average pattern:**
+```javascript
+const newAvg = Math.round(((prevAvg * prevCount) + newValue) / (prevCount + 1) * 10) / 10;
+```
+
+### Outcome Completeness Nudge (Apr 23, 2026)
+
+**LOST outcome:** `howHigh` (how high were you?) is required before `saveOutcome()` proceeds. Shows validation alert if empty.
+**Dashboard stat:** `statOutcomeRate` now shows `X% data complete` instead of raw count. Completeness = outcomes with key data fields / total non-pending outcomes.
+**Definition of "complete":** WON = has `margin`; LOST = has `outcome_data.howHigh`.
+
+### Competitive Pressure Explainer — Source Projects (Apr 23, 2026)
+
+**Active state** (3+ outcomes logged for a GC) now lists up to 5 source projects that feed the score.
+**Data shape:** `details.sourceProjects` array — `{ name, bidderCount, outcome }` — added in `getCompetitivePressureScore()`.
+**Displayed in:** the collapsible Competitive Pressure score section — each source project shown with a colored outcome badge (green=won, red=lost/ghost, amber=pending).
+**allProjectsCache join:** source projects are resolved by joining `gc_competition_density.project_id` against `allProjectsCache` at score time. If cache is cold this join silently returns 'Unknown project' — acceptable.
+
 ---
 
 ## 🚫 ABSOLUTE PROHIBITIONS
