@@ -15425,8 +15425,8 @@ Respond now:`;
             // Group by month
             const monthlyVolume = {};
             projects.forEach(p => {
-                if (!p.created_at) return;
-                const date = new Date(p.created_at);
+                if (!p.createdAt) return;
+                const date = new Date(p.createdAt);
                 if (isNaN(date.getTime())) return;
                 const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
                 monthlyVolume[monthKey] = (monthlyVolume[monthKey] || 0) + 1;
@@ -15839,7 +15839,8 @@ Respond now:`;
                             position: 'right',
                             onClick: () => {},
                             labels: {
-                                color: '#F8FAFC',
+                                color: '#ffffff',
+                                font: { size: 12 },
                                 generateLabels: function(chart) {
                                     const dataset = chart.data.datasets[0];
                                     const total = dataset.data.reduce((a, b) => a + b, 0);
