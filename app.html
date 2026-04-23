@@ -14333,82 +14333,46 @@ Respond now:`;
         }
 
         function initAddressAutocomplete() {
-            console.log('🗺️ Initializing address autocomplete...');
-
-            if (!window.google || !window.google.maps || !window.google.maps.places) {
-                console.warn('⚠️ Google Maps Places API not loaded yet - retrying in 1 second...');
+            if (!window.google?.maps?.places) {
                 setTimeout(initAddressAutocomplete, 1000);
                 return;
             }
 
             const input = document.getElementById('settingStreet');
-            if (!input) {
-                console.warn('⚠️ settingStreet input not found - retrying in 500ms...');
-                setTimeout(initAddressAutocomplete, 500);
-                return;
-            }
+            if (!input) { setTimeout(initAddressAutocomplete, 500); return; }
+
+            // Remove any lingering web-component element from a previous session
+            const existing = document.getElementById('settingStreetPAC');
+            if (existing) { existing.remove(); }
+            input.style.display = '';
 
             try {
-                // Clean up previous PlaceAutocompleteElement on re-init (multiple tab opens)
-                const existing = document.getElementById('settingStreetPAC');
-                if (existing) {
-                    existing.remove();
-                    input.style.display = '';
-                }
-
-                // Create PlaceAutocompleteElement (replaces deprecated google.maps.places.Autocomplete)
-                const placeAutocomplete = new google.maps.places.PlaceAutocompleteElement({
+                // Use classic Autocomplete (attaches to the existing styled input, no style conflicts)
+                const ac = new google.maps.places.Autocomplete(input, {
                     types: ['address'],
-                    componentRestrictions: { country: 'us' }
-                });
-                placeAutocomplete.id = 'settingStreetPAC';
-                placeAutocomplete.style.width = '100%';
-                placeAutocomplete.style.display = 'block';
-
-                // Insert before the original input and hide it (kept for save/load logic)
-                input.parentNode.insertBefore(placeAutocomplete, input);
-                input.style.display = 'none';
-
-                // Pre-populate with the saved street value (set by loadSettings before this runs)
-                if (input.value) placeAutocomplete.value = input.value;
-
-                // Sync manual typing back to hidden input so save logic still works
-                placeAutocomplete.addEventListener('input', () => {
-                    input.value = placeAutocomplete.value || '';
+                    componentRestrictions: { country: 'us' },
+                    fields: ['address_components']
                 });
 
-                // Handle autocomplete selection
-                placeAutocomplete.addEventListener('gmp-placeselect', async ({ place }) => {
-                    await place.fetchFields({ fields: ['addressComponents'] });
+                ac.addListener('place_changed', () => {
+                    const place = ac.getPlace();
+                    if (!place.address_components) return;
 
                     let street = '', city = '', state = '', zip = '';
-                    for (const component of (place.addressComponents || [])) {
-                        const types = component.types;
-                        if (types.includes('street_number')) {
-                            street = component.longText;
-                        } else if (types.includes('route')) {
-                            street += (street ? ' ' : '') + component.longText;
-                        } else if (types.includes('locality')) {
-                            city = component.longText;
-                        } else if (types.includes('administrative_area_level_1')) {
-                            state = component.shortText;
-                        } else if (types.includes('postal_code')) {
-                            zip = component.longText;
-                        }
+                    for (const c of place.address_components) {
+                        if (c.types.includes('street_number')) street = c.long_name;
+                        else if (c.types.includes('route')) street += (street ? ' ' : '') + c.long_name;
+                        else if (c.types.includes('locality')) city = c.long_name;
+                        else if (c.types.includes('administrative_area_level_1')) state = c.short_name;
+                        else if (c.types.includes('postal_code')) zip = c.long_name;
                     }
-
-                    const streetValue = street.trim();
-                    input.value = streetValue;
+                    input.value = street.trim();
                     if (city) document.getElementById('settingCity').value = city;
                     if (state) document.getElementById('settingState').value = state;
                     if (zip) document.getElementById('settingZip').value = zip;
-
-                    console.log('✅ Address autocompleted:', { street: streetValue, city, state, zip });
                 });
-
-                console.log('✅ Google Maps PlaceAutocompleteElement initialized');
             } catch (error) {
-                console.error('❌ Error initializing autocomplete:', error);
+                console.error('❌ Error initializing address autocomplete:', error);
             }
         }
 
@@ -16638,14 +16602,9 @@ Respond now:`;
                     document.getElementById('adminMetricsNavItem').style.display = 'none';
                 }
 
-                // Show Team tab for org owners
-                const teamSettings = dataCache.settings;
-                if (teamSettings && teamSettings.org_id) {
-                    document.getElementById('teamNavItem').style.display = 'flex';
-                    loadTeamTab();
-                } else {
-                    document.getElementById('teamNavItem').style.display = 'none';
-                }
+                // Show Team tab for all users (content adapts based on org status)
+                document.getElementById('teamNavItem').style.display = 'flex';
+                if (dataCache.settings?.org_id) loadTeamTab();
             } catch (error) {
                 console.error('❌ loadAll() error:', error);
                 throw error;
@@ -16658,7 +16617,15 @@ Respond now:`;
 
         async function loadTeamTab() {
             const settings = dataCache.settings;
-            if (!settings || !settings.org_id) return;
+            if (!settings || !settings.org_id) {
+                const list = document.getElementById('teamMembersList');
+                if (list) list.innerHTML = `<div style="padding:20px 0;color:var(--text-muted);font-size:14px;line-height:1.6;">
+                    Your team account is ready to configure. Contact <a href="mailto:ryan@bidintell.ai" style="color:var(--accent);">ryan@bidintell.ai</a> to get your seats activated — include your company name and the email addresses of your estimators.
+                </div>`;
+                const inviteCard = document.getElementById('teamInviteCard');
+                if (inviteCard) inviteCard.style.display = 'none';
+                return;
+            }
 
             try {
                 // Fetch org info, members, and per-member project counts
