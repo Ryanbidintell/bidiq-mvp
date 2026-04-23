@@ -1,29 +1,27 @@
 // Serverless function for sending notifications and emails
 // Deploys to Netlify as /.netlify/functions/notify
 
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
 async function sendEmail({ to, subject, htmlBody }) {
     const isInternalOnly = to === 'ryan@fsikc.com';
-    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+    const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SENDGRID_API_KEY}`
+            'Authorization': `Bearer ${RESEND_API_KEY}`
         },
         body: JSON.stringify({
-            personalizations: [{
-                to: [{ email: to }],
-                ...(isInternalOnly ? {} : { bcc: [{ email: 'ryan@bidintell.ai' }] })
-            }],
-            from: { email: 'hello@bidintell.ai', name: 'BidIntell' },
+            from: 'BidIntell <hello@bidintell.ai>',
+            to: [to],
+            ...(isInternalOnly ? {} : { bcc: ['ryan@bidintell.ai'] }),
             subject,
-            content: [{ type: 'text/html', value: htmlBody }]
+            html: htmlBody
         })
     });
     if (!response.ok) {
         const errText = await response.text();
-        throw new Error(`SendGrid API error: ${response.status} ${errText}`);
+        throw new Error(`Resend API error: ${response.status} ${errText}`);
     }
     return response;
 }
