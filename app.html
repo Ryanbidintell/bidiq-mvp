@@ -9126,10 +9126,13 @@ ${truncatedText}`;
         function buildSectionRegex(code) {
             // Normalize stored code to digits only e.g. "09 65 00" → "096500"
             const digits = code.replace(/[\s\-\.]/g, '');
-            // Rebuild as regex that matches any separator between the three groups
             const d1 = digits.slice(0, 2);
             const d2 = digits.slice(2, 4);
             const d3 = digits.slice(4, 6);
+            // "XX XX 00" is a CSI parent section — match any subsection (e.g. "12 24 00" matches "12 24 13")
+            if (d3 === '00') {
+                return new RegExp(`${d1}[-\\s.]*${d2}[-\\s.]*\\d{2}`, 'i');
+            }
             return new RegExp(`${d1}[-\\s.]*${d2}[-\\s.]*${d3}`, 'i');
         }
 
@@ -9414,22 +9417,18 @@ ${truncatedText}`;
                     const foundSectionCount = foundSections.length;
 
                     if (foundSectionCount === 0) {
-                        if (foundSections.length === 0 && tradesFound.length === 0) {
-                            tradeScore = keywordsGoodScore;
-                            scoringMode = 'keyword_fallback';
-                            tradeAnalysisNote = 'No spec sections detected — trade relevance estimated from keyword matches. Upload spec book for section-level scoring.';
-                        } else {
-                            tradeScore = 0;
-                        }
+                        // No sections matched — always fall back to keyword score.
+                        // Keywords found in drawings = trade is likely in scope.
+                        tradeScore = keywordsGoodScore;
+                        scoringMode = 'keyword_fallback';
+                        tradeAnalysisNote = 'No spec sections detected — trade relevance estimated from keyword matches.';
                     } else {
                         const bonus = (foundSectionCount - 1) * 5;
                         tradeScore = Math.min(65 + bonus, 100);
                     }
 
                     if (foundSectionCount === 0) {
-                        reason = scoringMode === 'keyword_fallback'
-                            ? 'No spec sections detected — trade relevance estimated from keyword matches'
-                            : `None of your ${sectionCount} spec section${sectionCount !== 1 ? 's' : ''} found in this bid`;
+                        reason = 'No spec sections detected — trade relevance estimated from keyword matches';
                     } else if (foundSectionCount === sectionCount) {
                         reason = `All ${sectionCount} section${sectionCount !== 1 ? 's' : ''} found — strong scope match`;
                     } else {
