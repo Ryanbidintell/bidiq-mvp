@@ -17,7 +17,7 @@
 //
 // Required Supabase secrets (set via: supabase secrets set KEY=value):
 //   CLAUDE_API_KEY
-//   SENDGRID_API_KEY
+//   RESEND_API_KEY
 //   SUPABASE_SERVICE_ROLE_KEY  (auto-available in Edge Functions)
 //   SUPABASE_URL               (auto-available)
 
@@ -26,7 +26,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const SUPABASE_URL         = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const CLAUDE_API_KEY       = Deno.env.get('CLAUDE_API_KEY')!;
-const SENDGRID_API_KEY     = Deno.env.get('SENDGRID_API_KEY')!;
+const RESEND_API_KEY       = Deno.env.get('RESEND_API_KEY')!;
 
 const MAX_ATTACHMENTS = 3;
 
@@ -889,20 +889,18 @@ async function processEmail(payload: Record<string, unknown>) {
 
     let replyStatus: Record<string, unknown> = {};
     try {
-        const replyRes = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        const replyRes = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${SENDGRID_API_KEY}`
+                'Authorization': `Bearer ${RESEND_API_KEY}`
             },
             body: JSON.stringify({
-                personalizations: [{
-                    to: [{ email: userEmail }],
-                    bcc: [{ email: 'ryan@bidintell.ai' }]
-                }],
-                from: { email: 'hello@bidintell.ai', name: 'BidIntell' },
+                from: 'BidIntell <hello@bidintell.ai>',
+                to: [userEmail],
+                bcc: ['ryan@bidintell.ai'],
                 subject: replySubject,
-                content: [{ type: 'text/plain', value: replyLines }]
+                text: replyLines
             })
         });
         replyStatus = { ok: replyRes.ok, status: replyRes.status };
