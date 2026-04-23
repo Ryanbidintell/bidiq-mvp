@@ -1654,6 +1654,17 @@
                         </div>
                     </div>
 
+                    <!-- Risk vs. Reward Scatter -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Risk vs. Score</h3>
+                            <div class="form-hint">Every bid plotted by its risk level (X) and BidIndex score (Y), colored by outcome. Shows whether your scoring is calibrated to real risk.</div>
+                        </div>
+                        <div class="card-body">
+                            <div id="riskRewardScatter"></div>
+                        </div>
+                    </div>
+
                     <!-- Score vs Outcome correlation -->
                     <div class="card">
                         <div class="card-header">
@@ -15502,7 +15513,8 @@ Respond now:`;
         let chartInstances = {
             winRateTrend: null,
             bidVolume: null,
-            buildingType: null
+            buildingType: null,
+            riskReward: null
         };
 
         // Generate Win Rate Trend Chart
@@ -16089,6 +16101,131 @@ Respond now:`;
             el.innerHTML = `<div style="margin-bottom:4px;">${rows}</div><div style="font-size:12px;color:var(--text-muted);">Win rate by score range — the further GO bids outpace PASS bids, the better calibrated your scoring is.</div>`;
         }
 
+        function renderRiskRewardScatter(projects) {
+            const el = document.getElementById('riskRewardScatter');
+            if (!el) return;
+
+            const eligible = projects.filter(p => p.scores?.final != null && p.extracted);
+            if (eligible.length < 3) {
+                el.innerHTML = '<div class="help-text">Score at least 3 bids to see risk vs. score patterns.</div>';
+                return;
+            }
+
+            if (chartInstances.riskReward) chartInstances.riskReward.destroy();
+
+            const riskOrder = { none: 0, moderate: 1, elevated: 2, high: 3 };
+            const outcomeColor = {
+                won:      { bg: 'rgba(34,197,94,0.85)',  border: '#22c55e' },
+                lost:     { bg: 'rgba(239,68,68,0.8)',   border: '#ef4444' },
+                ghosted:  { bg: 'rgba(234,179,8,0.8)',   border: '#eab308' },
+                'no-bid': { bg: 'rgba(234,179,8,0.8)',   border: '#eab308' },
+                pending:  { bg: 'rgba(148,163,184,0.55)', border: '#94a3b8' }
+            };
+
+            const points = eligible.map(p => {
+                const risk = calculateBidRisk(p.extracted);
+                const level = risk?.level || 'none';
+                const outcome = p.outcome && p.outcome !== '' ? p.outcome : 'pending';
+                const colors = outcomeColor[outcome] || outcomeColor.pending;
+                const jitter = (Math.random() - 0.5) * 0.38;
+                return {
+                    x: (riskOrder[level] ?? 0) + jitter,
+                    y: p.scores.final,
+                    outcome,
+                    riskLabel: level === 'none' ? 'No Risk Flags' : level.charAt(0).toUpperCase() + level.slice(1),
+                    name: p.extracted?.project_name || p.project_name || 'Unnamed Project',
+                    score: p.scores.final,
+                    bgColor: colors.bg,
+                    borderColor: colors.border
+                };
+            });
+
+            const canvas = document.createElement('canvas');
+            canvas.style.height = '280px';
+            el.innerHTML = '';
+            el.appendChild(canvas);
+
+            chartInstances.riskReward = new Chart(canvas, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        data: points,
+                        pointBackgroundColor: points.map(d => d.bgColor),
+                        pointBorderColor: points.map(d => d.borderColor),
+                        pointRadius: 7,
+                        pointHoverRadius: 10,
+                        pointBorderWidth: 1.5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => {
+                                    const d = ctx.raw;
+                                    const outcomeLabel = d.outcome.charAt(0).toUpperCase() + d.outcome.slice(1);
+                                    return [d.name, `BidIndex: ${d.score}  ·  Risk: ${d.riskLabel}`, `Outcome: ${outcomeLabel}`];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            min: -0.6,
+                            max: 3.6,
+                            title: { display: true, text: 'Bid Risk Level', color: '#94a3b8', font: { size: 12 } },
+                            ticks: {
+                                color: '#94a3b8',
+                                stepSize: 1,
+                                callback: v => ['No Flags', 'Moderate', 'Elevated', 'High'][Math.round(v)] || ''
+                            },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            title: { display: true, text: 'BidIndex Score', color: '#94a3b8', font: { size: 12 } },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        }
+                    }
+                }
+            });
+
+            el.insertAdjacentHTML('beforeend', `
+                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;">
+                    <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted);">
+                        <span style="width:10px;height:10px;border-radius:50%;background:#22c55e;flex-shrink:0;"></span>Won
+                    </span>
+                    <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted);">
+                        <span style="width:10px;height:10px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>Lost
+                    </span>
+                    <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted);">
+                        <span style="width:10px;height:10px;border-radius:50%;background:#eab308;flex-shrink:0;"></span>Ghosted / No-bid
+                    </span>
+                    <span style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted);">
+                        <span style="width:10px;height:10px;border-radius:50%;background:#94a3b8;flex-shrink:0;"></span>Pending
+                    </span>
+                </div>
+                <div style="font-size:12px;color:var(--text-muted);line-height:1.6;margin-top:10px;">
+                    <strong style="color:var(--text-primary);">How to read this:</strong>
+                    Green dots top-left (high score, no risk flags, won) = your BidIndex is well-calibrated.
+                    Red dots bottom-right (low score, high risk, lost) = the algorithm is correctly filtering bad bids.
+                    Red dots top-left (high score, no risk, lost) = you may be underweighting a scoring factor — check your Settings weights.
+                    Green dots top-right (high score, high risk, won) = you have edge cases where risk didn't hurt you — valuable data.
+                </div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">
+                    <strong style="color:var(--text-primary);">How risk is calculated:</strong> BidIntell flags four risk factors —
+                    vague or incomplete scope, bid shopping language, multiple competing bidders expected, and rushed bid deadlines (&lt;10 days).
+                    0 flags = No Risk · 1 flag = Moderate · 2 flags = Elevated · 3+ flags = High.
+                    Risk level is independent of your BidIndex score — a high-risk bid can still score 80 if location, client, and trade all match perfectly.
+                </div>
+            `);
+        }
+
         function renderWinRateByBuildingType(projects) {
             const el = document.getElementById('winRateByBuildingType');
             if (!el) return;
@@ -16231,6 +16368,7 @@ Respond now:`;
 
                 document.getElementById('topGCsTable').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('worstGCsTable').innerHTML = '<div class="help-text">No data available yet.</div>';
+                document.getElementById('riskRewardScatter').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('scoreOutcomeChart').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('winRateByBuildingType').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('winRateByTrade').innerHTML = '<div class="help-text">No data available yet.</div>';
@@ -16247,6 +16385,7 @@ Respond now:`;
             await renderClientTypePerformance(projects);
             renderBuildingTypeChart(projects);
             renderBidROIAnalytics(projects);
+            renderRiskRewardScatter(projects);
             renderScoreOutcomeChart(projects);
             renderWinRateByBuildingType(projects);
             renderWinRateByTrade(projects, settings);

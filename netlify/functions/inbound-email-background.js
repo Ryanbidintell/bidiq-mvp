@@ -522,7 +522,9 @@ exports.handler = async (event) => {
                     bond_required:   extracted.bond_required || null,
                     source:          'email_forward',
                     email_from:      From || null,
-                    email_subject:   Subject || null
+                    email_subject:   Subject || null,
+                    skipped_pdfs:    skippedFiles.length > 0 ? skippedFiles : undefined,
+                    pdf_upload_needed: skippedFiles.length > 0 && processedCount === 0
                 },
                 scores,
                 contract_risks: contractRisks || null,
@@ -568,8 +570,13 @@ exports.handler = async (event) => {
         ``,
         topRisk ? `\u26A0\uFE0F  ${topRisk.clause_type || topRisk.plain_english || 'Contract risk flag'}` : null,
         extracted.bond_required === true ? `\u26A0\uFE0F  Bond required` : null,
-        skippedFiles.length > 0
-            ? `\u26A0\uFE0F  ${skippedFiles.join(', ')} was too large to process via email (4MB limit).\n   For full contract analysis, upload the PDF directly at bidintell.ai/app.`
+        skippedFiles.length > 0 && processedCount === 0
+            ? `⚠️  ${skippedFiles.join(', ')} exceeded the 4MB email limit.
+   Score above is based on the email text only. Your project was created in BidIntell — open it and upload the PDF for a complete analysis:
+   https://bidintell.ai/app.html`
+            : skippedFiles.length > 0
+            ? `⚠️  ${skippedFiles.join(', ')} was too large to score (4MB limit). Score above reflects the other attachments.
+   Upload the skipped file in the app: https://bidintell.ai/app.html`
             : null,
         ``,
         `─────────────────────────────────`,
