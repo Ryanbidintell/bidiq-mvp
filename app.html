@@ -1748,9 +1748,9 @@
                 <div class="page-content">
                     <div class="help-text">
                         <strong>Keywords serve two different purposes — keep them separated.</strong><br>
-                        • <span style="color: var(--accent)">Scope keywords</span> confirm <em>your work is in this bid</em> — use work type terms like "roller shades", "resilient flooring", "fire alarm" (feeds Trade Match score)<br>
-                        • <span style="color: var(--success)">Favorable terms</span> signal good contract conditions — use phrases like "design-assist", "negotiated", "no retainage" (+8 pts each, feeds Contract Terms score)<br>
-                        • <span style="color: var(--danger)">Risk terms</span> flag contract red flags — "liquidated damages", "pay-if-paid", "no damage for delay" (penalty varies by risk tolerance, feeds Contract Terms score)<br><br>
+                        • <span style="color: var(--accent)">Scope keywords</span> confirm <em>your work is in this bid</em> — use your work type terms like "roller shades", "resilient flooring", "fire alarm" (feeds Trade Match)<br>
+                        • <span style="color: var(--success)">Favorable terms</span> signal good contract conditions specific to your business — "design-assist", "negotiated", "owner-specified" (+8 pts each, feeds Contract Terms)<br>
+                        • <span style="color: var(--danger)">Risk terms</span> are for anything BidIntell doesn't already catch automatically — standard clauses like liquidated damages and pay-if-paid are already flagged for you (feeds Contract Terms)<br><br>
                         <strong>Tip:</strong> Separate by commas to add multiple at once.
                     </div>
                     <div class="keywords-grid" style="grid-template-columns:1fr;gap:16px;">
@@ -1775,7 +1775,7 @@
                                 <div class="keywords-section-header"><h4>Risk Terms (penalty, feeds Contract Terms)</h4></div>
                                 <div class="keywords-list" id="badKeywordsList"></div>
                                 <div class="keywords-input-row">
-                                    <input type="text" id="badKeywordInput" placeholder='e.g. "liquidated damages, pay-if-paid"' onkeypress="if(event.key==='Enter'){event.preventDefault();addBadKeyword();}">
+                                    <input type="text" id="badKeywordInput" placeholder='e.g. "no bond waiver, open shop only"' onkeypress="if(event.key==='Enter'){event.preventDefault();addBadKeyword();}">
                                     <button class="btn btn-sm btn-secondary" onclick="addBadKeyword()">Add</button>
                                 </div>
                             </div>
