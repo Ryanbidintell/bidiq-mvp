@@ -3134,6 +3134,17 @@
             }
 
             try {
+                // Check if user has a comped account (bypasses Stripe entirely)
+                const { data: settings } = await supabaseClient
+                    .from('user_settings')
+                    .select('is_comped')
+                    .eq('user_id', currentUser.id)
+                    .maybeSingle();
+                if (settings?.is_comped) {
+                    console.log('✅ Comped account - access granted');
+                    return true;
+                }
+
                 // Get user revenue/subscription data
                 const { data: revenue, error } = await supabaseClient
                     .from('user_revenue')

@@ -270,6 +270,7 @@
                             <th>Tier</th>
                             <th>Bids</th>
                             <th>Onboarded</th>
+                            <th>Comped</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -762,12 +763,15 @@
                 .filter(u => u.user_email)
                 .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
+            const tbody = document.querySelector('#users-table tbody');
+
             if (!sorted.length) {
-                document.querySelector('#users-table tbody').innerHTML = '<tr><td colspan="8" style="color:#999;font-style:italic;">No users.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="color:#999;font-style:italic;">No users.</td></tr>';
                 return;
             }
 
-            document.querySelector('#users-table tbody').innerHTML = sorted.map(u => {
+            tbody.innerHTML = '';
+            sorted.forEach(u => {
                 const joined = u.created_at
                     ? new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                     : '—';
@@ -775,17 +779,60 @@
                 const tier = u.subscription_tier || 'beta';
                 const tierColor = tier === 'professional' ? '#4F46E5' : tier === 'starter' ? '#2563eb' : '#666';
                 const trades = Array.isArray(u.trades) && u.trades.length ? u.trades.join(', ') : '—';
-                return `<tr>
-                    <td style="white-space:nowrap;">${joined}</td>
-                    <td>${u.user_name || '—'}</td>
-                    <td>${u.user_email || '—'}</td>
-                    <td>${u.company_name || u.user_name || '—'}</td>
-                    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${trades}</td>
-                    <td style="color:${tierColor};font-weight:600;text-transform:capitalize;">${tier}</td>
-                    <td style="text-align:right;">${bidCount}</td>
-                    <td style="text-align:center;">${u.onboarding_completed ? '✅' : '—'}</td>
-                </tr>`;
-            }).join('');
+                const isComped = u.is_comped || false;
+
+                const tr = document.createElement('tr');
+
+                const cells = [
+                    { html: false, value: joined, style: 'white-space:nowrap;' },
+                    { html: false, value: u.user_name || '—' },
+                    { html: false, value: u.user_email || '—' },
+                    { html: false, value: u.company_name || u.user_name || '—' },
+                    { html: false, value: trades, style: 'max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;' },
+                    { html: false, value: tier, style: `color:${tierColor};font-weight:600;text-transform:capitalize;` },
+                    { html: false, value: String(bidCount), style: 'text-align:right;' },
+                    { html: true,  value: u.onboarding_completed ? '✅' : '—', style: 'text-align:center;' },
+                ];
+
+                cells.forEach(({ html, value, style }) => {
+                    const td = document.createElement('td');
+                    if (style) td.setAttribute('style', style);
+                    if (html) td.innerHTML = value; else td.textContent = value;
+                    tr.appendChild(td);
+                });
+
+                // Comp toggle cell — no user data in onclick, uses data attributes
+                const compTd = document.createElement('td');
+                compTd.style.textAlign = 'center';
+                const compBtn = document.createElement('button');
+                compBtn.dataset.uid = u.user_id;
+                compBtn.dataset.comped = String(isComped);
+                compBtn.textContent = isComped ? 'Comped ✓' : 'Comp';
+                compBtn.setAttribute('style', isComped
+                    ? 'background:#16a34a;color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;'
+                    : 'background:#e5e7eb;color:#374151;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;');
+                compBtn.addEventListener('click', () => compUser(compBtn.dataset.uid, compBtn.dataset.comped === 'true'));
+                compTd.appendChild(compBtn);
+                tr.appendChild(compTd);
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function compUser(userId, currentState) {
+            const newState = !currentState;
+            const label = newState ? 'comp' : 'un-comp';
+            if (!confirm(`Are you sure you want to ${label} this user?`)) return;
+            const { error } = await supabaseClient
+                .from('user_settings')
+                .update({ is_comped: newState })
+                .eq('user_id', userId);
+            if (error) {
+                alert('Error: ' + error.message);
+                return;
+            }
+            alert(`User ${label}ped successfully.`);
+            location.reload();
         }
 
         // ── Beta-to-paid email tool ──────────────────────────────────────────
