@@ -11407,6 +11407,18 @@ ${truncatedText}`;
                 return;
             }
 
+            // Pre-compute outcome count per GC for CP activation chips
+            const gcOutcomeCount = {};
+            const allProjects = allProjectsCache.length > 0 ? allProjectsCache : projects;
+            allProjects.forEach(p => {
+                if (p.outcome === 'won' || p.outcome === 'lost') {
+                    const gcs = p.gcs && p.gcs.length > 0 ? p.gcs.map(g => g.name) : [];
+                    gcs.forEach(name => {
+                        if (name) gcOutcomeCount[name] = (gcOutcomeCount[name] || 0) + 1;
+                    });
+                }
+            });
+
             const html = `
                 <div style="margin-bottom: 12px; display: flex; gap: 8px; align-items: center;">
                     <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
@@ -11508,7 +11520,17 @@ ${truncatedText}`;
                                         <div style="font-weight:600;">${extracted.project_name || 'Unnamed Project'}</div>
                                         <div style="font-size:12px; color:var(--text-muted);">${(typeof extracted.building_type === 'object' ? extracted.building_type?.type : extracted.building_type) || 'Unknown Type'}</div>
                                     </td>
-                                    <td>${gcDisplay}</td>
+                                    <td>
+                                        <div>${gcDisplay}</div>
+                                        ${(() => {
+                                            const primaryGC = p.gcs?.[0]?.name;
+                                            if (!primaryGC) return '';
+                                            const count = gcOutcomeCount[primaryGC] || 0;
+                                            if (count >= 3) return '<div style="display:inline-flex;align-items:center;gap:4px;margin-top:3px;padding:1px 7px;border-radius:4px;background:rgba(34,197,94,0.10);border:1px solid rgba(34,197,94,0.20);font-size:10px;color:var(--success);font-weight:600;">CP Active</div>';
+                                            if (count >= 1) return `<div style="display:inline-flex;align-items:center;gap:4px;margin-top:3px;padding:1px 7px;border-radius:4px;background:rgba(242,101,34,0.10);border:1px solid rgba(242,101,34,0.20);font-size:10px;color:#F26522;"><span style="font-weight:600;">${count}/3</span><span style="color:var(--text-muted);">outcomes</span></div>`;
+                                            return '';
+                                        })()}
+                                    </td>
                                     <td>${city}${city && state ? ', ' : ''}${state}</td>
                                     <td>${scoreCellHtml}</td>
                                     <td><span class="outcome-badge ${outcomeClass}">${(p.outcome || 'pending').toUpperCase()}</span></td>
