@@ -9995,6 +9995,7 @@ ${truncatedText}`;
         function renderComponent(icon, title, comp) {
             const fillClass = comp.score >= 70 ? 'high' : comp.score >= 50 ? 'medium' : 'low';
             let details = '';
+            let detailsAlwaysVisible = false;
             
             // Location details
             if (title === 'Location Fit' && comp.details?.dist !== undefined) {
@@ -10172,6 +10173,7 @@ ${truncatedText}`;
                     const logged = d.count || 0;
                     const needed = 3;
                     const pct = Math.round((logged / needed) * 100);
+                    detailsAlwaysVisible = true;
                     details = `<div class="score-component-details">
                         <div style="margin-bottom:8px;font-size:13px;color:var(--text-muted);">See how competitive this client's jobs really are — how many subs you're up against, based on your own bid history. Log outcomes on <strong style="color:var(--text-primary)">3 bids with this client</strong> to unlock it.</div>
                         <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">${logged} of ${needed} outcomes logged with this client</div>
@@ -10205,7 +10207,12 @@ ${truncatedText}`;
                 }
             }
 
-            return `<div class="score-component"><div class="score-component-inner ${fillClass}"><div class="component-section-label">${title.toUpperCase()} · ${comp.weight}% WEIGHT</div><div class="score-component-header"><div class="score-component-title">${title}</div><div class="score-component-value score-${fillClass}">${comp.score}<span class="score-denom">/100</span></div></div><div class="score-component-bar"><div class="score-component-fill ${fillClass}" style="width:${comp.score}%"></div></div>${comp.reason ? `<div class="insight-quote">${comp.reason}</div>` : ''}${details ? `<details style="margin-top:8px;"><summary style="font-size:11px;color:var(--text-muted);cursor:pointer;user-select:none;outline:none;list-style:none;padding:2px 0;">Details</summary>${details}</details>` : ''}</div></div>`;
+            const detailsHtml = details
+                ? (detailsAlwaysVisible
+                    ? `<div style="margin-top:8px;">${details}</div>`
+                    : `<details style="margin-top:8px;"><summary style="font-size:11px;color:var(--text-muted);cursor:pointer;user-select:none;outline:none;list-style:none;padding:2px 0;">Details</summary>${details}</details>`)
+                : '';
+            return `<div class="score-component"><div class="score-component-inner ${fillClass}"><div class="component-section-label">${title.toUpperCase()} · ${comp.weight}% WEIGHT</div><div class="score-component-header"><div class="score-component-title">${title}</div><div class="score-component-value score-${fillClass}">${comp.score}<span class="score-denom">/100</span></div></div><div class="score-component-bar"><div class="score-component-fill ${fillClass}" style="width:${comp.score}%"></div></div>${comp.reason ? `<div class="insight-quote">${comp.reason}</div>` : ''}${detailsHtml}</div></div>`;
         }
 
         // Generate improvement tips based on scores
