@@ -761,15 +761,43 @@ tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
 The skill has specialized workflows that produce better results than ad-hoc answers.
 
 Key routing rules:
-- Product ideas, "is this worth building", brainstorming → invoke office-hours
-- Bugs, errors, "why is this broken", 500 errors → invoke investigate
-- Ship, deploy, push, create PR → invoke ship
-- QA, test the site, find bugs → invoke qa
-- Code review, check my diff → invoke review
+
+### Strategy & Planning
+- Product ideas, "is this worth building", brainstorming, "should we..." → invoke office-hours
+- Architecture review, "how should we build X", feature design → invoke plan-eng-review
+- Full product review, roadmap, CEO-level strategy → invoke plan-ceo-review
+
+### Bugs & Debugging
+- Bugs, errors, "why is this broken", 500 errors, silent failures → invoke investigate
+- Any issue in app.html, Netlify functions, Supabase queries, Stripe webhooks → invoke investigate
+
+### Shipping
+- Ship, deploy, push, create PR, "ready to go", "push it" → invoke ship
+- After every session with code changes: invoke ship to commit + push
+
+### Quality & Testing
+- QA, test the site, find bugs, "does this work", "check the flow" → invoke qa
+- After running gc_competition_density migration: invoke qa to verify Competitive Pressure end-to-end
+- Before shipping any new UI (CP explainer, activation indicator, monthly email): invoke qa
+
+### Design
+- Visual audit, design polish, "does this look right", UI review → invoke design-review
+- Before shipping CP explainer card or activation progress indicator: invoke design-review
+- Design system, brand colors, typography → invoke design-consultation
+
+### Code Quality
+- Code quality, health check, "is app.html getting unwieldy", tech debt → invoke health
+- Run /health monthly — app.html is 15K lines and growing
+
+### Security
+- Security audit, OWASP, "is this secure", billing/auth concerns → invoke cso
+- Run /cso before any new auth flow, billing integration, or RLS policy change
+
+### Retrospective
+- Weekly retro, "what did we ship", "how's the week going" → invoke retro
+- Run every Friday to track moat acceleration progress
+
+### Documentation & Memory
 - Update docs after shipping → invoke document-release
-- Weekly retro → invoke retro
-- Design system, brand → invoke design-consultation
-- Visual audit, design polish → invoke design-review
-- Architecture review → invoke plan-eng-review
 - Save progress, checkpoint, resume → invoke checkpoint
-- Code quality, health check → invoke health
+- Code review, check my diff → invoke review

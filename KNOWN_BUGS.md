@@ -19,13 +19,11 @@
 - **normalizeCompanyName() broken regex** — pattern `[A-Z][a-z]+` was never matching after `.toLowerCase()`; fixed to lowercase-compatible pattern
 - **Winner's Curse / Bid Risk card** — built and wired into analyze + report view; uses "Bid Risk: ELEVATED" terminology
 
-## ⏳ OPEN — P0 (Blocks functionality)
+## ✅ FIXED (Apr 24, 2026)
 
 ### gc_competition_density table missing
-- **What:** Outcome form collects bidder count and writes to `gc_competition_density` table, but the table doesn't exist in the database
-- **Impact:** Every outcome save with a bidder count silently fails. Competitive Pressure Score always returns 0.
-- **Fix:** Migration file written at `migrations/010_gc_competition_density.sql` — **needs to be run in Supabase SQL Editor**
-- **Code:** `saveOutcome()` insert at app.html ~line 13284; `getCompetitivePressureScore()` reads at ~line 7779
+- **What:** Table didn't exist — Competitive Pressure Score always returned 0
+- **Fix:** Ran `migrations/010_gc_competition_density.sql` in Supabase SQL Editor. Table live with 3 existing rows. CP now returns real data.
 
 ## ⏳ OPEN — P1 (Hurts accuracy)
 
