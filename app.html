@@ -1564,10 +1564,19 @@
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Win Rate Trends</h3>
-                            <div class="form-hint">Your win rate performance over time</div>
+                            <div class="form-hint">Your win rate month by month — Won ÷ (Won + Lost)</div>
                         </div>
                         <div class="card-body">
                             <canvas id="winRateTrendChart" style="max-height: 300px;"></canvas>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <strong style="color:var(--text-primary);">What it measures:</strong> Win rate = bids won ÷ (bids won + bids lost). GC Lost and Ghosted outcomes are excluded — those aren't competitive losses.<br><br>
+                                    <strong style="color:var(--text-primary);">Upward trend</strong> means your bid selection is improving — you're saying yes to more winnable work.<br>
+                                    <strong style="color:var(--text-primary);">Downward trend</strong> means either you're taking on harder work, or the market got more competitive. Check whether a new building type or client is dragging it down.<br>
+                                    <strong style="color:var(--text-primary);">Flat line</strong> is normal early on — you need 6+ competitive outcomes for a trend to be meaningful.
+                                </div>
+                            </details>
                         </div>
                     </div>
 
@@ -1579,6 +1588,14 @@
                         </div>
                         <div class="card-body">
                             <canvas id="bidVolumeChart" style="max-height: 300px;"></canvas>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <strong style="color:var(--text-primary);">What it measures:</strong> How many bids you ran through BidIntell each month.<br><br>
+                                    Consistent volume matters more than a high monthly peak. BidIntell gets sharper as your outcome history grows — the more you feed it, the better the Competitive Pressure and Client Relationship scores become.<br><br>
+                                    Dips are normal during slow seasons. A sustained drop usually means either the market slowed or you're pre-screening bids before analyzing — both worth checking.
+                                </div>
+                            </details>
                         </div>
                     </div>
 
@@ -1586,20 +1603,36 @@
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Top Performing Clients</h3>
-                            <div class="form-hint">Clients with the highest win rates (minimum 3 bids)</div>
+                            <div class="form-hint">Clients with the highest win rates — minimum 3 competitive (won + lost) bids</div>
                         </div>
                         <div class="card-body">
                             <div id="topGCsTable"></div>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <strong style="color:var(--text-primary);">What it measures:</strong> Win rate per client = bids won ÷ (bids won + bids lost). GC Lost and Ghosted are excluded from both sides — only direct competitive outcomes count.<br><br>
+                                    These are your strongest relationships. High-win-rate clients are worth protecting — bid everything they send, stay in front of them, and use their star rating in your Settings to weight their bids higher.<br><br>
+                                    A client appearing here with 3–5 bids is a strong early signal. One appearing with 10+ bids at 60%+ is a genuine competitive advantage.
+                                </div>
+                            </details>
                         </div>
                     </div>
 
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">High Ghost Rate Clients</h3>
-                            <div class="form-hint">Clients with the highest ghost/decline rates</div>
+                            <div class="form-hint">Clients with the highest ghost or pass rates — may be using your number for budget checks</div>
                         </div>
                         <div class="card-body">
                             <div id="worstGCsTable"></div>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <strong style="color:var(--text-primary);">What it measures:</strong> Ghost rate = (ghosted + passed) ÷ total outcomes for that client.<br><br>
+                                    A high ghost rate is a red flag. Common causes: the GC is using your number to hit their bid count requirement with no real intent to award you work; the relationship is weak and they don't respect your time; or the scope is regularly outside your sweet spot.<br><br>
+                                    If the same client appears here repeatedly, lower their star rating in Clients — it'll pull down their score on future bids and prompt you to think twice before estimating.
+                                </div>
+                            </details>
                         </div>
                     </div>
 
@@ -1607,10 +1640,18 @@
                     <div class="card" id="bidROICard" style="display:none;">
                         <div class="card-header">
                             <h3 class="card-title">Bid ROI by Building Type</h3>
-                            <div class="form-hint">Expected value per estimating hour, by project type</div>
+                            <div class="form-hint">Expected revenue per estimating hour, by project type — where your time is worth most</div>
                         </div>
                         <div class="card-body">
                             <div id="bidROISection"></div>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <strong style="color:var(--text-primary);">What it measures:</strong> Expected revenue per estimating hour = (win rate × average won amount) ÷ average hours to estimate. Requires hours-spent data from your outcome records.<br><br>
+                                    This is the most actionable number in BidIntell. A building type might have a low win rate but still produce high ROI if the wins are large and estimating is fast. Conversely, a high-win-rate type can be a poor use of time if every bid takes 20 hours.<br><br>
+                                    Use this to decide where to invest estimating capacity — especially when you're busy and need to triage the bid queue.
+                                </div>
+                            </details>
                         </div>
                     </div>
 
@@ -1618,10 +1659,17 @@
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Projects by Building Type</h3>
-                            <div class="form-hint">Distribution of your analyzed projects</div>
+                            <div class="form-hint">Distribution of your analyzed bids by project type</div>
                         </div>
                         <div class="card-body">
                             <canvas id="buildingTypeChart" style="max-height: 350px;"></canvas>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <strong style="color:var(--text-primary);">What it measures:</strong> The mix of building types in all bids you've analyzed — including pending ones with no outcome yet.<br><br>
+                                    Use this alongside Win Rate by Building Type. If one type dominates here but has a low win rate, you may be overcommitting estimating time to a market segment that isn't returning. The ideal is a mix weighted toward your highest-win-rate types.
+                                </div>
+                            </details>
                         </div>
                     </div>
 
@@ -1629,10 +1677,20 @@
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Win Rate by Building Type</h3>
-                            <div class="form-hint">Where do you win most? Building types with fewer than 2 tracked outcomes are excluded.</div>
+                            <div class="form-hint">Where do you win most? Only types with 2+ competitive outcomes shown.</div>
                         </div>
                         <div class="card-body">
                             <div id="winRateByBuildingType"></div>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <strong style="color:var(--text-primary);">What it measures:</strong> Win rate (won ÷ won + lost) broken down by the building type extracted from the bid documents.<br><br>
+                                    <strong style="color:#22c55e;">Green bars (50%+)</strong> are your sweet spots — building types where you consistently beat the competition.<br>
+                                    <strong style="color:#eab308;">Yellow bars (25–49%)</strong> are competitive but not dominant — worth continuing, especially if the project sizes are large.<br>
+                                    <strong style="color:#94a3b8;">Gray bars (under 25%)</strong> are segments where you're losing more than you're winning — consider whether the estimating time is justified.<br><br>
+                                    Compare this against Projects by Building Type: if you have high volume + low win rate on a type, that's where you're burning the most estimating time for the least return.
+                                </div>
+                            </details>
                         </div>
                     </div>
 
@@ -1644,6 +1702,14 @@
                         </div>
                         <div class="card-body">
                             <div id="winRateByTrade"></div>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <strong style="color:var(--text-primary);">What it measures:</strong> For each CSI division found in your bid documents, your win rate on bids where that scope was present. Only divisions with 2+ outcomes shown. Subcontractors only.<br><br>
+                                    This tells you which trade scopes you're most competitive in — not just which ones you bid most. A division with a high win rate is a core strength. A division with a low win rate may mean you're pricing out of scope, or competitors have a structural advantage.<br><br>
+                                    If a low-win-rate division keeps showing up with your high-win-rate scopes (bundled bids), consider whether to sub it out or price it as a loss-leader to win the primary scope.
+                                </div>
+                            </details>
                         </div>
                     </div>
 
@@ -1651,10 +1717,17 @@
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Client Type Performance</h3>
-                            <div class="form-hint">Which types of clients are most profitable for your business?</div>
+                            <div class="form-hint">Win rates broken down by client type — GC, end user, building owner, and others</div>
                         </div>
                         <div class="card-body">
                             <div id="clientTypePerformance"></div>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <strong style="color:var(--text-primary);">What it measures:</strong> Win rate and bid count grouped by client type — General Contractor, End User, Building Owner, Distributor, Manufacturer Rep, etc.<br><br>
+                                    Most useful for distributors and reps who sell to multiple client types and want to know which channel produces the best return. If GC-bid work has a 20% win rate and direct end-user work has 45%, that's a signal about where to focus relationship development.
+                                </div>
+                            </details>
                         </div>
                     </div>
 
@@ -1673,10 +1746,18 @@
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Score vs. Outcome</h3>
-                            <div class="form-hint">How well do your scores predict wins? Needs at least 5 outcomes.</div>
+                            <div class="form-hint">Win rate by score range — shows whether GO bids actually win more than PASS bids</div>
                         </div>
                         <div class="card-body">
                             <div id="scoreOutcomeChart"></div>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <strong style="color:var(--text-primary);">What it measures:</strong> The actual win rate for bids that scored GO, REVIEW, and PASS — needs at least 5 outcomes to appear.<br><br>
+                                    <strong style="color:var(--text-primary);">Well-calibrated scoring looks like:</strong> GO has the highest win rate, REVIEW is in the middle, PASS is lowest. The bigger the gap between GO and PASS, the better your algorithm is at predicting real outcomes.<br><br>
+                                    <strong style="color:var(--text-primary);">Red flags:</strong> If your GO win rate is below 40%, the algorithm may be too generous — raise your score threshold in Settings or increase the weight on your weakest scoring factor. If PASS bids are winning more than 20% of the time, you're filtering out winnable work.
+                                </div>
+                            </details>
                         </div>
                     </div>
 
@@ -1688,6 +1769,12 @@
                         </div>
                         <div class="card-body">
                             <div id="accuracyMetrics"></div>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <strong>Score Accuracy</strong> measures how well the GO / REVIEW / PASS recommendation matched your actual outcome. A high win rate on GO bids means the scoring is correctly identifying your best opportunities. A high win rate on PASS bids would mean you're leaving money on the table — that's a signal to revisit your keyword or location settings. Needs at least 1 completed outcome to populate.
+                                </div>
+                            </details>
                         </div>
                     </div>
 
@@ -1699,6 +1786,12 @@
                         </div>
                         <div class="card-body">
                             <div id="feedbackAnalysis"></div>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <strong>Score Agreement</strong> tracks how often you agreed with a score when you gave thumbs-up or thumbs-down feedback after an analysis. High agreement means the model's read matches your instincts. Low agreement is useful signal — it usually means your keyword list or CSI sections need tuning, or the weights in Settings don't reflect how you actually evaluate bids.
+                                </div>
+                            </details>
                         </div>
                     </div>
 
@@ -1710,6 +1803,12 @@
                         </div>
                         <div class="card-body">
                             <div id="calibrationInsights"></div>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <strong>Score Calibration</strong> compares the average BidIndex score on bids you won versus bids you lost. A large gap (won scores much higher than lost) means the scoring is discriminating well. If the averages are close together, the model needs more outcome data before it can reliably separate strong bids from weak ones. Log more outcomes to sharpen calibration over time.
+                                </div>
+                            </details>
                         </div>
                     </div>
 
@@ -1721,6 +1820,12 @@
                         </div>
                         <div class="card-body">
                             <div id="aiRecommendations"></div>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:12px;color:var(--text-muted);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <strong>Insights</strong> are generated from patterns in your bid history — where you tend to win, where you lose, and what that suggests about adjusting your approach. Suggestions here are directional, not prescriptive. Use them as a prompt to revisit your Settings weights or to notice patterns you might have missed across dozens of bids.
+                                </div>
+                            </details>
                         </div>
                     </div>
                 </div>
