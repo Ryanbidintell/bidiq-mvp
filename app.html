@@ -7261,11 +7261,15 @@ ${fullText.substring(0, 40000)}`;
                 listEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">No matches found.<br>Click "Add New" to add this client</div>';
             } else {
                 gcSelectorRenderedList = filtered;
+                const typeShort = { general_contractor:'GC', subcontractor:'Sub', end_user:'End User', building_owner:'Owner', municipality:'Muni', distributor:'Dist', manufacturer_rep:'Mfr' };
                 listEl.innerHTML = filtered.map((gc, index) => {
                     const isSelected = selectedGCs.find(s => s.name === gc.name);
                     const winRate = gc.bids > 0 ? Math.round(gc.wins / gc.bids * 100) + '% win' : '';
+                    const typeBadge = gc.clientType && gc.clientType !== 'general_contractor'
+                        ? `<span style="font-size:10px;padding:1px 5px;background:rgba(79,70,229,0.1);color:var(--brand-primary);border-radius:3px;margin-left:4px;">${typeShort[gc.clientType] || gc.clientType}</span>`
+                        : '';
                     return `<div class="gc-selector-item ${isSelected ? 'selected' : ''}" data-gc-index="${index}">
-                        <span>${gc.name} ${winRate ? '<span style="color:var(--text-muted);font-size:11px;">(' + winRate + ')</span>' : ''}</span>
+                        <span>${gc.name}${typeBadge} ${winRate ? '<span style="color:var(--text-muted);font-size:11px;">(' + winRate + ')</span>' : ''}</span>
                         <span style="color:var(--accent);">${'★'.repeat(gc.rating)}${'☆'.repeat(5 - gc.rating)}</span>
                     </div>`;
                 }).join('');
@@ -8222,23 +8226,24 @@ ${truncatedText}`;
             return normalized;
         }
 
-        // Find if a similar GC already exists (fuzzy match)
-        function findSimilarGC(newName, existingGCs) {
+        // Find if a similar client already exists (fuzzy match)
+        function findSimilarGC(newName, existingClients) {
             const normalizedNew = normalizeCompanyName(newName);
 
-            for (const gc of existingGCs) {
-                const normalizedExisting = normalizeCompanyName(gc.name);
+            for (const client of existingClients) {
+                const normalizedExisting = normalizeCompanyName(client.name);
 
-                // Exact match after normalization
-                if (normalizedExisting === normalizedNew) {
-                    return gc;
-                }
+                if (normalizedExisting === normalizedNew) return client;
 
-                // Check if one name contains the other (handles partial matches)
+                // Substring containment — require the shorter name to be ≥70% of the longer
+                // name's length. Prevents "Johnson" (7) from matching "Johnson Controls" (16, ratio 44%).
                 if (normalizedNew.length > 5 && normalizedExisting.length > 5) {
-                    if (normalizedNew.includes(normalizedExisting) ||
-                        normalizedExisting.includes(normalizedNew)) {
-                        return gc;
+                    const shorter = Math.min(normalizedNew.length, normalizedExisting.length);
+                    const longer = Math.max(normalizedNew.length, normalizedExisting.length);
+                    if (shorter / longer >= 0.70) {
+                        if (normalizedNew.includes(normalizedExisting) || normalizedExisting.includes(normalizedNew)) {
+                            return client;
+                        }
                     }
                 }
             }
@@ -8374,113 +8379,8 @@ ${truncatedText}`;
             }
         }
 
-        // Auto-add extracted GCs to user's database with smart normalization
-        async function autoAddExtractedGCs(extracted) {
-            if (!currentUser || !supabaseClient) return;
-
-            // Get GC names from various possible fields
-            const gcNames = [];
-            if (extracted.gc_names && Array.isArray(extracted.gc_names)) {
-                gcNames.push(...extracted.gc_names);
-            } else if (extracted.general_contractor) {
-                gcNames.push(extracted.general_contractor);
-            } else if (extracted.gc_name) {
-                gcNames.push(extracted.gc_name);
-            }
-
-            if (gcNames.length === 0) return;
-
-            // Get GC addresses if available (parallel array to gc_names)
-            const gcAddresses = extracted.gc_addresses && Array.isArray(extracted.gc_addresses)
-                ? extracted.gc_addresses
-                : [];
-
-            console.log(`📋 Found ${gcNames.length} GC(s) in bid documents:`, gcNames);
-            if (gcAddresses.length > 0) {
-                console.log(`📍 With addresses:`, gcAddresses);
-            }
-
-            // Get existing GCs
-            const existingGCs = await getGCs();
-
-            // Add new GCs with default rating (with normalization)
-            for (let i = 0; i < gcNames.length; i++) {
-                const name = gcNames[i].trim();
-                if (!name) continue;
-
-                const address = gcAddresses[i] ? gcAddresses[i].trim() : null;
-
-                // Check for exact match OR similar match (handles multiple offices)
-                const exactMatch = existingGCs.find(gc =>
-                    gc.name.toLowerCase() === name.toLowerCase()
-                );
-
-                if (exactMatch) {
-                    console.log(`📋 GC "${name}" already exists (exact match)`);
-                    // Update address if we have new info and existing entry doesn't
-                    if (address && !exactMatch.address) {
-                        console.log(`📍 Updating address for "${name}": ${address}`);
-                        try {
-                            await saveGC({
-                                ...exactMatch,
-                                address: address
-                            });
-                        } catch (error) {
-                            console.warn(`Failed to update address for "${name}":`, error);
-                        }
-                    }
-                    continue;
-                }
-
-                // Check for fuzzy match (e.g., "Turner Construction - Denver" matches "Turner Construction")
-                const similarMatch = findSimilarGC(name, existingGCs);
-
-                if (similarMatch) {
-                    console.log(`🔗 GC "${name}" matches existing "${similarMatch.name}" (normalized match)`);
-                    // Update address if we have new info and existing entry doesn't
-                    if (address && !similarMatch.address) {
-                        console.log(`📍 Updating address for "${similarMatch.name}": ${address}`);
-                        try {
-                            await saveGC({
-                                ...similarMatch,
-                                address: address
-                            });
-                        } catch (error) {
-                            console.warn(`Failed to update address for "${similarMatch.name}":`, error);
-                        }
-                    }
-                    continue;
-                }
-
-                // Truly new GC - add to database with address if available
-                const gcData = {
-                    name: name,
-                    rating: 3, // Default neutral rating
-                    bids: 0,
-                    wins: 0,
-                    riskTags: []
-                };
-
-                if (address) {
-                    gcData.address = address;
-                    console.log(`🏗️ Auto-adding NEW GC: "${name}" at ${address} with default 3-star rating`);
-                } else {
-                    console.log(`🏗️ Auto-adding NEW GC: "${name}" with default 3-star rating`);
-                }
-
-                try {
-                    await saveGC(gcData);
-                } catch (error) {
-                    console.warn(`Failed to auto-add GC "${name}":`, error);
-                }
-            }
-
-            // Invalidate cache to reload with new GCs
-            dataCache.gcs = null;
-        }
-
-        // Suggest extracted client names that aren't in the user's database
-        async function suggestExtractedClients(extracted) {
+        // After AI extraction: auto-select matched clients, show modal for new ones
+        async function processExtractedClients(extracted) {
             const gcNames = [];
             if (extracted.gc_names && Array.isArray(extracted.gc_names)) {
                 gcNames.push(...extracted.gc_names);
@@ -8491,42 +8391,114 @@ ${truncatedText}`;
             }
 
             const container = document.getElementById('extractedClientSuggestions');
-            if (!container) return;
+            if (container) container.innerHTML = '';
+            if (gcNames.length === 0) return;
 
-            if (gcNames.length === 0) {
-                container.innerHTML = '';
-                return;
+            const allClients = await getClients();
+            const autoSelected = [];
+            const newNames = [];
+
+            for (const rawName of gcNames) {
+                const name = rawName.trim();
+                if (!name) continue;
+                const exactMatch = allClients.find(c => c.name.toLowerCase() === name.toLowerCase());
+                const match = exactMatch || findSimilarGC(name, allClients);
+                if (match) {
+                    if (!selectedGCs.find(s => s.name === match.name)) {
+                        selectedGCs.push({ ...match });
+                        autoSelected.push(match.name);
+                    }
+                } else {
+                    newNames.push(name);
+                }
             }
 
-            const existingGCs = await getGCs();
-            const newNames = gcNames.filter(name => !findSimilarGC(name, existingGCs));
-
-            if (newNames.length === 0) {
-                container.innerHTML = '';
-                return;
+            if (autoSelected.length > 0 || newNames.length > 0) {
+                await renderGCSelector();
+                updateCompetition();
+                updateAnalyzeBtn();
             }
 
-            container.innerHTML = `
-                <div style="margin-top:8px;padding:12px 14px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border);">
-                    <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Found in this bid — not in your clients</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                        ${newNames.map(name => `
-                            <button onclick="addExtractedClient('${name.replace(/'/g, "\\'")}', this)" style="padding:5px 10px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-secondary);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">
-                                <span style="color:var(--accent);font-weight:700;">+</span> ${name}
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>`;
+            if (newNames.length > 0) {
+                showExtractedClientsModal(newNames, autoSelected);
+            } else if (autoSelected.length > 0) {
+                showNotification(`Auto-selected ${autoSelected.length} client${autoSelected.length > 1 ? 's' : ''} found in this bid`, 'success');
+            }
         }
 
-        async function addExtractedClient(name, btn) {
+        function showExtractedClientsModal(newNames, autoSelectedNames) {
+            document.getElementById('extractedClientsModal')?.remove();
+
+            const clientTypeOptions = Object.entries(CLIENT_TYPE_LABELS || {
+                general_contractor: 'GC',
+                subcontractor: 'Sub',
+                end_user: 'End User',
+                building_owner: 'Owner',
+                municipality: 'Municipality',
+                distributor: 'Distributor',
+                manufacturer_rep: 'Mfr Rep'
+            }).map(([val, label]) => `<option value="${val}">${label}</option>`).join('');
+
+            const autoSelectedHtml = autoSelectedNames.length > 0 ? `
+                <div style="margin-bottom:20px;padding:14px;background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.25);border-radius:var(--radius);">
+                    <div style="font-size:12px;font-weight:600;color:var(--success);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">Auto-selected from your clients</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                        ${autoSelectedNames.map(n => `<span style="padding:5px 12px;background:rgba(34,197,94,0.12);color:var(--success);border-radius:20px;font-size:13px;font-weight:500;">✓ ${n}</span>`).join('')}
+                    </div>
+                </div>` : '';
+
+            const newClientsHtml = newNames.length > 0 ? `
+                <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">These companies appear in the bid but aren't in your client list. Select the ones you want to track and choose their type.</div>
+                ${newNames.map((name, i) => `
+                    <div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--bg-secondary);border-radius:var(--radius);margin-bottom:8px;border:1px solid var(--border-color);" id="extracted-row-${i}">
+                        <div style="flex:1;font-size:14px;font-weight:500;">${name}</div>
+                        <select id="extracted-type-${i}" class="form-input" style="width:auto;font-size:12px;padding:6px 8px;">${clientTypeOptions}</select>
+                        <button class="btn btn-primary btn-sm" onclick="addExtractedClientFromModal('${name.replace(/'/g, "\\'")}', ${i})">Add</button>
+                    </div>`).join('')}
+            ` : '';
+
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.id = 'extractedClientsModal';
+            modal.innerHTML = `
+                <div class="modal" style="max-width:520px;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Clients Found in This Bid</h3>
+                        <button class="modal-close" onclick="document.getElementById('extractedClientsModal').remove()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        ${autoSelectedHtml}
+                        ${newClientsHtml}
+                        ${newNames.length === 0 && autoSelectedNames.length > 0 ? '<p style="color:var(--text-muted);font-size:13px;">All clients from this bid are already in your list and have been selected above.</p>' : ''}
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="document.getElementById('extractedClientsModal').remove()">Done</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(modal);
+        }
+
+        async function addExtractedClientFromModal(name, index) {
+            const typeEl = document.getElementById(`extracted-type-${index}`);
+            const clientType = typeEl?.value || 'general_contractor';
             const settings = await getSettings();
-            await saveGC({ name, rating: settings.defaultStars || 3, bids: 0, wins: 0, riskTags: [] });
-            btn.style.opacity = '0.4';
-            btn.disabled = true;
-            btn.querySelector('span').textContent = '✓';
+
+            const newClient = { name, clientType, rating: settings.defaultStars || 3, bids: 0, wins: 0, riskTags: [] };
+            const saved = await saveClient(newClient);
+            dataCache.clients = null;
+
+            const clientToSelect = saved && saved.id ? { ...newClient, id: saved.id } : newClient;
+            if (!selectedGCs.find(s => s.name === name)) {
+                selectedGCs.push(clientToSelect);
+            }
             await renderGCSelector();
-            await loadGCDatabase();
+            updateCompetition();
+            updateAnalyzeBtn();
+
+            const row = document.getElementById(`extracted-row-${index}`);
+            if (row) {
+                row.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;"><span style="color:var(--success);font-weight:600;">✓</span><span style="font-size:14px;">${name}</span><span style="color:var(--text-muted);font-size:12px;">added and selected</span></div>`;
+            }
         }
 
         // Multi-provider AI extraction with fallback
@@ -8854,9 +8826,8 @@ ${truncatedText}`;
                 // Users should manually select which GCs are bidding
                 // await autoSelectNearbyGCs(extracted);
 
-                // Refresh GC selector UI
-                await renderGCSelector();
-                await suggestExtractedClients(extracted);
+                // Auto-select matched clients; show modal for new ones
+                await processExtractedClients(extracted);
 
                 // Validate and fix extracted data
                 const validStates = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
