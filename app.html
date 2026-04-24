@@ -1735,7 +1735,15 @@
                     <div class="card">
                         <div class="card-header"><h3 class="card-title">Your Clients</h3><button class="btn btn-primary btn-sm" onclick="showAddClientModal()">+ Add Client</button></div>
                         <div class="card-body">
-                            <input type="text" id="clientSearchInput" class="form-input" placeholder="Search clients..." style="margin-bottom:12px;" oninput="filterClientList(this.value)">
+                            <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+                                <input type="text" id="clientSearchInput" class="form-input" placeholder="Search clients..." style="flex:1;" oninput="filterClientList(this.value)">
+                                <select class="form-input" style="width:auto;font-size:13px;" onchange="sortClientList(this.value)">
+                                    <option value="name">Sort: Name</option>
+                                    <option value="win_rate">Sort: Win Rate</option>
+                                    <option value="bids">Sort: Bids</option>
+                                    <option value="rating">Sort: Rating</option>
+                                </select>
+                            </div>
                             <div id="gcDatabaseList" class="gc-list"></div>
                         </div>
                     </div>
@@ -4672,8 +4680,13 @@ ${fullText.substring(0, 40000)}`;
                     rating: c.rating,
                     bids: c.bids || 0,
                     wins: c.wins || 0,
+                    losses: c.losses || 0,
+                    ghosts: c.ghosts || 0,
                     riskTags: c.risk_tags || [],
-                    notes: c.notes || ''
+                    notes: c.notes || '',
+                    avg_rfi: c.avg_rfi || null,
+                    rfi_count: c.rfi_count || 0,
+                    payment_flag: c.payment_flag || null
                 }));
 
                 if (!clientType) {
@@ -4717,8 +4730,13 @@ ${fullText.substring(0, 40000)}`;
                     rating: client.rating,
                     bids: client.bids || 0,
                     wins: client.wins || 0,
+                    losses: client.losses || 0,
+                    ghosts: client.ghosts || 0,
                     risk_tags: client.riskTags || [],
                     notes: client.notes || null,
+                    avg_rfi: client.avg_rfi || null,
+                    rfi_count: client.rfi_count || 0,
+                    payment_flag: client.payment_flag || null,
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'id' }).select().single();
 
@@ -13977,24 +13995,26 @@ Respond now:`;
 
                 await updateProjectOutcome(id, type, outcomeData);
 
-                // Aggregate RFI + payment data back to client profile
-                if ((type === 'won' || type === 'lost') && (outcomeData.rfi_responsiveness || outcomeData.payment_reliability)) {
+                // Aggregate outcome, RFI, and payment data back to client profile
+                if (type === 'won' || type === 'lost' || type === 'ghost') {
                     const proj = allProjectsCache.find(x => x.id === id);
                     const clientName = outcomeGCName || proj?.gcs?.[0]?.name;
                     if (clientName) {
-                        const allGCs = await getGCs();
-                        const client = allGCs.find(g => g.name === clientName);
+                        const allClients = await getClients();
+                        const client = allClients.find(g => g.name === clientName);
                         if (client) {
-                            if (outcomeData.rfi_responsiveness) {
+                            if (type === 'lost') client.losses = (client.losses || 0) + 1;
+                            if (type === 'ghost') client.ghosts = (client.ghosts || 0) + 1;
+                            if (outcomeData.rfi_responsiveness && type !== 'ghost') {
                                 const prevCount = client.rfi_count || 0;
                                 const prevAvg = client.avg_rfi || outcomeData.rfi_responsiveness;
                                 client.rfi_count = prevCount + 1;
                                 client.avg_rfi = Math.round(((prevAvg * prevCount) + outcomeData.rfi_responsiveness) / client.rfi_count * 10) / 10;
                             }
-                            if (outcomeData.payment_reliability) {
+                            if (outcomeData.payment_reliability && type !== 'ghost') {
                                 client.payment_flag = outcomeData.payment_reliability;
                             }
-                            await saveGC(client);
+                            await saveClient(client);
                         }
                     }
                 }
@@ -14109,9 +14129,46 @@ Respond now:`;
         // Backwards compatibility
         const RISK_TAG_LABELS = GC_TAG_LABELS;
         
-        function renderClientRows(gcs) {
-            document.getElementById('gcDatabaseList').innerHTML = gcs.map(gc => {
+        const CLIENT_TYPE_LABELS = {
+            general_contractor: 'GC',
+            subcontractor: 'Sub',
+            end_user: 'End User',
+            building_owner: 'Owner',
+            municipality: 'Municipality',
+            distributor: 'Distributor',
+            manufacturer_rep: 'Mfr Rep'
+        };
+
+        function renderClientRows(clients) {
+            const sortKey = _clientSortKey || 'name';
+            const sorted = [...clients].sort((a, b) => {
+                if (sortKey === 'win_rate') {
+                    const rA = a.bids > 0 ? a.wins / a.bids : -1;
+                    const rB = b.bids > 0 ? b.wins / b.bids : -1;
+                    return rB - rA;
+                }
+                if (sortKey === 'bids') return (b.bids || 0) - (a.bids || 0);
+                if (sortKey === 'rating') return (b.rating || 0) - (a.rating || 0);
+                return a.name.localeCompare(b.name);
+            });
+
+            const payLabels = { prompt:'Prompt pay', net30:'Net-30', net60:'Net-60', net90:'Net-90+', poor:'Slow pay' };
+            const payColors = { prompt:'var(--success)', net30:'var(--text-muted)', net60:'var(--warning)', net90:'var(--danger)', poor:'var(--danger)' };
+            const payBg = { prompt:'rgba(34,197,94,0.12)', net30:'rgba(100,116,139,0.12)', net60:'rgba(234,179,8,0.12)', net90:'rgba(239,68,68,0.12)', poor:'rgba(239,68,68,0.12)' };
+
+            document.getElementById('gcDatabaseList').innerHTML = sorted.map(gc => {
                 const rate = gc.bids > 0 ? Math.round(gc.wins / gc.bids * 100) : null;
+                const pending = (gc.bids || 0) - (gc.wins || 0) - (gc.losses || 0) - (gc.ghosts || 0);
+                const outcomeBreakdown = gc.bids > 0
+                    ? [
+                        gc.wins > 0 ? `<span style="color:var(--success);font-weight:600;">${gc.wins}W</span>` : '',
+                        gc.losses > 0 ? `<span style="color:var(--danger);">${gc.losses}L</span>` : '',
+                        gc.ghosts > 0 ? `<span style="color:var(--warning);">${gc.ghosts}G</span>` : '',
+                        pending > 0 ? `<span style="color:var(--text-muted);">${pending} pending</span>` : ''
+                    ].filter(Boolean).join(' / ')
+                    : '';
+                const typeLabel = CLIENT_TYPE_LABELS[gc.clientType] || gc.clientType;
+                const typeBadge = `<span style="font-size:10px;padding:1px 6px;background:rgba(79,70,229,0.1);color:var(--brand-primary);border-radius:3px;font-weight:500;">${typeLabel}</span>`;
                 const tagsHtml = (gc.riskTags || []).length > 0
                     ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">${gc.riskTags.map(t => {
                         const isPositive = POSITIVE_TAGS.includes(t);
@@ -14122,50 +14179,64 @@ Respond now:`;
                     : '';
                 const notesHtml = gc.notes ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;font-style:italic;">${gc.notes}</div>` : '';
                 const rfiHtml = gc.avg_rfi ? `<span style="font-size:10px;padding:2px 6px;background:rgba(79,70,229,0.12);color:var(--brand-primary);border-radius:4px;">RFI ${gc.avg_rfi}/5</span>` : '';
-                const payLabels = { prompt:'Prompt pay', net30:'Net-30', net60:'Net-60', net90:'Net-90+', poor:'Slow pay' };
-                const payColors = { prompt:'var(--success)', net30:'var(--text-muted)', net60:'var(--warning)', net90:'var(--danger)', poor:'var(--danger)' };
-                const payBg = { prompt:'rgba(34,197,94,0.12)', net30:'rgba(100,116,139,0.12)', net60:'rgba(234,179,8,0.12)', net90:'rgba(239,68,68,0.12)', poor:'rgba(239,68,68,0.12)' };
                 const payHtml = gc.payment_flag ? `<span style="font-size:10px;padding:2px 6px;background:${payBg[gc.payment_flag]||'rgba(100,116,139,0.12)'};color:${payColors[gc.payment_flag]||'var(--text-muted)'};border-radius:4px;">${payLabels[gc.payment_flag]||gc.payment_flag}</span>` : '';
                 const behaviorHtml = (rfiHtml || payHtml) ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">${rfiHtml}${payHtml}</div>` : '';
+                const safeName = gc.name.replace(/'/g, "\\'");
                 return `<div class="gc-item">
                     <div class="gc-item-info">
-                        <div class="gc-item-name">${gc.name}</div>
-                        <div class="gc-item-stats">${gc.bids || 0} bids${rate !== null ? ' • ' + rate + '% win rate' : ''}</div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span class="gc-item-name">${gc.name}</span>
+                            ${typeBadge}
+                        </div>
+                        <div class="gc-item-stats">
+                            ${gc.bids || 0} bids${rate !== null ? ' • ' + rate + '% win rate' : ''}
+                            ${outcomeBreakdown ? ' — ' + outcomeBreakdown : ''}
+                        </div>
                         ${tagsHtml}
                         ${behaviorHtml}
                         ${notesHtml}
                     </div>
-                    <div class="gc-item-rating">${[1, 2, 3, 4, 5].map(i => `<span class="star ${i <= gc.rating ? 'filled' : ''}" onclick="rateGC('${gc.name.replace(/'/g, "\\'")}', ${i})">★</span>`).join('')}</div>
-                    <button class="btn btn-sm btn-secondary" onclick="editGCTags('${gc.name.replace(/'/g, "\\'")}')" style="margin-left:8px;">Edit</button>
-                    <button class="btn btn-sm btn-secondary" onclick="deleteGCUI('${gc.name.replace(/'/g, "\\'")}')" style="color:var(--danger);margin-left:4px;">×</button>
+                    <div class="gc-item-rating">${[1, 2, 3, 4, 5].map(i => `<span class="star ${i <= gc.rating ? 'filled' : ''}" onclick="rateGC('${safeName}', ${i})">★</span>`).join('')}</div>
+                    <button class="btn btn-sm btn-secondary" onclick="editGCTags('${safeName}')" style="margin-left:8px;">Edit</button>
+                    <button class="btn btn-sm btn-secondary" onclick="deleteGCUI('${safeName}')" style="color:var(--danger);margin-left:4px;">×</button>
                 </div>`;
             }).join('');
         }
 
+        let _clientSortKey = 'name';
+
         async function loadGCDatabase() {
-            const gcs = await getGCs();
-            if (!gcs.length) {
+            const clients = await getClients();
+            if (!clients.length) {
                 document.getElementById('gcDatabaseList').innerHTML = '<div class="empty-state"><h3>No clients yet</h3><p>Add your first client to start tracking win rates</p><button class="btn btn-primary" onclick="showAddClientModal()">+ Add Client</button></div>';
                 return;
             }
-            renderClientRows(gcs);
+            renderClientRows(clients);
         }
 
         async function filterClientList(query) {
-            const gcs = await getGCs();
-            const filtered = query ? gcs.filter(g => g.name.toLowerCase().includes(query.toLowerCase())) : gcs;
+            const clients = await getClients();
+            const filtered = query ? clients.filter(g => g.name.toLowerCase().includes(query.toLowerCase())) : clients;
             if (!filtered.length) {
                 document.getElementById('gcDatabaseList').innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:14px;">No clients match "${query}"</div>`;
                 return;
             }
             renderClientRows(filtered);
         }
+
+        async function sortClientList(key) {
+            _clientSortKey = key;
+            const clients = await getClients();
+            renderClientRows(clients);
+        }
         
         async function editGCTags(name) {
-            const gcs = await getGCs();
+            const gcs = await getClients();
             const gc = gcs.find(g => g.name === name);
             if (!gc) return;
-            
+
+            _editRatingValue = gc.rating || 3;
+
             const currentTags = gc.riskTags || [];
 
             const positiveTagsHtml = POSITIVE_TAGS.map(val =>
@@ -14180,23 +14251,41 @@ Respond now:`;
                 </label>`
             ).join('');
             
+            const clientTypeOptions = Object.entries(CLIENT_TYPE_LABELS).map(([val, label]) =>
+                `<option value="${val}" ${gc.clientType === val ? 'selected' : ''}>${label}</option>`
+            ).join('');
+
+            const ratingStarsHtml = [1,2,3,4,5].map(i =>
+                `<span class="star ${i <= gc.rating ? 'filled' : ''}" id="editStar${i}" onclick="setEditRating(${i})" style="cursor:pointer;font-size:22px;">★</span>`
+            ).join('');
+
             const modal = document.createElement('div');
             modal.className = 'modal-overlay active';
             modal.id = 'editTagsModal';
             modal.innerHTML = `
-                <div class="modal" style="max-width:500px;">
+                <div class="modal" style="max-width:520px;">
                     <div class="modal-header"><h3 class="modal-title">Edit Client: ${name}</h3><button class="modal-close" onclick="closeModal('editTagsModal');document.getElementById('editTagsModal').remove();">×</button></div>
                     <div class="modal-body">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+                            <div>
+                                <div style="font-weight:600;margin-bottom:6px;font-size:13px;">Client Type</div>
+                                <select id="editClientType" class="form-input" style="font-size:13px;">${clientTypeOptions}</select>
+                            </div>
+                            <div>
+                                <div style="font-weight:600;margin-bottom:6px;font-size:13px;">Rating</div>
+                                <div id="editRatingStars" style="display:flex;gap:2px;">${ratingStarsHtml}</div>
+                            </div>
+                        </div>
                         <div style="margin-bottom:16px;">
-                            <div style="font-weight:600;margin-bottom:8px;color:var(--success);display:flex;align-items:center;gap:6px;">✓ Positive Tags</div>
+                            <div style="font-weight:600;margin-bottom:8px;color:var(--success);font-size:13px;">Positive Tags</div>
                             <div style="display:flex;flex-wrap:wrap;gap:8px;">${positiveTagsHtml}</div>
                         </div>
                         <div style="margin-bottom:16px;">
-                            <div style="font-weight:600;margin-bottom:8px;color:var(--danger);display:flex;align-items:center;gap:6px;">⚠ Risk Tags</div>
+                            <div style="font-weight:600;margin-bottom:8px;color:var(--danger);font-size:13px;">Risk Tags</div>
                             <div style="display:flex;flex-wrap:wrap;gap:8px;">${negativeTagsHtml}</div>
                         </div>
                         <div>
-                            <div style="font-weight:600;margin-bottom:6px;color:var(--text-primary);">Relationship Notes</div>
+                            <div style="font-weight:600;margin-bottom:6px;font-size:13px;">Relationship Notes</div>
                             <textarea id="editClientNotes" class="form-input" rows="3" placeholder="Payment history, communication style, anything useful..." style="resize:vertical;font-size:13px;">${gc.notes || ''}</textarea>
                         </div>
                     </div>
@@ -14208,14 +14297,26 @@ Respond now:`;
             document.body.appendChild(modal);
         }
         
+        let _editRatingValue = 3;
+
+        function setEditRating(r) {
+            _editRatingValue = r;
+            [1,2,3,4,5].forEach(i => {
+                const star = document.getElementById(`editStar${i}`);
+                if (star) star.className = `star ${i <= r ? 'filled' : ''}`;
+            });
+        }
+
         async function saveGCTags(name) {
-            const gcs = await getGCs();
-            const gc = gcs.find(g => g.name === name);
+            const clients = await getClients();
+            const gc = clients.find(g => g.name === name);
             if (!gc) return;
 
             gc.riskTags = Array.from(document.querySelectorAll('.editGCTag:checked')).map(cb => cb.value);
             gc.notes = document.getElementById('editClientNotes')?.value?.trim() || '';
-            await saveGC(gc);
+            gc.clientType = document.getElementById('editClientType')?.value || gc.clientType;
+            gc.rating = _editRatingValue;
+            await saveClient(gc);
 
             document.getElementById('editTagsModal')?.remove();
             await loadGCDatabase();

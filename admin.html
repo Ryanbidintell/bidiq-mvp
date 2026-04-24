@@ -379,7 +379,7 @@
                 renderMetricCards(metrics);
                 renderChurnAnalysis(users, events, snapshots);
                 renderOverrideStats(projects, events);
-                renderRevenueDetail(users, metrics);
+                renderRevenueDetail(users, metrics, snapshots);
                 renderROILeads(events);
                 renderCurrentUsers(users, projects);
                 renderPhaseGates(users, projects, events);
@@ -412,15 +412,8 @@
             const professionalUsers = activeUsers.filter(u => u.subscription_tier === 'professional').length;
             const paidUsers = starterUsers + professionalUsers;
 
-            // Calculate MRR
-            let mrrCents = 0;
-            activeUsers.forEach(u => {
-                if (u.subscription_tier === 'starter') {
-                    mrrCents += u.is_beta_user ? PRICING.starter_beta : PRICING.starter;
-                } else if (u.subscription_tier === 'professional') {
-                    mrrCents += u.is_beta_user ? PRICING.professional_beta : PRICING.professional;
-                }
-            });
+            // MRR from most recent daily snapshot (real Stripe amounts, not estimates)
+            const mrrCents = snapshots.length > 0 ? (snapshots[0].mrr_cents || 0) : 0;
 
             // Churn calculation
             const cancellationEvents = events.filter(e =>
@@ -495,8 +488,17 @@
                 {
                     label: 'MRR',
                     value: `$${mrr}`,
-                    change: '+$0 (30d)', // Would calculate from snapshots
-                    changeType: 'neutral'
+                    change: (() => {
+                        if (snapshots.length < 2) return 'No trend yet';
+                        const oldest = snapshots[snapshots.length - 1].mrr_cents || 0;
+                        const delta = (metrics.mrrCents - oldest) / 100;
+                        const sign = delta >= 0 ? '+' : '';
+                        return `${sign}$${delta.toFixed(0)} (30d)`;
+                    })(),
+                    changeType: (() => {
+                        if (snapshots.length < 2) return 'neutral';
+                        return metrics.mrrCents >= (snapshots[snapshots.length - 1].mrr_cents || 0) ? 'positive' : 'negative';
+                    })()
                 },
                 {
                     label: 'Total / Paid Users',
@@ -617,32 +619,28 @@
             `).join('');
         }
 
-        function renderRevenueDetail(users, metrics) {
+        function renderRevenueDetail(users, metrics, snapshots) {
             const mrr = metrics.mrrCents / 100;
             const arr = mrr * 12;
-            const arpu = metrics.totalUsers > 0 ? (mrr / metrics.totalUsers) : 0;
+            const arpu = metrics.paidUsers > 0 ? (mrr / metrics.paidUsers) : 0;
 
-            const starterRevenue = metrics.starterUsers * (PRICING.starter / 100);
-            const proRevenue = metrics.professionalUsers * (PRICING.professional / 100);
-            const totalRevenue = starterRevenue + proRevenue;
-
-            const starterPercent = totalRevenue > 0 ? ((starterRevenue / totalRevenue) * 100).toFixed(0) : 0;
-            const proPercent = totalRevenue > 0 ? ((proRevenue / totalRevenue) * 100).toFixed(0) : 0;
+            const mrr30dAgo = snapshots.length > 1 ? (snapshots[snapshots.length - 1].mrr_cents || 0) / 100 : null;
+            const mrrGrowth = mrr30dAgo !== null && mrr30dAgo > 0
+                ? (((mrr - mrr30dAgo) / mrr30dAgo) * 100).toFixed(1)
+                : null;
 
             const stripeFees = mrr * 0.029 + (metrics.paidUsers * 0.30);
-            const claudeCosts = metrics.bidsLast30Days * 0.50; // Estimate $0.50 per bid
+            const claudeCosts = metrics.bidsLast30Days * 0.50;
             const grossMargin = mrr > 0 ? (((mrr - stripeFees - claudeCosts) / mrr) * 100).toFixed(0) : 0;
 
             const stats = [
-                { label: 'Current MRR', value: `$${mrr.toFixed(2)}` },
+                { label: 'Current MRR (from Stripe)', value: `$${mrr.toFixed(2)}` },
                 { label: 'ARR (MRR × 12)', value: `$${arr.toFixed(0)}` },
-                { label: 'MRR 30 days ago', value: `$${mrr.toFixed(2)}` }, // Would pull from snapshots
-                { label: 'MRR growth rate', value: '0.0%' }, // Would calculate from snapshots
-                { label: 'Avg revenue per user (ARPU)', value: `$${arpu.toFixed(2)}` },
-                { label: 'Revenue by tier: Starter', value: `$${starterRevenue.toFixed(0)} (${starterPercent}%)` },
-                { label: 'Revenue by tier: Professional', value: `$${proRevenue.toFixed(0)} (${proPercent}%)` },
-                { label: 'Stripe fees (est. 2.9% + $0.30)', value: `$${stripeFees.toFixed(2)}` },
-                { label: 'Claude API costs (est.)', value: `$${claudeCosts.toFixed(2)}` },
+                { label: 'MRR 30 days ago', value: mrr30dAgo !== null ? `$${mrr30dAgo.toFixed(2)}` : 'No snapshot yet' },
+                { label: 'MRR growth (30d)', value: mrrGrowth !== null ? `${mrrGrowth >= 0 ? '+' : ''}${mrrGrowth}%` : 'No trend yet' },
+                { label: 'ARPU (paid users only)', value: `$${arpu.toFixed(2)}` },
+                { label: 'Stripe fees (est. 2.9% + $0.30/user)', value: `$${stripeFees.toFixed(2)}` },
+                { label: 'Claude API costs (est. $0.50/bid)', value: `$${claudeCosts.toFixed(2)}` },
                 { label: 'Est. gross margin', value: `${grossMargin}%` }
             ];
 

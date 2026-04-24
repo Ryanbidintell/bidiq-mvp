@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BidIntell — Dashboard Mockup v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-body:   #0B0F14;
+  --bg-panel:  #111827;
+  --bg-card:   #1A2433;
+  --border:    rgba(255,255,255,0.07);
+  --border-md: rgba(255,255,255,0.12);
+  --text-1: #F1F5F9; --text-2: #94A3B8; --text-3: #475569;
+  --orange: #F26522; --orange-dim: rgba(242,101,34,0.12);
+  --green: #22c55e; --green-dim: rgba(34,197,94,0.12);
+  --amber: #f59e0b; --amber-dim: rgba(245,158,11,0.12);
+  --red: #ef4444;   --red-dim:   rgba(239,68,68,0.12);
+  --blue: #3b82f6;  --blue-dim:  rgba(59,130,246,0.12);
+  --font-ui:   'Plus Jakarta Sans', sans-serif;
+  --font-data: 'Geist Mono', monospace;
+  --radius: 10px; --radius-sm: 6px;
+  --sidebar-w: 220px;
+  /* Skin-variable slots */
+  --s-body: #0B0F14; --s-panel: #111827; --s-card: #1A2433;
+  --s-border: rgba(255,255,255,0.07); --s-border-md: rgba(255,255,255,0.12);
+  --s-nav-active-bg: rgba(255,255,255,0.08);
+  --s-nav-active-color: var(--text-1);
+  --s-nav-item-color: var(--text-2);
+  --s-nav-icon: var(--orange);
+  --s-type-tag: var(--orange);
+  --s-stat-val-font: var(--font-data);
+  --s-badge-font: var(--font-data);
+  --s-date-font: var(--font-data);
+}
+
+/* Current skin overrides */
+body.old {
+  --s-body: #0d1117; --s-panel: #0d1117; --s-card: #161b22;
+  --s-border: rgba(255,255,255,0.1); --s-border-md: rgba(255,255,255,0.15);
+  --s-nav-active-bg: rgba(242,101,34,0.18);
+  --s-nav-active-color: #F26522;
+  --s-nav-item-color: #8b949e;
+  --s-nav-icon: #F26522;
+  --s-type-tag: #F26522;
+  --s-stat-val-font: var(--font-ui);
+  --s-badge-font: var(--font-ui);
+  --s-date-font: var(--font-ui);
+}
+
+html, body { font-family: var(--font-ui); background: var(--s-body); color: var(--text-1); height: 100%; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+.shell { display: flex; height: 100vh; overflow: hidden; }
+
+/* Sidebar */
+.sidebar { width: var(--sidebar-w); flex-shrink: 0; background: var(--s-panel); border-right: 1px solid var(--s-border); display: flex; flex-direction: column; overflow: hidden; }
+.sidebar-logo { padding: 18px 16px 16px; border-bottom: 1px solid var(--s-border); }
+.logo-row { display: flex; align-items: center; gap: 9px; }
+.logo-mark { width: 34px; height: 34px; background: var(--orange); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0; }
+.logo-text { font-size: 15px; font-weight: 700; color: var(--text-1); }
+.logo-sub { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--orange); margin-top: 1px; }
+.sidebar-nav { flex: 1; padding: 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 1px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); color: var(--s-nav-item-color); font-size: 13.5px; font-weight: 500; cursor: pointer; text-decoration: none; }
+.nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-1); }
+.nav-item.active { background: var(--s-nav-active-bg); color: var(--s-nav-active-color); }
+.nav-item.active .nav-icon { color: var(--s-nav-icon); }
+.nav-icon { width: 16px; height: 16px; flex-shrink: 0; }
+.sidebar-footer { padding: 10px 8px; border-top: 1px solid var(--s-border); }
+.user-chip { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: var(--radius-sm); cursor: pointer; }
+.user-chip:hover { background: rgba(255,255,255,0.04); }
+.user-avatar { width: 28px; height: 28px; border-radius: 50%; background: rgba(242,101,34,0.15); border: 1px solid rgba(242,101,34,0.4); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--orange); flex-shrink: 0; }
+.user-name { font-size: 12.5px; font-weight: 600; color: var(--text-1); }
+.user-plan { font-size: 11px; color: var(--text-3); }
+
+/* Main */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { height: 56px; border-bottom: 1px solid var(--s-border); display: flex; align-items: center; padding: 0 24px; gap: 8px; flex-shrink: 0; background: var(--s-body); }
+.page-title { font-size: 20px; font-weight: 700; color: var(--text-1); flex: 1; }
+.page-subtitle { font-size: 12px; color: var(--text-3); }
+.content { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+/* Card */
+.card { background: var(--s-card); border: 1px solid var(--s-border); border-radius: var(--radius); overflow: hidden; }
+.card-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid var(--s-border); }
+.card-title { font-size: 13.5px; font-weight: 700; color: var(--text-1); }
+.card-meta { font-size: 12px; color: var(--text-3); margin-left: 8px; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12.5px; font-weight: 600; cursor: pointer; border: none; font-family: var(--font-ui); white-space: nowrap; line-height: 1; }
+.btn-primary { background: var(--orange); color: #fff; }
+.btn-secondary { background: rgba(255,255,255,0.07); color: var(--text-2); border: 1px solid var(--s-border-md); }
+.btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.25); padding: 5px 8px; }
+.btn-sm { padding: 5px 9px; font-size: 11.5px; }
+.btn-ghost { padding: 7px 14px; border-radius: var(--radius-sm); background: transparent; border: 1px solid var(--s-border-md); color: var(--text-2); font-size: 12.5px; font-weight: 500; cursor: pointer; font-family: var(--font-ui); align-self: flex-end; }
+
+/* Table */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { font-size: 10.5px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; padding: 9px 16px; text-align: left; border-bottom: 1px solid var(--s-border); white-space: nowrap; }
+td { padding: 12px 16px; border-bottom: 1px solid var(--s-border); font-size: 13px; color: var(--text-1); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+.proj-name { font-weight: 600; font-size: 13px; margin-bottom: 3px; }
+.proj-type { font-size: 11px; color: var(--s-type-tag); font-weight: 500; }
+.gc-name { font-size: 12.5px; color: var(--text-2); }
+.actions-cell { display: flex; gap: 5px; align-items: center; }
+input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--orange); cursor: pointer; }
+
+/* Score display — both versions in DOM, CSS shows the right one */
+.score-v2 { display: none; }
+.score-old { display: block; }
+body:not(.old) .score-v2 { display: inline-flex; }
+body:not(.old) .score-old { display: none; }
+
+.score-old-num { font-weight: 700; font-size: 13px; line-height: 1.2; }
+.score-old-label { display: block; font-size: 11px; font-weight: 700; color: var(--text-3); }
+
+/* Outcome badge — both versions */
+.outcome-old { display: inline-block; }
+.outcome-v2 { display: none; }
+body:not(.old) .outcome-v2 { display: inline-flex; }
+body:not(.old) .outcome-old { display: none; }
+
+/* Old outcome style */
+.outcome-old { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.03em; }
+.outcome-old.pending { background: rgba(255,255,255,0.07); color: #8b949e; }
+.outcome-old.won { background: rgba(34,197,94,0.15); color: #22c55e; }
+.outcome-old.lost { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+/* Badges */
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.badge-go    { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+.badge-review{ background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+.badge-pass  { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(239,68,68,0.2); }
+.badge-pending { background: rgba(255,255,255,0.06); color: var(--text-3); border: 1px solid var(--s-border); }
+.badge-won   { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+.badge-lost  { background: var(--red-dim);   color: var(--red);   border: 1px solid rgba(239,68,68,0.2); }
+.badge-submitted { background: rgba(59,130,246,0.12); color: var(--blue); border: 1px solid rgba(59,130,246,0.2); font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.score-num { font-family: var(--s-badge-font); font-size: 12px; font-weight: 600; }
+
+/* Date cell */
+.date-cell { font-family: var(--s-date-font); font-size: 12px; color: var(--text-3); white-space: nowrap; }
+
+/* Stats grid */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.stat-card { background: var(--s-card); border: 1px solid var(--s-border); border-radius: var(--radius); padding: 16px 18px; position: relative; overflow: hidden; }
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+.stat-card.accent::before  { background: var(--orange); }
+.stat-card.success::before { background: var(--green); }
+.stat-card.info::before    { background: var(--blue); }
+.stat-card.warning::before { background: var(--amber); }
+.stat-card.risk::before    { background: var(--red); }
+.stat-card.moat::before    { background: linear-gradient(90deg, var(--green), var(--blue)); }
+.stat-label { font-size: 10.5px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+.stat-value { font-family: var(--s-stat-val-font); font-size: 28px; font-weight: 600; color: var(--text-1); line-height: 1; letter-spacing: -0.5px; margin-bottom: 6px; }
+.stat-meta { font-size: 11px; color: var(--text-3); }
+.stat-meta span { font-family: var(--s-date-font); font-size: 11px; color: var(--text-2); }
+
+/* Filter bar */
+.filter-bar { background: var(--s-card); border: 1px solid var(--s-border); border-radius: var(--radius); padding: 14px 18px; display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.filter-group { display: flex; flex-direction: column; gap: 5px; }
+.filter-label { font-size: 11px; color: var(--text-3); font-weight: 600; display: flex; align-items: center; gap: 5px; }
+.fdot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.fdot-orange { background: var(--orange); }
+.fdot-blue   { background: var(--blue); }
+.fdot-red    { background: var(--red); }
+.fdot-amber  { background: var(--amber); }
+.filter-input { background: rgba(255,255,255,0.06); border: 1px solid var(--s-border-md); border-radius: var(--radius-sm); padding: 7px 11px; color: var(--text-2); font-size: 13px; font-family: var(--font-ui); appearance: none; min-width: 160px; }
+.filter-input::placeholder { color: var(--text-3); }
+
+/* Views */
+.view { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+.view.active { display: flex; }
+
+/* Control bar */
+.control-bar { position: fixed; top: 12px; right: 12px; display: flex; gap: 8px; z-index: 999; }
+.pill-group { background: #111827; border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; padding: 5px 6px; display: flex; gap: 3px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+.pill-label { font-size: 10px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; align-self: center; padding: 0 6px; }
+.pill-btn { padding: 5px 12px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: transparent; color: var(--text-3); font-family: var(--font-ui); }
+.pill-btn.on { background: var(--orange); color: #fff; }
+.pill-btn:not(.on):hover { color: var(--text-2); background: rgba(255,255,255,0.05); }
+</style>
+</head>
+<body>
+
+<div class="control-bar">
+  <div class="pill-group">
+    <span class="pill-label">Skin</span>
+    <button class="pill-btn" id="btnOld" onclick="setMode('old')">Current</button>
+    <button class="pill-btn on" id="btnNew" onclick="setMode('new')">v2</button>
+  </div>
+  <div class="pill-group">
+    <span class="pill-label">View</span>
+    <button class="pill-btn on" id="btnDash" onclick="setView('dashboard')">Dashboard</button>
+    <button class="pill-btn" id="btnProj" onclick="setView('projects')">Projects</button>
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-row">
+        <div class="logo-mark">BI</div>
+        <div>
+          <div class="logo-text">BidIntell</div>
+          <div class="logo-sub">Decision Intelligence</div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <a class="nav-item" id="nav-dash" href="#" onclick="setView('dashboard');return false;">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Analyze Bid
+      </a>
+      <a class="nav-item" id="nav-proj" href="#" onclick="setView('projects');return false;">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Projects
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Analytics
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Clients
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+        Keywords
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Settings
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Schedule a Demo
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+        Operations
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Metrics
+      </a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar">FS</div>
+        <div>
+          <div class="user-name">Facility Systems Inc</div>
+          <div class="user-plan">Solo plan</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div id="view-dashboard" class="view active">
+      <div class="topbar">
+        <div class="page-title">Dashboard</div>
+        <span class="page-subtitle">Your bids at a glance</span>
+      </div>
+      <div class="content">
+        <div class="stats-grid">
+          <div class="stat-card accent">
+            <div class="stat-label">Total Bids Analyzed</div>
+            <div class="stat-value">47</div>
+            <div class="stat-meta"><span>3</span> this week</div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-label">Win Rate</div>
+            <div class="stat-value">38%</div>
+            <div class="stat-meta"><span>9</span> wins / <span>15</span> losses</div>
+          </div>
+          <div class="stat-card info">
+            <div class="stat-label">Avg BidIndex Score</div>
+            <div class="stat-value">71</div>
+            <div class="stat-meta"><span>12</span> above 80</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-label">Hours Saved</div>
+            <div class="stat-value">94</div>
+            <div class="stat-meta"><span>47</span> faster decisions</div>
+          </div>
+          <div class="stat-card risk">
+            <div class="stat-label">Contract Risks Found</div>
+            <div class="stat-value">23</div>
+            <div class="stat-meta">across <span>11</span> projects</div>
+          </div>
+          <div class="stat-card moat">
+            <div class="stat-label">AI Learning Progress</div>
+            <div class="stat-value">83%</div>
+            <div class="stat-meta"><span>20 of 24</span> outcomes tracked</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Recent Activity</span>
+            <button class="btn btn-primary btn-sm">+ Analyze New Bid</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Project</th><th>GC</th><th>Score</th><th>Outcome</th><th>Date</th><th></th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><div class="proj-name">Overland Park Medical Center</div><div style="font-size:11.5px;color:var(--text-3);">Medical Office · Overland Park, KS</div></td>
+                  <td><span class="gc-name">Turner Construction</span></td>
+                  <td>
+                    <div class="score-old"><span class="score-old-num">84 –<span class="score-old-label">GO</span></span></div>
+                    <span class="badge badge-go score-v2"><span class="score-num">84</span> GO</span>
+                  </td>
+                  <td>
+                    <span class="outcome-old submitted" style="background:rgba(59,130,246,0.15);color:#3b82f6;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:0.05em;text-transform:uppercase;">BID SUBMITTED</span>
+                    <span class="badge badge-submitted outcome-v2">Bid Submitted</span>
+                  </td>
+                  <td><span class="date-cell">Apr 22, 2026</span></td>
+                  <td><button class="btn btn-secondary btn-sm">View</button></td>
+                </tr>
+                <tr>
+                  <td><div class="proj-name">Summit Ridge Apartments Ph. 2</div><div style="font-size:11.5px;color:var(--text-3);">Multi-Family · Lenexa, KS</div></td>
+                  <td><span class="gc-name">JE Dunn Construction</span></td>
+                  <td>
+                    <div class="score-old"><span class="score-old-num">67 –<span class="score-old-label">REVIEW</span></span></div>
+                    <span class="badge badge-review score-v2"><span class="score-num">67</span> REVIEW</span>
+                  </td>
+                  <td>
+                    <span class="outcome-old pending">PENDING</span>
+                    <span class="badge badge-pending outcome-v2">PENDING</span>
+                  </td>
+                  <td><span class="date-cell">Apr 20, 2026</span></td>
+                  <td><button class="btn btn-secondary btn-sm">View</button></td>
+                </tr>
+                <tr>
+                  <td><div class="proj-name">Crossroads District Renovation</div><div style="font-size:11.5px;color:var(--text-3);">Mixed Use · Kansas City, MO</div></td>
+                  <td><span class="gc-name">Sunstone Construction</span></td>
+                  <td>
+                    <div class="score-old"><span class="score-old-num">91 –<span class="score-old-label">GO</span></span></div>
+                    <span class="badge badge-go score-v2"><span class="score-num">91</span> GO</span>
+                  </td>
+                  <td>
+                    <span class="outcome-old won">WON</span>
+                    <span class="badge badge-won outcome-v2">WON</span>
+                  </td>
+                  <td><span class="date-cell">Apr 18, 2026</span></td>
+                  <td><button class="btn btn-secondary btn-sm">View</button></td>
+                </tr>
+                <tr>
+                  <td><div class="proj-name">Heartland Distribution Hub</div><div style="font-size:11.5px;color:var(--text-3);">Industrial · Olathe, KS</div></td>
+                  <td><span class="gc-name">McCownGordon Construction</span></td>
+                  <td>
+                    <div class="score-old"><span class="score-old-num">44 –<span class="score-old-label">PASS</span></span></div>
+                    <span class="badge badge-pass score-v2"><span class="score-num">44</span> PASS</span>
+                  </td>
+                  <td>
+                    <span class="outcome-old lost">LOST</span>
+                    <span class="badge badge-lost outcome-v2">LOST</span>
+                  </td>
+                  <td><span class="date-cell">Apr 15, 2026</span></td>
+                  <td><button class="btn btn-secondary btn-sm">View</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div id="view-projects" class="view">
+      <div class="topbar">
+        <div class="page-title">Projects</div>
+        <span class="page-subtitle">Track all your analyzed bids and outcomes</span>
+      </div>
+      <div class="content">
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label"><span class="fdot fdot-orange"></span> Search</span>
+            <input class="filter-input" type="text" placeholder="Project name or location...">
+          </div>
+          <div class="filter-group">
+            <span class="filter-label"><span class="fdot fdot-blue"></span> Outcome</span>
+            <select class="filter-input"><option>All Outcomes</option><option>Pending</option><option>Won</option><option>Lost</option></select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label"><span class="fdot fdot-red"></span> Score Range</span>
+            <select class="filter-input"><option>All Scores</option><option>GO (80+)</option><option>REVIEW (60–79)</option><option>PASS (&lt;60)</option></select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-label"><span class="fdot fdot-amber"></span> Sort By</span>
+            <select class="filter-input"><option>Date (Newest First)</option><option>Score (High–Low)</option></select>
+          </div>
+          <button class="btn-ghost">Clear Filters</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span class="card-title">All Projects</span>
+              <span class="card-meta">(5 of 5)</span>
+            </div>
+            <button class="btn btn-secondary btn-sm">
+              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Export CSV
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:28px;"><input type="checkbox"></th>
+                  <th>Project</th><th>GC</th><th>Location</th><th>Score</th><th>Outcome</th><th>Date</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Row 1: PASS / PENDING / no bid -->
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td><div class="proj-name">KDEM Emergency Operations and Training Center</div><div class="proj-type">Government</div></td>
+                  <td><span class="gc-name">law group</span></td>
+                  <td><span class="gc-name">Topeka, KS</span></td>
+                  <td>
+                    <div class="score-old"><span class="score-old-num">48 –<span class="score-old-label">PASS</span></span></div>
+                    <span class="badge badge-pass score-v2"><span class="score-num">48</span> PASS</span>
+                  </td>
+                  <td>
+                    <span class="outcome-old pending">PENDING</span>
+                    <span class="badge badge-pending outcome-v2">PENDING</span>
+                  </td>
+                  <td><span class="date-cell">Apr 23, 2026</span></td>
+                  <td><div class="actions-cell">
+                    <button class="btn btn-secondary btn-sm">View</button>
+                    <button class="btn btn-secondary btn-sm">Log Bid</button>
+                    <button class="btn btn-secondary btn-sm">Outcome</button>
+                    <button class="btn-danger btn"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+                  </div></td>
+                </tr>
+                <!-- Row 2: REVIEW / PENDING / BID SUBMITTED -->
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td><div class="proj-name">Midwest Trust Second Floor Retrofit</div><div class="proj-type">Office</div></td>
+                  <td><span class="gc-name">Midwest Trust</span></td>
+                  <td><span class="gc-name">Overland Park, KS</span></td>
+                  <td>
+                    <div class="score-old"><span class="score-old-num">63 –<span class="score-old-label">REVIEW</span></span></div>
+                    <span class="badge badge-review score-v2"><span class="score-num">63</span> REVIEW</span>
+                  </td>
+                  <td>
+                    <span class="outcome-old submitted" style="background:rgba(59,130,246,0.15);color:#3b82f6;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:0.05em;text-transform:uppercase;">BID SUBMITTED</span>
+                    <span class="badge badge-submitted outcome-v2">Bid Submitted</span>
+                  </td>
+                  <td><span class="date-cell">Apr 6, 2026</span></td>
+                  <td><div class="actions-cell">
+                    <button class="btn btn-secondary btn-sm">View</button>
+                    <button class="btn btn-secondary btn-sm">Outcome</button>
+                    <button class="btn-danger btn"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+                  </div></td>
+                </tr>
+                <!-- Row 3: PASS / PENDING -->
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td><div class="proj-name">Midwest Trust Second Floor Retrofit</div><div class="proj-type">Unknown Type</div></td>
+                  <td><span class="gc-name">Unknown</span></td>
+                  <td><span class="gc-name">Overland Park, KS</span></td>
+                  <td>
+                    <div class="score-old"><span class="score-old-num">31 –<span class="score-old-label">PASS</span></span></div>
+                    <span class="badge badge-pass score-v2"><span class="score-num">31</span> PASS</span>
+                  </td>
+                  <td>
+                    <span class="outcome-old pending">PENDING</span>
+                    <span class="badge badge-pending outcome-v2">PENDING</span>
+                  </td>
+                  <td><span class="date-cell">Apr 6, 2026</span></td>
+                  <td><div class="actions-cell">
+                    <button class="btn btn-secondary btn-sm">View</button>
+                    <button class="btn btn-secondary btn-sm">Log Bid</button>
+                    <button class="btn btn-secondary btn-sm">Outcome</button>
+                    <button class="btn-danger btn"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+                  </div></td>
+                </tr>
+                <!-- Row 4: PASS / PENDING -->
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td><div class="proj-name">Overland Park Arboretum Visitors Center</div><div class="proj-type">Other</div></td>
+                  <td><span class="gc-name">mccown gordon, Turner Construction, al huber</span></td>
+                  <td><span class="gc-name">Overland Park, KS</span></td>
+                  <td>
+                    <div class="score-old"><span class="score-old-num">58 –<span class="score-old-label">PASS</span></span></div>
+                    <span class="badge badge-pass score-v2"><span class="score-num">58</span> PASS</span>
+                  </td>
+                  <td>
+                    <span class="outcome-old pending">PENDING</span>
+                    <span class="badge badge-pending outcome-v2">PENDING</span>
+                  </td>
+                  <td><span class="date-cell">Mar 26, 2026</span></td>
+                  <td><div class="actions-cell">
+                    <button class="btn btn-secondary btn-sm">View</button>
+                    <button class="btn btn-secondary btn-sm">Log Bid</button>
+                    <button class="btn btn-secondary btn-sm">Outcome</button>
+                    <button class="btn-danger btn"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+                  </div></td>
+                </tr>
+                <!-- Row 5: REVIEW / WON -->
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td><div class="proj-name">NAIC Renovation</div><div class="proj-type">Office</div></td>
+                  <td><span class="gc-name">mccown gordon</span></td>
+                  <td><span class="gc-name">Kansas City, MO</span></td>
+                  <td>
+                    <div class="score-old"><span class="score-old-num">78 –<span class="score-old-label">REVIEW</span></span></div>
+                    <span class="badge badge-review score-v2"><span class="score-num">78</span> REVIEW</span>
+                  </td>
+                  <td>
+                    <span class="outcome-old won">WON</span>
+                    <span class="badge badge-won outcome-v2">WON</span>
+                  </td>
+                  <td><span class="date-cell">Mar 23, 2026</span></td>
+                  <td><div class="actions-cell">
+                    <button class="btn btn-secondary btn-sm">View</button>
+                    <button class="btn-danger btn"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
+                  </div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function setMode(m) {
+  document.body.classList.toggle('old', m === 'old');
+  document.getElementById('btnOld').className = m === 'old' ? 'pill-btn on' : 'pill-btn';
+  document.getElementById('btnNew').className = m === 'new' ? 'pill-btn on' : 'pill-btn';
+}
+
+function setView(v) {
+  document.getElementById('view-dashboard').className = v === 'dashboard' ? 'view active' : 'view';
+  document.getElementById('view-projects').className = v === 'projects' ? 'view active' : 'view';
+  document.getElementById('btnDash').className = v === 'dashboard' ? 'pill-btn on' : 'pill-btn';
+  document.getElementById('btnProj').className = v === 'projects' ? 'pill-btn on' : 'pill-btn';
+  document.getElementById('nav-dash').className = v === 'dashboard' ? 'nav-item active' : 'nav-item';
+  document.getElementById('nav-proj').className = v === 'projects' ? 'nav-item active' : 'nav-item';
+}
+</script>
+</body>
+</html>

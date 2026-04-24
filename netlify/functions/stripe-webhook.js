@@ -278,12 +278,31 @@ async function sendTrialEndingEmail(subscription) {
 async function handleSubscriptionDeleted(subscription) {
     const { error } = await supabase
         .from('user_revenue')
-        .update({ status: 'cancelled' })
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
         .eq('stripe_subscription_id', subscription.id);
 
     if (error) {
         console.error('Failed to cancel subscription:', error);
         throw error;
+    }
+
+    // Log cancellation event so admin.html churn rate calculation has data
+    try {
+        const userId = await getUserFromStripeCustomer(subscription.customer);
+        if (userId) {
+            const planName = subscription.items?.data[0]?.plan?.nickname || 'unknown';
+            await supabase.from('admin_events').insert({
+                user_id: userId,
+                event_type: 'cancellation',
+                event_data: {
+                    stripe_subscription_id: subscription.id,
+                    plan: planName,
+                    canceled_at: new Date().toISOString()
+                }
+            });
+        }
+    } catch (e) {
+        console.warn('Could not log cancellation event:', e.message);
     }
 
     console.log(`✅ Cancelled subscription ${subscription.id}`);

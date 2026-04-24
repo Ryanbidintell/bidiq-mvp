@@ -116,13 +116,13 @@ exports.handler = async (event, context) => {
             throw signupsError;
         }
 
-        // Cancellations today
+        // Cancellations today — count admin_events rows written by handleSubscriptionDeleted
         const { count: cancellationsToday, error: cancellationsError } = await supabase
-            .from('user_revenue')
+            .from('admin_events')
             .select('*', { count: 'exact', head: true })
-            .eq('status', 'canceled')
-            .gte('billing_period_end', todayStart.toISOString())
-            .lte('billing_period_end', todayEnd.toISOString());
+            .eq('event_type', 'cancellation')
+            .gte('created_at', todayStart.toISOString())
+            .lte('created_at', todayEnd.toISOString());
 
         if (cancellationsError) {
             console.error('Error counting cancellations:', cancellationsError);

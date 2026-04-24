@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BidIntell — Landing Page Mockup v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── CURRENT SKIN tokens ─── */
+:root {
+  /* Shared */
+  --orange: #F26522;
+  --green:  #22c55e;
+  --amber:  #f59e0b;
+  --red:    #ef4444;
+  --blue:   #3b82f6;
+  --font-ui:   'Plus Jakarta Sans', sans-serif;
+  --font-data: 'Geist Mono', monospace;
+
+  /* Skin-switchable */
+  --s-bg:       #0B0F14;
+  --s-nav-bg:   rgba(11,15,20,0.9);
+  --s-surf:     rgba(255,255,255,0.04);
+  --s-surf-2:   rgba(255,255,255,0.07);
+  --s-border:   rgba(255,255,255,0.1);
+  --s-text-1:   #F1F5F9;
+  --s-text-2:   #94A3B8;
+  --s-text-3:   #475569;
+  --s-tag-bg:   rgba(242,101,34,0.12);
+  --s-tag-color: var(--orange);
+  --s-hero-h1-accent: var(--orange);
+
+  /* Card (score card in hero) */
+  --s-card-bg: #111827;
+  --s-card-border: rgba(255,255,255,0.1);
+
+  /* v2 additions (active by default — toggle to "old" hides them) */
+  --s-proof-bg: #111827;
+  --s-proof-border: rgba(255,255,255,0.07);
+}
+
+/* Old skin overrides */
+body.old {
+  --s-surf:   rgba(255,255,255,0.04);
+  --s-surf-2: rgba(255,255,255,0.07);
+  --s-card-bg: rgba(255,255,255,0.05);
+  --s-proof-bg: rgba(255,255,255,0.04);
+  --s-proof-border: rgba(255,255,255,0.1);
+}
+
+html, body { font-family: var(--font-ui); background: var(--s-bg); color: var(--s-text-1); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--s-nav-bg);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--s-border);
+  padding: 0 24px;
+}
+
+.nav-inner { max-width: 1100px; margin: 0 auto; height: 60px; display: flex; align-items: center; gap: 32px; }
+
+.nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--s-text-1); font-weight: 700; font-size: 16px; }
+.nav-mark { width: 32px; height: 32px; background: var(--orange); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; }
+
+.nav-links { display: flex; align-items: center; gap: 4px; list-style: none; margin-left: auto; }
+.nav-links a { font-size: 13.5px; color: var(--s-text-2); text-decoration: none; padding: 6px 10px; border-radius: 6px; font-weight: 500; }
+.nav-links a:hover { color: var(--s-text-1); background: rgba(255,255,255,0.05); }
+.nav-links .nav-cta { background: var(--orange); color: #fff; padding: 7px 16px; font-weight: 700; }
+.nav-links .nav-cta:hover { opacity: 0.9; background: var(--orange); }
+
+/* ── HERO ── */
+.hero { padding: 96px 0 80px; }
+.hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; font-weight: 600; color: var(--s-text-2);
+  background: var(--s-surf); border: 1px solid var(--s-border);
+  padding: 5px 12px; border-radius: 20px; margin-bottom: 20px;
+}
+.hero-tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; }
+
+h1 { font-size: clamp(32px, 4vw, 46px); font-weight: 800; line-height: 1.1; letter-spacing: -1px; color: var(--s-text-1); margin-bottom: 20px; }
+h1 span { color: var(--s-hero-h1-accent); }
+
+.hero-sub { font-size: 17px; color: var(--s-text-2); line-height: 1.65; margin-bottom: 32px; max-width: 460px; }
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.btn-hero { display: inline-flex; align-items: center; gap: 6px; padding: 13px 24px; border-radius: 8px; font-size: 15px; font-weight: 700; text-decoration: none; transition: opacity 0.15s; }
+.btn-hero-primary { background: var(--orange); color: #fff; }
+.btn-hero-primary:hover { opacity: 0.9; }
+.btn-hero-secondary { background: var(--s-surf-2); color: var(--s-text-2); border: 1px solid var(--s-border); }
+.btn-hero-secondary:hover { color: var(--s-text-1); }
+.hero-fine { font-size: 12px; color: var(--s-text-3); }
+
+/* Score card */
+.score-card {
+  background: var(--s-card-bg);
+  border: 1px solid var(--s-card-border);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+}
+
+.sc-eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--s-text-3); margin-bottom: 14px; font-weight: 600; }
+.sc-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+.sc-proj-name { font-size: 15px; font-weight: 700; color: var(--s-text-1); margin-bottom: 3px; }
+.sc-proj-meta { font-size: 12px; color: var(--s-text-3); }
+.sc-badge { padding: 6px 14px; border-radius: 6px; font-size: 14px; font-weight: 800; letter-spacing: 0.04em; }
+.sc-badge.go { background: rgba(34,197,94,0.15); color: var(--green); }
+
+.score-ring-area { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
+.score-ring { position: relative; width: 90px; height: 90px; flex-shrink: 0; }
+.score-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 8; }
+.ring-fill { fill: none; stroke: var(--green); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 263.9; stroke-dashoffset: 44; }
+.score-number { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.score-num-big { font-family: var(--font-data); font-size: 26px; font-weight: 600; color: var(--s-text-1); line-height: 1; }
+.score-lbl { font-size: 9px; color: var(--s-text-3); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2px; }
+
+.sc-components { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.sc-comp { display: flex; flex-direction: column; gap: 4px; }
+.sc-comp-label { font-size: 11px; color: var(--s-text-3); font-weight: 500; }
+.sc-comp-bar { display: flex; align-items: center; gap: 8px; }
+.sc-bar-track { flex: 1; height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
+.sc-bar-fill { height: 100%; border-radius: 3px; }
+.sc-comp-val { font-family: var(--font-data); font-size: 11px; font-weight: 600; color: var(--s-text-2); width: 22px; text-align: right; }
+
+.sc-flags { display: flex; flex-direction: column; gap: 6px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); }
+.sc-flag { font-size: 12px; color: var(--s-text-2); display: flex; align-items: center; gap: 8px; }
+.sc-flag-icon { font-size: 11px; }
+
+/* ── PROOF BAR ── */
+.proof-bar { padding: 24px 0; border-top: 1px solid var(--s-border); border-bottom: 1px solid var(--s-border); background: var(--s-proof-bg); }
+.proof-inner { display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; }
+.proof-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 40px; }
+.proof-stat .num { font-family: var(--font-data); font-size: 26px; font-weight: 600; color: var(--s-text-1); }
+.proof-stat .lbl { font-size: 12px; color: var(--s-text-3); text-align: center; max-width: 160px; }
+.proof-divider { width: 1px; height: 40px; background: var(--s-border); }
+
+/* ── HOW IT WORKS ── */
+.section { padding: 80px 0; }
+.section-tag { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--orange); background: rgba(242,101,34,0.1); padding: 4px 12px; border-radius: 20px; margin-bottom: 12px; }
+.section-title { font-size: clamp(26px, 3vw, 36px); font-weight: 800; letter-spacing: -0.5px; color: var(--s-text-1); margin-bottom: 12px; }
+.section-sub { font-size: 16px; color: var(--s-text-2); max-width: 560px; line-height: 1.65; }
+.section-header { margin-bottom: 48px; }
+
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.step { background: var(--s-surf); border: 1px solid var(--s-border); border-radius: 12px; padding: 24px; }
+.step-num { font-family: var(--font-data); font-size: 11px; font-weight: 600; color: var(--orange); margin-bottom: 12px; }
+.step-title { font-size: 16px; font-weight: 700; color: var(--s-text-1); margin-bottom: 8px; }
+.step-desc { font-size: 14px; color: var(--s-text-2); line-height: 1.6; }
+
+/* ── SCORE BREAKDOWN ── */
+.score-factors { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 40px; }
+.factor-card { background: var(--s-surf); border: 1px solid var(--s-border); border-radius: 10px; padding: 20px; }
+.factor-label { font-size: 12px; font-weight: 700; color: var(--s-text-3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+.factor-name { font-size: 15px; font-weight: 700; color: var(--s-text-1); margin-bottom: 6px; }
+.factor-desc { font-size: 13px; color: var(--s-text-2); line-height: 1.55; }
+
+/* ── PRICING ── */
+.pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px; }
+.price-card { background: var(--s-surf); border: 1px solid var(--s-border); border-radius: 12px; padding: 28px 24px; display: flex; flex-direction: column; }
+.price-card.featured { border-color: var(--orange); background: rgba(242,101,34,0.06); }
+.price-tier { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--s-text-3); margin-bottom: 8px; }
+.price-amount { font-family: var(--font-data); font-size: 34px; font-weight: 600; color: var(--s-text-1); line-height: 1; }
+.price-period { font-size: 13px; color: var(--s-text-3); margin-bottom: 4px; }
+.price-annual { font-size: 12px; color: var(--s-text-3); margin-bottom: 20px; }
+.price-annual span { color: var(--green); font-weight: 600; }
+.price-seats { font-size: 13px; color: var(--s-text-2); margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--s-border); }
+.price-features { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; flex: 1; }
+.price-features li { font-size: 13.5px; color: var(--s-text-2); display: flex; align-items: flex-start; gap: 8px; }
+.price-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.price-btn { display: block; text-align: center; padding: 11px; border-radius: 7px; font-size: 14px; font-weight: 700; text-decoration: none; }
+.price-btn-primary { background: var(--orange); color: #fff; }
+.price-btn-secondary { background: rgba(255,255,255,0.08); color: var(--s-text-2); border: 1px solid var(--s-border); }
+.founding-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: var(--amber); background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); padding: 4px 10px; border-radius: 20px; margin-bottom: 12px; }
+
+/* ── MID CTA ── */
+.mid-cta { padding: 60px 0; text-align: center; background: var(--s-proof-bg); border-top: 1px solid var(--s-border); border-bottom: 1px solid var(--s-border); }
+.mid-cta h2 { font-size: 28px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.3px; }
+.mid-cta p { font-size: 15px; color: var(--s-text-2); margin-bottom: 28px; }
+
+/* ── FOOTER ── */
+footer { padding: 32px 0; border-top: 1px solid var(--s-border); }
+.footer-inner { display: flex; align-items: center; justify-content: space-between; }
+.footer-logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; color: var(--s-text-1); }
+.footer-links { display: flex; gap: 20px; }
+.footer-links a { font-size: 12.5px; color: var(--s-text-3); text-decoration: none; }
+.footer-links a:hover { color: var(--s-text-2); }
+.footer-copy { font-size: 12px; color: var(--s-text-3); }
+
+/* Control bar */
+.control-bar { position: fixed; top: 12px; right: 12px; z-index: 999; }
+.pill-group { background: #111827; border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; padding: 5px 6px; display: flex; gap: 3px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+.pill-label { font-size: 10px; color: var(--s-text-3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; align-self: center; padding: 0 6px; }
+.pill-btn { padding: 5px 12px; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; background: transparent; color: var(--s-text-3); font-family: var(--font-ui); }
+.pill-btn.on { background: var(--orange); color: #fff; }
+.pill-btn:not(.on):hover { color: var(--s-text-2); background: rgba(255,255,255,0.05); }
+
+/* v2-only vs old-only elements */
+.v2-only { display: block; }
+.old-only { display: none; }
+body.old .v2-only { display: none; }
+body.old .old-only { display: block; }
+</style>
+</head>
+<body>
+
+<div class="control-bar">
+  <div class="pill-group">
+    <span class="pill-label">Skin</span>
+    <button class="pill-btn" id="btnOld" onclick="setMode('old')">Current</button>
+    <button class="pill-btn on" id="btnNew" onclick="setMode('new')">v2</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="#">
+      <div class="nav-mark">BI</div>
+      BidIntell
+    </a>
+    <ul class="nav-links">
+      <li><a href="#">How It Works</a></li>
+      <li><a href="#">Features</a></li>
+      <li><a href="#">Intelligence</a></li>
+      <li><a href="#">Who It's For</a></li>
+      <li><a href="#">Calculator</a></li>
+      <li><a href="#">Pricing</a></li>
+      <li><a href="#">Contact</a></li>
+      <li><a href="#" style="color:var(--s-text-2);">Sign In</a></li>
+      <li><a href="#" class="nav-cta">Schedule a Demo →</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-tag"><span class="dot"></span> 7-day free trial — no credit card required</div>
+        <h1>Know Which Bids <span>Are Worth Your Time</span></h1>
+        <p class="hero-sub">BidIntell scores every opportunity 0–100, personalized to your trade, region, and client history. GO, REVIEW, or PASS before estimating starts.</p>
+        <div class="hero-actions">
+          <a href="#" class="btn-hero btn-hero-primary">Score Your First Bid Free →</a>
+          <a href="#" class="btn-hero btn-hero-secondary">See How It Works</a>
+        </div>
+        <p class="hero-fine">7-day free trial &nbsp;·&nbsp; No credit card required &nbsp;·&nbsp; Setup takes 5 minutes</p>
+      </div>
+
+      <!-- Score card -->
+      <div class="score-card">
+        <div class="sc-eyebrow">Sample Analysis</div>
+        <div class="sc-header">
+          <div>
+            <div class="sc-proj-name">Medical Office Renovation</div>
+            <div class="sc-proj-meta">ABC General Contractors · Your Area · $4.2M</div>
+          </div>
+          <div class="sc-badge go">GO</div>
+        </div>
+        <div class="score-ring-area">
+          <div class="score-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="ring-bg" cx="50" cy="50" r="42"/>
+              <circle class="ring-fill" cx="50" cy="50" r="42"/>
+            </svg>
+            <div class="score-number">
+              <span class="score-num-big">83</span>
+              <span class="score-lbl">BidIndex</span>
+            </div>
+          </div>
+          <div class="sc-components">
+            <div class="sc-comp">
+              <span class="sc-comp-label">Location Fit</span>
+              <div class="sc-comp-bar">
+                <div class="sc-bar-track"><div class="sc-bar-fill" style="width:92%;background:var(--green)"></div></div>
+                <span class="sc-comp-val">92</span>
+              </div>
+            </div>
+            <div class="sc-comp">
+              <span class="sc-comp-label">Trade Match</span>
+              <div class="sc-comp-bar">
+                <div class="sc-bar-track"><div class="sc-bar-fill" style="width:88%;background:var(--green)"></div></div>
+                <span class="sc-comp-val">88</span>
+              </div>
+            </div>
+            <div class="sc-comp">
+              <span class="sc-comp-label">Client Relationship</span>
+              <div class="sc-comp-bar">
+                <div class="sc-bar-track"><div class="sc-bar-fill" style="width:75%;background:var(--amber)"></div></div>
+                <span class="sc-comp-val">75</span>
+              </div>
+            </div>
+            <div class="sc-comp">
+              <span class="sc-comp-label">Contract Risk</span>
+              <div class="sc-comp-bar">
+                <div class="sc-bar-track"><div class="sc-bar-fill" style="width:78%;background:var(--green)"></div></div>
+                <span class="sc-comp-val">78</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="sc-flags">
+          <div class="sc-flag"><span class="sc-flag-icon" style="color:var(--green);">✓</span> 12 mi from office</div>
+          <div class="sc-flag"><span class="sc-flag-icon" style="color:var(--green);">✓</span> Prior client relationship</div>
+          <div class="sc-flag"><span class="sc-flag-icon" style="color:var(--amber);">⚠</span> Pay-if-paid clause detected</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROOF BAR -->
+<div class="proof-bar">
+  <div class="container">
+    <div class="proof-inner">
+      <div class="proof-stat">
+        <span class="num">1 in 5</span>
+        <span class="lbl">Average bids a sub wins</span>
+      </div>
+      <div class="proof-divider"></div>
+      <div class="proof-stat">
+        <span class="num">80%</span>
+        <span class="lbl">Of estimating time spent on unwinnable work</span>
+      </div>
+      <div class="proof-divider"></div>
+      <div class="proof-stat">
+        <span class="num">30 sec</span>
+        <span class="lbl">To get a GO/REVIEW/PASS decision</span>
+      </div>
+      <div class="proof-divider"></div>
+      <div class="proof-stat">
+        <span class="num">$49</span>
+        <span class="lbl">To start — less than one bad bid costs you</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">How it works</div>
+      <h2 class="section-title">Three steps to a better bid decision</h2>
+      <p class="section-sub">No training required. Upload, score, decide.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01 —</div>
+        <div class="step-title">Set up your profile</div>
+        <div class="step-desc">Enter your trade, service area, and the clients you work with. Takes about 5 minutes. BidIntell uses this to personalize every score.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02 —</div>
+        <div class="step-title">Upload a bid document</div>
+        <div class="step-desc">Drop a PDF — bid invite, spec book, drawings, or addenda. BidIntell reads it with AI and scores it against your profile.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03 —</div>
+        <div class="step-title">Get GO, REVIEW, or PASS</div>
+        <div class="step-desc">A BidIndex score 0–100 with a plain-English breakdown. Log outcomes over time and the model learns what you actually win.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCORE FACTORS -->
+<section class="section" style="padding-top:0;">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Scoring model</div>
+      <h2 class="section-title">Four factors. One score.</h2>
+      <p class="section-sub">The BidIndex Score is a fit score, not a win probability. It tells you how well a bid matches your specific business.</p>
+    </div>
+    <div class="score-factors">
+      <div class="factor-card">
+        <div class="factor-label">Factor 1</div>
+        <div class="factor-name">Location Fit</div>
+        <div class="factor-desc">Distance from your office to the job site. Weighted by your service area settings.</div>
+      </div>
+      <div class="factor-card">
+        <div class="factor-label">Factor 2</div>
+        <div class="factor-name">Trade Match</div>
+        <div class="factor-desc">How well the spec sections and scope match your CSI trades. Section-level, not just division.</div>
+      </div>
+      <div class="factor-card">
+        <div class="factor-label">Factor 3</div>
+        <div class="factor-name">Client Relationship</div>
+        <div class="factor-desc">Your star rating and win history with the GC, plus competitive pressure from past bids.</div>
+      </div>
+      <div class="factor-card">
+        <div class="factor-label">Factor 4</div>
+        <div class="factor-name">Keywords and Contract Risk</div>
+        <div class="factor-desc">Good and bad keyword scan plus automatic detection of pay-if-paid, retainage, and liquidated damages clauses.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MID CTA -->
+<div class="mid-cta">
+  <div class="container">
+    <h2>Stop guessing. Start scoring.</h2>
+    <p>Your first bid is free. No credit card required.</p>
+    <a href="#" class="btn-hero btn-hero-primary" style="display:inline-flex;">Score Your First Bid Free →</a>
+  </div>
+</div>
+
+<!-- PRICING -->
+<section class="section" id="pricing">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Pricing</div>
+      <h2 class="section-title">Simple, honest pricing</h2>
+      <p class="section-sub">7-day free trial on all plans. Cancel anytime. Founding member pricing locks in for life.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-tier">Solo</div>
+        <div class="price-amount">$49</div>
+        <div class="price-period">/month</div>
+        <div class="price-annual">or $470/year — <span>Save 20%</span></div>
+        <div class="price-seats">1 seat</div>
+        <ul class="price-features">
+          <li>Unlimited bid scoring</li>
+          <li>AI contract risk detection</li>
+          <li>Outcome tracking and learning</li>
+          <li>Email forwarding</li>
+        </ul>
+        <a href="#" class="price-btn price-btn-secondary">Start Free Trial</a>
+      </div>
+
+      <div class="price-card featured">
+        <div class="founding-badge">★ Founding Member</div>
+        <div class="price-tier">Team</div>
+        <div class="price-amount">$99</div>
+        <div class="price-period">/month</div>
+        <div class="price-annual">or $950/year — <span>Save 20%</span></div>
+        <div class="price-seats">Up to 3 seats</div>
+        <ul class="price-features">
+          <li>Everything in Solo</li>
+          <li>Team outcome sharing</li>
+          <li>Shared client intelligence</li>
+          <li>Team analytics</li>
+        </ul>
+        <a href="#" class="price-btn price-btn-primary">Start Free Trial</a>
+      </div>
+
+      <div class="price-card">
+        <div class="price-tier">Company</div>
+        <div class="price-amount">$179</div>
+        <div class="price-period">/month</div>
+        <div class="price-annual">or $1,720/year — <span>Save 20%</span></div>
+        <div class="price-seats">Up to 8 seats</div>
+        <ul class="price-features">
+          <li>Everything in Team</li>
+          <li>Company-wide analytics</li>
+          <li>Priority support</li>
+          <li>Admin controls</li>
+        </ul>
+        <a href="#" class="price-btn price-btn-secondary">Start Free Trial</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-logo">
+        <div class="nav-mark" style="width:26px;height:26px;font-size:11px;">BI</div>
+        BidIntell
+      </div>
+      <div class="footer-links">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Contact</a>
+        <a href="#">hello@bidintell.ai</a>
+      </div>
+      <div class="footer-copy">© 2026 BidIntell. All rights reserved.</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+function setMode(m) {
+  document.body.classList.toggle('old', m === 'old');
+  document.getElementById('btnOld').className = m === 'old' ? 'pill-btn on' : 'pill-btn';
+  document.getElementById('btnNew').className = m === 'new' ? 'pill-btn on' : 'pill-btn';
+}
+</script>
+</body>
+</html>
