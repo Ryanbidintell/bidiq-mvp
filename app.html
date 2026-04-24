@@ -300,6 +300,7 @@
         .outcome-badge.ghost { background: var(--bg-input); color: var(--text-muted); }
         .outcome-badge.pending { background: var(--info-bg); color: var(--info); }
         .outcome-badge.declined { background: var(--bg-input); color: var(--text-secondary); }
+        .outcome-badge.gc_lost { background: var(--bg-input); color: var(--text-muted); }
         
         /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
@@ -2382,81 +2383,47 @@
     </div>
     
     <div class="modal-overlay" id="outcomeModal">
-        <div class="modal">
-            <div class="modal-header"><h3 class="modal-title">Record Outcome</h3><button class="modal-close" onclick="closeModal('outcomeModal')">×</button></div>
+        <div class="modal" style="max-width:600px;">
+            <div class="modal-header"><h3 class="modal-title">Record Outcomes</h3><button class="modal-close" onclick="closeModal('outcomeModal')">×</button></div>
             <div class="modal-body">
                 <input type="hidden" id="outcomeProjectId">
-                <div class="form-group" id="outcomeGCSelectorGroup" style="display:none;">
-                    <label class="form-label">Which client is this outcome for?</label>
-                    <select class="form-select" id="outcomeGCSelector"></select>
-                    <div class="form-hint">For "Won" — the winning client's score counts; other clients on this project are marked as not applicable.</div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">What happened with this bid?</label>
-                    <select class="form-select" id="outcomeType" onchange="(async()=>{await updateOutcomeFields();})()">
-                        <option value="">Select outcome...</option>
-                        <option value="won">Won — We got the job</option>
-                        <option value="lost">Lost — Someone else got it</option>
-                        <option value="ghost">Ghosted — No response from client</option>
-                        <option value="declined">Passed — Was invited, chose not to bid</option>
-                        <option value="no_bid">No Bid — Saw it, didn't pursue an invitation</option>
-                    </select>
-                </div>
+                <div id="outcomeSubmissionsContainer"></div>
                 <div id="outcomeFields"></div>
             </div>
-            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('outcomeModal')">Cancel</button><button class="btn btn-primary" onclick="saveOutcome()">Save Outcome</button></div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('outcomeModal')">Cancel</button><button class="btn btn-primary" onclick="saveOutcome()">Save Outcomes</button></div>
         </div>
     </div>
 
     <!-- Log Bid Submission Modal -->
     <div class="modal-overlay" id="logBidModal">
-        <div class="modal">
+        <div class="modal" style="max-width:580px;">
             <div class="modal-header">
                 <h3 class="modal-title">Log Bid Submission</h3>
                 <button class="modal-close" onclick="closeModal('logBidModal')">×</button>
             </div>
             <div class="modal-body">
-                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Capture your bid details while they're fresh. You'll log the outcome (won/lost/ghosted) separately when you hear back.</p>
+                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">Check the GCs you submitted to and enter your bid amount for each. You'll record the outcome separately when you hear back.</p>
                 <input type="hidden" id="logBidProjectId">
                 <div class="form-group">
-                    <label class="form-label">What did you call this bid? <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional</span></label>
-                    <input type="text" class="form-input" id="logBidScopeLabel" placeholder="e.g. Toilet Compartments — Div 10/12">
+                    <label class="form-label">Which GCs did you submit to?</label>
+                    <div id="logBidGCRows" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;"></div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="addLogBidGCRow()" style="margin-top:8px;">+ Add GC not in list</button>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Divisions submitted <span style="color:var(--text-muted);font-weight:400;font-size:12px;">(check all that apply)</span></label>
-                    <div id="logBidDivisions" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;"></div>
+                    <label class="form-label">Bid Label <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional</span></label>
+                    <input type="text" class="form-input" id="logBidScopeLabel" placeholder="e.g. Flooring Package — Div 09">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Bid Date</label>
                     <input type="date" class="form-input" id="logBidDate">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Bid Amount ($)</label>
-                    <input type="number" class="form-input" id="logBidAmount" placeholder="500000" min="0">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Margin (%)</label>
-                    <input type="number" class="form-input" id="logBidMargin" step="0.1" placeholder="12.5" min="0" max="100">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Alternates <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional</span></label>
-                    <div id="logBidAlternatesList"></div>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="addLogBidAlternate()" style="margin-top:8px;">+ Add Alternate</button>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Client RFI responsiveness <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional</span></label>
-                    <select class="form-select" id="logBidRfi">
-                        <option value="">Not sure / N/A</option>
-                        <option value="1">1 — Unresponsive</option>
-                        <option value="2">2 — Slow, eventually answered</option>
-                        <option value="3">3 — Average</option>
-                        <option value="4">4 — Responsive, good communication</option>
-                        <option value="5">5 — Excellent, proactive</option>
-                    </select>
+                    <label class="form-label">Divisions submitted <span style="color:var(--text-muted);font-weight:400;font-size:12px;">(check all that apply)</span></label>
+                    <div id="logBidDivisions" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:8px;"></div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Notes <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional</span></label>
-                    <textarea class="form-input" id="logBidNotes" rows="2" placeholder="e.g. Included VE alternates, bid to Turner only"></textarea>
+                    <textarea class="form-input" id="logBidNotes" rows="2" placeholder="e.g. VE alternates included"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -11150,8 +11117,8 @@ ${truncatedText}`;
                     // Format recommendation class for badge (use colorful score-badge)
                     const recClass = recommendation.toLowerCase();
                     // Format outcome for badge (use colorful outcome-badge)
-                    const outcomeClass = (p.outcome || 'pending').toLowerCase();
-                    const outcomeText = (p.outcome || 'pending').toUpperCase();
+                    const outcomeClass = (p.outcome || 'pending').toLowerCase().replace('_', '_');
+                    const outcomeText = p.outcome === 'gc_lost' ? 'GC LOST' : (p.outcome || 'pending').toUpperCase();
                     return `<tr>
                         <td>
                             <div style="font-weight:600;">${extracted.project_name || 'Unnamed Project'}</div>
@@ -11538,9 +11505,17 @@ ${truncatedText}`;
                                     <td style="white-space: nowrap;">
                                         <div style="display: flex; gap: 6px; justify-content: flex-end;">
                                             <button class="btn btn-sm btn-secondary" onclick="viewReport('${p.id}')" style="padding:6px 12px;" title="View full report">👁️ View</button>
-                                            ${p.outcome === 'pending' ? (p.outcomeData?.bid_decided
-                                                ? `<span style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;background:var(--accent-blue,#3b82f6);color:#fff;display:inline-flex;align-items:center;white-space:nowrap;">BID SUBMITTED</span><button class="btn btn-sm btn-primary" onclick="showOutcome('${p.id}')" style="padding:6px 12px;" title="Record outcome">📝 Record Outcome</button>`
-                                                : `<button class="btn btn-sm btn-secondary" onclick="showLogBid('${p.id}')" style="padding:6px 12px;" title="Log bid submission">📋 Log Bid</button><button class="btn btn-sm btn-secondary" onclick="showOutcome('${p.id}')" style="padding:6px 12px;" title="Add outcome">📝 Outcome</button>`) : ''}
+                                            ${p.outcome === 'pending' ? (() => {
+                                                const subs = p.outcomeData?.bid_submissions;
+                                                if (subs?.length > 0) {
+                                                    const n = subs.length;
+                                                    return `<span style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;background:var(--accent-blue,#3b82f6);color:#fff;display:inline-flex;align-items:center;white-space:nowrap;">${n} bid${n > 1 ? 's' : ''} submitted</span><button class="btn btn-sm btn-primary" onclick="showOutcome('${p.id}')" style="padding:6px 12px;" title="Record outcome">📝 Record Outcome</button>`;
+                                                } else if (p.outcomeData?.bid_decided) {
+                                                    return `<span style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;background:var(--accent-blue,#3b82f6);color:#fff;display:inline-flex;align-items:center;white-space:nowrap;">BID SUBMITTED</span><button class="btn btn-sm btn-primary" onclick="showOutcome('${p.id}')" style="padding:6px 12px;" title="Record outcome">📝 Record Outcome</button>`;
+                                                } else {
+                                                    return `<button class="btn btn-sm btn-secondary" onclick="showLogBid('${p.id}')" style="padding:6px 12px;" title="Log bid submission">📋 Log Bid</button><button class="btn btn-sm btn-secondary" onclick="showOutcome('${p.id}')" style="padding:6px 12px;" title="Add outcome">📝 Outcome</button>`;
+                                                }
+                                            })() : ''}
                                             <button class="btn btn-sm" onclick="deleteProject('${p.id}')" style="padding:6px 10px; background:var(--danger); color:white;" title="Delete project">🗑️</button>
                                         </div>
                                     </td>
@@ -13303,72 +13278,85 @@ Respond now:`;
         }
 
         // ── Log Bid Submission ──────────────────────────────────────────────
-        let logBidAlternates = [];
 
         function _escAttr(s) {
             return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
 
-        function renderLogBidAlternates() {
-            const container = document.getElementById('logBidAlternatesList');
-            if (!container) return;
-            const rows = logBidAlternates.map((alt, i) => {
-                const div = document.createElement('div');
-                div.style.cssText = 'display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center;';
-                const descInput = document.createElement('input');
-                descInput.type = 'text'; descInput.className = 'form-input'; descInput.placeholder = 'Alternate description'; descInput.value = alt.description || ''; descInput.style.fontSize = '13px';
-                descInput.addEventListener('input', function() { logBidAlternates[i].description = this.value; });
-                const amtInput = document.createElement('input');
-                amtInput.type = 'number'; amtInput.className = 'form-input'; amtInput.placeholder = 'Amount ($)'; amtInput.value = alt.amount || ''; amtInput.style.fontSize = '13px';
-                amtInput.addEventListener('input', function() { logBidAlternates[i].amount = this.value; });
-                const mrgInput = document.createElement('input');
-                mrgInput.type = 'number'; mrgInput.className = 'form-input'; mrgInput.placeholder = 'Margin (%)'; mrgInput.step = '0.1'; mrgInput.value = alt.margin || ''; mrgInput.style.fontSize = '13px';
-                mrgInput.addEventListener('input', function() { logBidAlternates[i].margin = this.value; });
-                const rmBtn = document.createElement('button');
-                rmBtn.type = 'button'; rmBtn.className = 'btn btn-sm'; rmBtn.textContent = '✕'; rmBtn.style.cssText = 'background:var(--danger);color:white;padding:8px 10px;';
-                rmBtn.addEventListener('click', function() { removeLogBidAlternate(i); });
-                div.appendChild(descInput); div.appendChild(amtInput); div.appendChild(mrgInput); div.appendChild(rmBtn);
-                return div;
-            });
-            container.replaceChildren(...rows);
+        // Build a single GC row for the Log Bid modal
+        function buildLogBidGCRow(gcName, existingSub, checked) {
+            const row = document.createElement('div');
+            row.className = 'log-bid-gc-row';
+            row.style.cssText = 'display:grid;grid-template-columns:auto 1fr 110px 90px;gap:8px;align-items:center;padding:8px 10px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);';
+
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.className = 'log-bid-gc-checkbox';
+            cb.checked = checked;
+
+            let nameEl;
+            if (gcName) {
+                nameEl = document.createElement('span');
+                nameEl.style.cssText = 'font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                nameEl.textContent = gcName;
+                row.dataset.gcName = gcName;
+            } else {
+                nameEl = document.createElement('input');
+                nameEl.type = 'text';
+                nameEl.className = 'form-input log-bid-gc-name-input';
+                nameEl.placeholder = 'GC name...';
+                nameEl.style.cssText = 'font-size:13px;padding:4px 8px;';
+            }
+
+            const amtInput = document.createElement('input');
+            amtInput.type = 'number';
+            amtInput.className = 'form-input log-bid-amount';
+            amtInput.placeholder = 'Amount ($)';
+            amtInput.style.cssText = 'font-size:13px;padding:4px 8px;';
+            amtInput.min = '0';
+            if (existingSub?.amount) amtInput.value = existingSub.amount;
+
+            const marginInput = document.createElement('input');
+            marginInput.type = 'number';
+            marginInput.className = 'form-input log-bid-margin';
+            marginInput.placeholder = 'Margin %';
+            marginInput.style.cssText = 'font-size:13px;padding:4px 8px;';
+            marginInput.step = '0.1';
+            marginInput.min = '0';
+            marginInput.max = '100';
+            if (existingSub?.margin) marginInput.value = existingSub.margin;
+
+            row.appendChild(cb);
+            row.appendChild(nameEl);
+            row.appendChild(amtInput);
+            row.appendChild(marginInput);
+            return row;
         }
 
-        function addLogBidAlternate() {
-            logBidAlternates.push({ description: '', amount: '', margin: '' });
-            renderLogBidAlternates();
-        }
-
-        function removeLogBidAlternate(index) {
-            logBidAlternates.splice(index, 1);
-            renderLogBidAlternates();
+        function addLogBidGCRow() {
+            const container = document.getElementById('logBidGCRows');
+            container.appendChild(buildLogBidGCRow('', null, true));
         }
 
         async function showLogBid(id) {
-            logBidAlternates = [];
             document.getElementById('logBidProjectId').value = id;
             document.getElementById('logBidScopeLabel').value = '';
             document.getElementById('logBidDate').value = new Date().toISOString().split('T')[0];
-            document.getElementById('logBidAmount').value = '';
-            document.getElementById('logBidMargin').value = '';
-            document.getElementById('logBidRfi').value = '';
             document.getElementById('logBidNotes').value = '';
-            renderLogBidAlternates();
 
-            // Pre-fill if re-opening after a previous log bid
             const project = allProjectsCache.find(p => p.id === id);
-            const existing = project?.outcomeData?.bid_details;
-            if (existing) {
-                document.getElementById('logBidScopeLabel').value = existing.scope_label || '';
-                document.getElementById('logBidDate').value = existing.bid_date || new Date().toISOString().split('T')[0];
-                document.getElementById('logBidAmount').value = existing.amount || '';
-                document.getElementById('logBidMargin').value = existing.margin || '';
-                document.getElementById('logBidRfi').value = existing.rfi_responsiveness || '';
-                document.getElementById('logBidNotes').value = existing.notes || '';
-                logBidAlternates = existing.alternates ? existing.alternates.map(a => ({ ...a })) : [];
-                renderLogBidAlternates();
+            const existingSubs = project?.outcomeData?.bid_submissions || [];
+            const legacyBid = project?.outcomeData?.bid_details;
+
+            // Pre-fill shared fields
+            const refBid = existingSubs[0] || legacyBid;
+            if (refBid) {
+                document.getElementById('logBidScopeLabel').value = refBid.scope_label || '';
+                document.getElementById('logBidDate').value = refBid.bid_date || new Date().toISOString().split('T')[0];
+                document.getElementById('logBidNotes').value = refBid.notes || '';
             }
 
-            // Build division checkboxes from user settings using safe DOM methods
+            // Build division checkboxes
             const settings = await getSettings();
             const userDivisions = (settings.trades || []).map(String).sort((a,b) => parseInt(a)-parseInt(b));
             const divisionNames = {
@@ -13376,7 +13364,7 @@ Respond now:`;
                 '09':'Finishes','21':'Fire Protection','22':'Plumbing','23':'HVAC',
                 '26':'Electrical','27':'Communications','28':'Electronic Safety','31':'Earthwork','32':'Exterior Improvements'
             };
-            const checkedDivs = existing?.divisions || userDivisions;
+            const checkedDivs = refBid?.divisions || userDivisions;
             const divContainer = document.getElementById('logBidDivisions');
             if (userDivisions.length > 0) {
                 const labels = userDivisions.map(d => {
@@ -13397,90 +13385,246 @@ Respond now:`;
                 divContainer.replaceChildren(msg);
             }
 
+            // Build GC rows — start from project.gcs, supplement with existing submissions
+            const gcContainer = document.getElementById('logBidGCRows');
+            gcContainer.innerHTML = '';
+            const projectGCNames = (project?.gcs || []).map(g => g.name).filter(Boolean);
+            existingSubs.forEach(s => { if (s.gc_name && !projectGCNames.includes(s.gc_name)) projectGCNames.push(s.gc_name); });
+
+            if (projectGCNames.length > 0) {
+                projectGCNames.forEach(gcName => {
+                    const existingSub = existingSubs.find(s => s.gc_name === gcName);
+                    gcContainer.appendChild(buildLogBidGCRow(gcName, existingSub, true));
+                });
+            } else {
+                gcContainer.appendChild(buildLogBidGCRow('', null, true));
+            }
+
             openModal('logBidModal');
         }
 
         async function saveLogBid() {
             const id = document.getElementById('logBidProjectId').value;
-            const amount = document.getElementById('logBidAmount').value;
-            const margin = document.getElementById('logBidMargin').value;
             const scopeLabel = document.getElementById('logBidScopeLabel').value.trim() || null;
             const bidDate = document.getElementById('logBidDate').value || null;
-            const rfiVal = document.getElementById('logBidRfi').value;
             const notes = document.getElementById('logBidNotes').value.trim() || null;
             const divisions = Array.from(document.querySelectorAll('.log-bid-div-checkbox:checked')).map(cb => cb.value);
-            const alternates = logBidAlternates.filter(a => a.description || a.amount);
 
-            const bidDetails = {
-                scope_label: scopeLabel,
-                divisions,
-                bid_date: bidDate,
-                amount: amount ? parseFloat(amount) : null,
-                margin: margin ? parseFloat(margin) : null,
-                alternates,
-                rfi_responsiveness: rfiVal ? parseInt(rfiVal) : null,
-                notes
-            };
+            const gcRows = document.querySelectorAll('.log-bid-gc-row');
+            const submissions = [];
+            gcRows.forEach(row => {
+                const cb = row.querySelector('.log-bid-gc-checkbox');
+                if (!cb?.checked) return;
+                const gcName = row.dataset.gcName || row.querySelector('.log-bid-gc-name-input')?.value?.trim();
+                if (!gcName) return;
+                const amtRaw = row.querySelector('.log-bid-amount')?.value;
+                const marginRaw = row.querySelector('.log-bid-margin')?.value;
+                submissions.push({
+                    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+                    gc_name: gcName,
+                    scope_label: scopeLabel,
+                    amount: amtRaw ? parseFloat(amtRaw) : null,
+                    margin: marginRaw ? parseFloat(marginRaw) : null,
+                    bid_date: bidDate,
+                    divisions,
+                    notes,
+                    outcome: 'pending',
+                    submitted_at: new Date().toISOString()
+                });
+            });
 
-            // Preserve existing non-bid outcome_data fields
+            if (submissions.length === 0) {
+                alert('Please check at least one GC you submitted to.');
+                return;
+            }
+
             const project = allProjectsCache.find(p => p.id === id);
             const existingOutcomeData = project?.outcomeData || {};
-            const newOutcomeData = { ...existingOutcomeData, bid_decided: true, bid_details: bidDetails };
+            const newOutcomeData = { ...existingOutcomeData, bid_decided: true, bid_submissions: submissions };
 
             try {
                 await supabaseClient.from('projects').update({ outcome_data: newOutcomeData }).eq('id', id);
-
-                // Aggregate RFI to client profile
-                if (rfiVal && project?.gcs?.length > 0) {
-                    const allGCs = await getGCs();
-                    const clientName = project.gcs[0]?.name;
-                    const client = allGCs.find(g => g.name === clientName);
-                    if (client) {
-                        const prevCount = client.rfi_count || 0;
-                        const prevAvg = client.avg_rfi || parseInt(rfiVal);
-                        client.rfi_count = prevCount + 1;
-                        client.avg_rfi = Math.round(((prevAvg * prevCount) + parseInt(rfiVal)) / client.rfi_count * 10) / 10;
-                        await saveGC(client);
-                    }
-                }
-
-                // Save divisions to bid_divisions_submitted
                 if (divisions.length > 0) {
                     await supabaseClient.from('projects').update({ bid_divisions_submitted: divisions }).eq('id', id);
                 }
-
                 closeModal('logBidModal');
                 dataCache.projects = null;
                 await loadProjects();
                 await loadDashboard();
-                console.log('✅ Bid submission logged');
+                console.log('✅ Bid submissions logged:', submissions.length, 'GC(s)');
             } catch (error) {
                 console.error('❌ Failed to log bid:', error);
                 alert('Failed to save: ' + error.message);
             }
         }
 
+        // Track selected outcome per submission id
+        let submissionOutcomeSelections = {};
+
+        function selectSubmissionOutcome(subId, outcome) {
+            submissionOutcomeSelections[subId] = outcome;
+
+            const colorMap = { won: '#22c55e', lost: '#ef4444', gc_lost: '#94a3b8', ghost: '#eab308' };
+            const color = colorMap[outcome] || 'var(--accent)';
+
+            document.querySelectorAll(`.outcome-type-btn[data-sub-id="${CSS.escape(subId)}"]`).forEach(btn => {
+                const isActive = btn.dataset.outcome === outcome;
+                btn.style.background = isActive ? color : 'var(--bg-secondary)';
+                btn.style.color = isActive ? 'white' : 'var(--text-primary)';
+                btn.style.borderColor = isActive ? color : 'var(--border-color)';
+            });
+
+            const projectId = document.getElementById('outcomeProjectId').value;
+            const project = allProjectsCache.find(p => p.id === projectId);
+            const sub = (project?.outcomeData?.bid_submissions || []).find(s => s.id === subId);
+            const prefillAmount = sub?.amount || '';
+            const prefillMargin = sub?.margin || '';
+
+            const expanded = document.getElementById('sub-expanded-' + subId);
+            if (!expanded) return;
+
+            if (outcome === 'won') {
+                expanded.style.display = 'block';
+                expanded.innerHTML = `
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+                        <div>
+                            <label class="form-label" style="font-size:12px;">Amount ($) <span style="color:var(--text-muted);font-weight:400;">Optional</span></label>
+                            <input type="number" class="form-input sub-outcome-amount" data-sub-id="${_escAttr(subId)}" value="${_escAttr(prefillAmount)}" placeholder="500000" min="0" style="font-size:13px;">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size:12px;">Margin (%) <span style="color:#ef4444;font-size:11px;">Required</span></label>
+                            <input type="number" class="form-input sub-outcome-margin" data-sub-id="${_escAttr(subId)}" value="${_escAttr(prefillMargin)}" step="0.1" placeholder="12.5" style="font-size:13px;">
+                        </div>
+                    </div>`;
+                // Auto-set other pending GCs to gc_lost
+                document.querySelectorAll('.outcome-sub-row').forEach(row => {
+                    const rSubId = row.dataset.subId;
+                    if (rSubId !== subId && !submissionOutcomeSelections[rSubId]) {
+                        selectSubmissionOutcome(rSubId, 'gc_lost');
+                    }
+                });
+            } else if (outcome === 'lost') {
+                expanded.style.display = 'block';
+                expanded.innerHTML = `
+                    <div style="margin-top:8px;">
+                        <label class="form-label" style="font-size:12px;">How high were you? <span style="color:#ef4444;font-size:11px;">Required</span></label>
+                        <select class="form-select sub-outcome-how-high" data-sub-id="${_escAttr(subId)}" style="font-size:13px;">
+                            <option value="">Select...</option>
+                            <option value="within_2pct">Within 2% of winner</option>
+                            <option value="3_to_5pct">3–5% above winner</option>
+                            <option value="6_to_10pct">6–10% above winner</option>
+                            <option value="above_10pct">More than 10% above</option>
+                            <option value="not_sure">Not sure / unknown</option>
+                        </select>
+                    </div>`;
+            } else {
+                expanded.style.display = 'none';
+                expanded.innerHTML = '';
+            }
+        }
+
+        function renderSubmissionOutcomeRows(container, pendingSubmissions) {
+            container.innerHTML = '';
+            const intro = document.createElement('p');
+            intro.style.cssText = 'font-size:13px;color:var(--text-secondary);margin-bottom:14px;';
+            intro.textContent = 'Set the outcome for each GC you submitted to. "GC Lost" means the GC didn\'t win the job — those bids won\'t count against your win rate.';
+            container.appendChild(intro);
+
+            pendingSubmissions.forEach(sub => {
+                const wrap = document.createElement('div');
+                wrap.className = 'outcome-sub-row';
+                wrap.dataset.subId = sub.id;
+                wrap.style.cssText = 'border:1px solid var(--border-color);border-radius:var(--radius);padding:12px;margin-bottom:10px;';
+
+                const header = document.createElement('div');
+                header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;';
+                const gcLabel = document.createElement('span');
+                gcLabel.style.cssText = 'font-weight:600;font-size:14px;';
+                gcLabel.textContent = sub.gc_name || 'Unknown GC';
+                header.appendChild(gcLabel);
+                if (sub.amount) {
+                    const badge = document.createElement('span');
+                    badge.style.cssText = 'font-size:12px;color:var(--text-muted);';
+                    badge.textContent = '$' + Number(sub.amount).toLocaleString();
+                    header.appendChild(badge);
+                }
+                wrap.appendChild(header);
+
+                const btnGroup = document.createElement('div');
+                btnGroup.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;';
+                [
+                    { value: 'won', label: 'Won' },
+                    { value: 'lost', label: 'Lost' },
+                    { value: 'gc_lost', label: 'GC Lost' },
+                    { value: 'ghost', label: 'Ghosted' }
+                ].forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'outcome-type-btn btn btn-sm';
+                    btn.dataset.subId = sub.id;
+                    btn.dataset.outcome = opt.value;
+                    btn.textContent = opt.label;
+                    btn.style.cssText = 'background:var(--bg-secondary);border:1px solid var(--border-color);cursor:pointer;font-size:12px;padding:5px 12px;';
+                    btn.addEventListener('click', () => selectSubmissionOutcome(sub.id, opt.value));
+                    btnGroup.appendChild(btn);
+                });
+                wrap.appendChild(btnGroup);
+
+                const expandedEl = document.createElement('div');
+                expandedEl.id = 'sub-expanded-' + sub.id;
+                expandedEl.style.display = 'none';
+                wrap.appendChild(expandedEl);
+
+                container.appendChild(wrap);
+            });
+        }
+
+        function renderLegacyOutcomeUI(container, project) {
+            const gcBids = project?.gc_bids || [];
+            let gcSelectorHtml = '';
+            if (gcBids.length > 1) {
+                const opts = gcBids
+                    .sort((a, b) => (b.scores?.final || 0) - (a.scores?.final || 0))
+                    .map(b => `<option value="${_escAttr(b.gc_name || '')}">${_escAttr(b.gc_name || 'Unknown GC')} — ${b.scores?.final || 0}/100</option>`)
+                    .join('');
+                gcSelectorHtml = `<div class="form-group">
+                    <label class="form-label">Which client is this outcome for?</label>
+                    <select class="form-select" id="outcomeGCSelector">${opts}</select>
+                    <div class="form-hint">For "Won" — only the winning client's score counts.</div>
+                </div>`;
+            } else {
+                gcSelectorHtml = `<select class="form-select" id="outcomeGCSelector" style="display:none;">${gcBids.length === 1 ? `<option value="${_escAttr(gcBids[0].gc_name || '')}">${_escAttr(gcBids[0].gc_name || 'Unknown GC')}</option>` : ''}</select>`;
+            }
+            container.innerHTML = gcSelectorHtml + `
+                <div class="form-group">
+                    <label class="form-label">What happened with this bid?</label>
+                    <select class="form-select" id="outcomeType" onchange="(async()=>{await updateOutcomeFields();})()">
+                        <option value="">Select outcome...</option>
+                        <option value="won">Won — We got the job</option>
+                        <option value="lost">Lost — Someone else got it</option>
+                        <option value="gc_lost">GC Lost — The GC didn't win the project</option>
+                        <option value="ghost">Ghosted — No response from client</option>
+                        <option value="declined">Passed — Was invited, chose not to bid</option>
+                        <option value="no_bid">No Bid — Saw it, didn't pursue an invitation</option>
+                    </select>
+                </div>`;
+        }
+
         function showOutcome(id) {
             document.getElementById('outcomeProjectId').value = id;
-            document.getElementById('outcomeType').value = '';
             document.getElementById('outcomeFields').innerHTML = '';
+            submissionOutcomeSelections = {};
 
-            // Show GC selector if project has multiple GC bids
             const project = allProjectsCache.find(p => p.id === id);
-            const gcBids = project?.gc_bids || [];
-            const gcSelectorGroup = document.getElementById('outcomeGCSelectorGroup');
-            const gcSelector = document.getElementById('outcomeGCSelector');
-            if (gcBids.length > 1) {
-                gcSelector.innerHTML = gcBids
-                    .sort((a, b) => (b.scores?.final || 0) - (a.scores?.final || 0))
-                    .map(b => `<option value="${b.gc_name || ''}">${b.gc_name || 'Unknown GC'} — ${b.scores?.final || 0}/100 ${b.scores?.recommendation || ''}</option>`)
-                    .join('');
-                gcSelectorGroup.style.display = '';
+            const submissions = project?.outcomeData?.bid_submissions || [];
+            const pending = submissions.filter(s => !s.outcome || s.outcome === 'pending');
+            const container = document.getElementById('outcomeSubmissionsContainer');
+            container.innerHTML = '';
+
+            if (pending.length > 0) {
+                renderSubmissionOutcomeRows(container, pending);
             } else {
-                gcSelectorGroup.style.display = 'none';
-                gcSelector.innerHTML = gcBids.length === 1
-                    ? `<option value="${gcBids[0].gc_name || ''}">${gcBids[0].gc_name || 'Unknown GC'}</option>`
-                    : '';
+                renderLegacyOutcomeUI(container, project);
             }
 
             openModal('outcomeModal');
@@ -13838,8 +13982,93 @@ Respond now:`;
             `).join('');
         }
 
+        async function saveSubmissionOutcomes(id, project, pendingSubmissions) {
+            const allSubs = [...(project?.outcomeData?.bid_submissions || [])];
+            let hasError = false;
+
+            for (const sub of pendingSubmissions) {
+                const outcome = submissionOutcomeSelections[sub.id];
+                if (!outcome) { alert('Please select an outcome for ' + (sub.gc_name || 'each GC') + '.'); hasError = true; break; }
+
+                const subData = { outcome };
+                if (outcome === 'won') {
+                    const marginEl = document.querySelector(`.sub-outcome-margin[data-sub-id="${CSS.escape(sub.id)}"]`);
+                    if (!marginEl?.value) { alert('Please enter your margin for ' + (sub.gc_name || 'the won bid') + '.'); hasError = true; break; }
+                    subData.margin = parseFloat(marginEl.value);
+                    const amtEl = document.querySelector(`.sub-outcome-amount[data-sub-id="${CSS.escape(sub.id)}"]`);
+                    if (amtEl?.value) subData.amount = parseFloat(amtEl.value);
+                } else if (outcome === 'lost') {
+                    const hhEl = document.querySelector(`.sub-outcome-how-high[data-sub-id="${CSS.escape(sub.id)}"]`);
+                    if (!hhEl?.value) { alert('Please select how high you were for ' + (sub.gc_name || 'the lost bid') + '.'); hasError = true; break; }
+                    subData.howHigh = hhEl.value;
+                }
+
+                const idx = allSubs.findIndex(s => s.id === sub.id);
+                if (idx >= 0) allSubs[idx] = { ...allSubs[idx], ...subData };
+            }
+            if (hasError) return;
+
+            // Derive project-level outcome from all submissions
+            const wonAny = allSubs.some(s => s.outcome === 'won');
+            const lostAny = allSubs.some(s => s.outcome === 'lost');
+            const anyPending = allSubs.some(s => !s.outcome || s.outcome === 'pending');
+            let projectOutcome = 'pending';
+            if (wonAny) projectOutcome = 'won';
+            else if (!anyPending && lostAny) projectOutcome = 'lost';
+            else if (!anyPending) projectOutcome = 'gc_lost';
+
+            const newOutcomeData = { ...(project?.outcomeData || {}), bid_submissions: allSubs };
+
+            try {
+                await supabaseClient.from('projects').update({
+                    outcome: projectOutcome,
+                    outcome_data: newOutcomeData,
+                    outcome_nudge_count: 0,
+                    updated_at: new Date().toISOString()
+                }).eq('id', id);
+
+                // Update client stats — won and lost only (not gc_lost)
+                for (const sub of pendingSubmissions) {
+                    const outcome = submissionOutcomeSelections[sub.id];
+                    if (!outcome || outcome === 'gc_lost') continue;
+                    const allClients = await getClients();
+                    const client = allClients.find(g => g.name === sub.gc_name);
+                    if (!client) continue;
+                    if (outcome === 'won') { client.wins = (client.wins || 0) + 1; client.bids = (client.bids || 0) + 1; }
+                    else if (outcome === 'lost') { client.losses = (client.losses || 0) + 1; client.bids = (client.bids || 0) + 1; }
+                    else if (outcome === 'ghost') { client.ghosts = (client.ghosts || 0) + 1; }
+                    await saveClient(client);
+                }
+
+                try { supabaseClient.from('admin_events').insert({ event_type: 'outcome_recorded', user_id: currentUser.id, event_data: { outcome: projectOutcome, project_id: id } }); } catch(e) {}
+
+                closeModal('outcomeModal');
+                submissionOutcomeSelections = {};
+                dataCache.projects = null;
+                await loadProjects();
+                await loadDashboard();
+                const reportTab = document.getElementById('tab-report');
+                if (reportTab && reportTab.classList.contains('active')) await viewReport(id);
+                gtag('event', 'outcome_recorded', { outcome: projectOutcome });
+                console.log('✅ Submission outcomes saved, project outcome:', projectOutcome);
+            } catch (error) {
+                console.error('❌ Failed to save outcomes:', error);
+                alert('Failed to save outcomes: ' + error.message);
+            }
+        }
+
         async function saveOutcome() {
             const id = document.getElementById('outcomeProjectId').value;
+            // New path: per-submission outcomes
+            const project = allProjectsCache.find(p => p.id === id);
+            const submissions = project?.outcomeData?.bid_submissions || [];
+            const pending = submissions.filter(s => !s.outcome || s.outcome === 'pending');
+            if (pending.length > 0) {
+                await saveSubmissionOutcomes(id, project, pending);
+                return;
+            }
+
+            // Legacy path
             const type = document.getElementById('outcomeType').value;
             if (!type) { alert('Please select an outcome'); return; }
 
@@ -15663,7 +15892,8 @@ Respond now:`;
             // Group projects by month
             const monthlyData = {};
             projects.forEach(p => {
-                if (!p.outcome || p.outcome === 'pending') return;
+                // Only count won and lost — exclude gc_lost, ghost, declined, no_bid, pending
+                if (p.outcome !== 'won' && p.outcome !== 'lost') return;
 
                 const date = new Date(p.created_at);
                 const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -15796,16 +16026,18 @@ Respond now:`;
                     return extracted && extracted.general_contractor === gc.name;
                 });
 
-                const total = gcProjects.length;
                 const won = gcProjects.filter(p => p.outcome === 'won').length;
                 const lost = gcProjects.filter(p => p.outcome === 'lost').length;
                 const ghost = gcProjects.filter(p => p.outcome === 'ghost').length;
                 const declined = gcProjects.filter(p => p.outcome === 'declined').length;
-                const winRate = total > 0 ? (won / total * 100).toFixed(1) : 0;
+                // Win rate = won / (won + lost) — exclude gc_lost and ghost from denominator
+                const competitive = won + lost;
+                const total = gcProjects.filter(p => p.outcome && p.outcome !== 'pending').length;
+                const winRate = competitive > 0 ? (won / competitive * 100).toFixed(1) : 0;
                 const ghostRate = total > 0 ? ((ghost + declined) / total * 100).toFixed(1) : 0;
 
-                return { name: gc.name, total, won, lost, ghost, declined, winRate: parseFloat(winRate), ghostRate: parseFloat(ghostRate) };
-            }).filter(stat => stat.total >= 3); // Minimum 3 bids
+                return { name: gc.name, total, competitive, won, lost, ghost, declined, winRate: parseFloat(winRate), ghostRate: parseFloat(ghostRate) };
+            }).filter(stat => stat.competitive >= 3); // Minimum 3 competitive (won+lost) bids
 
             // Sort for top performers (high win rate)
             const topGCs = [...gcStats].sort((a, b) => b.winRate - a.winRate).slice(0, 5);
