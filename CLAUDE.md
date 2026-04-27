@@ -1,6 +1,6 @@
-# 🤖 Claude Code Instructions for BidIQ Project
+# 🤖 Claude Code Instructions for BidIntell Project
 
-**Last Updated:** March 6, 2026
+**Last Updated:** April 27, 2026
 
 This file contains mandatory rules Claude Code must follow when working on this project.
 
@@ -115,10 +115,12 @@ git commit -m "Before [change description]"
 ### Important Files:
 - `app.html` - Main application (~15K lines, handle with care)
 - `auth.html` - Authentication / magic link flow (logo links back to bidintell.ai)
-- `admin.html` - Founder dashboard (metrics, ROI leads, current users, phase gates, email tool)
+- `admin.html` - Founder dashboard (metrics, ROI leads, current users, FOUNDING30 email tool, comp toggle)
 - `demo.html` - Schedule a Demo intake form → Pipedrive Lead via pipedrive-lead.js
 - `index.html` - Landing page (separate from app.html)
-- `BidIntell_Product_Bible_v1_9.md` - Product roadmap and requirements (v1.9 is current)
+- `roi-calculator.html` - Standalone ROI calculator lead magnet page at /roi-calculator
+- `BidIntell_Product_Bible_v2_0.md` - Product roadmap and requirements (v2.0 is current — NOT v1.9)
+- `apollo-sequences.md` - Apollo cold outreach sequences + upload instructions (3-email specialty subs sequence)
 - `DATA_SAFETY_PROTOCOL.md` - Data handling rules
 - `KNOWN_BUGS.md` - Active bug list
 - `SCHEMA.md` - Database schema (10 tables, keep current)
@@ -134,6 +136,7 @@ git commit -m "Before [change description]"
 ### Backend (netlify/functions/):
 - `analyze.js` - AI API calls (Claude/OpenAI), tracks usage via api_usage table
 - `notify.js` - Email notifications via Postmark; also logs `roi_lead` events to admin_events
+- `inbound-email-background.js` - Postmark inbound webhook → score bid → reply with branded HTML report
 - `stripe-webhook.js` - Stripe subscription webhooks (writes to user_revenue)
 - `stripe-create-checkout.js` - Creates Stripe checkout session
 - `stripe-create-portal.js` - Opens Stripe billing portal
@@ -148,19 +151,24 @@ git commit -m "Before [change description]"
 
 ## 🎯 PROJECT GOALS
 
-### Current Phase: 1.5 (Beta Testing & Refinement)
+### Current Phase: 2 — Paid Launch & User Growth (as of April 2026)
 
 **Priority Order:**
-1. **Data safety** - Never lose data again
-2. **Bug fixes** - Fix what's broken
-3. **User validation** - Does it work for real users?
-4. **Feature development** - Only after above are solid
+1. **Get to 10 paying users** - Outbound outreach, referrals, ROI calculator lead magnet
+2. **Data safety** - Never lose data again
+3. **Bug fixes** - Fix what's broken
+4. **Feature development** - Only after user growth is on track
+
+**Active growth levers:**
+- Apollo cold outreach (apollo-sequences.md) → 100 contacts in MO/KS/CO
+- ROI calculator at bidintell.ai/roi-calculator → lead capture
+- Referrals from FDC Contract + Summit Sealants
+- FOUNDING30 coupon emails → admin.html → Load Users → Send FOUNDING30 Emails
 
 **Not priorities right now:**
 - ❌ Infrastructure optimization
 - ❌ Perfect code architecture
-- ❌ SEO/marketing features
-- ❌ New features (unless critical)
+- ❌ New features (Estimating Front Office, etc.) until 10+ users
 
 ---
 
