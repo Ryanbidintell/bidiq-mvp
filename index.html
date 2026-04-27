@@ -1422,11 +1422,8 @@ img { max-width: 100%; display: block; }
     <ul class="nav-links">
       <li><a href="#how">How It Works</a></li>
       <li><a href="#features">Features</a></li>
-      <li><a href="#intelligence">Intelligence</a></li>
       <li><a href="#who">Who It's For</a></li>
-      <li><a href="#calculator">Calculator</a></li>
       <li><a href="#pricing">Pricing</a></li>
-      <li><a href="/contact">Contact</a></li>
       <li><a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=nav-cta" style="color: var(--cloud);">Sign In</a></li>
       <li><a href="/demo" class="nav-cta">Schedule a Demo →</a></li>
     </ul>
@@ -1688,6 +1685,15 @@ img { max-width: 100%; display: block; }
   </div>
 </section>
 
+<!-- ICP CTA STRIP -->
+<section style="padding:48px 0; background:var(--ink-light); border-top:1px solid rgba(255,255,255,0.04); border-bottom:1px solid rgba(255,255,255,0.04);">
+  <div class="container" style="text-align:center;">
+    <p style="font-size:1.1rem; color:var(--white); font-weight:600; margin-bottom:8px;">Sound like you? Score your next bid in under 2 minutes.</p>
+    <p style="font-size:0.9rem; color:var(--fog); margin-bottom:24px;">7-day free trial. No credit card at signup.</p>
+    <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=icp-cta" class="btn-primary" onclick="gtag('event','cta_click',{cta_location:'icp',cta_text:'Score Your First Bid Free'})">Score Your First Bid Free →</a>
+  </div>
+</section>
+
 <!-- FEATURES -->
 <section class="features-section" id="features">
   <div class="container">
@@ -1695,7 +1701,6 @@ img { max-width: 100%; display: block; }
     <!-- Feature 1: Personalized Scoring -->
     <div class="feature-row fade-up">
       <div class="feature-content">
-        <span class="section-tag">Personalized scoring</span>
         <h3>Same bid. Different score.<br>That's the point.</h3>
         <p>An HVAC contractor with a 50-mile radius and an electrician across the state should never get the same recommendation on the same project. BidIntell scores every bid based on your specific trade, service area, client relationships, and capacity — weighted the way <em>you</em> prioritize them.</p>
         <ul class="feature-list">
@@ -1739,7 +1744,6 @@ img { max-width: 100%; display: block; }
     <!-- Feature 2: Outcome Tracking -->
     <div class="feature-row reverse fade-up">
       <div class="feature-content">
-        <span class="section-tag">Outcome intelligence</span>
         <h3>Every bid outcome builds<br>your intelligence edge.</h3>
         <p>Won, lost, ghosted, passed, or never pursued — BidIntell tracks every outcome and captures why. Over time, patterns emerge: which project types you win, which clients respond, and where your sweet spot really is.</p>
         <ul class="feature-list">
@@ -1776,7 +1780,6 @@ img { max-width: 100%; display: block; }
     <!-- Feature 3: Crowdsourced Intelligence -->
     <div class="feature-row fade-up">
       <div class="feature-content">
-        <span class="section-tag">Built on real bid outcomes</span>
         <h3>Every sub on BidIntell makes every other sub smarter.</h3>
         <p>Most software is just as smart on day one as it ever gets. BidIntell is different. Every bid analyzed, every outcome tracked, every client rated adds to a dataset that has never existed before in construction — and every user benefits automatically and anonymously.</p>
         <ul class="feature-list">
@@ -2325,18 +2328,52 @@ img { max-width: 100%; display: block; }
   </div>
 </section>
 
+<!-- TESTIMONIALS -->
+<section class="testimonial-section">
+  <div class="container">
+    <div style="text-align:center; margin-bottom:48px;">
+      <span class="section-tag">From the field</span>
+      <h2 style="font-size:clamp(1.5rem,2.5vw,2rem); font-weight:700; color:var(--white); letter-spacing:-0.02em;">Real subs. Real bids. Real results.</h2>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:24px; max-width:960px; margin:0 auto;">
+      <div style="background:var(--ink-mid); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius-lg); padding:28px 28px 24px;">
+        <div style="color:var(--accent); font-size:1.5rem; margin-bottom:16px; line-height:1;">"</div>
+        <blockquote style="font-size:1rem; color:var(--white); line-height:1.7; margin-bottom:20px; font-style:normal;"><!-- REPLACE: add quote from Collin Stergos / FDC Contract here. Something like "BidIntell helped us pass on a job that scored 34 — saved our estimator a full day." -->[Quote from Collin Stergos, FDC Contract — coming soon]</blockquote>
+        <div class="testimonial-author" style="justify-content:flex-start;">
+          <div class="ta-avatar" style="width:40px;height:40px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;color:white;font-size:0.85rem;flex-shrink:0;">CS</div>
+          <div>
+            <div style="font-weight:600; color:var(--white); font-size:0.9rem;">Collin Stergos</div>
+            <div style="font-size:0.8rem; color:var(--fog);">FDC Contract · North Kansas City, MO</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--ink-mid); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius-lg); padding:28px 28px 24px;">
+        <div style="color:var(--accent); font-size:1.5rem; margin-bottom:16px; line-height:1;">"</div>
+        <blockquote style="font-size:1rem; color:var(--white); line-height:1.7; margin-bottom:20px; font-style:normal;"><!-- REPLACE: add quote from Brennan K / Summit Sealants here. Something about saving time or better bid selection. -->[Quote from Brennan K., Summit Sealants — coming soon]</blockquote>
+        <div class="testimonial-author" style="justify-content:flex-start;">
+          <div class="ta-avatar" style="width:40px;height:40px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;color:white;font-size:0.85rem;flex-shrink:0;">BK</div>
+          <div>
+            <div style="font-weight:600; color:var(--white); font-size:0.9rem;">Brennan K.</div>
+            <div style="font-size:0.8rem; color:var(--fog);">Summit Sealants · Sedalia, CO</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- CTA -->
 <section class="cta-section" id="apply">
   <div class="container">
-    <span class="section-tag">7-day free trial</span>
-    <h2>Start building intelligence around your bids.</h2>
-    <p>Every bid you analyze and every outcome you record makes the system smarter — for you and for every sub on the platform. Founding member pricing locks in for the life of your subscription.</p>
+    <span class="section-tag">Founding member pricing</span>
+    <h2>Stop guessing. Start scoring.</h2>
+    <p>Forward a bid invite and get a scored report back in under 2 minutes — no calls, no setup, no contracts. Founding member pricing locks in for the life of your subscription. We're raising prices after the first 50 members.</p>
     <form id="beta-form" class="cta-form" onsubmit="handleBetaSubmit(event)">
       <input type="email" id="email" name="email" placeholder="your@company.com" required>
       <button type="submit" class="btn-primary" style="white-space:nowrap;">Start Free Trial →</button>
     </form>
     <div id="form-message" style="margin-top: 12px; font-size: 0.9rem; text-align: center;"></div>
-    <p style="font-size:0.8rem; color:var(--slate-light); margin-top:12px;">7-day free trial. Cancel before day 8 and you won't be charged.</p>
+    <p style="font-size:0.8rem; color:var(--slate-light); margin-top:12px;">7-day free trial · Cancel before day 8 and pay nothing · Founding pricing locks in forever</p>
   </div>
 </section>
 
