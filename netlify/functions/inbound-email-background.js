@@ -544,47 +544,186 @@ exports.handler = async (event) => {
     // 11. Send reply email
     const projectName = extracted.project_name || Subject || 'New Bid';
     const gcName      = extracted.gc_name || 'Unknown GC';
-    const replySubject = `BidIndex Score: ${final}/100 — ${projectName} (${gcName})`;
+    const replySubject = `BidIndex Score: ${final}/100 — ${recommendation} · ${projectName}`;
 
+    // ── Colors ──────────────────────────────────────────────────────────────────────────
+    const isGo     = recommendation === 'GO';
+    const isReview = recommendation.startsWith('REVIEW');
+    const recColor  = isGo ? '#22c55e' : isReview ? '#eab308' : '#ef4444';
+    const recBgCell = isGo ? '#0d2117' : isReview ? '#1a1500' : '#1a0808';
+    const recLabel  = isGo ? 'GO — Strong Fit' : isReview ? 'REVIEW — Evaluate Carefully' : 'PASS — Not a Fit';
+
+    // ── Helpers ────────────────────────────────────────────────────────────────────────
+    const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+    const scoreBar = (label, comp, reasonOverride) => {
+        const s = comp.score ?? 0;
+        const bar = s >= 70 ? '#22c55e' : s >= 50 ? '#eab308' : '#ef4444';
+        const pct = Math.min(100, Math.max(0, s));
+        const reason = esc(reasonOverride ?? comp.reason ?? '');
+        return `
+<tr>
+  <td style="padding:0 0 2px;">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="140" style="color:rgba(255,255,255,0.65);font-size:12px;font-weight:500;vertical-align:middle;padding-right:12px;white-space:nowrap;">${esc(label)}</td>
+        <td style="vertical-align:middle;padding-right:12px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,0.08);">
+            <tr>
+              <td width="${pct}%" style="background:${bar};height:5px;font-size:1px;line-height:1px;">&nbsp;</td>${pct < 100 ? '<td style="font-size:1px;line-height:1px;">&nbsp;</td>' : ''}
+            </tr>
+          </table>
+        </td>
+        <td width="52" style="color:${bar};font-size:13px;font-weight:700;text-align:right;white-space:nowrap;vertical-align:middle;">${s}/100</td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr><td style="color:rgba(255,255,255,0.38);font-size:11px;padding:3px 0 14px;">${reason}</td></tr>`;
+    };
+
+    // ── Score component rows ──────────────────────────────────────────────────────────────────
+    const componentRows = [
+        scoreBar('Location Fit',        locComp),
+        scoreBar('Trade Match',         trComp),
+        scoreBar('Client Relationship', gcComp),
+        scoreBar('Keywords & Scope',    kwComp, 'Pending — upload documents for full keyword analysis'),
+        ...(contractComp ? [scoreBar('Contract Terms', contractComp)] : [])
+    ].join('');
+
+    // ── AI analysis summary (same template logic as renderAIInsights in app.html) ─────────
+    const summaryParts = [];
+    const buildingType = (typeof extracted.building_type === 'object'
+        ? extracted.building_type?.type
+        : extracted.building_type) || 'project';
+    const distMiles = locComp.details?.dist;
+    if (distMiles !== undefined) {
+        summaryParts.push(`This ${buildingType.toLowerCase()} is ${distMiles} miles from your office.`);
+        if (locComp.score >= 80)      summaryParts.push('The location is well within your service area.');
+        else if (locComp.score >= 60) summaryParts.push('The location is at the edge of your service area.');
+        else                          summaryParts.push('The location may be outside your typical service area — factor in travel cost.');
+    } else {
+        summaryParts.push('Location could not be determined from this email.');
+    }
+    if (trComp.score === 0) {
+        summaryParts.push('No matching trades were detected in the scope — confirm your work type is included before investing time on a takeoff.');
+    } else if (trComp.score >= 70) {
+        summaryParts.push('Trade scope aligns well with your configured divisions.');
+    }
     const topRisk = contractRisks?.risks_found?.[0];
+    if (topRisk) {
+        summaryParts.push(`Contract flag: ${topRisk.plain_english || topRisk.clause_type || 'review contract terms carefully'}.`);
+    }
+    if (extracted.bond_required === true) {
+        summaryParts.push('Bond is required on this project.');
+    }
+    if (gcComp.score < 40) {
+        summaryParts.push('No prior relationship history on file for this client — treat this as a cold start.');
+    }
+    const aiSummary = esc(summaryParts.join(' '));
 
-    const replyLines = [
-        `─────────────────────────────────`,
+    // ── Warning rows ────────────────────────────────────────────────────────────────────
+    let warningRows = '';
+    if (topRisk) {
+        warningRows += `<tr><td style="background:#1a0808;border-left:3px solid #ef4444;padding:10px 14px;color:#fca5a5;font-size:12px;line-height:1.5;">&#9888; ${esc(topRisk.plain_english || topRisk.clause_type || 'Contract risk detected')}</td></tr>`;
+    }
+    if (extracted.bond_required === true) {
+        warningRows += '<tr><td style="background:#1a1200;border-left:3px solid #eab308;padding:10px 14px;color:#fde68a;font-size:12px;">&#9888; Bond required on this project</td></tr>';
+    }
+    if (skippedFiles.length > 0) {
+        const msg = processedCount === 0
+            ? `${skippedFiles.join(', ')} exceeded the 4MB email limit. Score is based on email text only — open the project in BidIntell to upload the PDF for a full analysis.`
+            : `${skippedFiles.join(', ')} was too large to score (4MB limit). Score reflects the other attachments.`;
+        warningRows += `<tr><td style="background:#1a1200;border-left:3px solid #eab308;padding:10px 14px;color:#fde68a;font-size:12px;line-height:1.5;">&#9888; ${esc(msg)}</td></tr>`;
+    }
+
+    // ── Meta line ───────────────────────────────────────────────────────────────────────────
+    const locationStr = [extracted.project_city, extracted.project_state].filter(Boolean).join(', ');
+    const metaParts = [
+        esc(gcName),
+        locationStr ? esc(locationStr) : null,
+        extracted.bid_due_date ? `Due ${esc(formatDate(extracted.bid_due_date))}` : null
+    ].filter(Boolean).join('&nbsp;&nbsp;·&nbsp;&nbsp;');
+
+    // ── Plain text fallback ───────────────────────────────────────────────────────────────────
+    const plainText = [
         `BidIndex Score: ${final}/100 — ${recommendation}`,
-        `─────────────────────────────────`,
-        ``,
+        '',
         `${gcName} | ${projectName}`,
-        extracted.project_city && extracted.project_state
-            ? `${extracted.project_city}, ${extracted.project_state}`
-            : (extracted.project_city || extracted.project_state || ''),
-        `Bid Due: ${formatDate(extracted.bid_due_date)}`,
-        ``,
-        `SCORE BREAKDOWN`,
-        `Location Match:   ${locComp.score}/100 (weight ${locComp.weight}%)`,
-        `Trade Match:      ${trComp.score}/100 (weight ${trComp.weight}%)`,
-        `Client Relationship: ${gcComp.score}/100 (weight ${gcComp.weight}%)`,
-        `Keywords:         ${kwComp.score}/100 (weight ${kwComp.weight}%) — neutral for email forwards`,
-        contractComp
-            ? `Contract Terms:   ${contractComp.score}/100 (weight ${gcComp.weight}%)`
-            : `Contract Terms:   Pending — upload documents for full analysis`,
-        ``,
-        topRisk ? `\u26A0\uFE0F  ${topRisk.clause_type || topRisk.plain_english || 'Contract risk flag'}` : null,
-        extracted.bond_required === true ? `\u26A0\uFE0F  Bond required` : null,
-        skippedFiles.length > 0 && processedCount === 0
-            ? `⚠️  ${skippedFiles.join(', ')} exceeded the 4MB email limit.
-   Score above is based on the email text only. Your project was created in BidIntell — open it and upload the PDF for a complete analysis:
-   https://bidintell.ai/app.html`
-            : skippedFiles.length > 0
-            ? `⚠️  ${skippedFiles.join(', ')} was too large to score (4MB limit). Score above reflects the other attachments.
-   Upload the skipped file in the app: https://bidintell.ai/app.html`
-            : null,
-        ``,
-        `─────────────────────────────────`,
-        `View full report \u2192 https://bidintell.ai/app.html`,
-        `─────────────────────────────────`,
-        ``,
-        `Powered by BidIntell \u00B7 bidintell.ai`
-    ].filter(line => line !== null).join('\n');
+        locationStr || '',
+        extracted.bid_due_date ? `Due: ${formatDate(extracted.bid_due_date)}` : '',
+        '',
+        'SCORE BREAKDOWN',
+        `Location Fit:        ${locComp.score}/100  ${locComp.reason || ''}`,
+        `Trade Match:         ${trComp.score}/100  ${trComp.reason || ''}`,
+        `Client Relationship: ${gcComp.score}/100  ${gcComp.reason || ''}`,
+        `Keywords & Scope:    ${kwComp.score}/100  Pending — upload documents for full analysis`,
+        contractComp ? `Contract Terms:      ${contractComp.score}/100` : '',
+        '',
+        summaryParts.join(' '),
+        '',
+        'View full report: https://bidintell.ai/app.html',
+        'BidIntell · bidintell.ai'
+    ].filter(l => l !== null).join('\n');
+
+    // ── HTML email ────────────────────────────────────────────────────────────────────────────
+    const replyHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BidIntell Report</title>
+</head>
+<body style="margin:0;padding:0;background:#0d1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0d1117;padding:20px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+  <tr><td style="background:${recColor};height:3px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+
+  <!-- Header -->
+  <tr><td style="background:#0B0F14;padding:28px 32px 24px;text-align:center;">
+    <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding-bottom:18px;">
+      <span style="display:inline-block;background:#F26522;color:white;font-weight:800;font-size:11px;padding:3px 7px;border-radius:3px;letter-spacing:0.04em;vertical-align:middle;">BI</span><span style="color:white;font-weight:700;font-size:14px;margin-left:6px;vertical-align:middle;">BidIntell</span><span style="color:rgba(255,255,255,0.28);font-size:10px;margin-left:8px;text-transform:uppercase;letter-spacing:0.14em;vertical-align:middle;">Intelligence Report</span>
+    </td></tr></table>
+    <div style="font-size:64px;font-weight:800;color:${recColor};line-height:1;letter-spacing:-2px;">${final}</div>
+    <div style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:4px;letter-spacing:0.08em;text-transform:uppercase;">out of 100</div>
+    <div style="margin-top:14px;"><span style="display:inline-block;background:${recBgCell};color:${recColor};border:1px solid ${recColor};font-weight:700;font-size:12px;padding:5px 18px;border-radius:99px;letter-spacing:0.06em;text-transform:uppercase;">${recLabel}</span></div>
+    <div style="color:white;font-size:17px;font-weight:600;margin-top:18px;line-height:1.35;">${esc(projectName)}</div>
+    <div style="color:rgba(255,255,255,0.38);font-size:12px;margin-top:8px;">${metaParts}</div>
+  </td></tr>
+
+  <!-- Score Breakdown -->
+  <tr><td style="background:#141A23;padding:22px 32px 8px;">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.14em;color:#F26522;font-weight:700;margin-bottom:16px;">Score Breakdown</div>
+    <table width="100%" cellpadding="0" cellspacing="0">${componentRows}</table>
+  </td></tr>
+
+  <!-- AI Analysis -->
+  <tr><td style="background:#141A23;padding:0 32px 22px;">
+    <table width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td style="border-left:3px solid #F26522;padding:12px 16px;background:#1C2533;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.14em;color:#F26522;font-weight:700;margin-bottom:8px;">AI Analysis</div>
+        <div style="color:rgba(255,255,255,0.72);font-size:13px;line-height:1.7;">${aiSummary}</div>
+      </td>
+    </tr></table>
+  </td></tr>
+
+  ${warningRows ? `<!-- Warnings --><tr><td style="background:#141A23;padding:0 32px 12px;"><table width="100%" cellpadding="0" cellspacing="0" style="border-spacing:0 3px;">${warningRows}</table></td></tr>` : ''}
+
+  <!-- CTA -->
+  <tr><td style="background:#0B0F14;padding:26px 32px 28px;text-align:center;border-top:1px solid rgba(255,255,255,0.06);">
+    <a href="https://bidintell.ai/app.html" style="display:inline-block;background:#F26522;color:white;font-weight:700;font-size:14px;padding:12px 28px;border-radius:6px;text-decoration:none;letter-spacing:0.02em;">View Full Report &rarr;</a>
+    <div style="color:rgba(255,255,255,0.2);font-size:11px;margin-top:16px;">BidIntell &middot; bidintell.ai</div>
+  </td></tr>
+
+  <tr><td style="background:${recColor};height:2px;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
 
     let replyStatus = null;
     try {
@@ -599,7 +738,11 @@ exports.handler = async (event) => {
                 To: userEmail,
                 Bcc: 'ryan@bidintell.ai',
                 Subject: replySubject,
-                TextBody: replyLines,
+                HtmlBody: replyHtml,
+                TextBody: plainText,
+                MessageStream: 'outbound'
+            })
+        });
                 MessageStream: 'outbound'
             })
         });
