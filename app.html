@@ -8867,13 +8867,13 @@ ${truncatedText}`
                     spec_divisions_found: extracted.spec_divisions_found || [],
                     sheet_disciplines_found: extracted.sheet_disciplines_found || [],
                     scope_of_work_trades: extracted.scope_of_work_trades || [],
-                    contract_risk_clauses: extracted.contract_risk_clauses || {
-                        pay_if_paid: false,
-                        liquidated_damages: false,
-                        broad_indemnification: false,
-                        no_damage_for_delay: false,
-                        waiver_consequential_damages: false,
-                        retainage_over_10_percent: false
+                    contract_risk_clauses: {
+                        pay_if_paid: parseBool(extracted.contract_risk_clauses?.pay_if_paid),
+                        liquidated_damages: parseBool(extracted.contract_risk_clauses?.liquidated_damages),
+                        broad_indemnification: parseBool(extracted.contract_risk_clauses?.broad_indemnification),
+                        no_damage_for_delay: parseBool(extracted.contract_risk_clauses?.no_damage_for_delay),
+                        waiver_consequential_damages: parseBool(extracted.contract_risk_clauses?.waiver_consequential_damages),
+                        retainage_over_10_percent: parseBool(extracted.contract_risk_clauses?.retainage_over_10_percent)
                     },
                     has_contract_language: extracted.contract_language_present || false,
                     bid_bond_required: parseBool(extracted.bid_bond_required),
@@ -10102,6 +10102,29 @@ ${truncatedText}`
                             <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Architect</div>
                             <div style="font-weight:500;font-size:14px;">${extracted.architect_name || 'Not found'}</div>
                         </div>
+                        <div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Project Type</div>
+                            <div style="font-weight:500;font-size:14px;">${extracted.project_type || 'Not found'}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Bid Deadline</div>
+                            <div style="font-weight:500;font-size:14px;">${extracted.bid_deadline || 'Not found'}</div>
+                        </div>
+                        ${(extracted.scope_of_work_trades && extracted.scope_of_work_trades.length > 0) ? `
+                        <div style="grid-column: 1 / -1;">
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Trades / Scope</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;">
+                                ${extracted.scope_of_work_trades.map(t => `<span style="background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:4px;padding:2px 8px;font-size:12px;color:var(--text-secondary);">${t}</span>`).join('')}
+                            </div>
+                        </div>` : ''}
+                        ${extracted.bid_bond_required || extracted.invitation_only ? `
+                        <div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Bid Flags</div>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;">
+                                ${extracted.bid_bond_required ? '<span style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:4px;padding:2px 8px;font-size:12px;">Bond Required</span>' : ''}
+                                ${extracted.invitation_only ? '<span style="background:rgba(234,179,8,0.1);color:#eab308;border:1px solid rgba(234,179,8,0.3);border-radius:4px;padding:2px 8px;font-size:12px;">Invitation Only</span>' : ''}
+                            </div>
+                        </div>` : ''}
                     </div>
                 </div>
 

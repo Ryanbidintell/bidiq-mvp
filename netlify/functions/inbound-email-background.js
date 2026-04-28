@@ -310,23 +310,28 @@ exports.handler = async (event) => {
 
     // 5. Extract project data from email via Claude
     const extractionSystemPrompt =
-        'You are extracting structured data from a construction bid document email. ' +
+        'You are extracting structured data from a construction bid invitation email. ' +
         'Return JSON only. No preamble. No markdown. No explanation.';
 
     const extractionUserPrompt =
-        `Extract the following fields from this bid document email. ` +
-        `Use null for any field not explicitly stated — do not guess.\n\n` +
+        `Extract the following fields from this bid invitation email. ` +
+        `Use null/[] for any field not explicitly stated — do not guess.\n\n` +
         `{\n` +
-        `  "gc_name": string | null,\n` +
-        `  "project_name": string | null,\n` +
-        `  "project_city": string | null,\n` +
-        `  "project_state": string | null,\n` +
-        `  "project_address": string | null,\n` +
-        `  "bid_due_date": string | null,\n` +
-        `  "scope_description": string | null,\n` +
-        `  "trade_keywords": string[],\n` +
-        `  "bond_required": boolean | null,\n` +
-        `  "estimated_value": number | null\n` +
+        `  "gc_names": ["array of general contractor names who sent or are listed in this invitation"],\n` +
+        `  "project_name": "project name or null",\n` +
+        `  "project_city": "city or null",\n` +
+        `  "project_state": "2-letter state code or null",\n` +
+        `  "project_address": "construction site address only (not sender address) or null",\n` +
+        `  "bid_deadline": "bid due date/time like 'February 15, 2026 at 2:00 PM' — NOT pre-bid meeting date or RFI deadline, or null",\n` +
+        `  "building_type": "one of: Healthcare/Office/Multifamily/Retail/Industrial/Education/Higher Education/Government/Religious/Mixed-Use/Infrastructure/Other",\n` +
+        `  "project_type": "one of: New Construction/Renovation/Addition/Tenant Improvement/Demolition/Mixed",\n` +
+        `  "scope_of_work_trades": ["array of trade scopes mentioned"],\n` +
+        `  "scope_summary": "1-2 sentence description of the project and trades",\n` +
+        `  "bid_bond_required": false,\n` +
+        `  "invitation_only": false,\n` +
+        `  "multiple_bidders_expected": false,\n` +
+        `  "vague_scope": false,\n` +
+        `  "estimated_value": null\n` +
         `}\n\n` +
         `Sender name/domain: ${From}\n` +
         `Subject: ${Subject || ''}\n` +
@@ -344,14 +349,15 @@ exports.handler = async (event) => {
         extracted = {};
     }
 
-    // 6. GC name fallback: parse from From header
-    if (!extracted.gc_name) {
+    // 6. GC name fallback: parse from From header if not extracted
+    if (!extracted.gc_names || !Array.isArray(extracted.gc_names) || extracted.gc_names.length === 0) {
+        extracted.gc_names = [];
         const displayMatch = (From || '').match(/^(.+?)\s*</);
-        if (displayMatch) {
-            extracted.gc_name = displayMatch[1].trim();
+        if (displayMatch && displayMatch[1].trim().length > 1) {
+            extracted.gc_names = [displayMatch[1].trim()];
         } else {
             const domainMatch = (From || '').match(/@([^.]+)/);
-            extracted.gc_name = domainMatch ? domainMatch[1] : null;
+            if (domainMatch) extracted.gc_names = [domainMatch[1]];
         }
     }
 
@@ -394,19 +400,40 @@ exports.handler = async (event) => {
                 'Return JSON only. No preamble. No markdown.';
 
             const pdfUserPrompt =
-                `Extract these fields from the PDF. Use null if not found.\n\n` +
+                `You are analyzing a construction bid document PDF for a subcontractor. Extract the following fields and return as JSON only.\n\n` +
                 `{\n` +
-                `  "gc_name": string | null,\n` +
-                `  "project_name": string | null,\n` +
-                `  "project_city": string | null,\n` +
-                `  "project_state": string | null,\n` +
-                `  "project_address": string | null,\n` +
-                `  "bid_due_date": string | null,\n` +
-                `  "scope_description": string | null,\n` +
-                `  "trade_keywords": string[],\n` +
-                `  "bond_required": boolean | null,\n` +
-                `  "estimated_value": number | null,\n` +
-                `  "contract_risk_flags": string[]\n` +
+                `  "project_name": "building/project name from title block or cover page",\n` +
+                `  "project_address": "construction SITE address only — from title block on drawings or cover page on specs. NOT architect/GC/owner office addresses.",\n` +
+                `  "project_city": "city where project is located",\n` +
+                `  "project_state": "2-letter US state code",\n` +
+                `  "project_zip": "zip code if stated",\n` +
+                `  "building_type": "one of: Healthcare/Office/Multifamily/Retail/Industrial/Education/Higher Education/Government/Religious/Mixed-Use/Infrastructure/Other",\n` +
+                `  "project_type": "one of: New Construction/Renovation/Addition/Tenant Improvement/Demolition/Mixed",\n` +
+                `  "bid_deadline": "bid submission deadline as 'Month DD, YYYY at H:MM AM/PM' — NOT pre-bid meeting, NOT RFI deadline, NOT substantial completion",\n` +
+                `  "project_size_sf": "total building square footage as integer — ignore unit sizes and parking areas",\n` +
+                `  "estimated_value": "estimated construction cost as number or null",\n` +
+                `  "owner_name": "building owner — NOT the GC who sent the invite",\n` +
+                `  "architect_name": "architect or design firm",\n` +
+                `  "gc_names": ["array of general contractor names from bid invitation or project directory — NOT from drawings"],\n` +
+                `  "gc_addresses": ["array of GC addresses matching gc_names order"],\n` +
+                `  "spec_divisions_found": [2, 7, 8, 9],\n` +
+                `  "sheet_disciplines_found": ["A", "S", "M", "P", "E", "FP"],\n` +
+                `  "scope_of_work_trades": ["array of trades — combine sheet codes + spec divisions + scope text. Div 22=Plumbing, Div 23=HVAC, Div 26=Electrical, Div 21=Fire Suppression"],\n` +
+                `  "scope_summary": "2-3 sentences: project type, primary trades, notable systems",\n` +
+                `  "contract_risk_clauses": {\n` +
+                `    "pay_if_paid": false,\n` +
+                `    "liquidated_damages": false,\n` +
+                `    "broad_indemnification": false,\n` +
+                `    "no_damage_for_delay": false,\n` +
+                `    "waiver_consequential_damages": false,\n` +
+                `    "retainage_over_10_percent": false\n` +
+                `  },\n` +
+                `  "contract_language_present": false,\n` +
+                `  "bid_bond_required": false,\n` +
+                `  "invitation_only": false,\n` +
+                `  "multiple_bidders_expected": false,\n` +
+                `  "bid_shopping_language": false,\n` +
+                `  "vague_scope": false\n` +
                 `}`;
 
             const pdfRaw = await callClaude(
@@ -436,14 +463,20 @@ exports.handler = async (event) => {
             }
 
             // Merge: PDF fields take priority over email fields where both exist
-            for (const key of ['gc_name', 'project_name', 'project_city', 'project_state',
-                                'project_address', 'bid_due_date', 'scope_description',
-                                'bond_required', 'estimated_value']) {
+            for (const key of ['project_name', 'project_city', 'project_state', 'project_address',
+                                'bid_deadline', 'building_type', 'project_type', 'project_size_sf',
+                                'estimated_value', 'owner_name', 'architect_name',
+                                'bid_bond_required', 'invitation_only', 'multiple_bidders_expected',
+                                'bid_shopping_language', 'vague_scope', 'contract_language_present',
+                                'scope_summary', 'contract_risk_clauses']) {
                 if (pdfExtracted[key] != null) extracted[key] = pdfExtracted[key];
             }
-            if (pdfExtracted.trade_keywords && pdfExtracted.trade_keywords.length > 0) {
-                const existing = extracted.trade_keywords || [];
-                extracted.trade_keywords = [...new Set([...existing, ...pdfExtracted.trade_keywords])];
+            // Arrays: PDF takes priority if non-empty, otherwise keep email version
+            for (const key of ['gc_names', 'gc_addresses', 'spec_divisions_found',
+                                'sheet_disciplines_found', 'scope_of_work_trades']) {
+                if (Array.isArray(pdfExtracted[key]) && pdfExtracted[key].length > 0) {
+                    extracted[key] = pdfExtracted[key];
+                }
             }
 
             // Build basic contract risks from PDF flags
@@ -472,7 +505,7 @@ exports.handler = async (event) => {
     const geocodeCache = new Map();
     const [locComp, gcComp, trComp] = await Promise.all([
         scoreLocation(extracted.project_city, extracted.project_state, settings, geocodeCache),
-        Promise.resolve(scoreGC(extracted.gc_name, settings, clients || [])),
+        Promise.resolve(scoreGC((extracted.gc_names || [])[0] || null, settings, clients || [])),
         Promise.resolve(scoreTrade(scopeText, settings))
     ]);
 
@@ -511,24 +544,38 @@ exports.handler = async (event) => {
                 created_month: now.getMonth() + 1,
                 created_week:  Math.ceil((now - new Date(now.getFullYear(), 0, 1)) / (7 * 24 * 3600000)),
                 extracted_data: {
-                    gc_name:         extracted.gc_name || null,
-                    project_name:    extracted.project_name || Subject || 'Forwarded Bid',
-                    project_city:    extracted.project_city || null,
-                    project_state:   extracted.project_state || null,
-                    project_address: extracted.project_address || null,
-                    bid_deadline:    extracted.bid_due_date || null,
-                    estimated_value: extracted.estimated_value || null,
-                    scope_summary:   extracted.scope_description || null,
-                    bond_required:   extracted.bond_required || null,
-                    source:          'email_forward',
-                    email_from:      From || null,
-                    email_subject:   Subject || null,
-                    skipped_pdfs:    skippedFiles.length > 0 ? skippedFiles : undefined,
-                    pdf_upload_needed: skippedFiles.length > 0 && processedCount === 0
+                    project_name:             extracted.project_name || Subject || 'Forwarded Bid',
+                    city:                     extracted.project_city || null,
+                    state:                    extracted.project_state || null,
+                    project_address:          extracted.project_address || null,
+                    bid_deadline:             extracted.bid_deadline || null,
+                    building_type:            extracted.building_type || null,
+                    project_type:             extracted.project_type || null,
+                    project_size_sf:          extracted.project_size_sf || null,
+                    estimated_value:          extracted.estimated_value || null,
+                    owner_name:               extracted.owner_name || null,
+                    architect_name:           extracted.architect_name || null,
+                    general_contractor:       (extracted.gc_names || [])[0] || null,
+                    gc_names:                 extracted.gc_names || [],
+                    scope_summary:            extracted.scope_summary || null,
+                    spec_divisions_found:     extracted.spec_divisions_found || [],
+                    sheet_disciplines_found:  extracted.sheet_disciplines_found || [],
+                    scope_of_work_trades:     extracted.scope_of_work_trades || [],
+                    contract_risk_clauses:    extracted.contract_risk_clauses || null,
+                    bid_bond_required:        extracted.bid_bond_required || false,
+                    invitation_only:          extracted.invitation_only || false,
+                    multiple_bidders_expected: extracted.multiple_bidders_expected || false,
+                    bid_shopping_language:    extracted.bid_shopping_language || false,
+                    vague_scope:              extracted.vague_scope || false,
+                    source:                   'email_forward',
+                    email_from:               From || null,
+                    email_subject:            Subject || null,
+                    skipped_pdfs:             skippedFiles.length > 0 ? skippedFiles : undefined,
+                    pdf_upload_needed:        skippedFiles.length > 0 && processedCount === 0
                 },
                 scores,
                 contract_risks: contractRisks || null,
-                gcs:       extracted.gc_name ? [{ name: extracted.gc_name }] : [],
+                gcs: (extracted.gc_names || []).map(name => ({ name })),
                 files:     qualifying.map(a => ({ name: a.Name || 'attachment.pdf', size: null })),
                 outcome:   'pending',
                 full_text: null
@@ -543,7 +590,7 @@ exports.handler = async (event) => {
 
     // 11. Send reply email
     const projectName = extracted.project_name || Subject || 'New Bid';
-    const gcName      = extracted.gc_name || 'Unknown GC';
+    const gcName      = (extracted.gc_names || [])[0] || 'Unknown GC';
     const replySubject = `BidIndex Score: ${final}/100 — ${recommendation} · ${projectName}`;
 
     // ── Colors ──────────────────────────────────────────────────────────────────────────
