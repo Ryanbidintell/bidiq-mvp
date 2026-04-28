@@ -6069,9 +6069,9 @@ ${fullText.substring(0, 40000)}`;
             // GA4: track which onboarding step was reached
             const stepNames = {
                 0: 'org_setup', 1: 'company_type', 2: 'plan_rooms', 3: 'office_address',
-                4: 'acquisition_source', 5: 'csi_sections', 6: 'location_importance',
-                7: 'risk_tolerance', 8: 'capacity', 9: 'ai_advisor',
-                10: 'client_types', 11: 'client_addition', 12: 'email_alias', 13: 'summary'
+                4: 'acquisition_source', 5: 'csi_sections',
+                6: 'risk_tolerance', 7: 'capacity', 8: 'ai_advisor',
+                9: 'client_types', 10: 'client_addition', 11: 'email_alias', 12: 'summary'
             };
             if (typeof gtag !== 'undefined') gtag('event', 'onboarding_step_viewed', { step_number: step, step_name: stepNames[step] || 'unknown' });
             const body = document.getElementById('onboardingBody');
@@ -6081,7 +6081,7 @@ ${fullText.substring(0, 40000)}`;
 
             const pendingTier = sessionStorage.getItem('bidintell_pending_tier');
             const isCompanyTier = pendingTier === 'team' || pendingTier === 'company';
-            const totalSteps = isCompanyTier ? 14 : 13;
+            const totalSteps = isCompanyTier ? 13 : 12;
             const displayStep = isCompanyTier ? (step === 0 ? 1 : step + 1) : step;
 
             // Update progress
@@ -6092,8 +6092,8 @@ ${fullText.substring(0, 40000)}`;
 
             // Show/hide back button
             backBtn.style.display = (step === 1 && !isCompanyTier) || step === 0 ? 'none' : 'inline-flex';
-            skipBtn.style.display = step === 13 ? 'none' : 'inline-block';
-            nextBtn.textContent = step === 13 ? 'Complete Setup' : 'Continue';
+            skipBtn.style.display = step === 12 ? 'none' : 'inline-block';
+            nextBtn.textContent = step === 12 ? 'Complete Setup' : 'Continue';
             // Re-enable next button by default (step 2 plan rooms may override this below)
             nextBtn.disabled = false;
             nextBtn.style.opacity = '';
@@ -6369,26 +6369,6 @@ ${fullText.substring(0, 40000)}`;
             } else if (step === 6) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
-                        <h3 style="color: var(--text-primary); margin-bottom: 12px;">How important is project location?</h3>
-                        <p style="color: var(--text-muted); margin-bottom: 32px;">Adjust the slider based on how much location matters to your business</p>
-                        <div style="max-width: 500px; margin: 0 auto;">
-                            <div style="background: var(--bg-secondary); padding: 32px; border-radius: var(--radius);">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
-                                    <span style="font-size: 13px; color: var(--text-muted);">Not Important (0%)</span>
-                                    <span style="font-size: 20px; font-weight: 700; color: var(--accent);" id="locationImportanceValue">${onboardingData.locationImportance}%</span>
-                                    <span style="font-size: 13px; color: var(--text-muted);">Critical (100%)</span>
-                                </div>
-                                <input type="range" min="0" max="100" value="${onboardingData.locationImportance}" id="onboarding_locationImportance" oninput="document.getElementById('locationImportanceValue').textContent = this.value + '%'" style="width: 100%; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--bg-tertiary) 0%, var(--accent) 100%); outline: none; -webkit-appearance: none; appearance: none; cursor: pointer;">
-                                <div style="margin-top: 16px; padding: 12px; background: var(--bg-tertiary); border-radius: var(--radius); font-size: 12px; color: var(--text-secondary);">
-                                    If you work locally, set this high (70–100%). If you travel for work or location doesn't matter, set it low (0–30%).
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else if (step === 7) {
-                body.innerHTML = `
-                    <div style="text-align: center; padding: 20px 0;">
                         <h3 style="color: var(--text-primary); margin-bottom: 12px;">What's your risk tolerance?</h3>
                         <p style="color: var(--text-muted); margin-bottom: 32px;">How cautious should BidIntell be when scoring contract risks?</p>
                         <div style="max-width: 500px; margin: 0 auto;">
@@ -6399,7 +6379,7 @@ ${fullText.substring(0, 40000)}`;
                                     { value: 'high', icon: '🚀', label: 'High Tolerance', desc: 'Only warn about major red flags - I can handle risk' }
                                 ].map(opt => `
                                     <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.riskTolerance === opt.value ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
-                                        <input type="radio" name="onboarding_riskTolerance" value="${opt.value}" ${onboardingData.riskTolerance === opt.value ? 'checked' : ''} onchange="onboardingData.riskTolerance = this.value; renderOnboardingStep(7); setTimeout(() => onboardingNext(), 300);" style="margin-top: 4px; accent-color: var(--accent);">
+                                        <input type="radio" name="onboarding_riskTolerance" value="${opt.value}" ${onboardingData.riskTolerance === opt.value ? 'checked' : ''} onchange="onboardingData.riskTolerance = this.value; renderOnboardingStep(6); setTimeout(() => onboardingNext(), 300);" style="margin-top: 4px; accent-color: var(--accent);">
                                         <div style="flex: 1; text-align: left;">
                                             <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;"><strong>${opt.label}</strong></div>
                                             <div style="font-size: 13px; color: var(--text-muted);">${opt.desc}</div>
@@ -6410,7 +6390,7 @@ ${fullText.substring(0, 40000)}`;
                         </div>
                     </div>
                 `;
-            } else if (step === 8) {
+            } else if (step === 7) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
                         <h3 style="color: var(--text-primary); margin-bottom: 12px;">Current workload capacity?</h3>
@@ -6423,7 +6403,7 @@ ${fullText.substring(0, 40000)}`;
                                     { value: 'slow', icon: '🟡', label: 'At Capacity', desc: 'We\'re full - only show best fits' }
                                 ].map(opt => `
                                     <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.capacity === opt.value ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
-                                        <input type="radio" name="onboarding_capacity" value="${opt.value}" ${onboardingData.capacity === opt.value ? 'checked' : ''} onchange="onboardingData.capacity = this.value; renderOnboardingStep(8); setTimeout(() => onboardingNext(), 300);" style="margin-top: 4px; accent-color: var(--accent);">
+                                        <input type="radio" name="onboarding_capacity" value="${opt.value}" ${onboardingData.capacity === opt.value ? 'checked' : ''} onchange="onboardingData.capacity = this.value; renderOnboardingStep(7); setTimeout(() => onboardingNext(), 300);" style="margin-top: 4px; accent-color: var(--accent);">
                                         <div style="flex: 1; text-align: left;">
                                             <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;"><strong>${opt.label}</strong></div>
                                             <div style="font-size: 13px; color: var(--text-muted);">${opt.desc}</div>
@@ -6434,7 +6414,7 @@ ${fullText.substring(0, 40000)}`;
                         </div>
                     </div>
                 `;
-            } else if (step === 9) {
+            } else if (step === 8) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
                         <h3 style="color: var(--text-primary); margin-bottom: 10px; font-size: 20px;">Recommendation Style</h3>
@@ -6449,7 +6429,7 @@ ${fullText.substring(0, 40000)}`;
                                         { value: 'data_nerd', label: 'Analytical — Data-focused, includes score breakdowns', desc: '' }
                                     ].map(opt => `
                                         <label style="display: flex; align-items: start; gap: 12px; cursor: pointer; padding: 16px; background: var(--bg-secondary); border-radius: var(--radius); border: 3px solid ${onboardingData.aiAdvisorTone === opt.value ? 'var(--accent)' : 'transparent'}; transition: all 0.2s;">
-                                            <input type="radio" name="onboarding_aiAdvisorTone" value="${opt.value}" ${onboardingData.aiAdvisorTone === opt.value ? 'checked' : ''} onchange="onboardingData.aiAdvisorTone = this.value; renderOnboardingStep(9);" style="margin-top: 4px; accent-color: var(--accent);">
+                                            <input type="radio" name="onboarding_aiAdvisorTone" value="${opt.value}" ${onboardingData.aiAdvisorTone === opt.value ? 'checked' : ''} onchange="onboardingData.aiAdvisorTone = this.value; renderOnboardingStep(8);" style="margin-top: 4px; accent-color: var(--accent);">
                                             <div style="flex: 1; text-align: left;">
                                                 <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;"><strong>${opt.label}</strong></div>
                                             </div>
@@ -6470,7 +6450,7 @@ ${fullText.substring(0, 40000)}`;
                         </div>
                     </div>
                 `;
-            } else if (step === 10) {
+            } else if (step === 9) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
                         <h3 style="color: var(--text-primary); margin-bottom: 12px;">Who are your typical clients?</h3>
@@ -6499,7 +6479,7 @@ ${fullText.substring(0, 40000)}`;
                         </div>
                     </div>
                 `;
-            } else if (step === 11) {
+            } else if (step === 10) {
                 body.innerHTML = `
                     <div style="text-align: center; padding: 20px 0;">
                         <h3 style="color: var(--text-primary); margin-bottom: 12px;">Add your first client</h3>
@@ -6524,7 +6504,7 @@ ${fullText.substring(0, 40000)}`;
                             <div class="form-group">
                                 <label class="form-label">Your Rating</label>
                                 <div style="display: flex; gap: 8px; font-size: 32px; margin-top: 8px;">
-                                    ${[1,2,3,4,5].map(i => `<span onclick="onboardingData.gcRating = ${i}; renderOnboardingStep(11);" style="cursor: pointer; color: ${i <= (onboardingData.gcRating || 3) ? 'var(--warning)' : 'var(--text-muted)'};">★</span>`).join('')}
+                                    ${[1,2,3,4,5].map(i => `<span onclick="onboardingData.gcRating = ${i}; renderOnboardingStep(10);" style="cursor: pointer; color: ${i <= (onboardingData.gcRating || 3) ? 'var(--warning)' : 'var(--text-muted)'};">★</span>`).join('')}
                                 </div>
                                 <div class="form-hint">How would you rate working with this client?</div>
                             </div>
@@ -6534,8 +6514,8 @@ ${fullText.substring(0, 40000)}`;
                         </div>
                     </div>
                 `;
-            } else if (step === 12) {
-                // Step 12: Set Forwarding Address
+            } else if (step === 11) {
+                // Step 11: Set Forwarding Address
                 nextBtn.disabled = true;
                 nextBtn.style.opacity = '0.45';
 
@@ -6589,7 +6569,7 @@ ${fullText.substring(0, 40000)}`;
                     }
                 }, 100);
 
-            } else if (step === 13) {
+            } else if (step === 12) {
                 const companyTypeLabel = onboardingData.companyType === 'subcontractor' ? 'Subcontractor' :
                                         onboardingData.companyType === 'distributor' ? 'Distributor' : 'Manufacturer Rep';
                 const tradesOrProducts = onboardingData.companyType === 'subcontractor' ?
@@ -6617,7 +6597,6 @@ ${fullText.substring(0, 40000)}`;
                                     <div>Office: <strong>${(onboardingData.city || onboardingData.state) ? [onboardingData.city, onboardingData.state].filter(Boolean).join(', ') : '<span style="color:var(--warning)">Not set — add in Settings after setup</span>'}</strong></div>
                                     <div>${tradesOrProducts}</div>
                                     <div>Client Types: <strong>${clientTypesText}</strong></div>
-                                    <div>Location Importance: <strong>${onboardingData.locationImportance}%</strong></div>
                                     <div>Risk Tolerance: <strong>${onboardingData.riskTolerance}</strong></div>
                                     <div>Capacity: <strong>${onboardingData.capacity}</strong></div>
                                     <div>Recommendation Style: <strong>${advisorToneLabel}</strong></div>
@@ -6642,6 +6621,12 @@ ${fullText.substring(0, 40000)}`;
                                 <div style="font-family: monospace; font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 6px 0;">${onboardingData.emailAlias}@bids.bidintell.ai</div>
                                 <div style="font-size: 12px; color: var(--text-muted);">BidIntell will auto-score and reply with results. Max 10MB per file.</div>
                             </div>` : ''}
+                            <div style="background: var(--bg-secondary); padding: 16px 20px; border-radius: var(--radius); margin-bottom: 12px; border-left: 3px solid var(--accent);">
+                                <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); font-weight: 600; margin-bottom: 8px;">Before You Bid — 2 Minutes</div>
+                                <div style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Finish Your Settings</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Score weights, search radius, and good/bad keywords are set to smart defaults. Tuning them for your market makes every score more accurate.</div>
+                                <div style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">Settings tab: Score Weights · Keywords · Service Area</div>
+                            </div>
                             <div style="background: linear-gradient(135deg, var(--accent-dim), rgba(34, 197, 94, 0.1)); padding: 20px; border-radius: var(--radius); border: 2px solid var(--accent);">
                                 <h4 style="color: var(--text-primary); margin-bottom: 8px;">Next Step: Analyze Your First Bid</h4>
                                 <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
@@ -6707,9 +6692,7 @@ ${fullText.substring(0, 40000)}`;
                         onboardingData.productCategories = Array.from(categories.selectedOptions).map(opt => opt.value);
                     }
                 }
-            } else if (onboardingStep === 6) {
-                onboardingData.locationImportance = parseInt(document.getElementById('onboarding_locationImportance')?.value || 50);
-            } else if (onboardingStep === 9) {
+            } else if (onboardingStep === 8) {
                 // Step 9: AI Advisor - capture selections (step 9 renders onboarding_aiAdvisorName)
                 const advisorSelect = document.getElementById('onboarding_aiAdvisorName')?.value;
                 if (advisorSelect === 'Custom') {
@@ -6723,13 +6706,13 @@ ${fullText.substring(0, 40000)}`;
                     onboardingData.aiAdvisorName = advisorSelect;
                 }
                 // aiAdvisorTone is already updated via radio buttons
-            } else if (onboardingStep === 10) {
+            } else if (onboardingStep === 9) {
                 // Step 10: Client Types - ensure at least one is selected
                 if (onboardingData.clientTypes.length === 0) {
                     alert('Please select at least one client type');
                     return;
                 }
-            } else if (onboardingStep === 11) {
+            } else if (onboardingStep === 10) {
                 // Step 11: Client Addition (optional)
                 const clientName = document.getElementById('onboarding_gcName')?.value.trim();
                 const clientType = document.getElementById('onboarding_clientType')?.value || 'general_contractor';
@@ -6762,7 +6745,7 @@ ${fullText.substring(0, 40000)}`;
             }
 
             // Move to next step or complete (step 13 is the summary/confirm screen)
-            if (onboardingStep === 13) {
+            if (onboardingStep === 12) {
                 await completeOnboarding();
             } else {
                 renderOnboardingStep(onboardingStep + 1);
@@ -6850,7 +6833,7 @@ ${fullText.substring(0, 40000)}`;
 
         function skipEmailAliasStep() {
             // Advance to summary without saving alias
-            renderOnboardingStep(13);
+            renderOnboardingStep(12);
         }
 
         function updateOnboardingTrade(checkbox) {
@@ -6897,8 +6880,8 @@ ${fullText.substring(0, 40000)}`;
             } else {
                 onboardingData.clientTypes.push(type);
             }
-            // Re-render to update border colors (client types step is now step 10)
-            renderOnboardingStep(10);
+            // Re-render to update border colors (client types step is now step 9)
+            renderOnboardingStep(9);
         }
 
         function addOnboardingProductLine() {
