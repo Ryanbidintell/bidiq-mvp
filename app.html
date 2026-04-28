@@ -1860,6 +1860,7 @@
             <div class="tab-content" id="tab-keywords">
                 <header class="page-header"><h2 class="page-title">Keywords</h2><p class="page-subtitle">Configure what BidIntell looks for in bid documents</p></header>
                 <div class="page-content">
+                    <div id="keywordsNudge" style="display:none; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">No keywords added yet.</strong> Add your trade terms (like "resilient flooring" or "fire alarm") so BidIntell can find your work in bid documents — directly improves Trade Match accuracy.</div>
                     <div class="help-text">
                         <strong>Keywords serve two different purposes — keep them separated.</strong><br>
                         • <span style="color: var(--accent)">Scope keywords</span> confirm <em>your work is in this bid</em> — use your work type terms like "roller shades", "resilient flooring", "fire alarm" (feeds Trade Match)<br>
@@ -1910,6 +1911,7 @@
                             <div class="settings-card-description">Your contact information and company details</div>
                         </div>
                         <div class="settings-card-body">
+                            <div id="profileNudge" style="display:none; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">Complete your profile:</strong> Add your company name and your name — they appear in reports and outbound emails.</div>
                             <div class="form-group">
                                 <label class="form-label">Company Name</label>
                                 <input type="text" class="form-input" id="settingCompanyName" placeholder="Your Company LLC" required>
@@ -2028,6 +2030,8 @@
                             <div class="settings-card-description">Enter your full office address for accurate distance calculations. At minimum, provide city and state.</div>
                         </div>
                         <div class="settings-card-body">
+                            <div id="locationNudgeMissing" style="display:none; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">Office location not set.</strong> City and state are required for Location Fit scoring — without them, all location scores default to 50.</div>
+                            <div id="locationNudgePartial" style="display:none; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">Tip:</strong> Adding a street address improves Location Fit accuracy — city-level geocoding can be off by several miles.</div>
                             <div class="form-group">
                                 <label class="form-label">Office Street Address (Optional)</label>
                                 <input type="text" class="form-input" id="settingStreet" placeholder="123 Main Street">
@@ -2055,6 +2059,7 @@
                             <div class="settings-card-description">Select the CSI divisions you work in. BidIntell searches bid docs for these divisions to calculate your Trade Match score.</div>
                         </div>
                         <div class="settings-card-body">
+                            <div id="tradesNudge" style="display:none; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">No trades selected.</strong> Trade Match scores will default to neutral (50) for every bid until you pick your CSI sections below.</div>
                             <div class="checkbox-grid" id="tradesCheckboxes"></div>
                         </div>
                     </div>
@@ -14866,6 +14871,8 @@ Respond now:`;
             document.getElementById('scopeKeywordsList').innerHTML = (kw.scope || []).map(k => `<span class="keyword-tag" style="background:rgba(242,101,34,0.12);border-color:rgba(242,101,34,0.3);color:var(--accent);">${k}<span class="remove" onclick="removeKeyword('scope','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No scope keywords yet</span>';
             document.getElementById('goodKeywordsList').innerHTML = kw.good.map(k => `<span class="keyword-tag good">${k}<span class="remove" onclick="removeKeyword('good','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No favorable terms yet</span>';
             document.getElementById('badKeywordsList').innerHTML = kw.bad.map(k => `<span class="keyword-tag bad">${k}<span class="remove" onclick="removeKeyword('bad','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No risk terms yet</span>';
+            const kwNudge = document.getElementById('keywordsNudge');
+            if (kwNudge) kwNudge.style.display = ((kw.scope || []).length === 0 && kw.good.length === 0) ? 'block' : 'none';
         }
 
         // Add scope keyword(s) - supports comma-separated input
@@ -15334,6 +15341,18 @@ Respond now:`;
 
             // Initialize Google Places Autocomplete
             setTimeout(() => initAddressAutocomplete(), 500);
+
+            // Settings completion nudges
+            const profileNudge = document.getElementById('profileNudge');
+            if (profileNudge) profileNudge.style.display = (!s.company_name && !s.user_name) ? 'block' : 'none';
+
+            const locMissing = document.getElementById('locationNudgeMissing');
+            const locPartial = document.getElementById('locationNudgePartial');
+            if (locMissing) locMissing.style.display = (!s.city || !s.state) ? 'block' : 'none';
+            if (locPartial) locPartial.style.display = (s.city && s.state && !s.street) ? 'block' : 'none';
+
+            const tradesNudge = document.getElementById('tradesNudge');
+            if (tradesNudge) tradesNudge.style.display = (settingsCSISections.length === 0 && s.companyType === 'subcontractor') ? 'block' : 'none';
 
             // Load billing status
             await loadBillingStatus();
