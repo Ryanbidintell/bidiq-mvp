@@ -1,6 +1,6 @@
 # 🤖 Claude Code Instructions for BidIntell Project
 
-**Last Updated:** April 27, 2026
+**Last Updated:** April 28, 2026
 
 This file contains mandatory rules Claude Code must follow when working on this project.
 
@@ -113,7 +113,7 @@ git commit -m "Before [change description]"
 ## 📁 PROJECT STRUCTURE
 
 ### Important Files:
-- `app.html` - Main application (~15K lines, handle with care)
+- `app.html` - Main application (~18.5K lines, handle with care)
 - `auth.html` - Authentication / magic link flow (logo links back to bidintell.ai)
 - `admin.html` - Founder dashboard (metrics, ROI leads, current users, FOUNDING30 email tool, comp toggle)
 - `demo.html` - Schedule a Demo intake form → Pipedrive Lead via pipedrive-lead.js
@@ -795,7 +795,7 @@ Key routing rules:
 
 ### Code Quality
 - Code quality, health check, "is app.html getting unwieldy", tech debt → invoke health
-- Run /health monthly — app.html is 15K lines and growing
+- Run /health monthly — app.html is ~18.5K lines and growing
 
 ### Security
 - Security audit, OWASP, "is this secure", billing/auth concerns → invoke cso
