@@ -4940,8 +4940,8 @@ ${fullText.substring(0, 40000)}`;
                 // SANITIZATION: Clean up data before saving
                 const cleanedExtracted = {
                     project_name: project.extracted.project_name || 'Untitled Project',
-                    city: project.extracted.project_city || null,
-                    state: project.extracted.project_state || null,
+                    project_city: project.extracted.project_city || project.extracted.city || null,
+                    project_state: project.extracted.project_state || project.extracted.state || null,
                     project_address: project.extracted.project_address || null,
                     project_zip: project.extracted.project_zip || null,
                     bid_deadline: project.extracted.bid_deadline || null,
@@ -5488,10 +5488,10 @@ ${fullText.substring(0, 40000)}`;
             // Core project fields (check both old and new field names)
             if (!extracted.project_name) missing.push('project_name');
 
-            const hasCity = extracted.city || extracted.project_city;
+            const hasCity = extracted.project_city || extracted.city;
             if (!hasCity) missing.push('project_city');
 
-            const hasState = extracted.state || extracted.project_state;
+            const hasState = extracted.project_state || extracted.state;
             if (!hasState) missing.push('project_state');
 
             // GC identification (check multiple possible fields)
@@ -9338,8 +9338,8 @@ ${truncatedText}`
                     console.log('✅ User office coordinates:', userCoords);
 
                     // Handle both old and new field names
-                    const projCity = extracted.city || extracted.project_city;
-                    const projState = extracted.state || extracted.project_state;
+                    const projCity = extracted.project_city || extracted.city;
+                    const projState = extracted.project_state || extracted.state;
                     const projAddr = extracted.project_address || (projCity && projState ? `${projCity}, ${projState}` : null);
 
                     if (!projAddr && !projCity) {
@@ -10088,7 +10088,7 @@ ${truncatedText}`
                         </div>
                         <div>
                             <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Location</div>
-                            <div style="font-weight:500;font-size:14px;">${extracted.city || extracted.project_city || 'Unknown'}, ${extracted.state || extracted.project_state || '?'}</div>
+                            <div style="font-weight:500;font-size:14px;">${extracted.project_city || extracted.city || 'Unknown'}, ${extracted.project_state || extracted.state || '?'}</div>
                         </div>
                         <div>
                             <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Building Size</div>
@@ -11295,8 +11295,8 @@ ${truncatedText}`
                     const score = scores.final || scores.bidindex_score || 0;
                     const recommendation = scores.recommendation || (score >= 80 ? 'GO' : score >= 60 ? 'REVIEW' : 'PASS');
                     // Handle both old (project_city) and new (city) field names
-                    const city = extracted.city || extracted.project_city || '';
-                    const state = extracted.state || extracted.project_state || '';
+                    const city = extracted.project_city || extracted.city || '';
+                    const state = extracted.project_state || extracted.state || '';
                     // Get building type (match Projects table format)
                     const buildingType = (typeof extracted.building_type === 'object' ? extracted.building_type?.type : extracted.building_type) || 'Unknown Type';
                     // Get GC names from gcs array (match Projects table format)
@@ -11643,8 +11643,8 @@ ${truncatedText}`
                             }
 
                             // Handle both old (project_city) and new (city) field names
-                            const city = extracted.city || extracted.project_city || '';
-                            const state = extracted.state || extracted.project_state || '';
+                            const city = extracted.project_city || extracted.city || '';
+                            const state = extracted.project_state || extracted.state || '';
 
                             // Get GC names from gcs array (not from extracted fields)
                             let gcDisplay = 'Unknown';
@@ -11879,8 +11879,8 @@ ${truncatedText}`
                 }
                 titleEl.textContent = p.extracted.project_name || 'Bid Report';
                 const buildingType = (typeof p.extracted.building_type === 'object' ? p.extracted.building_type?.type : p.extracted.building_type) || '';
-                const city = p.extracted.city || p.extracted.project_city || '';
-                const state = p.extracted.state || p.extracted.project_state || '';
+                const city = p.extracted.project_city || p.extracted.city || '';
+                const state = p.extracted.project_state || p.extracted.state || '';
                 const location = [city, state].filter(Boolean).join(', ');
                 subtitleEl.textContent = location && buildingType ? `${location} • ${buildingType}` : (location || buildingType);
 
@@ -11888,8 +11888,8 @@ ${truncatedText}`
                 document.getElementById('reportProjectId').value = p.id;
                 document.getElementById('reportProjectName').value = p.extracted.project_name || '';
                 document.getElementById('reportBuildingType').value = (typeof p.extracted.building_type === 'object' ? p.extracted.building_type?.type : p.extracted.building_type) || 'Other';
-                document.getElementById('reportCity').value = p.extracted.city || p.extracted.project_city || '';
-                document.getElementById('reportState').value = p.extracted.state || p.extracted.project_state || '';
+                document.getElementById('reportCity').value = p.extracted.project_city || p.extracted.city || '';
+                document.getElementById('reportState').value = p.extracted.project_state || p.extracted.state || '';
 
                 // Format bid deadline
                 if (p.extracted.bid_deadline) {
@@ -13028,7 +13028,7 @@ ${truncatedText}`
                 // Build context about the bid for the AI
                 const context = {
                     project_name: project.extracted?.project_name || 'this project',
-                    location: `${project.extracted?.city || ''}, ${project.extracted?.state || ''}`.trim() || 'Unknown',
+                    location: `${project.extracted?.project_city || project.extracted?.city || ''}, ${project.extracted?.project_state || project.extracted?.state || ''}`.trim() || 'Unknown',
                     building_type: project.buildingType?.type || project.extracted?.building_type || 'Unknown',
                     score: project.scores?.final || 0,
                     recommendation: project.scores?.recommendation || 'REVIEW',

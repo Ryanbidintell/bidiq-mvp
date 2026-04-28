@@ -545,8 +545,8 @@ exports.handler = async (event) => {
                 created_week:  Math.ceil((now - new Date(now.getFullYear(), 0, 1)) / (7 * 24 * 3600000)),
                 extracted_data: {
                     project_name:             extracted.project_name || Subject || 'Forwarded Bid',
-                    city:                     extracted.project_city || null,
-                    state:                    extracted.project_state || null,
+                    project_city:             extracted.project_city || null,
+                    project_state:            extracted.project_state || null,
                     project_address:          extracted.project_address || null,
                     bid_deadline:             extracted.bid_deadline || null,
                     building_type:            extracted.building_type || null,
