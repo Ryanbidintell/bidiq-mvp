@@ -6614,7 +6614,7 @@ ${fullText.substring(0, 40000)}`;
                                 <h4 style="color: var(--text-primary); margin-bottom: 12px;">Your Setup Summary:</h4>
                                 <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.8;">
                                     <div>Company Type: <strong>${companyTypeLabel}</strong></div>
-                                    <div>Office: <strong>${onboardingData.city}, ${onboardingData.state}</strong></div>
+                                    <div>Office: <strong>${(onboardingData.city || onboardingData.state) ? [onboardingData.city, onboardingData.state].filter(Boolean).join(', ') : '<span style="color:var(--warning)">Not set — add in Settings after setup</span>'}</strong></div>
                                     <div>${tradesOrProducts}</div>
                                     <div>Client Types: <strong>${clientTypesText}</strong></div>
                                     <div>Location Importance: <strong>${onboardingData.locationImportance}%</strong></div>
@@ -6679,9 +6679,10 @@ ${fullText.substring(0, 40000)}`;
                         // Best-effort parse of city/state from free-text (e.g. "123 Main St, Kansas City, MO")
                         if (!onboardingData.city || !onboardingData.state) {
                             const parts = typed.split(',').map(p => p.trim()).filter(Boolean);
-                            if (parts.length >= 3 && !onboardingData.city) onboardingData.city = parts[parts.length - 3];
+                            // Always take second-to-last segment as city (last segment is "STATE ZIP")
                             if (parts.length >= 2 && !onboardingData.city) onboardingData.city = parts[parts.length - 2];
-                            if (parts.length >= 2 && !onboardingData.state) onboardingData.state = (parts[parts.length - 1] || '').split(' ')[0];
+                            else if (parts.length === 1 && !onboardingData.city) onboardingData.city = parts[0];
+                            if (parts.length >= 2 && !onboardingData.state) onboardingData.state = (parts[parts.length - 1] || '').split(' ')[0].replace(/[^A-Za-z]/g, '');
                         }
                         // completeOnboarding has a fallback geocoder that will resolve lat/lng from city+state
                         console.log('📍 Address fallback from typed value:', onboardingData.fullAddress);
