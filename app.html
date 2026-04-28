@@ -1876,6 +1876,7 @@
                                 <input type="text" id="scopeKeywordInput" placeholder='e.g. "roller shades, motorized blinds, window treatments"' onkeypress="if(event.key==='Enter'){event.preventDefault();addScopeKeyword();}">
                                 <button class="btn btn-sm btn-secondary" onclick="addScopeKeyword()">Add</button>
                             </div>
+                            <div id="keywordSuggestions" style="display:none; margin-top:14px; padding-top:12px; border-top:1px solid var(--border);"></div>
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                             <div class="keywords-section good">
@@ -11249,20 +11250,28 @@ ${truncatedText}`
         }
 
         async function renderProfileWarningHtml(settings) {
-            if (sessionStorage.getItem('bidintell_report_warning_shown')) return '';
             const keywords = await getKeywords();
-            const gcs = await getGCs();
-            let score = 0;
-            if (settings.city && settings.state) score += 25;
-            if ((settings.preferred_csi_sections || []).length > 0 || (settings.trades || []).length > 0) score += 35;
-            if ((keywords.good || []).length > 0) score += 25;
-            if ((gcs || []).length > 0) score += 15;
-            if (score >= 75) return '';
-            sessionStorage.setItem('bidintell_report_warning_shown', '1');
+            const issues = [];
+            const hasSections = (settings.preferred_csi_sections || []).length > 0 || (settings.trades || []).length > 0;
+            const hasKeywords = (keywords.scope || []).length > 0 || (keywords.good || []).length > 0;
+            const hasLocation = settings.city && settings.state;
+
+            if (!hasLocation) {
+                issues.push(`Office location not set — Location Fit defaults to 50. <span class="link" onclick="switchTab('settings')">Add location →</span>`);
+            }
+            if (!hasSections && (settings.companyType === 'subcontractor' || !settings.companyType)) {
+                issues.push(`No CSI trade sections selected — Trade Match defaults to 50 on every bid. <span class="link" onclick="switchTab('settings')">Pick your trades →</span>`);
+            }
+            if (!hasKeywords) {
+                issues.push(`No keywords set — BidIntell can't confirm your work appears in the bid docs. <span class="link" onclick="switchTab('keywords')">Add keywords →</span>`);
+            }
+
+            if (issues.length === 0) return '';
             return `<div class="profile-incomplete-callout">
-                <strong>⚡ This score is based on default settings</strong><br>
-                Add your trade types, location, and keywords to get a personalized score.
-                <span class="link" onclick="switchTab('settings')"> Complete your profile →</span>
+                <strong style="color:var(--accent);">Score accuracy limited</strong>
+                <ul style="margin:6px 0 0;padding-left:16px;line-height:1.8;">
+                    ${issues.map(i => `<li>${i}</li>`).join('')}
+                </ul>
             </div>`;
         }
 
@@ -14874,6 +14883,78 @@ Respond now:`;
             await renderGCSelector();
         }
 
+        const CSI_KEYWORD_MAP = {
+            '03': ['concrete','cast-in-place concrete','precast concrete','shotcrete','concrete repair','concrete restoration'],
+            '04': ['masonry','brick','CMU','concrete masonry unit','stone','tuck pointing','repointing'],
+            '05': ['structural steel','miscellaneous metals','metal fabrication','metal stair','railing','handrail'],
+            '06': ['millwork','casework','finish carpentry','plastic laminate','architectural woodwork','wood framing'],
+            '07': ['roofing','waterproofing','insulation','air barrier','sealants','caulking','firestopping','flashing','membrane roofing','TPO','EPDM'],
+            '08': ['doors','frames','hardware','windows','glazing','curtain wall','storefront','overhead doors','automatic doors'],
+            '09': ['drywall','gypsum board','painting','flooring','carpet','tile','resilient flooring','LVT','VCT','luxury vinyl tile','acoustical ceiling','ACT','ceramic tile','porcelain tile','epoxy flooring'],
+            '10': ['toilet partitions','toilet compartments','urinal screens','lockers','wall protection','corner guards','fire extinguishers','fire extinguisher cabinets','signage','operable partitions','accordion walls','demountable partitions','storage specialties'],
+            '11': ['food service equipment','laboratory equipment','loading dock equipment','parking equipment'],
+            '12': ['window blinds','roller shades','solar shades','motorized shades','window treatments','blackout shades','light filtering','office furniture','systems furniture','workstations','panel systems','seating','task chairs','conference table','desks','casegoods','lounge seating','lobby furniture','hospitality furniture','classroom furniture','fixed seating','auditorium seating','bleachers','telescoping bleachers','pews','countertops','laminate countertops'],
+            '21': ['fire sprinkler','fire suppression','sprinkler system','wet pipe','dry pipe','NFPA 13'],
+            '22': ['plumbing','plumbing rough-in','domestic water','sanitary sewer','plumbing fixtures'],
+            '23': ['HVAC','mechanical','ductwork','air handling unit','VAV','chiller','boiler','building automation','controls','BAS'],
+            '26': ['electrical','power distribution','lighting','switchgear','panels','conduit','wiring devices','low voltage'],
+            '27': ['low voltage','data cabling','telecom','AV','audio visual','structured cabling','fiber optic','distributed antenna'],
+            '28': ['fire alarm','security','access control','CCTV','surveillance','intrusion detection','video surveillance'],
+            '31': ['earthwork','excavation','grading','site preparation','demolition'],
+            '32': ['paving','asphalt','concrete paving','pavement marking','landscaping','irrigation','site concrete'],
+            '33': ['storm drainage','sanitary sewer','water main','underground utilities','site utilities'],
+        };
+
+        async function renderKeywordSuggestions() {
+            const container = document.getElementById('keywordSuggestions');
+            if (!container) return;
+            const settings = await getSettings();
+            const kw = await getKeywords();
+            const sections = settings.preferred_csi_sections || [];
+            if (sections.length === 0) { container.style.display = 'none'; return; }
+
+            // Get unique divisions from selected sections
+            const divs = [...new Set(sections.map(s => s.slice(0, 2)))];
+            const existing = new Set((kw.scope || []).map(k => k.toLowerCase()));
+
+            // Collect suggestions not already added
+            const suggestions = [];
+            for (const div of divs) {
+                for (const kw of (CSI_KEYWORD_MAP[div] || [])) {
+                    if (!existing.has(kw.toLowerCase())) suggestions.push(kw);
+                }
+            }
+
+            if (suggestions.length === 0) { container.style.display = 'none'; return; }
+
+            container.style.display = 'block';
+            const label = document.createElement('div');
+            label.style.cssText = 'font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;';
+            label.textContent = 'Suggested for your trades — click to add:';
+            container.innerHTML = '';
+            container.appendChild(label);
+
+            const chips = document.createElement('div');
+            chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+            suggestions.slice(0, 20).forEach(kw => {
+                const chip = document.createElement('span');
+                chip.textContent = kw;
+                chip.style.cssText = 'cursor:pointer;padding:4px 10px;border-radius:20px;font-size:12px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-secondary);transition:all 0.15s;';
+                chip.onmouseenter = () => { chip.style.borderColor = 'var(--accent)'; chip.style.color = 'var(--accent)'; };
+                chip.onmouseleave = () => { chip.style.borderColor = 'var(--border)'; chip.style.color = 'var(--text-secondary)'; };
+                chip.onclick = async () => {
+                    chip.remove();
+                    const kwData = await getKeywords();
+                    if (!kwData.scope) kwData.scope = [];
+                    if (!kwData.scope.includes(kw)) kwData.scope.push(kw);
+                    await saveKeywordsStorage(kwData);
+                    await loadKeywords();
+                };
+                chips.appendChild(chip);
+            });
+            container.appendChild(chips);
+        }
+
         // Keywords - FIXED
         async function loadKeywords() {
             const kw = await getKeywords();
@@ -14882,6 +14963,7 @@ Respond now:`;
             document.getElementById('badKeywordsList').innerHTML = kw.bad.map(k => `<span class="keyword-tag bad">${k}<span class="remove" onclick="removeKeyword('bad','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No risk terms yet</span>';
             const kwNudge = document.getElementById('keywordsNudge');
             if (kwNudge) kwNudge.style.display = ((kw.scope || []).length === 0 && kw.good.length === 0) ? 'block' : 'none';
+            await renderKeywordSuggestions();
         }
 
         // Add scope keyword(s) - supports comma-separated input
