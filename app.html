@@ -6259,9 +6259,10 @@ ${fullText.substring(0, 40000)}`;
 
                                 // Fallback: parse city/state from formattedAddress if components didn't populate them
                                 if (formattedAddress && (!city || !state)) {
-                                    const parts = formattedAddress.split(',').map(p => p.trim());
-                                    if (parts.length >= 3 && !city) city = parts[parts.length - 3] || '';
-                                    if (!state) state = (parts[parts.length - 2] || '').split(' ')[0] || '';
+                                    const parts = formattedAddress.split(',').map(p => p.trim()).filter(Boolean);
+                                    // Second-to-last segment is city; last segment is "STATE ZIP"
+                                    if (parts.length >= 2 && !city) city = parts[parts.length - 2] || '';
+                                    if (parts.length >= 2 && !state) state = (parts[parts.length - 1] || '').split(' ')[0].replace(/[^A-Za-z]/g, '') || '';
                                 }
 
                                 onboardingData.fullAddress = formattedAddress;
@@ -7003,10 +7004,18 @@ ${fullText.substring(0, 40000)}`;
                 provides_installation: onboardingData.providesInstallation,
                 product_lines: onboardingData.productLines,
                 product_categories: onboardingData.productCategories,
-                // Full address from onboarding
+                // Full address from onboarding — final parse safety net if autocomplete didn't populate city/state
+                ...(() => {
+                    let city = onboardingData.city || '';
+                    let state = onboardingData.state || '';
+                    if ((!city || !state) && onboardingData.fullAddress) {
+                        const parts = onboardingData.fullAddress.split(',').map(p => p.trim()).filter(Boolean);
+                        if (parts.length >= 2 && !city) city = parts[parts.length - 2] || '';
+                        if (parts.length >= 2 && !state) state = (parts[parts.length - 1] || '').split(' ')[0].replace(/[^A-Za-z]/g, '') || '';
+                    }
+                    return { city, state };
+                })(),
                 street: onboardingData.street || null,
-                city: onboardingData.city,
-                state: onboardingData.state,
                 zip: onboardingData.zip || null,
                 officeLocation: onboardingData.officeLocation || null,
                 search_radius: 100,
