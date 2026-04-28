@@ -8035,7 +8035,49 @@ ${truncatedText}`
 
                 const extracted = safeJSONParse(jsonStr.trim());
                 console.log('🔍 OpenAI extracted (raw):', extracted);
-                return extracted;
+
+                // Normalize to canonical shape matching extractWithClaude output
+                const validBuildingTypes = ['Healthcare', 'Office', 'Multifamily', 'Retail', 'Industrial',
+                    'Education', 'Higher Education', 'Government', 'Religious', 'Mixed-Use', 'Infrastructure', 'Other'];
+                const buildingType = validBuildingTypes.includes(extracted.building_type)
+                    ? extracted.building_type : 'Other';
+
+                return {
+                    project_name: extracted.project_name || null,
+                    project_city: extracted.project_city || null,
+                    project_state: extracted.project_state || null,
+                    project_address: extracted.project_address || null,
+                    project_zip: extracted.project_zip || null,
+                    building_type: buildingType,
+                    project_type: extracted.project_type || null,
+                    bid_deadline: extracted.bid_deadline || null,
+                    project_size_sf: extracted.project_size_sf
+                        ? (parseInt(String(extracted.project_size_sf).replace(/\D/g, '')) || null)
+                        : null,
+                    estimated_value: parseMonetaryValue(extracted.estimated_value),
+                    owner_name: extracted.owner_name || null,
+                    architect_name: extracted.architect_name || null,
+                    gc_names: Array.isArray(extracted.gc_names) ? extracted.gc_names : [],
+                    gc_addresses: Array.isArray(extracted.gc_addresses) ? extracted.gc_addresses : [],
+                    spec_divisions_found: Array.isArray(extracted.spec_divisions_found) ? extracted.spec_divisions_found : [],
+                    sheet_disciplines_found: Array.isArray(extracted.sheet_disciplines_found) ? extracted.sheet_disciplines_found : [],
+                    scope_of_work_trades: Array.isArray(extracted.scope_of_work_trades) ? extracted.scope_of_work_trades : [],
+                    contract_risk_clauses: {
+                        pay_if_paid: parseBool(extracted.contract_risk_clauses?.pay_if_paid),
+                        liquidated_damages: parseBool(extracted.contract_risk_clauses?.liquidated_damages),
+                        broad_indemnification: parseBool(extracted.contract_risk_clauses?.broad_indemnification),
+                        no_damage_for_delay: parseBool(extracted.contract_risk_clauses?.no_damage_for_delay),
+                        waiver_consequential_damages: parseBool(extracted.contract_risk_clauses?.waiver_consequential_damages),
+                        retainage_over_10_percent: parseBool(extracted.contract_risk_clauses?.retainage_over_10_percent)
+                    },
+                    has_contract_language: parseBool(extracted.contract_language_present),
+                    bid_bond_required: parseBool(extracted.bid_bond_required),
+                    invitation_only: parseBool(extracted.invitation_only),
+                    scope_summary: extracted.scope_summary || null,
+                    multiple_bidders_expected: parseBool(extracted.multiple_bidders_expected),
+                    bid_shopping_language: parseBool(extracted.bid_shopping_language),
+                    vague_scope: parseBool(extracted.vague_scope)
+                };
             } catch (e) {
                 console.error('OpenAI extraction failed:', e);
                 throw e;
@@ -8641,6 +8683,9 @@ ${truncatedText}`
             }
         }
 
+        // Coerce AI string booleans ("true"/"True"/true) → real boolean
+        function parseBool(v) { return v === true || v === 'true' || v === 'True'; }
+
         // Parse "$2.5M", "2.5 million", "$2,500,000" → integer
         function parseMonetaryValue(val) {
             if (!val) return null;
@@ -8846,7 +8891,6 @@ ${truncatedText}`
                 // Note: API usage tracking not available from backend callAI function
                 // Backend handles API calls internally, usage data not returned
 
-                const parseBool = v => v === true || v === 'true' || v === 'True';
                 return {
                     project_name: projectName,
                     project_city: projectCity,
