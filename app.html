@@ -4950,9 +4950,15 @@ ${fullText.substring(0, 40000)}`;
                     estimated_value: project.extracted.estimated_value || null,
                     owner_name: project.extracted.owner_name || null,
                     architect_name: project.extracted.architect_name || null,
-                    general_contractor: project.extracted.gc_name || null,
+                    general_contractor: (project.extracted.gc_names || [])[0] || project.extracted.gc_name || null,
+                    gc_names: project.extracted.gc_names || (project.extracted.gc_name ? [project.extracted.gc_name] : []),
                     scope_summary: project.extracted.scope_summary || null,
                     spec_divisions_found: project.extracted.spec_divisions_found || [],
+                    sheet_disciplines_found: project.extracted.sheet_disciplines_found || [],
+                    scope_of_work_trades: project.extracted.scope_of_work_trades || [],
+                    project_type: project.extracted.project_type || null,
+                    bid_bond_required: project.extracted.bid_bond_required || false,
+                    invitation_only: project.extracted.invitation_only || false,
                     // Bid Risk detection fields
                     multiple_bidders_expected: project.extracted.multiple_bidders_expected || false,
                     bid_shopping_language: project.extracted.bid_shopping_language || false,
@@ -8635,6 +8641,21 @@ ${truncatedText}`
             }
         }
 
+        // Parse "$2.5M", "2.5 million", "$2,500,000" → integer
+        function parseMonetaryValue(val) {
+            if (!val) return null;
+            if (typeof val === 'number') return Math.round(val);
+            const s = String(val).replace(/[$,\s]/g, '');
+            const mM = s.match(/^([\d.]+)\s*[Mm](?:illion)?$/i);
+            if (mM) return Math.round(parseFloat(mM[1]) * 1_000_000);
+            const mB = s.match(/^([\d.]+)\s*[Bb](?:illion)?$/i);
+            if (mB) return Math.round(parseFloat(mB[1]) * 1_000_000_000);
+            const mK = s.match(/^([\d.]+)\s*[Kk]$/i);
+            if (mK) return Math.round(parseFloat(mK[1]) * 1_000);
+            const n = parseFloat(s);
+            return isNaN(n) ? null : Math.round(n);
+        }
+
         // Claude API extraction
         async function extractWithClaude(text) {
             // Truncate text if too long (Claude has token limits)
@@ -8825,6 +8846,7 @@ ${truncatedText}`
                 // Note: API usage tracking not available from backend callAI function
                 // Backend handles API calls internally, usage data not returned
 
+                const parseBool = v => v === true || v === 'true' || v === 'True';
                 return {
                     project_name: projectName,
                     project_city: projectCity,
@@ -8832,13 +8854,19 @@ ${truncatedText}`
                     project_address: projectAddress,
                     project_zip: extracted.project_zip || null,
                     building_type: buildingType,
+                    project_type: extracted.project_type || null,
                     bid_deadline: bidDeadline,
-                    project_size_sf: extracted.project_size_sf || null,
-                    estimated_value: extracted.estimated_value || null,
+                    project_size_sf: extracted.project_size_sf
+                        ? (parseInt(String(extracted.project_size_sf).replace(/\D/g, '')) || null)
+                        : null,
+                    estimated_value: parseMonetaryValue(extracted.estimated_value),
                     owner_name: extracted.owner_name || null,
                     architect_name: extracted.architect_name || null,
-                    gc_name: extracted.gc_name || null,
+                    gc_names: extracted.gc_names || [],
+                    gc_addresses: extracted.gc_addresses || [],
                     spec_divisions_found: extracted.spec_divisions_found || [],
+                    sheet_disciplines_found: extracted.sheet_disciplines_found || [],
+                    scope_of_work_trades: extracted.scope_of_work_trades || [],
                     contract_risk_clauses: extracted.contract_risk_clauses || {
                         pay_if_paid: false,
                         liquidated_damages: false,
@@ -8848,7 +8876,12 @@ ${truncatedText}`
                         retainage_over_10_percent: false
                     },
                     has_contract_language: extracted.contract_language_present || false,
-                    scope_summary: extracted.scope_summary || null
+                    bid_bond_required: parseBool(extracted.bid_bond_required),
+                    invitation_only: parseBool(extracted.invitation_only),
+                    scope_summary: extracted.scope_summary || null,
+                    multiple_bidders_expected: parseBool(extracted.multiple_bidders_expected),
+                    bid_shopping_language: parseBool(extracted.bid_shopping_language),
+                    vague_scope: parseBool(extracted.vague_scope)
                 };
             } catch (e) {
                 console.error('Claude extraction failed:', e);
