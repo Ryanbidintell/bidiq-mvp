@@ -156,6 +156,9 @@
         .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius); color: var(--text-secondary); cursor: pointer; margin-bottom: 4px; font-weight: 500; font-size: 14px; transition: all 0.2s; }
         .nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
         .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+        .analytics-date-filter { padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+        .analytics-date-filter:hover { border-color: var(--accent); color: var(--accent); }
+        .analytics-date-filter.active { background: var(--accent); border-color: var(--accent); color: #fff; }
         .nav-item svg { width: 18px; height: 18px; }
         a.nav-item { text-decoration: none; color: var(--text-secondary); }
         .sidebar-footer { padding: 12px; border-top: 1px solid var(--border); }
@@ -1559,6 +1562,15 @@
                     <h2 class="page-title">Bid Performance</h2>
                     <p class="page-subtitle">Win rates, scoring accuracy, and trends across your analyzed bids</p>
                 </header>
+                <div style="padding: 0 24px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span style="font-size: 13px; color: var(--text-muted); font-weight: 500; margin-right: 4px;">Date range:</span>
+                    <button class="analytics-date-filter active" data-range="all" onclick="setAnalyticsDateFilter('all')">All time</button>
+                    <button class="analytics-date-filter" data-range="365" onclick="setAnalyticsDateFilter('365')">Last 12 months</button>
+                    <button class="analytics-date-filter" data-range="180" onclick="setAnalyticsDateFilter('180')">Last 6 months</button>
+                    <button class="analytics-date-filter" data-range="90" onclick="setAnalyticsDateFilter('90')">Last 90 days</button>
+                    <button class="analytics-date-filter" data-range="30" onclick="setAnalyticsDateFilter('30')">Last 30 days</button>
+                    <span id="analyticsProjectCount" style="margin-left: auto; font-size: 12px; color: var(--text-muted);"></span>
+                </div>
                 <div class="page-content">
                     <!-- Win Rate Trends Over Time -->
                     <div class="card">
@@ -2874,6 +2886,7 @@
 
         let supabaseClient = null;
         let currentUser = null;
+        let analyticsDateFilter = 'all'; // 'all' | '30' | '90' | '180' | '365'
 
         // ============================================
         // SECURE API CLIENT - Calls backend functions
@@ -17044,11 +17057,38 @@ Respond now:`;
             el.innerHTML = html;
         }
 
+        function getAnalyticsFilteredProjects(projects) {
+            if (analyticsDateFilter === 'all') return projects;
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - parseInt(analyticsDateFilter));
+            return projects.filter(p => new Date(p.created_at) >= cutoff);
+        }
+
+        function setAnalyticsDateFilter(range) {
+            analyticsDateFilter = range;
+            document.querySelectorAll('.analytics-date-filter').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.range === range);
+            });
+            renderAnalytics();
+        }
+
         async function renderAnalytics() {
             const projects = await getProjects();
             const settings = await getSettings();
-            if (!projects || projects.length === 0) {
-                document.getElementById('accuracyMetrics').innerHTML = '<div class="help-text">📊 No projects yet. Start analyzing bids to see AI learning insights.</div>';
+            const filtered = getAnalyticsFilteredProjects(projects || []);
+
+            const countEl = document.getElementById('analyticsProjectCount');
+            if (countEl) {
+                countEl.textContent = analyticsDateFilter === 'all'
+                    ? `${(projects || []).length} bids`
+                    : `${filtered.length} of ${(projects || []).length} bids`;
+            }
+
+            if (!filtered || filtered.length === 0) {
+                const hasProjects = projects && projects.length > 0;
+                document.getElementById('accuracyMetrics').innerHTML = hasProjects
+                    ? '<div class="help-text">No bids in this date range. Try a wider filter or select All time.</div>'
+                    : '<div class="help-text">No projects yet. Start analyzing bids to see AI learning insights.</div>';
                 document.getElementById('feedbackAnalysis').innerHTML = '';
                 document.getElementById('calibrationInsights').innerHTML = '';
                 document.getElementById('aiRecommendations').innerHTML = '';
@@ -17080,21 +17120,21 @@ Respond now:`;
             }
 
             // Render new enhanced charts
-            renderWinRateTrendChart(projects);
-            renderBidVolumeChart(projects);
-            await renderGCPerformanceTables(projects);
-            await renderClientTypePerformance(projects);
-            renderBuildingTypeChart(projects);
-            renderBidROIAnalytics(projects);
-            renderRiskRewardScatter(projects);
-            renderScoreOutcomeChart(projects);
-            renderWinRateByBuildingType(projects);
-            renderWinRateByTrade(projects, settings);
+            renderWinRateTrendChart(filtered);
+            renderBidVolumeChart(filtered);
+            await renderGCPerformanceTables(filtered);
+            await renderClientTypePerformance(filtered);
+            renderBuildingTypeChart(filtered);
+            renderBidROIAnalytics(filtered);
+            renderRiskRewardScatter(filtered);
+            renderScoreOutcomeChart(filtered);
+            renderWinRateByBuildingType(filtered);
+            renderWinRateByTrade(filtered, settings);
 
             // Calculate metrics
-            const accuracy = calculatePredictionAccuracy(projects);
-            const feedback = calculateUserFeedback(projects);
-            const calibration = calculateCalibration(projects);
+            const accuracy = calculatePredictionAccuracy(filtered);
+            const feedback = calculateUserFeedback(filtered);
+            const calibration = calculateCalibration(filtered);
             const recommendations = generateRecommendations(accuracy, feedback, calibration);
 
             // Render Prediction Accuracy
