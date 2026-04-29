@@ -3207,7 +3207,8 @@
             }
 
             // Admin/internal accounts always have access
-            if (currentUser.email && currentUser.email.endsWith('@fsikc.com')) {
+            const internalEmails = ['ryan@fsikc.com', 'ryan@bidintell.ai'];
+            if (currentUser.email && (currentUser.email.endsWith('@fsikc.com') || internalEmails.includes(currentUser.email))) {
                 return true;
             }
 
