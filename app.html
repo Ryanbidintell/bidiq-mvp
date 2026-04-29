@@ -7682,7 +7682,7 @@ Return ONLY a JSON object — no other text.
   "doc_type": "drawing_set" | "spec_book" | "bid_invite" | "mixed",
   "phase": "SD" | "DD" | "CD" | "unknown",
   "sheet_index": [{"sheet": "A-101", "title": "Floor Plan", "page": 3}],
-  "toc_sections": [{"division": "09", "title": "Finishes", "page": 45}],
+  "toc_sections": [{"section": "09 65 00", "division": "09", "title": "Resilient Flooring", "page": 45}],
   "finish_schedule_pages": [],
   "finish_legend_pages": [],
   "furniture_plan_pages": [],
@@ -7694,7 +7694,7 @@ Return ONLY a JSON object — no other text.
 Rules:
 - phase: SD = schematic/conceptual, DD = design development, CD = construction documents/permit set. Default CD if unclear.
 - sheet_index: extract every row from the sheet index/drawing list (sheet number + title + page number if shown).
-- toc_sections: extract every row from the spec book table of contents (division number + title + page).
+- toc_sections: extract every row from the spec book TOC. section = full 6-digit code if visible (e.g. "09 65 00"), division = 2-digit prefix, title, page number.
 - *_pages arrays: page numbers (integers) where those sheet types appear. Leave empty [] if not found.
 - finish_schedule_pages: sheets titled FINISH SCHEDULE, ROOM FINISH SCHEDULE, FINISH PLAN.
 - finish_legend_pages: sheets with FINISH LEGEND, MATERIAL LEGEND, FINISH KEY, ROOM FINISH MATRIX.
@@ -8180,12 +8180,15 @@ ${sampleText}`;
             if (isInteriorDesign) addPageNums(docMap.interior_elevation_pages);
 
             // ── Spec book TOC matching ────────────────────────────────────────
-            // Derive 2-digit divisions for TOC matching (toc_sections only has division field)
+            // Match by 6-digit section code when Pass 1 extracted it; fall back to 2-digit division.
             const userDivisions = new Set(sections.map(s => s.substring(0, 2)));
-            (docMap.toc_sections || []).forEach(section => {
-                const div = String(section.division || '').padStart(2, '0');
-                if (userDivisions.has(div)) {
-                    const idx = (section.page || 0) - 1;
+            const userSectionSet = new Set(sections);
+            (docMap.toc_sections || []).forEach(tocEntry => {
+                const sectionCode = tocEntry.section ? normalizeCode(tocEntry.section) : null;
+                const div = String(tocEntry.division || '').padStart(2, '0');
+                const matches = sectionCode ? userSectionSet.has(sectionCode) : userDivisions.has(div);
+                if (matches) {
+                    const idx = (tocEntry.page || 0) - 1;
                     // Include section start + next 8 pages for context
                     for (let j = idx; j < Math.min(idx + 8, totalPages); j++) {
                         if (j >= 0) targeted.add(j);
