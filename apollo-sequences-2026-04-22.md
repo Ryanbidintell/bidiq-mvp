@@ -1,37 +1,56 @@
-# BidIntell Apollo Sequences — Draft v1
+# BidIntell Apollo Sequences — v2 (Hormozi Frame)
 
 **Created:** April 22, 2026
 **For leads from:** `apollo-leads-2026-04-22.csv`
+**Frame:** Free 5-invite audit lead magnet + dollar-math hook + Guarantee D ("Kill 1 bad bid in 30 days or full refund")
+**Forwarding alias:** ryan@bidintell.ai
 
 ---
 
 ## How to use
 
 1. Log into Apollo → Sequences → **Create a sequence** (once per sequence below).
-2. Paste each email's subject + body into its step. Use Apollo variables: `{{first_name}}`, `{{company}}`.
-3. Set timing as noted (Day 0 = immediate, Day 2 = 2 business days after the prior step, etc.). All emails send Tue–Thu mornings.
-4. Tell me the sequence names and I'll bulk-enroll the 25 contacts via API.
+2. Paste each email's subject + body into its step. Use Apollo variables: `{{first_name}}` and `{{company}}`.
+3. Cadence (all 3 sequences): Day 0 → Day 2 → Day 5 → Day 9 → Day 14. Send window Tue–Thu, 7:30–9:30 AM local.
+4. Tell me the sequence names and which email account to send from. I'll bulk-enroll the 25 contacts.
+
+---
+
+## The Offer (referenced across all sequences)
+
+**Free:** Forward 5 bid invites to ryan@bidintell.ai → get back a 1-page report scoring each across 5 factors within 24 hrs. No call. No card. No pitch.
+
+**Paid:** Founding-member pricing locks for life. $470 / $950 / $1,720 per year (Starter / Pro / Team).
+
+**Guarantee:** Kill at least 1 bad bid in your first 30 days or full refund.
+*(Reasoning: 1 bad bid = 6–20 estimating hours × $75–$150 loaded = $450–$3,000 wasted. Killing one is worth more than a year of BidIntell.)*
 
 ---
 
 ## Sequence A — "Owner Outreach"
 
-**For:** Owners, Presidents, Founders, CEOs (13 of the 25 leads)
-**Angle:** Business-owner frame — protect estimating hours, lift win rate, lock founding-member pricing for life.
+**For:** Owners, Presidents, Founders, CEOs (12 leads)
+**Angle:** Protect estimating hours. Scale beyond tribal knowledge. Build the data moat.
 
-### Step 1 — Day 0 (send immediately on enrollment)
+---
 
-**Subject:** quick question about your bid pipeline
+### Step 1 — Day 0
+
+**Subject:** the math says 1 bad bid costs you $450–$3,000
 
 Hi {{first_name}},
 
-How much estimating time do you think {{company}} burns chasing bids you never had a real shot at?
+Quick math on bid triage:
 
-Most subs and distributors we talk to say 40–60%. That's a huge tax on your best estimators.
+- 1 bad bid = 6–20 estimating hours
+- Loaded estimator cost = $75–$150/hr
+- **Cost of one bad bid: $450 to $3,000**
 
-BidIntell scores every incoming bid invite in seconds across five factors — location fit, trade match, contract risk, client relationship, competitive pressure. Your estimators only touch the ones worth the effort.
+If you're chasing more than one of those a month at {{company}}, BidIntell pays for itself 5–50x over.
 
-Worth a 15-min look?
+Free offer: forward me 5 of {{company}}'s bid invites this week and I'll send back a 1-page report scoring each across 5 factors (location, contract risk, client history, trade match, competitive pressure) within 24 hrs. No call. No pitch.
+
+Send to: ryan@bidintell.ai
 
 — Ryan
 Founder, BidIntell
@@ -40,15 +59,17 @@ Founder, BidIntell
 
 ### Step 2 — Day 2
 
-**Subject:** founding-member pricing locks for life
+**Subject:** scale past tribal knowledge
 
-Hi {{first_name}},
+{{first_name}},
 
-Quick follow-up — we're capping founding members at 50 companies and the price you lock in stays for the life of your subscription. Starter is $470/yr, Pro $950, Team $1,720.
+Most subs and distributors I talk to win with certain GCs and lose with others — but it's tribal knowledge in someone's head.
 
-Owners who've joined have cut bid-triage time by half in the first 30 days.
+BidIntell quantifies it. Win rate by GC. Win rate by project type. Pay behavior. Bid-shopping signals. Over 6–12 months it becomes {{company}}'s internal bidding algorithm — not "what {{first_name}}'s gut says."
 
-Open to a short demo this week or next?
+That's how you scale past today's relationships.
+
+Free 5-invite audit still on the table. Forward to ryan@bidintell.ai.
 
 — Ryan
 
@@ -56,13 +77,24 @@ Open to a short demo this week or next?
 
 ### Step 3 — Day 5
 
-**Subject:** how one sub cut bid triage from 3 hrs to 15 min
+**Subject:** the offer (founding-member pricing locks for life)
 
-{{first_name}},
+Hi {{first_name}},
 
-Short story — a mechanical sub your size was spending 3+ hours every Monday triaging invites. After BidIntell scored them, he was down to 15 min and stopped bidding three accounts that had ghosted him for two years.
+Here's the deal if {{company}} wants in:
 
-Would the same math work for {{company}}? I can show you in 10 minutes with your actual inbox.
+**You get:**
+- BidIntell scoring engine (5 factors, every invite, in seconds)
+- GC database that learns your win/loss patterns over time
+- Contract risk detection (pay-if-paid, LDs, etc.)
+- Free founder-led onboarding
+- **Lifetime price lock** — the founding-member rate stays put as long as you're a customer
+
+**You pay:** $470 / $950 / $1,720 per year (Starter / Pro / Team)
+
+**You risk:** Nothing. If BidIntell doesn't help {{company}} kill at least 1 bad bid in 30 days, full refund. No questions.
+
+Want to start with the free 5-invite audit? Forward to ryan@bidintell.ai.
 
 — Ryan
 
@@ -70,13 +102,15 @@ Would the same math work for {{company}}? I can show you in 10 minutes with your
 
 ### Step 4 — Day 9
 
-**Subject:** worth a look before founding spots fill?
+**Subject:** founding spots are filling
 
-Hi {{first_name}},
+{{first_name}},
 
-Founding-member slots are going quickly and the lifetime price lock disappears when we close the cohort.
+We cap founding members at 50. After that the lifetime price lock disappears.
 
-If {{company}} gets 20+ bid invites a week and you want to see what fits, hit reply and I'll send a 5-minute Loom showing it scoring real invites.
+If {{company}} gets 20+ invites a week and you're tired of chasing the wrong ones, hit reply or forward 5 to ryan@bidintell.ai.
+
+Worst case: free audit. Best case: you kill a bad bid in week 1 and the tool pays for the year.
 
 — Ryan
 
@@ -84,16 +118,17 @@ If {{company}} gets 20+ bid invites a week and you want to see what fits, hit re
 
 ### Step 5 — Day 14 (break-up)
 
-**Subject:** should I close the file on {{company}}?
+**Subject:** closing the file on {{company}}?
 
 {{first_name}},
 
-Haven't heard back — totally fine. Before I close your file, two quick options:
+Last note from me.
 
-1. **Not now** — I'll check back in 6 months.
-2. **Wrong person** — who at {{company}} owns bid qualification?
+If bid triage isn't a priority at {{company}} right now, no worries — just hit reply with "not now" and I'll back off until Q3.
 
-Either reply works. Thanks for your time.
+If it is, even a one-line "send the audit instructions" works.
+
+Either way, thanks for your time.
 
 — Ryan
 
@@ -101,20 +136,27 @@ Either reply works. Thanks for your time.
 
 ## Sequence B — "Estimator Pain"
 
-**For:** VP Preconstruction, VP Construction, Directors of Operations (5–7 of the 25 leads — **Steven Bosse is the textbook fit**)
-**Angle:** Operator pain — stop drowning in bid invites, point your team at the winners.
+**For:** VP Preconstruction, VP Construction, Directors of Operations (5 leads — **Steven Bosse is priority**)
+**Angle:** Stop your team from drowning in invites. Get Mondays back.
+
+---
 
 ### Step 1 — Day 0
 
-**Subject:** which bids should {{company}}'s team say no to?
+**Subject:** which bids should {{company}}'s estimators say no to?
 
 Hi {{first_name}},
 
-You probably see 20–50 bid invites a week. Which ones should your estimators actually chase?
+Your team probably sees 20–50 bid invites a week. Right now they're qualifying invites instead of estimating jobs they'll win.
 
-BidIntell scores every invite against your trade, your best clients, the contract terms you hate, and the jobs you've won before — usually in under a minute per invite.
+The math:
+- 1 bad bid = 6–20 hours wasted
+- Loaded estimator rate = $75–$150/hr
+- **Burn per bad bid: $450–$3,000**
 
-One VP of Preconstruction told us it was "the first tool that made Monday mornings not a grind." Worth 15 minutes to compare against your last week of invites?
+Free offer for {{company}}: forward me 5 invites from this week and I'll send back a 1-page report — each one scored across 5 factors (location, contract risk, client relationship, trade match, competitive pressure). 24 hrs. No call. No pitch.
+
+Send to: ryan@bidintell.ai
 
 — Ryan
 Founder, BidIntell
@@ -123,19 +165,21 @@ Founder, BidIntell
 
 ### Step 2 — Day 2
 
-**Subject:** the 5 factors we score every bid on
+**Subject:** the 5 factors we score every invite on
 
 {{first_name}},
 
-Quick context — every invite gets scored across:
+Quick context on what {{company}}'s team would get:
 
-1. Location fit (distance, travel, market knowledge)
-2. Keywords & contract terms (risky language, red-flag clauses)
-3. Client relationship (win rate history, payment behavior)
-4. Trade/product match (how well the scope matches your wheelhouse)
+1. Location fit (travel, market knowledge)
+2. Keywords + contract terms (red-flag clauses your team should NOT sign)
+3. Client relationship (win history, payment behavior, ghost rate)
+4. Trade/product match (how well the scope hits your wheelhouse)
 5. Competitive pressure (after 3+ outcomes logged, we show how crowded the bid list is)
 
-If any of those are currently a gut-feel call, BidIntell gives your team the data. Open to a walk-through?
+If any of those are gut-feel calls today, BidIntell makes them data calls.
+
+Free 5-invite audit still on the table. ryan@bidintell.ai.
 
 — Ryan
 
@@ -143,15 +187,17 @@ If any of those are currently a gut-feel call, BidIntell gives your team the dat
 
 ### Step 3 — Day 5
 
-**Subject:** what your estimators are stuck doing right now
+**Subject:** what your team is stuck doing right now
 
 {{first_name}},
 
-Guess: your estimators spend more time qualifying invites than actually estimating. That's the problem we solve.
+Guess: your estimators spend more time qualifying invites than estimating. That's exactly the problem we solve.
 
-Forward one morning's batch of invites to your BidIntell alias and get them back scored in minutes — before your team touches them. Works with any email: Outlook, Gmail, whatever.
+Forward one morning's batch of invites to ryan@bidintell.ai and get them back scored before your team touches them.
 
-Want me to set up a trial alias for {{company}}?
+The offer: $470/yr Starter, $950 Pro, $1,720 Team. Founding-member pricing locks for life. Full refund if {{company}} doesn't kill at least 1 bad bid in 30 days.
+
+Worth a look?
 
 — Ryan
 
@@ -159,13 +205,15 @@ Want me to set up a trial alias for {{company}}?
 
 ### Step 4 — Day 9
 
-**Subject:** 20-min demo with your actual inbox?
+**Subject:** 20-min walk-through with your actual inbox?
 
 Hi {{first_name}},
 
-Better than a generic demo — send me one week of real bid invites (redacted fine) and I'll run them through BidIntell live. You'll see exactly how it'd call your pipeline.
+Better than a generic demo: send me one week of {{company}}'s real invites (redact what you want) and I'll run them through BidIntell live with you. You'll see exactly how it'd call your pipeline.
 
-15–20 minutes. Worth it?
+15–20 min. No deck.
+
+Or just forward 5 to ryan@bidintell.ai and skip the meeting.
 
 — Ryan
 
@@ -173,13 +221,11 @@ Better than a generic demo — send me one week of real bid invites (redacted fi
 
 ### Step 5 — Day 14 (break-up)
 
-**Subject:** closing the loop on {{company}}
+**Subject:** closing the loop
 
 {{first_name}},
 
-Last one from me. If bid triage at {{company}} isn't a priority right now I'll back off — just let me know and I won't keep pestering.
-
-If it is, even a one-line "send me info" works.
+Last one. If invite triage at {{company}} isn't a priority, just say "not now" and I'll stop. If it is, one line back works.
 
 Thanks either way.
 
@@ -189,20 +235,27 @@ Thanks either way.
 
 ## Sequence C — "Distributor Growth"
 
-**For:** VP Sales, Sales Directors, Sales Managers at distributors (5–7 of the 25 leads)
-**Angle:** Distributor/wholesaler angle — your team responds to sub & GC RFQs; BidIntell helps pick which ones are real.
+**For:** VP Sales, Sales Directors, Sales Managers at distributors (8 leads)
+**Angle:** RFQs that close. Sales pipeline quality. Stop quoting deals that ghost.
+
+---
 
 ### Step 1 — Day 0
 
-**Subject:** RFQs that actually convert
+**Subject:** how many {{company}} RFQs ghost?
 
 Hi {{first_name}},
 
-How many RFQs does {{company}}'s sales team quote each week that never close? For most building-products distributors we talk to, it's 60%+.
+For most building-products distributors I talk to, 60%+ of RFQs never close. Your sales team is quoting jobs that won't happen.
 
-BidIntell scores incoming RFQs on fit, contract risk, and client history so your team knows where to push and where to deprioritize. Less noise, better close rates.
+The math:
+- 1 dead RFQ = 2–6 hours of quote work
+- Loaded sales-rep cost = $50–$100/hr
+- **Burn per dead RFQ: $100–$600**
 
-Worth a 15-min look?
+Free offer: forward me 5 of {{company}}'s recent RFQs and I'll send back a 1-page report scoring each on fit, contract risk, and client history. 24 hrs. No call.
+
+Send to: ryan@bidintell.ai
 
 — Ryan
 Founder, BidIntell
@@ -211,16 +264,15 @@ Founder, BidIntell
 
 ### Step 2 — Day 2
 
-**Subject:** quoting less, closing more
+**Subject:** which contractors quote you, then ghost?
 
 {{first_name}},
 
-Quick follow-up — the distributors on BidIntell report two things within 30 days:
+One thing BidIntell tracks: which contractors ask you to quote, then disappear — and which ones actually award.
 
-1. Sales reps spend less time on quotes that never convert.
-2. Win rates go up because the team focuses on the right opportunities.
+Most sales leaders feel they know. The data usually says otherwise.
 
-Worth comparing against {{company}}'s quote history?
+That alone sharpens where {{company}}'s reps spend their time. Free 5-RFQ audit still open at ryan@bidintell.ai.
 
 — Ryan
 
@@ -228,15 +280,20 @@ Worth comparing against {{company}}'s quote history?
 
 ### Step 3 — Day 5
 
-**Subject:** which of your best customers ghost you?
+**Subject:** the offer for {{company}}
 
-{{first_name}},
+Hi {{first_name}},
 
-One thing BidIntell tracks: which contractors ask you to quote, then ghost — and which ones actually award.
+Here's what {{company}} gets:
 
-Most sales leads at distributors say they *feel* they know. Our data usually shows otherwise. It's a useful gut-check.
+- Every RFQ scored on 5 factors (location, contract terms, client history, trade match, competitive pressure)
+- Database that learns which contractors actually convert vs. shop you
+- Founder-led onboarding
+- **Lifetime price lock** at founding-member rates: $470 / $950 / $1,720 per year
 
-Happy to show you what it'd look like for {{company}} — 10 minutes.
+Risk: zero. If {{company}} doesn't kill at least 1 bad RFQ in the first 30 days, full refund.
+
+Free 5-RFQ audit at ryan@bidintell.ai if you want to test before buying.
 
 — Ryan
 
@@ -244,13 +301,13 @@ Happy to show you what it'd look like for {{company}} — 10 minutes.
 
 ### Step 4 — Day 9
 
-**Subject:** founding-member pricing for distributors
+**Subject:** founding member spots filling
 
-Hi {{first_name}},
+{{first_name}},
 
-We're capping our founding member group at 50 companies — the price you lock in stays for the life of your subscription. Starter is $470/yr, Pro $950, Team $1,720.
+Capping founding members at 50 — lifetime price lock goes away after.
 
-If {{company}} wants in, I can get you set up this week.
+If {{company}} sees 30+ RFQs a week and your sales team is tired of quoting deals that ghost, hit reply or forward 5 to ryan@bidintell.ai.
 
 — Ryan
 
@@ -258,16 +315,13 @@ If {{company}} wants in, I can get you set up this week.
 
 ### Step 5 — Day 14 (break-up)
 
-**Subject:** last note from me
+**Subject:** last note
 
 {{first_name}},
 
-Haven't heard back — no worries. Two quick options before I close your file:
+If RFQ qualification isn't a priority right now at {{company}}, just say so and I'll back off. If it is, one line works.
 
-1. **Not now** — I'll circle back in Q3.
-2. **Wrong person** — who owns RFQ strategy at {{company}}?
-
-Either reply works, and thanks for your time.
+Thanks.
 
 — Ryan
 
@@ -290,7 +344,7 @@ Either reply works, and thanks for your time.
 - Ellie Priester — FireRock Luxury Building Materials
 
 ### Sequence B — Estimator Pain (5 leads)
-- **Steven Bosse — Temp Air Company (VP Preconstruction — priority)**
+- **Steven Bosse — Temp Air Company (VP Preconstruction — top priority)**
 - Kevin Reynolds — Ashton Commercial Construction
 - Robert Cueman — Swift Electrical Supply
 - Dale B — Active Plumbing Supply
@@ -308,10 +362,20 @@ Either reply works, and thanks for your time.
 
 ---
 
-## Tips
+## What changed from v1 → v2 (for the record)
 
-- **Send window:** Tuesday–Thursday, 7:30–9:30 AM local time (field crews + estimators read early).
-- **Avoid Mondays** (invite backlog day — your email gets drowned).
-- **A/B test Step 1 subject lines** after 20+ sends. Apollo supports this natively.
-- **Same-company guardrail:** Apollo's default prevents multiple contacts from the same company getting enrolled simultaneously. You'll want to toggle `sequence_same_company_in_same_campaign: true` for Belden and Active Plumbing.
-- **Unsubscribe footer:** Apollo adds it automatically. Confirm it's enabled.
+- **Lead magnet added:** Every Step 1 now opens with a free 5-invite/RFQ audit. This is the Hormozi "give before ask" hook.
+- **Dollar math up front:** Specific cost-of-bad-bid figures ($450–$3,000) replace vague "save time" language.
+- **Guarantee added:** Step 3 stacks the offer and adds "kill 1 bad bid in 30 days or full refund." Removes all financial risk for the prospect.
+- **Founding-member urgency:** Real, dated scarcity in Step 4.
+- **Effort-to-respond reduced:** "Forward 5 emails to ryan@bidintell.ai" beats "book a 15-min call" by an order of magnitude.
+- **No fake proof:** No fabricated testimonials, no Brennan/Summit citation. Founder-led, math-driven, demonstration-backed.
+
+---
+
+## Operational checklist (do before launching)
+
+- [ ] Confirm Apollo email account is connected and warmed up
+- [ ] Create the 1-page audit report template (Google Doc or Canva — header, 5 invite scores, commentary, founding-member CTA)
+- [ ] Set a 24-hr SLA mental model for replying to forwards
+- [ ] Track in a sheet: lead, # invites scored, scores given, response (engaged / silent / converted)
