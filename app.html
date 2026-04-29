@@ -7724,31 +7724,398 @@ ${sampleText}`;
             }
         }
 
-        // Keywords in sheet titles that signal relevance for each CSI division.
-        // Matched case-insensitively against the sheet_index from Pass 1.
-        const CSI_SHEET_KEYWORDS = {
-            '02': ['demolition', 'demo', 'existing condition', 'survey', 'hazmat'],
-            '03': ['structural', 'foundation', 'concrete', 'footing', 'slab', 'grade beam', 's-'],
-            '04': ['masonry', 'brick', 'cmu', 'wall section', 'wall type'],
-            '05': ['steel', 'metal framing', 'joist', 'structural steel'],
-            '06': ['millwork', 'casework', 'woodwork', 'cabinet', 'cabinetry'],
-            '07': ['roof', 'roofing', 'waterproof', 'insulation', 'envelope', 'wall detail'],
-            '08': ['door schedule', 'window schedule', 'hardware schedule', 'opening schedule', 'door and frame'],
-            '09': ['finish schedule', 'room finish', 'finish legend', 'finish plan', 'finish key', 'material legend', 'flooring', 'ceiling', 'interior finish', 'paint schedule', 'wall finish'],
-            '10': ['specialty', 'specialties', 'signage', 'lockers', 'toilet partition', 'fire extinguisher'],
-            '11': ['equipment', 'food service', 'kitchen', 'laundry', 'lab equipment'],
-            '12': ['furniture', 'furnishing', 'ff&e', 'interior design', 'furniture plan', 'furniture layout', 'workstation'],
-            '13': ['special construction', 'clean room', 'radiation', 'pool'],
-            '14': ['elevator', 'lift', 'conveying', 'escalator'],
-            '21': ['fire protection', 'sprinkler', 'fire suppression', 'fp-'],
-            '22': ['plumbing', 'plumb', 'p-', 'sanitary', 'domestic water'],
-            '23': ['mechanical', 'hvac', 'ductwork', 'm-', 'air handling', 'ventilation', 'exhaust'],
-            '26': ['electrical', 'e-', 'lighting', 'power plan', 'panel schedule', 'one-line', 'single line', 'load schedule'],
-            '27': ['technology', 'communications', 'low voltage', 'data', 'av ', 'audio', 'it-', 't-'],
-            '28': ['security', 'access control', 'cctv', 'surveillance'],
-            '31': ['grading', 'earthwork', 'excavation', 'c-', 'civil', 'site grading', 'erosion', 'demolition plan'],
-            '32': ['landscape', 'l-', 'irrigation', 'planting', 'paving', 'site paving', 'hardscape', 'exterior improvement', 'site plan', 'sitework'],
-            '33': ['utility', 'utilities', 'underground', 'site utility', 'storm', 'sewer', 'water main'],
+        // Keywords matched case-insensitively against sheet index titles (drawing sets)
+        // and spec TOC headings. Keyed by canonical 6-digit CSI section code "XX XX XX".
+        // selectTargetPages() normalizes any stored format before lookup.
+        const CSI_SECTION_KEYWORDS = {
+            // Div 01 — General Requirements (spec-only, no dedicated drawing sheets)
+            '01 10 00': ['general requirements', 'summary of work'],
+            '01 33 00': ['submittal'],
+            '01 40 00': ['quality control', 'quality requirements'],
+            '01 50 00': ['temporary facilities', 'temp power', 'temp toilet'],
+            '01 77 00': ['closeout'],
+
+            // Div 02 — Existing Conditions
+            '02 21 00': ['survey', 'topographic survey', 'boundary survey'],
+            '02 24 00': ['environmental assessment', 'phase i', 'phase ii'],
+            '02 26 00': ['hazmat', 'hazardous material', 'asbestos survey'],
+            '02 41 00': ['demolition', 'demo plan', 'existing conditions', 'removal plan', 'selective demolition', 'da-'],
+            '02 42 00': ['salvage', 'removal and salvage'],
+            '02 50 00': ['remediation', 'site remediation'],
+            '02 52 00': ['asbestos', 'abatement', 'hazardous material'],
+            '02 53 00': ['lead abatement', 'lead remediation'],
+            '02 54 00': ['mold remediation', 'mold'],
+            '02 56 00': ['pcb remediation', 'pcb'],
+            '02 65 00': ['ust removal', 'tank removal', 'underground storage tank'],
+
+            // Div 03 — Concrete
+            '03 01 00': ['concrete repair', 'concrete maintenance'],
+            '03 10 00': ['concrete forming', 'formwork', 'form detail'],
+            '03 11 00': ['forming', 'formwork', 'shoring form'],
+            '03 15 00': ['concrete accessory', 'embedded', 'embed plate'],
+            '03 20 00': ['rebar', 'reinforcing', 'rebar plan', 'reinforcement plan', 'bar placement'],
+            '03 30 00': ['slab plan', 'concrete plan', 'cast-in-place', 'foundation plan', 'concrete', 'footing', 'grade beam', 'mat slab', 'slab on grade', 's-'],
+            '03 31 00': ['structural concrete', 'foundation', 'slab', 'footing detail', 's-'],
+            '03 33 00': ['architectural concrete', 'exposed concrete', 'board form'],
+            '03 35 00': ['concrete finish', 'floor flatness', 'surface finish'],
+            '03 40 00': ['precast', 'prestressed', 'hollow core plank'],
+            '03 41 00': ['precast concrete', 'double tee', 'precast structure', 'precast panel'],
+            '03 45 00': ['precast architectural', 'tilt-up', 'tilt panel', 'precast facade'],
+            '03 50 00': ['topping slab', 'concrete topping', 'cast deck'],
+            '03 53 00': ['concrete topping', 'topping'],
+            '03 54 00': ['underlayment', 'gypsum underlayment', 'self-leveling'],
+            '03 60 00': ['grouting', 'grout', 'non-shrink grout'],
+            '03 62 00': ['non-shrink grout', 'precision grout'],
+            '03 80 00': ['concrete cutting', 'core drilling', 'saw cut'],
+
+            // Div 04 — Masonry
+            '04 20 00': ['masonry', 'brick', 'cmu', 'unit masonry', 'wall section'],
+            '04 21 00': ['brick', 'clay brick', 'face brick', 'brick veneer'],
+            '04 22 00': ['cmu', 'concrete block', 'masonry block', 'block wall'],
+            '04 23 00': ['glass block', 'glass masonry', 'glass unit'],
+            '04 40 00': ['stone assembly', 'stone facade', 'natural stone'],
+            '04 42 00': ['stone cladding', 'stone veneer', 'exterior stone'],
+            '04 43 00': ['stone masonry', 'fieldstone', 'limestone masonry'],
+            '04 50 00': ['refractory', 'firebrick'],
+            '04 57 00': ['fireplace', 'chimney', 'masonry fireplace'],
+            '04 70 00': ['manufactured masonry'],
+            '04 72 00': ['cast stone', 'precast stone'],
+            '04 73 00': ['manufactured stone', 'thin stone', 'adhered stone'],
+
+            // Div 05 — Metals
+            '05 10 00': ['structural steel', 'steel framing', 'structural framing', 's-'],
+            '05 12 00': ['structural steel', 'wide flange', 'steel beam', 'steel column', 'connection detail', 's-'],
+            '05 20 00': ['joist', 'open web joist', 'owj'],
+            '05 21 00': ['steel joist', 'joist layout', 'joist plan', 'bar joist'],
+            '05 30 00': ['metal deck', 'steel deck', 'composite deck', 'roof deck'],
+            '05 31 00': ['steel deck', 'deck layout', 'deck plan'],
+            '05 40 00': ['metal stud', 'light gauge', 'cold-formed', 'metal framing', 'framing plan'],
+            '05 41 00': ['metal stud', 'structural stud', 'framing elevation', 'stud wall'],
+            '05 50 00': ['misc metal', 'miscellaneous metal', 'metal fabrication'],
+            '05 51 00': ['stair', 'metal stair', 'stairway', 'stair detail', 'stair plan'],
+            '05 52 00': ['railing', 'handrail', 'guard rail', 'guardrail', 'rail detail'],
+            '05 53 00': ['grating', 'trench grate', 'floor grate', 'drain grating'],
+            '05 70 00': ['decorative metal', 'ornamental metal'],
+            '05 73 00': ['decorative railing', 'ornamental railing', 'custom railing'],
+
+            // Div 06 — Wood, Plastics and Composites
+            '06 10 00': ['rough carpentry', 'blocking', 'wood framing', 'rough frame'],
+            '06 11 00': ['wood frame', 'stud wall', 'platform frame', 'framing plan'],
+            '06 16 00': ['sheathing', 'wall sheathing', 'roof sheathing'],
+            '06 20 00': ['finish carpentry', 'trim', 'molding', 'casework detail'],
+            '06 22 00': ['millwork', 'casework', 'cabinet', 'cabinetry', 'woodwork', 'casework elevation'],
+            '06 40 00': ['architectural woodwork', 'custom wood', 'paneling', 'wood panel'],
+            '06 41 00': ['casework elevation', 'casework plan', 'custom cabinet', 'millwork detail'],
+            '06 42 00': ['wood paneling', 'wainscot', 'wall panel', 'wood wall'],
+            '06 43 00': ['wood stair', 'wood railing', 'stair detail', 'wood handrail'],
+            '06 46 00': ['base molding', 'door trim', 'wood trim', 'crown molding'],
+            '06 60 00': ['plastic fabrication', 'frp panel'],
+            '06 80 00': ['composite panel', 'fiber reinforced composite'],
+
+            // Div 07 — Thermal and Moisture Protection
+            '07 10 00': ['waterproofing', 'dampproofing', 'below grade waterproofing'],
+            '07 11 00': ['dampproofing'],
+            '07 13 00': ['sheet waterproofing', 'membrane waterproofing', 'waterproofing detail'],
+            '07 14 00': ['fluid applied waterproofing', 'liquid waterproofing'],
+            '07 18 00': ['traffic coating', 'parking deck coating', 'deck coating', 'vehicular deck'],
+            '07 19 00': ['water repellent', 'masonry sealer'],
+            '07 21 00': ['insulation', 'thermal insulation', 'wall insulation', 'roof insulation'],
+            '07 24 00': ['eifs', 'exterior insulation finish', 'synthetic stucco'],
+            '07 25 00': ['weather barrier', 'housewrap', 'moisture barrier'],
+            '07 27 00': ['air barrier', 'air and vapor barrier'],
+            '07 31 00': ['shingle', 'asphalt shingle', 'roofing shingle'],
+            '07 32 00': ['roof tile', 'clay tile', 'concrete roof tile'],
+            '07 41 00': ['metal roof', 'standing seam', 'roof panel', 'metal roofing'],
+            '07 46 00': ['siding', 'exterior siding', 'lap siding', 'fiber cement siding'],
+            '07 51 00': ['built-up roof', 'bur', 'roofing plan', 'roof plan'],
+            '07 52 00': ['modified bitumen', 'cap sheet', 'modified bituminous'],
+            '07 53 00': ['epdm', 'single ply roof', 'rubber roof', 'membrane roofing'],
+            '07 54 00': ['tpo', 'pvc roof', 'thermoplastic roof', 'single ply', 'roofing plan', 'roof plan'],
+            '07 56 00': ['fluid applied roof', 'silicone roof', 'coating restoration'],
+            '07 60 00': ['flashing', 'sheet metal', 'coping', 'counter flashing', 'base flashing'],
+            '07 62 00': ['sheet metal flashing', 'roof flashing', 'wall flashing', 'flashing detail'],
+            '07 71 00': ['roof hatch', 'roof curb', 'expansion joint cover', 'roof specialty'],
+            '07 72 00': ['roof accessory', 'equipment screen', 'roof drain', 'roof screen'],
+            '07 81 00': ['fireproofing', 'spray fireproofing', 'intumescent', 'column fireproofing'],
+            '07 84 00': ['firestopping', 'fire stopping', 'fire barrier', 'smoke seal', 'through penetration'],
+            '07 92 00': ['sealant', 'caulking', 'joint sealant', 'expansion joint sealant'],
+
+            // Div 08 — Openings
+            '08 11 00': ['door schedule', 'door and frame', 'hollow metal', 'hm door', 'frame schedule'],
+            '08 13 00': ['metal door', 'hm door', 'door detail'],
+            '08 14 00': ['wood door', 'flush door', 'door schedule'],
+            '08 31 00': ['access door', 'access panel', 'attic access', 'access hatch'],
+            '08 32 00': ['sliding door', 'patio door', 'sliding glass'],
+            '08 33 00': ['coiling door', 'rolling door', 'roll-up door', 'overhead coiling', 'grille'],
+            '08 36 00': ['overhead door', 'garage door', 'dock door', 'sectional door'],
+            '08 41 00': ['storefront', 'entrance', 'aluminum storefront', 'glass entrance'],
+            '08 44 00': ['curtain wall', 'glazing system', 'glass wall', 'unitized curtain', 'facade glazing'],
+            '08 51 00': ['window schedule', 'aluminum window', 'window type', 'window detail'],
+            '08 52 00': ['wood window', 'wood clad window'],
+            '08 62 00': ['skylight', 'unit skylight', 'skylight detail'],
+            '08 63 00': ['framed skylight', 'ridge skylight', 'structural skylight'],
+            '08 71 00': ['hardware schedule', 'door hardware', 'finish hardware', 'keying schedule', 'lockset schedule'],
+            '08 81 00': ['glazing', 'insulating glass', 'laminated glass', 'glass type'],
+            '08 83 00': ['mirror', 'mirror schedule'],
+            '08 91 00': ['louver', 'wall louver', 'ventilation louver'],
+
+            // Div 09 — Finishes
+            '09 22 00': ['framing plan', 'ceiling framing', 'soffit framing', 'soffit detail'],
+            '09 23 00': ['plaster', 'veneer plaster', 'gypsum plaster'],
+            '09 24 00': ['stucco', 'exterior plaster', 'three-coat plaster'],
+            '09 29 00': ['drywall', 'gypsum board', 'partition plan', 'wall type', 'partition type', 'partition schedule'],
+            '09 30 00': ['tile', 'ceramic tile', 'porcelain tile', 'tile schedule', 'tile layout', 'tile plan', 'tile detail'],
+            '09 31 00': ['thin set tile', 'direct set tile'],
+            '09 34 00': ['shower tile', 'wet area tile', 'waterproofing tile'],
+            '09 51 00': ['ceiling plan', 'reflected ceiling', 'rcp', 'acoustical ceiling', 'ceiling grid', 'ceiling tile', 'suspended ceiling'],
+            '09 54 00': ['specialty ceiling', 'wood ceiling', 'metal ceiling', 'coffered ceiling', 'linear ceiling'],
+            '09 60 00': ['floor finish', 'finish plan', 'flooring plan'],
+            '09 62 00': ['specialty floor', 'sports floor', 'gym floor'],
+            '09 63 00': ['stone floor', 'tile floor', 'masonry floor'],
+            '09 64 00': ['wood floor', 'hardwood', 'engineered wood floor', 'wood flooring'],
+            '09 65 00': ['resilient floor', 'lvt', 'lvp', 'vinyl floor', 'vct', 'vinyl composition', 'resilient', 'finish schedule', 'finish legend', 'flooring plan', 'floor finish schedule'],
+            '09 66 00': ['terrazzo', 'epoxy terrazzo', 'terrazzo floor'],
+            '09 68 00': ['carpet', 'carpet plan', 'carpet tile', 'broadloom', 'carpet layout', 'finish schedule', 'finish legend'],
+            '09 69 00': ['access floor', 'raised floor', 'underfloor', 'access flooring system'],
+            '09 72 00': ['wall covering', 'wallcovering', 'fabric wall', 'vinyl wall covering'],
+            '09 91 00': ['paint schedule', 'finish schedule', 'color schedule', 'painting note', 'finish legend'],
+            '09 93 00': ['stain', 'transparent finish', 'wood stain'],
+            '09 96 00': ['epoxy coat', 'floor coating', 'high performance coating', 'epoxy floor', 'concrete coating'],
+
+            // Div 10 — Specialties
+            '10 11 00': ['display board', 'whiteboard', 'tackboard', 'markerboard'],
+            '10 14 00': ['signage', 'sign schedule', 'exterior signage', 'wayfinding', 'sign plan'],
+            '10 21 00': ['toilet partition', 'toilet compartment', 'shower partition', 'urinal screen'],
+            // Operable walls appear on floor plans (track location) and RCPs (pocket location)
+            '10 22 00': ['operable partition', 'accordion wall', 'folding partition', 'movable wall', 'operable wall', 'demountable partition', 'air wall', 'operable panel', 'partition track', 'floor plan', 'reflected ceiling plan', 'rcp'],
+            '10 26 00': ['corner guard', 'wall guard', 'bumper guard', 'crash rail'],
+            '10 28 00': ['toilet accessory', 'restroom accessory', 'grab bar', 'mirror schedule'],
+            // Fire curtains appear as annotations on RCPs and floor plans (no dedicated fire curtain sheet)
+            '10 44 00': ['fire curtain', 'smoke curtain', 'fire shutter', 'fire extinguisher', 'fire cabinet', 'fecp', 'reflected ceiling', 'rcp', 'floor plan', 'architectural plan'],
+            '10 51 00': ['locker', 'locker room', 'locker layout', 'employee locker'],
+            '10 56 00': ['storage rack', 'shelving', 'mobile shelving', 'storage system'],
+            '10 75 00': ['flagpole', 'flag pole'],
+
+            // Div 11 — Equipment
+            '11 11 00': ['vehicle service', 'auto lift'],
+            '11 12 00': ['parking control', 'parking gate', 'parking barrier'],
+            '11 13 00': ['loading dock', 'dock leveler', 'dock equipment', 'truck dock', 'dock door'],
+            '11 21 00': ['retail equipment', 'checkout', 'display case'],
+            '11 24 00': ['bar equipment', 'hotel equipment', 'hospitality equipment'],
+            '11 31 00': ['appliance', 'residential appliance', 'laundry equipment'],
+            '11 40 00': ['kitchen equipment', 'food service', 'foodservice', 'commercial kitchen', 'kitchen plan'],
+            '11 41 00': ['walk-in cooler', 'refrigerated storage', 'cold storage'],
+            '11 42 00': ['food prep equipment', 'prep table', 'commercial range'],
+            '11 44 00': ['cooking equipment', 'fryer', 'oven', 'cooking line'],
+            '11 46 00': ['food dispensing', 'cafeteria equipment'],
+            '11 53 00': ['lab equipment', 'laboratory', 'fume hood', 'lab plan', 'lab casework'],
+            '11 61 00': ['stage', 'theater equipment', 'rigging', 'fly system', 'catwalk'],
+            '11 66 00': ['athletic equipment', 'gym equipment', 'bleacher', 'scoreboard'],
+            '11 68 00': ['playground', 'play equipment', 'play structure', 'tot lot'],
+            '11 71 00': ['sterilizer', 'autoclave', 'sterilizing equipment'],
+            '11 73 00': ['exam table', 'medical equipment', 'treatment equipment', 'exam room'],
+            '11 76 00': ['operating room', 'surgical equipment', 'or equipment'],
+            '11 78 00': ['mortuary', 'autopsy', 'morgue'],
+            '11 82 00': ['waste handling', 'compactor', 'trash compactor'],
+
+            // Div 12 — Furnishings
+            '12 05 00': ['furnishing', 'furniture note'],
+            '12 20 00': ['window treatment', 'window blind', 'shade', 'drapery'],
+            '12 21 00': ['window blind', 'venetian blind', 'horizontal blind'],
+            '12 22 00': ['curtain', 'drapery', 'window curtain'],
+            '12 24 00': ['roller shade', 'window shade', 'shade schedule'],
+            '12 32 00': ['built-in casework', 'built-in cabinet'],
+            '12 36 00': ['countertop', 'counter', 'work surface', 'countertop schedule'],
+            '12 48 00': ['entrance mat', 'walk-off mat', 'carpet mat'],
+            '12 51 00': ['furniture plan', 'furniture layout', 'office furniture', 'workstation', 'ff&e', 'furnishing plan'],
+            '12 54 00': ['hospitality furniture', 'hotel furniture', 'guestroom'],
+            '12 56 00': ['institutional furniture', 'classroom furniture', 'fixed seating'],
+            '12 57 00': ['industrial furniture', 'lab table', 'industrial workbench'],
+            '12 61 00': ['fixed seating', 'auditorium seating', 'theater seating', 'fixed chair'],
+            '12 63 00': ['stadium seating', 'arena seating', 'bleacher'],
+            '12 67 00': ['pew', 'church seating', 'bench seating'],
+            '12 93 00': ['site furniture', 'site furnishing', 'bench', 'trash receptacle', 'bicycle rack', 'outdoor furniture'],
+
+            // Div 13 — Special Construction
+            '13 11 00': ['swimming pool', 'pool plan', 'natatorium', 'aquatic'],
+            '13 12 00': ['fountain', 'water feature', 'decorative fountain'],
+            '13 17 00': ['spa', 'hot tub', 'therapeutic pool', 'hydrotherapy'],
+            '13 21 00': ['clean room', 'controlled environment', 'data center'],
+            '13 28 00': ['athletic room', 'squash court', 'racquetball'],
+            '13 30 00': ['special function room'],
+            '13 31 00': ['fabric structure', 'tension structure', 'tensile canopy'],
+            '13 34 00': ['pre-engineered', 'metal building', 'pre-eng'],
+            '13 48 00': ['seismic', 'seismic control', 'base isolation'],
+            '13 49 00': ['radiation shielding', 'lead lined', 'x-ray room', 'radiation room'],
+            '13 51 00': ['storage tank', 'above ground tank'],
+            '13 53 00': ['digester', 'digester cover'],
+
+            // Div 14 — Conveying Equipment
+            '14 10 00': ['dumbwaiter', 'small freight lift'],
+            '14 20 00': ['elevator', 'elevator plan', 'hoistway', 'elevator pit', 'elevator shaft'],
+            '14 21 00': ['traction elevator', 'machine room', 'elevator detail'],
+            '14 24 00': ['hydraulic elevator'],
+            '14 25 00': ['residential elevator', 'home elevator'],
+            '14 27 00': ['elevator cab', 'custom elevator'],
+            '14 31 00': ['escalator', 'moving stair'],
+            '14 32 00': ['moving walk', 'pedestrian conveyor'],
+            '14 40 00': ['platform lift', 'vertical lift'],
+            '14 42 00': ['wheelchair lift', 'accessibility lift'],
+            '14 45 00': ['vehicle lift', 'car lift', 'auto lift'],
+            '14 70 00': ['turntable', 'vehicle turntable'],
+            '14 91 00': ['linen chute', 'trash chute', 'laundry chute'],
+            '14 92 00': ['pneumatic tube', 'carrier system'],
+
+            // Div 21 — Fire Suppression
+            '21 05 00': ['fire suppression', 'fire protection', 'sprinkler', 'fp-'],
+            '21 10 00': ['fire suppression', 'sprinkler', 'fire protection', 'fp-'],
+            '21 11 00': ['fire service water', 'fire water service', 'fire main'],
+            '21 12 00': ['standpipe', 'fire standpipe', 'hose valve'],
+            '21 13 00': ['sprinkler plan', 'sprinkler layout', 'wet pipe', 'fire suppression plan', 'fp-'],
+            '21 14 00': ['dry pipe', 'dry system', 'antifreeze sprinkler'],
+            '21 20 00': ['clean agent', 'fm-200', 'suppression system', 'fire extinguishing'],
+            '21 22 00': ['clean agent', 'fm-200', 'novec', 'gas suppression'],
+
+            // Div 22 — Plumbing
+            '22 05 00': ['plumbing', 'p-', 'plumbing plan'],
+            '22 07 00': ['plumbing insulation', 'pipe insulation', 'pipe wrap'],
+            '22 10 00': ['plumbing piping', 'plumbing plan', 'p-', 'plumb riser'],
+            '22 11 00': ['domestic water', 'water supply', 'cold water', 'hot water', 'water distribution', 'p-'],
+            '22 13 00': ['sanitary sewer', 'sanitary drain', 'waste stack', 'drain plan'],
+            '22 14 00': ['storm drainage', 'roof drain', 'interior drain', 'storm water'],
+            '22 15 00': ['compressed air', 'pneumatic piping', 'lab gas'],
+            '22 30 00': ['plumbing equipment', 'water heater', 'booster pump'],
+            '22 40 00': ['fixture schedule', 'plumbing fixture', 'restroom plan'],
+            '22 41 00': ['residential fixture', 'bathroom plan'],
+            '22 42 00': ['commercial fixture', 'restroom', 'fixture schedule'],
+            '22 45 00': ['emergency fixture', 'eyewash', 'safety shower'],
+            '22 60 00': ['lab gas', 'medical gas', 'vacuum system', 'compressed gas'],
+
+            // Div 23 — HVAC
+            '23 05 00': ['mechanical', 'hvac', 'm-', 'mechanical plan'],
+            '23 07 00': ['hvac insulation', 'duct insulation', 'pipe insulation'],
+            '23 09 00': ['controls diagram', 'bms', 'ddc', 'control wiring', 'sequence of operations', 'building automation'],
+            '23 11 00': ['fuel system', 'gas piping', 'fuel oil'],
+            '23 20 00': ['hydronic piping', 'chilled water', 'heating water', 'mechanical piping', 'm-'],
+            '23 21 00': ['hydronic', 'chilled water pipe', 'heating pipe', 'mechanical plan', 'm-'],
+            '23 22 00': ['steam', 'steam condensate', 'steam piping'],
+            '23 30 00': ['duct plan', 'ductwork', 'air distribution', 'supply duct', 'return duct', 'mechanical plan', 'm-'],
+            '23 31 00': ['duct', 'ductwork', 'duct routing', 'exhaust duct', 'mechanical plan', 'm-'],
+            '23 33 00': ['duct accessory', 'fire damper', 'smoke damper', 'turning vane'],
+            '23 34 00': ['hvac fan', 'exhaust fan', 'supply fan', 'fan schedule'],
+            '23 36 00': ['vav box', 'air terminal', 'diffuser schedule', 'grille schedule', 'vav'],
+            '23 37 00': ['diffuser', 'grille', 'register', 'air outlet', 'ceiling diffuser'],
+            '23 40 00': ['air filter', 'air cleaner', 'filtration', 'hepa'],
+            '23 50 00': ['boiler', 'heating plant', 'heat exchanger', 'mechanical room'],
+            '23 52 00': ['boiler', 'boiler room', 'steam boiler'],
+            '23 55 00': ['unit heater', 'infrared heater', 'radiant heater', 'suspended heater'],
+            '23 60 00': ['chiller', 'cooling plant', 'refrigeration', 'mechanical room'],
+            '23 62 00': ['condenser unit', 'split system', 'packaged unit', 'condensing unit'],
+            '23 64 00': ['chiller', 'water chiller', 'centrifugal chiller'],
+            '23 65 00': ['cooling tower', 'condenser water', 'evaporative cooling'],
+            '23 70 00': ['air handler', 'ahu', 'air handling unit', 'rooftop unit', 'rtu', 'mechanical plan'],
+            '23 72 00': ['energy recovery', 'heat recovery', 'erv', 'hrv'],
+            '23 74 00': ['rooftop unit', 'rtu', 'packaged rooftop', 'split system', 'mechanical plan', 'm-'],
+            '23 81 00': ['fan coil', 'ptac', 'unit heater', 'heat pump', 'through wall unit'],
+            '23 82 00': ['baseboard heat', 'fin tube', 'radiant panel', 'convection unit'],
+
+            // Div 25 — Integrated Automation
+            '25 05 00': ['building automation', 'bas', 'bms', 'integrated automation'],
+            '25 10 00': ['automation network', 'building network', 'bms network'],
+            '25 13 00': ['control network', 'bacnet', 'lonworks'],
+            '25 14 00': ['local control', 'direct digital control', 'ddc', 'field controller'],
+            '25 30 00': ['sensor', 'transmitter', 'control device'],
+            '25 35 00': ['control valve', 'actuator'],
+            '25 36 00': ['sensor', 'transmitter', 'temperature sensor'],
+            '25 50 00': ['facility control', 'building control'],
+            '25 51 00': ['hvac control', 'air side control', 'terminal control'],
+            '25 52 00': ['lighting control', 'daylight sensor', 'occupancy sensor'],
+            '25 53 00': ['electrical control', 'power monitoring'],
+            '25 55 00': ['fire control', 'smoke control'],
+            '25 90 00': ['control sequence', 'sequence of operations'],
+
+            // Div 26 — Electrical
+            '26 05 00': ['electrical plan', 'power plan', 'e-', 'electrical'],
+            '26 05 19': ['wire', 'conductor', 'cable routing', 'conduit schedule'],
+            '26 05 26': ['grounding', 'bonding', 'ground ring'],
+            '26 05 29': ['cable tray', 'conduit hanger', 'electrical support'],
+            '26 05 33': ['conduit', 'raceway', 'electrical conduit'],
+            '26 05 43': ['underground duct', 'electrical duct bank', 'underground conduit'],
+            '26 09 00': ['lighting control', 'dimming', 'occupancy sensor', 'daylight harvesting'],
+            '26 12 00': ['transformer', 'pad mount transformer', 'medium voltage transformer'],
+            '26 18 00': ['medium voltage', 'mv switchgear'],
+            '26 24 00': ['panel schedule', 'panelboard', 'switchboard', 'one-line', 'single line', 'load schedule', 'electrical panel'],
+            '26 27 00': ['busway', 'bus duct', 'power distribution'],
+            '26 28 00': ['circuit breaker', 'overcurrent', 'disconnect'],
+            '26 29 00': ['motor starter', 'motor control', 'mcc', 'vfd', 'variable frequency drive'],
+            '26 32 00': ['generator', 'standby power', 'emergency generator', 'genset'],
+            '26 36 00': ['transfer switch', 'ats', 'automatic transfer'],
+            '26 41 00': ['lightning protection', 'air terminal', 'roof grounding', 'down conductor'],
+            '26 43 00': ['surge protection', 'spd', 'transient voltage'],
+            '26 51 00': ['lighting plan', 'interior lighting', 'fixture schedule', 'lighting fixture', 'lighting layout', 'e-'],
+            '26 52 00': ['emergency lighting', 'exit sign', 'egress lighting'],
+            '26 56 00': ['exterior lighting', 'site lighting', 'parking lot light', 'pole light', 'area lighting'],
+
+            // Div 27 — Communications
+            '27 10 00': ['data cabling', 'structured cable', 'network cable', 'telecom', 'low voltage', 'communications', 't-'],
+            '27 13 00': ['backbone cable', 'riser cable', 'vertical cable'],
+            '27 15 00': ['horizontal cable', 'workstation outlet', 'patch panel'],
+            '27 20 00': ['data room', 'mdf', 'idf', 'server room', 'network room', 'rack layout'],
+            '27 21 00': ['network equipment', 'wireless access point'],
+            '27 30 00': ['telephone', 'voice', 'pbx', 'voip'],
+            '27 32 00': ['phone', 'telephone terminal'],
+            '27 40 00': ['audio video', 'av plan', 'audio-visual', 'av system', 'conference room', 'projection', 'display system', 't-'],
+            '27 41 00': ['av system', 'audio system', 'video system', 'projection screen'],
+
+            // Div 28 — Electronic Safety and Security
+            '28 13 00': ['access control', 'card reader', 'keypad', 'security plan', 'badge reader'],
+            '28 16 00': ['intrusion detection', 'alarm system', 'motion detector'],
+            '28 23 00': ['cctv', 'security camera', 'surveillance', 'video surveillance', 'camera plan'],
+            '28 31 00': ['fire alarm', 'fire detection', 'smoke detector', 'pull station', 'fa-', 'fire alarm plan', 'facp'],
+            '28 33 00': ['gas detection', 'gas alarm', 'carbon monoxide detector'],
+            '28 39 00': ['mass notification', 'public address', 'pa system', 'emergency notification'],
+
+            // Div 31 — Earthwork
+            '31 10 00': ['site clearing', 'clearing', 'tree removal', 'grubbing', 'c-'],
+            '31 20 00': ['earthwork', 'earth moving', 'excavation plan', 'c-'],
+            '31 22 00': ['grading plan', 'grading', 'topography', 'site grading', 'grade plan', 'contour', 'c-'],
+            '31 23 00': ['excavation', 'cut and fill', 'subgrade', 'backfill', 'trench'],
+            '31 25 00': ['erosion control', 'sedimentation control', 'bmp', 'silt fence', 'stormwater', 'swppp', 'c-'],
+            '31 40 00': ['shoring', 'sheet pile', 'soldier pile', 'underpinning'],
+            '31 50 00': ['excavation support', 'tieback', 'soil nail', 'earth retention'],
+            '31 60 00': ['deep foundation', 'special foundation', 'micropile'],
+            '31 62 00': ['driven pile', 'pile', 'piling', 'bearing pile'],
+            '31 63 00': ['drilled shaft', 'bored pile', 'auger cast', 'cip pile'],
+            '31 64 00': ['caisson', 'drilled caisson', 'drilled pier'],
+
+            // Div 32 — Exterior Improvements
+            '32 12 00': ['asphalt', 'pavement plan', 'parking lot', 'paving plan', 'blacktop', 'c-'],
+            '32 13 00': ['concrete paving', 'concrete walk', 'concrete pavement', 'sidewalk concrete'],
+            '32 14 00': ['unit paving', 'brick paver', 'concrete paver', 'paver layout', 'hardscape plan'],
+            '32 16 00': ['curb and gutter', 'curb', 'gutter', 'sidewalk', 'c-'],
+            '32 17 00': ['pavement marking', 'striping plan', 'traffic marking', 'line striping'],
+            '32 18 00': ['athletic surface', 'running track', 'sport court', 'synthetic turf'],
+            '32 31 00': ['fence', 'fencing plan', 'gate', 'chain link', 'perimeter fence'],
+            '32 32 00': ['retaining wall', 'segmental wall', 'gravity wall', 'crib wall'],
+            '32 84 00': ['irrigation', 'irrigation plan', 'sprinkler plan', 'drip irrigation', 'irrigation system', 'landscape irrigation', 'l-'],
+            '32 90 00': ['landscape plan', 'planting plan', 'landscape design', 'planting', 'tree', 'shrub', 'ground cover', 'l-', 'landscape'],
+
+            // Div 33 — Utilities
+            '33 11 00': ['water main', 'water distribution', 'domestic water main', 'utility plan', 'c-'],
+            '33 12 00': ['water meter', 'water service', 'backflow preventer', 'fire hydrant'],
+            '33 31 00': ['sanitary sewer', 'sewer', 'sanitary main', 'utility plan', 'c-'],
+            '33 32 00': ['pump station', 'lift station', 'sewage pump'],
+            '33 41 00': ['storm sewer', 'storm drain', 'storm main', 'drainage plan', 'c-'],
+            '33 42 00': ['culvert', 'pipe culvert', 'box culvert'],
+            '33 46 00': ['subdrain', 'perimeter drain', 'french drain', 'footing drain'],
+            '33 51 00': ['gas main', 'gas distribution', 'natural gas pipe', 'utility plan'],
+            '33 52 00': ['liquid fuel', 'fuel distribution', 'fuel pipe'],
+            '33 56 00': ['fuel tank', 'storage tank', 'above ground tank', 'ust'],
+            '33 71 00': ['electrical utility', 'primary power', 'underground electrical', 'site electrical', 'c-', 'e-'],
+            '33 73 00': ['utility transformer', 'pad mount', 'distribution transformer'],
+            '33 79 00': ['site grounding', 'ground grid'],
+            '33 81 00': ['communication structure', 'cell tower', 'antenna tower'],
+            '33 82 00': ['communication cable', 'fiber optic', 'utility communications'],
         };
 
         function selectTargetPages(allPages, docMap, userCSISections) {
@@ -7763,18 +8130,29 @@ ${sampleText}`;
                 if (idx >= 0 && idx < totalPages) targeted.add(idx);
             });
 
-            // Derive the user's 2-digit division set from their CSI sections
-            const userDivisions = new Set(
-                (userCSISections || []).map(s => String(s).substring(0, 2).padStart(2, '0'))
-            );
+            // Normalize any stored CSI code format to canonical "XX XX XX".
+            // Handles: "09 65 00", "09-65-00", "096500", "9 65 0", etc.
+            const normalizeCode = (raw) => {
+                const digits = String(raw).replace(/[^0-9]/g, '');
+                if (digits.length === 6) return `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)}`;
+                // Already spaced or short — re-space by splitting on non-digit runs
+                const parts = String(raw).trim().split(/[\s\-\.]+/);
+                if (parts.length === 3) return parts.map(p => p.padStart(2, '0')).join(' ');
+                return String(raw).trim(); // pass through unchanged if format is unknown
+            };
+
+            const sections = (userCSISections || []).map(s => normalizeCode(s));
+
+            // Helper: does user have any section in a given 2-digit division?
+            const hasDiv = (div) => sections.some(s => s.startsWith(div + ' '));
 
             // ── Sheet index matching (drawing sets) ──────────────────────────
-            // For each entry in the sheet index, check if any of the user's
-            // divisions have a keyword that matches the sheet title.
+            // For each sheet in the index, check if any of the user's CSI sections
+            // have a keyword matching the sheet title.
             (docMap.sheet_index || []).forEach(entry => {
                 const title = (entry.title || '').toLowerCase();
-                for (const div of userDivisions) {
-                    const keywords = CSI_SHEET_KEYWORDS[div] || [];
+                for (const sectionCode of sections) {
+                    const keywords = CSI_SECTION_KEYWORDS[sectionCode] || [];
                     if (keywords.some(kw => title.includes(kw.toLowerCase()))) {
                         // Include this page + 1 following page (schedules often span 2 pages)
                         const idx = (entry.page || 0) - 1;
@@ -7787,16 +8165,23 @@ ${sampleText}`;
                 }
             });
 
-            // ── Explicit page arrays from Pass 1 (always reliable when found) ─
-            // These are added regardless of trade — they are universal signals
-            // for interior trade scope. Non-interior subs won't have them.
-            addPageNums(docMap.finish_schedule_pages);
-            addPageNums(docMap.finish_legend_pages);
-            addPageNums(docMap.furniture_plan_pages);
-            addPageNums(docMap.product_schedule_pages);
-            addPageNums(docMap.interior_elevation_pages);
+            // ── Explicit page arrays from Pass 1 — conditional on trade profile ──
+            // Only add interior-finish schedule pages for trades that need them.
+            // A concrete sub or irrigation sub should not get finish schedule pages.
+            const isInteriorFinish = hasDiv('09') || hasDiv('10') || hasDiv('12');
+            const isFurnishings = hasDiv('12');
+            const isInteriorDesign = hasDiv('06') || hasDiv('09') || hasDiv('10') || hasDiv('12');
+            if (isInteriorFinish) {
+                addPageNums(docMap.finish_schedule_pages);
+                addPageNums(docMap.finish_legend_pages);
+                addPageNums(docMap.product_schedule_pages);
+            }
+            if (isFurnishings) addPageNums(docMap.furniture_plan_pages);
+            if (isInteriorDesign) addPageNums(docMap.interior_elevation_pages);
 
             // ── Spec book TOC matching ────────────────────────────────────────
+            // Derive 2-digit divisions for TOC matching (toc_sections only has division field)
+            const userDivisions = new Set(sections.map(s => s.substring(0, 2)));
             (docMap.toc_sections || []).forEach(section => {
                 const div = String(section.division || '').padStart(2, '0');
                 if (userDivisions.has(div)) {
@@ -7821,7 +8206,7 @@ ${sampleText}`;
 
             // Cap at 50 pages to stay within Claude context limits
             const sorted = Array.from(targeted).sort((a, b) => a - b).slice(0, 50);
-            console.log(`📌 Targeted ${sorted.length} of ${totalPages} pages — divisions: [${[...userDivisions].join(', ')}]`);
+            console.log(`📌 Targeted ${sorted.length} of ${totalPages} pages — sections: [${sections.join(', ')}]`);
             return sorted.map(i => allPages[i]);
         }
 
