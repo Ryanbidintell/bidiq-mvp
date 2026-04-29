@@ -7666,6 +7666,155 @@ ${fullText.substring(0, 40000)}`;
             });
         }
 
+        // ── Two-pass document intelligence ──────────────────────────────────────
+
+        async function classifyDocument(pages) {
+            // Pass 1: send first 10 pages to Claude for a lightweight document map.
+            // Returns doc type, design phase, and page locations for scope-relevant content.
+            const sampleText = pages.slice(0, 10)
+                .map(p => `[Page ${p.num}]\n${p.text.substring(0, 2000)}`)
+                .join('\n\n---\n\n');
+
+            const prompt = `You are analyzing the first pages of a construction document set.
+Return ONLY a JSON object — no other text.
+
+{
+  "doc_type": "drawing_set" | "spec_book" | "bid_invite" | "mixed",
+  "phase": "SD" | "DD" | "CD" | "unknown",
+  "sheet_index": [{"sheet": "A-101", "title": "Floor Plan", "page": 3}],
+  "toc_sections": [{"division": "09", "title": "Finishes", "page": 45}],
+  "finish_schedule_pages": [],
+  "finish_legend_pages": [],
+  "furniture_plan_pages": [],
+  "product_schedule_pages": [],
+  "floor_plan_pages": [],
+  "interior_elevation_pages": []
+}
+
+Rules:
+- phase: SD = schematic/conceptual, DD = design development, CD = construction documents/permit set. Default CD if unclear.
+- sheet_index: extract every row from the sheet index/drawing list (sheet number + title + page number if shown).
+- toc_sections: extract every row from the spec book table of contents (division number + title + page).
+- *_pages arrays: page numbers (integers) where those sheet types appear. Leave empty [] if not found.
+- finish_schedule_pages: sheets titled FINISH SCHEDULE, ROOM FINISH SCHEDULE, FINISH PLAN.
+- finish_legend_pages: sheets with FINISH LEGEND, MATERIAL LEGEND, FINISH KEY, ROOM FINISH MATRIX.
+- furniture_plan_pages: sheets titled FURNITURE PLAN, FF&E PLAN, FURNITURE LAYOUT.
+- product_schedule_pages: sheets with PRODUCT SCHEDULE, EQUIPMENT SCHEDULE, HARDWARE SCHEDULE.
+- floor_plan_pages: sheets titled FLOOR PLAN (architectural, not structural).
+- interior_elevation_pages: sheets titled INTERIOR ELEVATIONS, INT. ELEVATIONS.
+
+Document text:
+${sampleText}`;
+
+            try {
+                const content = await callAI('doc_classify', sampleText, prompt);
+                let jsonStr = content;
+                if (content.includes('```')) {
+                    const m = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+                    if (m) jsonStr = m[1];
+                }
+                const map = safeJSONParse(jsonStr.trim());
+                console.log('📋 Document map (Pass 1):', map);
+                return map;
+            } catch (e) {
+                console.warn('⚠️ Document classification failed, using full-document fallback:', e.message);
+                return { doc_type: 'unknown', phase: 'unknown', sheet_index: [], toc_sections: [],
+                    finish_schedule_pages: [], finish_legend_pages: [], furniture_plan_pages: [],
+                    product_schedule_pages: [], floor_plan_pages: [], interior_elevation_pages: [] };
+            }
+        }
+
+        function selectTargetPages(allPages, docMap, userCSISections) {
+            // Pure JS — no API call. Uses the Pass 1 doc map + user's CSI profile
+            // to select the pages most likely to contain scope-relevant content.
+            const totalPages = allPages.length;
+            const targeted = new Set();
+
+            // Always include the first 3 pages (cover, general notes, title block)
+            for (let i = 0; i < Math.min(3, totalPages); i++) targeted.add(i);
+
+            // Helper: add page numbers from docMap arrays (1-indexed → 0-indexed)
+            const addPages = (arr) => (arr || []).forEach(n => {
+                const idx = n - 1;
+                if (idx >= 0 && idx < totalPages) targeted.add(idx);
+            });
+
+            // Always include finish schedules and legends — universal scope signal
+            addPages(docMap.finish_schedule_pages);
+            addPages(docMap.finish_legend_pages);
+            addPages(docMap.interior_elevation_pages);
+
+            // Add pages based on user's CSI sections
+            const userDivisions = new Set(
+                (userCSISections || []).map(s => String(s).substring(0, 2))
+            );
+
+            // Map CSI divisions to page types
+            const div12 = userDivisions.has('12'); // Furnishings
+            const div09 = userDivisions.has('09'); // Finishes
+            const div10 = userDivisions.has('10'); // Specialties
+            const div11 = userDivisions.has('11'); // Equipment
+
+            if (div12) addPages(docMap.furniture_plan_pages);
+            if (div11) addPages(docMap.product_schedule_pages);
+            if (div09 || div10 || div12) {
+                addPages(docMap.finish_schedule_pages);
+                addPages(docMap.finish_legend_pages);
+            }
+
+            // For spec books: include pages around matching TOC sections
+            (docMap.toc_sections || []).forEach(section => {
+                const div = String(section.division || '').padStart(2, '0');
+                if (userDivisions.has(div)) {
+                    const idx = (section.page || 0) - 1;
+                    // Include the section start page + next 8 pages for context
+                    for (let j = idx; j < Math.min(idx + 8, totalPages); j++) {
+                        if (j >= 0) targeted.add(j);
+                    }
+                }
+            });
+
+            // SD/DD phase or no targeted pages found → include floor plans for program inference
+            const isEarlyPhase = docMap.phase === 'SD' || docMap.phase === 'DD';
+            if (isEarlyPhase || targeted.size < 5) {
+                addPages(docMap.floor_plan_pages);
+            }
+
+            // If we still have very few targeted pages, include first 20 pages as fallback
+            if (targeted.size < 5) {
+                for (let i = 0; i < Math.min(20, totalPages); i++) targeted.add(i);
+            }
+
+            // Cap at 50 pages to stay within Claude context limits
+            const sorted = Array.from(targeted).sort((a, b) => a - b).slice(0, 50);
+            console.log(`📌 Targeted ${sorted.length} of ${totalPages} pages for Pass 2`);
+            return sorted.map(i => allPages[i]);
+        }
+
+        function getAnalysisConfidence(docMap, targetedPageCount, totalPageCount) {
+            const phase = docMap.phase || 'unknown';
+            const hasFinishSchedule = (docMap.finish_schedule_pages || []).length > 0 ||
+                                      (docMap.finish_legend_pages || []).length > 0;
+            const hasSpecSections = (docMap.toc_sections || []).length > 0;
+
+            if (docMap.doc_type === 'bid_invite') {
+                return { level: 'high', phase, note: 'Bid invitation — all relevant scope text analyzed.' };
+            }
+            if (phase === 'CD' && (hasFinishSchedule || hasSpecSections)) {
+                return { level: 'high', phase, note: 'Construction documents — finish schedules and spec sections analyzed.' };
+            }
+            if (phase === 'CD') {
+                return { level: 'medium', phase, note: 'Construction documents — no finish schedule found. Score based on sheet index and available text.' };
+            }
+            if (phase === 'DD') {
+                return { level: 'medium', phase, note: 'Design development drawings — specifications may be incomplete. Score may shift when CDs are issued.' };
+            }
+            if (phase === 'SD') {
+                return { level: 'low', phase, note: 'Schematic drawings — no finish schedules yet. Scope estimated from building program and room types. Score will update significantly when CDs are issued.' };
+            }
+            return { level: 'medium', phase: 'unknown', note: `Analyzed ${targetedPageCount} of ${totalPageCount} pages.` };
+        }
+
         // PDF extraction
         async function extractPDF(file) {
             const ab = await file.arrayBuffer();
@@ -9014,16 +9163,33 @@ ${truncatedText}`
                 if (allPages.length === 0) {
                     throw new Error('Could not extract text from the uploaded PDFs. Please ensure they are valid PDF files.');
                 }
-                
-                let fullText = allPages.map(p => p.text).join('\n\n');
+
+                // ── Pass 1: Classify document and build page map ─────────────────
+                updateProgress(42, 'Mapping document structure...');
+                const settings_pre = await getSettings();
+                const docMap = await classifyDocument(allPages);
+                const userCSISections = settings_pre.preferred_csi_sections || [];
+
+                // ── Select targeted pages based on user's trade profile ──────────
+                const targetedPages = selectTargetPages(allPages, docMap, userCSISections);
+                const confidence = getAnalysisConfidence(docMap, targetedPages.length, allPages.length);
+                console.log(`📊 Analysis confidence: ${confidence.level} (${confidence.phase}) — ${confidence.note}`);
+
+                // ── Pass 2: Full extraction on targeted pages ──────────────────
+                updateProgress(50, `Analyzing ${targetedPages.length} of ${allPages.length} pages...`);
+                let fullText = targetedPages.map(p => `[Page ${p.num}]
+${p.text}`).join('
+
+');
 
                 // Sanitize text: Remove null characters that Postgres can't handle
-                fullText = fullText.replace(/\u0000/g, '');
-
-                updateProgress(50, 'AI analyzing project details...');
+                fullText = fullText.replace(/ /g, '');
 
                 // Use multi-provider AI extraction (Claude → OpenAI → Regex fallback)
                 const extracted = await extractWithAI(fullText);
+
+                // Attach confidence metadata to extracted data
+                extracted.analysis_confidence = confidence;
 
                 // DISABLED: Auto-add extracted GCs to database
                 // Users should manually control their client list
@@ -10582,6 +10748,15 @@ ${truncatedText}`
             // Bid deadline
             const deadline = a.extracted.bid_deadline || 'Not specified';
 
+            // Analysis confidence badge
+            const conf = a.extracted?.analysis_confidence;
+            const confBadge = conf ? (() => {
+                const colors = { high: '#dcfce7', medium: '#fef3c7', low: '#fee2e2' };
+                const textColors = { high: '#166534', medium: '#92400e', low: '#991b1b' };
+                const labels = { high: 'High Confidence', medium: 'Medium Confidence', low: 'Early Phase — Low Confidence' };
+                return `<div style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:${colors[conf.level]};border-radius:20px;font-size:11px;font-weight:600;color:${textColors[conf.level]};margin-top:8px;">${labels[conf.level]}</div>${conf.level !== 'high' ? `<div style="font-size:12px;color:#666;margin-top:6px;">${conf.note}</div>` : ''}`;
+            })() : '';
+
             // Score color and badge
             const scoreColor = a.scores.recommendation === 'GO' ? '#22c55e' : a.scores.recommendation === 'REVIEW' ? '#f59e0b' : '#ef4444';
             const badgeText = { GO: 'STRONG FIT', REVIEW: 'REVIEW CAREFULLY', PASS: 'WEAK FIT' }[a.scores.recommendation];
@@ -10972,6 +11147,7 @@ ${truncatedText}`
                     <!-- Project Summary -->
                     <div class="project-summary">
                         <h2>${a.extracted.project_name || 'Untitled Project'}</h2>
+                        ${confBadge}
                         <div class="summary-grid">
                             <div class="summary-item">
                                 <span class="summary-label">Location:</span>
