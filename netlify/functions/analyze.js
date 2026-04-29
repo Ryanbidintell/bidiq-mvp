@@ -27,7 +27,7 @@ function checkRateLimit(userId) {
     return true;
 }
 
-async function callClaudeAPI(messages, systemPrompt) {
+async function callClaudeAPI(messages, systemPrompt, model = 'claude-sonnet-4-20250514') {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -36,7 +36,7 @@ async function callClaudeAPI(messages, systemPrompt) {
             'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
+            model,
             max_tokens: 4096,
             system: systemPrompt,
             messages: messages
@@ -129,9 +129,14 @@ exports.handler = async function(event, context) {
         let result;
         let provider;
 
+        // doc_classify uses Haiku — it's lightweight JSON extraction, not reasoning
+        const claudeModel = operation === 'doc_classify'
+            ? 'claude-haiku-4-5-20251001'
+            : 'claude-sonnet-4-20250514';
+
         // Try Claude first, fallback to OpenAI
         try {
-            const claudeResponse = await callClaudeAPI(messages, systemPrompt);
+            const claudeResponse = await callClaudeAPI(messages, systemPrompt, claudeModel);
             result = {
                 text: claudeResponse.content[0].text,
                 model: claudeResponse.model,

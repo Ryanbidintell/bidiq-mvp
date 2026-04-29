@@ -7671,7 +7671,7 @@ ${fullText.substring(0, 40000)}`;
         async function classifyDocument(pages) {
             // Pass 1: send first 10 pages to Claude for a lightweight document map.
             // Returns doc type, design phase, and page locations for scope-relevant content.
-            const sampleText = pages.slice(0, 10)
+            const sampleText = pages.slice(0, 15)
                 .map(p => `[Page ${p.num}]\n${p.text.substring(0, 2000)}`)
                 .join('\n\n---\n\n');
 
@@ -9610,8 +9610,16 @@ ${p.text}`).join('
                 // Use multi-provider AI extraction (Claude → OpenAI → Regex fallback)
                 const extracted = await extractWithAI(fullText);
 
-                // Attach confidence metadata to extracted data
+                // Attach confidence and targeting metadata to extracted data
                 extracted.analysis_confidence = confidence;
+                extracted._doc_meta = {
+                    doc_type: docMap.doc_type,
+                    phase: docMap.phase,
+                    total_pages: allPages.length,
+                    targeted_pages: targetedPages.length,
+                    sheet_index_entries: (docMap.sheet_index || []).length,
+                    toc_entries: (docMap.toc_sections || []).length
+                };
 
                 // DISABLED: Auto-add extracted GCs to database
                 // Users should manually control their client list
