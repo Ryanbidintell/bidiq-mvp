@@ -17076,17 +17076,8 @@ Respond now:`;
 
             const wonValues = projects
                 .filter(p => p.outcome === 'won')
-                .map(p => p.extracted_data?.estimated_value || p.extracted_data?.project_value)
-                .filter(Boolean)
-                .map(v => {
-                    if (typeof v === 'number') return v;
-                    const str = String(v).replace(/[$,\s]/g, '');
-                    const m = str.match(/^([\d.]+)\s*(k|m|b)?$/i);
-                    if (!m) return null;
-                    const num = parseFloat(m[1]);
-                    const mult = { k: 1e3, m: 1e6, b: 1e9 }[m[2]?.toLowerCase()] || 1;
-                    return num * mult;
-                })
+                .map(p => parseFloat(p.outcome_data?.bid_details?.amount))
+                .filter(v => !isNaN(v) && v > 0)
                 .filter(v => v != null && v > 0);
             const totalWonValue = wonValues.length > 0 ? wonValues.reduce((a, b) => a + b, 0) : null;
 
@@ -17108,7 +17099,7 @@ Respond now:`;
                 kpiCard('Bids Analyzed', total, total === 1 ? '1 project' : `${total} projects`),
                 kpiCard('Win Rate', winRate != null ? winRate + '%' : '—', competitive > 0 ? `${won} won · ${lost} lost` : 'No outcomes yet'),
                 kpiCard('Avg BidIndex', avgScore != null ? avgScore : '—', avgScore != null ? (avgScore >= 80 ? 'GO range' : avgScore >= 60 ? 'REVIEW range' : 'PASS range') : 'No scores yet'),
-                kpiCard('Won Value', totalWonValue != null ? fmtValue(totalWonValue) : '—', totalWonValue != null ? `across ${wonValues.length} bid${wonValues.length !== 1 ? 's' : ''} with value data` : 'Add project values to track'),
+                kpiCard('Won Value', totalWonValue != null ? fmtValue(totalWonValue) : '—', totalWonValue != null ? `${wonValues.length} won bid${wonValues.length !== 1 ? 's' : ''} with amounts logged` : 'log bid amounts to track'),
             ].join('');
         }
 
