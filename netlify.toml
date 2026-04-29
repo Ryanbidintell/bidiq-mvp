@@ -15,6 +15,9 @@
 [functions."weekly-health-check"]
   schedule = "0 9 * * 1"
 
+[functions."weekly-digest"]
+  schedule = "0 13 * * 1"
+
 [functions."daily-digest"]
   schedule = "0 8 * * *"
 

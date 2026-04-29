@@ -1572,6 +1572,9 @@
                     <span id="analyticsProjectCount" style="margin-left: auto; font-size: 12px; color: var(--text-muted);"></span>
                 </div>
                 <div class="page-content">
+                    <!-- KPI Summary Bar -->
+                    <div id="analyticsKPIBar" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-bottom:16px;"></div>
+
                     <!-- Win Rate Trends Over Time -->
                     <div class="card">
                         <div class="card-header">
@@ -17057,6 +17060,58 @@ Respond now:`;
             el.innerHTML = html;
         }
 
+        function renderAnalyticsKPIs(projects) {
+            const el = document.getElementById('analyticsKPIBar');
+            if (!el) return;
+
+            const total = projects.length;
+            const withOutcome = projects.filter(p => p.outcome && p.outcome !== 'pending');
+            const won = withOutcome.filter(p => p.outcome === 'won').length;
+            const lost = withOutcome.filter(p => p.outcome === 'lost').length;
+            const competitive = won + lost;
+            const winRate = competitive > 0 ? Math.round(won / competitive * 100) : null;
+
+            const scores = projects.map(p => p.scores?.final ?? p.scores?.bidindex_score).filter(s => s != null && s > 0);
+            const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+
+            const wonValues = projects
+                .filter(p => p.outcome === 'won')
+                .map(p => p.extracted_data?.estimated_value || p.extracted_data?.project_value)
+                .filter(Boolean)
+                .map(v => {
+                    if (typeof v === 'number') return v;
+                    const str = String(v).replace(/[$,\s]/g, '');
+                    const m = str.match(/^([\d.]+)\s*(k|m|b)?$/i);
+                    if (!m) return null;
+                    const num = parseFloat(m[1]);
+                    const mult = { k: 1e3, m: 1e6, b: 1e9 }[m[2]?.toLowerCase()] || 1;
+                    return num * mult;
+                })
+                .filter(v => v != null && v > 0);
+            const totalWonValue = wonValues.length > 0 ? wonValues.reduce((a, b) => a + b, 0) : null;
+
+            function fmtValue(v) {
+                if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+                if (v >= 1e3) return '$' + Math.round(v / 1e3) + 'K';
+                return '$' + v.toLocaleString();
+            }
+
+            function kpiCard(label, value, sub) {
+                return `<div class="stat-card" style="text-align:center; padding:18px 12px;">
+                    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px;">${label}</div>
+                    <div style="font-size:28px;font-weight:700;color:var(--text-primary);line-height:1;">${value}</div>
+                    ${sub ? `<div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${sub}</div>` : ''}
+                </div>`;
+            }
+
+            el.innerHTML = [
+                kpiCard('Bids Analyzed', total, total === 1 ? '1 project' : `${total} projects`),
+                kpiCard('Win Rate', winRate != null ? winRate + '%' : '—', competitive > 0 ? `${won} won · ${lost} lost` : 'No outcomes yet'),
+                kpiCard('Avg BidIndex', avgScore != null ? avgScore : '—', avgScore != null ? (avgScore >= 80 ? 'GO range' : avgScore >= 60 ? 'REVIEW range' : 'PASS range') : 'No scores yet'),
+                kpiCard('Won Value', totalWonValue != null ? fmtValue(totalWonValue) : '—', totalWonValue != null ? `across ${wonValues.length} bid${wonValues.length !== 1 ? 's' : ''} with value data` : 'Add project values to track'),
+            ].join('');
+        }
+
         function getAnalyticsFilteredProjects(projects) {
             if (analyticsDateFilter === 'all') return projects;
             const cutoff = new Date();
@@ -17084,6 +17139,8 @@ Respond now:`;
                     : `${filtered.length} of ${(projects || []).length} bids`;
             }
 
+            renderAnalyticsKPIs(filtered);
+
             if (!filtered || filtered.length === 0) {
                 const hasProjects = projects && projects.length > 0;
                 document.getElementById('accuracyMetrics').innerHTML = hasProjects
@@ -17107,6 +17164,8 @@ Respond now:`;
                     }
                 });
 
+                const kpiBarEl = document.getElementById('analyticsKPIBar');
+                if (kpiBarEl) kpiBarEl.innerHTML = '';
                 document.getElementById('topGCsTable').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('worstGCsTable').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('riskRewardScatter').innerHTML = '<div class="help-text">No data available yet.</div>';
