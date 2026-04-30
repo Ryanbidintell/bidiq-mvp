@@ -10824,13 +10824,6 @@ ${truncatedText}`
                             <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Bid Deadline</div>
                             <div style="font-weight:500;font-size:14px;">${extracted.bid_deadline || 'Not found'}</div>
                         </div>
-                        ${(extracted.scope_of_work_trades && extracted.scope_of_work_trades.length > 0) ? `
-                        <div style="grid-column: 1 / -1;">
-                            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Trades / Scope</div>
-                            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;">
-                                ${extracted.scope_of_work_trades.map(t => `<span style="background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:4px;padding:2px 8px;font-size:12px;color:var(--text-secondary);">${t}</span>`).join('')}
-                            </div>
-                        </div>` : ''}
                         ${extracted.bid_bond_required || extracted.invitation_only ? `
                         <div>
                             <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Bid Flags</div>
