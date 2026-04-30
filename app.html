@@ -17072,8 +17072,10 @@ Respond now:`;
                         y: {
                             beginAtZero: true,
                             max: 100,
-                            ticks: { callback: value => value + '%' }
-                        }
+                            ticks: { color: 'rgba(255,255,255,0.6)', callback: value => value + '%' },
+                            grid: { color: 'rgba(255,255,255,0.06)' }
+                        },
+                        x: { ticks: { color: 'rgba(255,255,255,0.6)' }, grid: { color: 'rgba(255,255,255,0.06)' } }
                     }
                 }
             });
@@ -17121,7 +17123,10 @@ Respond now:`;
                     responsive: true,
                     maintainAspectRatio: true,
                     plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: 'rgba(255,255,255,0.6)', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.06)' } },
+                        x: { ticks: { color: 'rgba(255,255,255,0.6)' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+                    }
                 }
             });
         }
@@ -17503,7 +17508,7 @@ Respond now:`;
                             position: 'right',
                             onClick: () => {},
                             labels: {
-                                color: '#ffffff',
+                                color: 'rgba(255,255,255,0.85)',
                                 font: { size: 12 },
                                 generateLabels: function(chart) {
                                     const dataset = chart.data.datasets[0];
@@ -17512,6 +17517,7 @@ Respond now:`;
                                         text: `${label}  ${((dataset.data[i] / total) * 100).toFixed(1)}%`,
                                         fillStyle: dataset.backgroundColor[i],
                                         strokeStyle: dataset.backgroundColor[i],
+                                        color: 'rgba(255,255,255,0.85)',
                                         lineWidth: 0,
                                         hidden: false,
                                         index: i
