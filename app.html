@@ -9296,20 +9296,22 @@ ${truncatedText}`
             if (container) container.innerHTML = '';
             if (gcNames.length === 0) return;
 
-            const allClients = await getClients();
+            const allClients = deduplicateClients(await getClients());
             const autoSelected = [];
             const newNames = [];
 
             for (const rawName of gcNames) {
                 const name = rawName.trim();
                 if (!name) continue;
+
+                // Skip if already selected for this bid (fuzzy match, not exact name)
+                if (findSimilarGC(name, selectedGCs)) continue;
+
                 const exactMatch = allClients.find(c => c.name.toLowerCase() === name.toLowerCase());
                 const match = exactMatch || findSimilarGC(name, allClients);
                 if (match) {
-                    if (!selectedGCs.find(s => s.name === match.name)) {
-                        selectedGCs.push({ ...match });
-                        autoSelected.push(match.name);
-                    }
+                    selectedGCs.push({ ...match });
+                    autoSelected.push(match.name);
                 } else {
                     newNames.push(name);
                 }
@@ -9385,12 +9387,22 @@ ${truncatedText}`
             const clientType = typeEl?.value || 'general_contractor';
             const settings = await getSettings();
 
-            const newClient = { name, clientType, rating: settings.defaultStars || 3, bids: 0, wins: 0, riskTags: [] };
-            const saved = await saveClient(newClient);
-            dataCache.clients = null;
+            // Guard: if a similar client already exists, use it instead of creating a duplicate
+            const allClients = await getClients();
+            const existing = allClients.find(c => c.name.toLowerCase() === name.toLowerCase())
+                          || findSimilarGC(name, allClients);
 
-            const clientToSelect = saved && saved.id ? { ...newClient, id: saved.id } : newClient;
-            if (!selectedGCs.find(s => s.name === name)) {
+            let clientToSelect;
+            if (existing) {
+                clientToSelect = existing;
+            } else {
+                const newClient = { name, clientType, rating: settings.defaultStars || 3, bids: 0, wins: 0, riskTags: [] };
+                const saved = await saveClient(newClient);
+                dataCache.clients = null;
+                clientToSelect = saved && saved.id ? { ...newClient, id: saved.id } : newClient;
+            }
+
+            if (!findSimilarGC(clientToSelect.name, selectedGCs)) {
                 selectedGCs.push(clientToSelect);
             }
             await renderGCSelector();
