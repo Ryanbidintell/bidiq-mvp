@@ -10694,57 +10694,11 @@ ${truncatedText}`
                     
                 </div>
                 <div style="display:flex;gap:8px;margin-top:16px;align-items:center;">
-                    <button class="btn btn-primary" onclick="showOutcomeFromReport()" style="flex:1;">+ Add Outcome</button>
+                    <button class="btn btn-primary" id="saveProjectBtn" onclick="saveProjectManually()" style="flex:1;">Save to Projects</button>
+                    <button class="btn btn-secondary" onclick="showOutcomeFromReport()">+ Add Outcome</button>
                     <button class="btn btn-secondary" onclick="resetAnalysis()">Re-analyze</button>
-                    <div style="position:relative;">
-                        <button class="btn btn-secondary" id="reportOverflowBtn" onclick="toggleReportOverflow()" style="padding:0 12px;font-size:18px;line-height:1;letter-spacing:1px;" title="More options">···</button>
-                        <div id="reportOverflowMenu" style="display:none;position:absolute;right:0;bottom:calc(100% + 4px);background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:var(--radius);padding:4px;min-width:160px;box-shadow:0 4px 16px rgba(0,0,0,0.5);z-index:100;">
-                            <button id="saveProjectBtn" onclick="saveProjectManually();toggleReportOverflow()" style="display:block;width:100%;text-align:left;padding:8px 12px;background:none;border:none;color:var(--text-primary);font-size:13px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='none'">Save to Projects</button>
-                            <button onclick="printReport()" style="display:block;width:100%;text-align:left;padding:8px 12px;background:none;border:none;color:var(--text-primary);font-size:13px;cursor:pointer;border-radius:4px;" onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='none'">Print Report</button>
-                        </div>
-                    </div>
+                    <button class="btn btn-secondary" onclick="printReport()" style="padding:0 12px;" title="Print report">🖨</button>
                 </div>
-                <script>
-                    setTimeout(() => {
-                        const radios = document.querySelectorAll('input[name="userAgreement"]');
-                        const note = document.getElementById('overrideNote');
-                        radios.forEach(radio => {
-                            radio.addEventListener('change', function() {
-                                document.querySelectorAll('.override-option').forEach(label => {
-                                    label.style.borderColor = 'rgba(255,255,255,0.12)';
-                                    label.style.background = 'rgba(255,255,255,0.05)';
-                                    label.style.color = 'rgba(255,255,255,0.55)';
-                                });
-                                const selectedLabel = this.closest('.override-option');
-                                if (selectedLabel) {
-                                    selectedLabel.style.borderColor = 'rgba(255,255,255,0.45)';
-                                    selectedLabel.style.background = 'rgba(255,255,255,0.1)';
-                                    selectedLabel.style.color = 'rgba(255,255,255,0.85)';
-                                }
-                                if (note) note.style.display = this.value !== 'agree' ? 'block' : 'none';
-                            });
-                        });
-                        const checked = document.querySelector('input[name="userAgreement"]:checked');
-                        if (checked) {
-                            const label = checked.closest('.override-option');
-                            if (label) {
-                                label.style.borderColor = 'rgba(255,255,255,0.45)';
-                                label.style.background = 'rgba(255,255,255,0.1)';
-                                label.style.color = 'rgba(255,255,255,0.85)';
-                            }
-                        }
-                        window.toggleReportOverflow = function() {
-                            const menu = document.getElementById('reportOverflowMenu');
-                            if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-                        };
-                        document.addEventListener('click', function closeOverflow(e) {
-                            if (!e.target.closest('#reportOverflowBtn') && !e.target.closest('#reportOverflowMenu')) {
-                                const menu = document.getElementById('reportOverflowMenu');
-                                if (menu) menu.style.display = 'none';
-                            }
-                        });
-                    }, 100);
-                <\/script>
             `;
 
             if (analysis.scores.components.location.needsAddress) {
