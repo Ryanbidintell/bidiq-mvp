@@ -2905,12 +2905,25 @@
         async function callAI(operation, text, systemPrompt, projectId = null) {
             const startTime = Date.now();
             try {
-                const { data: { session } } = await supabaseClient.auth.getSession();
+                // Get auth token — try getSession first, fall back to refreshSession if null
+                let accessToken = '';
+                try {
+                    const { data } = await supabaseClient.auth.getSession();
+                    accessToken = data?.session?.access_token || '';
+                    if (!accessToken && currentUser) {
+                        // Session expired but user is still logged in — force refresh
+                        const { data: refreshed } = await supabaseClient.auth.refreshSession();
+                        accessToken = refreshed?.session?.access_token || '';
+                    }
+                } catch (sessionErr) {
+                    console.warn('callAI: failed to get session token:', sessionErr.message);
+                }
+
                 const response = await fetch(`${API_BASE_URL}/analyze`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session?.access_token || ''}`
+                        'Authorization': `Bearer ${accessToken}`
                     },
                     body: JSON.stringify({ operation, text, systemPrompt })
                 });
@@ -4851,6 +4864,32 @@ ${fullText.substring(0, 40000)}`;
                 console.error('saveClient error:', e);
                 return client;
             }
+        }
+
+        // Throws on DB error — use when the caller needs to know if the save failed
+        async function saveClientOrThrow(client) {
+            if (!supabaseClient || !currentUser) throw new Error('Not authenticated');
+            dataCache.clients = null;
+            dataCache.gcs = null;
+            const { data, error } = await supabaseClient.from('clients').upsert({
+                id: client.id || undefined,
+                user_id: currentUser.id,
+                name: client.name,
+                client_type: client.clientType || 'general_contractor',
+                rating: client.rating,
+                bids: client.bids || 0,
+                wins: client.wins || 0,
+                losses: client.losses || 0,
+                ghosts: client.ghosts || 0,
+                risk_tags: client.riskTags || [],
+                notes: client.notes || null,
+                avg_rfi: client.avg_rfi || null,
+                rfi_count: client.rfi_count || 0,
+                payment_flag: client.payment_flag || null,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'id' }).select().single();
+            if (error) throw error;
+            return data || client;
         }
 
         // Legacy function
@@ -9300,17 +9339,17 @@ ${truncatedText}`
 
   "project_address": "The PHYSICAL STREET ADDRESS where this project will be built. DRAWING SETS: look in the title block (bottom strip of sheets, especially the cover/G-001 sheet or sheet index page). SPEC BOOKS: look on the cover page or Table of Contents. Extract ONLY ONE address — the construction site address. Do NOT include addresses of architects, engineers, consultants, owners' offices, permit authorities, or bid depositories.",
 
-  "project_city": "The city where the project is located.",
+  "project_city": "The city (municipality) where the project is physically located. ONLY extract a proper place name — a real city or town name. NEVER use: sheet/drawing titles (e.g. 'SHEET 1 COVER SHEET'), table of contents text, scope descriptions (e.g. 'CIVIL - WATER MAIN EXTENSION'), engineering document references, document numbers, CSI section numbers, or any text that is not a real city name. For civil/utility projects, the city is the municipality where the work is done (e.g. 'Overland Park' not 'WATER MAIN EXTENSION'). Return null if you cannot find a real city name.",
 
-  "project_state": "The US state abbreviation (2 letters) where the project is located. Must be a valid US state code.",
+  "project_state": "The US state abbreviation (2 letters) where the project is located. Must be a valid 2-letter US state code like KS, MO, CO, TX, etc. Return null if not found.",
 
   "project_zip": "The ZIP code if stated.",
 
-  "building_type": "Classify as ONE of: Healthcare, Office, Multifamily, Retail, Industrial, Education, Higher Education, Government, Religious, Mixed-Use, Infrastructure, Other. CRITICAL RULES (check in order): 1) Multiple building uses together = Mixed-Use. 2) Project name contains 'LOFTS' = Multifamily. 3) Apartments/condos/townhomes/student housing/senior living = Multifamily. 4) School/university owner = Education. NEVER classify residential as Office. Owner-name inference: 'City of X', 'County of X', 'State of X', 'Federal', 'USAF', 'Army', 'Corps of Engineers', 'Department of' in owner → Government. 'Hospital', 'Medical Center', 'Health System', 'Clinic', 'Surgery Center', 'Medical Office', 'MOB', 'Healthcare' in project or owner name → Healthcare. 'Church', 'Cathedral', 'Temple', 'Mosque', 'Chapel', 'Parish', 'Diocese', 'Ministry' → Religious. 'Parking Garage', 'Parking Structure', 'Transit', 'Airport', 'Highway', 'Bridge', 'Water Treatment', 'Wastewater' → Infrastructure. Default Other only if truly ambiguous.",
+  "building_type": "Classify as ONE of: Healthcare, Office, Multifamily, Retail, Industrial, Education, Higher Education, Government, Religious, Mixed-Use, Infrastructure, Other. CRITICAL RULES (check in order): 1) Multiple building uses together = Mixed-Use. 2) Project name contains 'LOFTS' = Multifamily. 3) Apartments/condos/townhomes/student housing/senior living = Multifamily. 4) School/university owner = Education. NEVER classify residential as Office. Owner-name inference: 'City of X', 'County of X', 'State of X', 'Federal', 'USAF', 'Army', 'Corps of Engineers', 'Department of' in owner → Government. 'Hospital', 'Medical Center', 'Health System', 'Clinic', 'Surgery Center', 'Medical Office', 'MOB', 'Healthcare' in project or owner name → Healthcare. 'Church', 'Cathedral', 'Temple', 'Mosque', 'Chapel', 'Parish', 'Diocese', 'Ministry' → Religious. 'Parking Garage', 'Parking Structure', 'Transit', 'Airport', 'Highway', 'Bridge', 'Water Treatment', 'Wastewater Treatment', 'Water Main', 'Water Line', 'Water System', 'Water Distribution', 'Sewer Extension', 'Sewer Main', 'Sanitary Sewer', 'Storm Sewer', 'Storm Drain', 'Lift Station', 'Pump Station', 'Utility Extension', 'Road Improvement', 'Street Improvement', 'Intersection', 'Roundabout', 'Culvert' → Infrastructure. Default Other only if truly ambiguous.",
 
   "project_type": "Classify as ONE of: New Construction, Renovation, Addition, Tenant Improvement, Demolition, Mixed. Keywords: 'new construction'/'ground-up'/'greenfield' → New Construction. 'renovation'/'remodel'/'existing building'/'gut rehab'/'alteration' → Renovation. 'addition'/'expansion' → Addition. 'tenant improvement'/'TI'/'fit-out'/'suite build-out' → Tenant Improvement. 'demolition'/'demo only' → Demolition. Both new and renovation work → Mixed. Default to New Construction if unspecified.",
 
-  "bid_deadline": "The date bids must be submitted to the GC or owner. Look for labels: 'Bids Due', 'Bid Deadline', 'Bids Received Until', 'Bid Opening', 'Proposals Due', 'Quotations Due by'. IGNORE dates labeled: Pre-bid Meeting, Pre-bid Conference, Pre-bid Walk-Through, RFI Deadline, Questions Due, Addendum Issue Date, Substantial Completion, Notice to Proceed, Project Start Date, Award Date, Occupancy Date. If an addendum changes the bid deadline, use the LATEST date. Return ONLY a date/time string like 'February 15, 2026 at 2:00 PM' or null.",
+  "bid_deadline": "The date bids/proposals must be submitted to the GC or owner. Look ONLY for: 'Bids Due', 'Bid Deadline', 'Bids Received Until', 'Bid Opening', 'Proposals Due', 'Quotations Due'. IGNORE ALL of these: Pre-bid Meeting, Pre-bid Walk, Pre-bid Conference, RFI Deadline, Questions Due, Questions Submitted, Letter of Intent, Submittals Due, Addendum Issue, Substantial Completion, Notice to Proceed, Project Start, Award Date, Occupancy, Contract Execution, Schedule dates. Documents often list many milestone dates — only the BID SUBMISSION date counts. Return ONLY a single date/time string like 'January 11, 2024 at 2:00 PM' or null. NEVER return multiple dates or a list.",
 
   "project_size_sf": "🔴 CRITICAL PRIORITY - Total building square footage. Search these locations IN ORDER: 1) Code Notes section (often near cover page), 2) Building Information table/box, 3) Project Summary, 4) Scope of Work section, 5) Section 01 General Requirements, 6) Cover page header/footer. Match ANY pattern: '5,000 SF', '5000 SF', '5,000 square feet', '5000 sq ft', '5000 GSF', '5,000 s.f.', 'Building Area: 5000', 'Project Size: 5000', 'Total SF: 5000'. If multiple numbers found, use the LARGEST (total building area). EXCLUDE: individual unit sizes (e.g. 'Unit A: 850 SF'), parking stall areas, lot areas, site areas, acreage converted to SF, individual tenant suite areas. PREFER labels: 'Total Building Area', 'Gross Floor Area', 'GFA', 'Total Area', 'Gross Building Area'. If only floor-by-floor areas are listed, sum them. Extract ONLY numeric digits (no commas). Return as integer or null. EXAMPLE: '5,500 SF' → 5500.",
 
@@ -9400,14 +9439,25 @@ ${truncatedText}`
                     console.warn('⚠️ Bid deadline looks like garbage text, setting to null:', bidDeadline.substring(0, 50) + '...');
                     bidDeadline = null;
                 }
+                // Also reject if deadline contains milestone keywords (AI included non-deadline dates)
+                if (bidDeadline && /Letter of Intent|Submittal|Questions|Pre-bid|RFI|Notice to Proceed|Award|Substantial Completion/i.test(bidDeadline)) {
+                    console.warn('⚠️ Bid deadline contains non-deadline keywords, setting to null:', bidDeadline.substring(0, 80));
+                    bidDeadline = null;
+                }
 
-                // FIX BUG 4: Validate project_city - reject if it contains multiple cities
-                if (projectCity && (projectCity.includes('•') || projectCity.split(',').length > 2)) {
-                    console.warn('⚠️ Project city contains multiple locations, attempting to clean:', projectCity);
-                    // Try to extract just the first city
-                    const firstCity = projectCity.split(/[•,]/)[0].trim();
-                    if (firstCity.length < 30) {
-                        projectCity = firstCity;
+                // FIX BUG 4: Validate project_city - reject garbage values
+                if (projectCity) {
+                    // Reject if it looks like a sheet list, table of contents, or scope description
+                    const cityLooksLikeTOC = /SHEET\s+\d|COVER SHEET|GENERAL LAYOUT|GRADING PLAN|SANITARY|EROSION|DISTURBANCE/i.test(projectCity);
+                    const cityLooksLikeScope = /CIVIL\s*[-–]|WATER MAIN|SEWER MAIN|STORM DRAIN|UTILITY|EXTENSION|IMPROVEMENT|INTERSECTION|PHASE \d/i.test(projectCity);
+                    const cityLooksLikeDocRef = /^(No\.|No |\d{4,}|Section |Div\.|Division)/i.test(projectCity);
+                    if (cityLooksLikeTOC || cityLooksLikeScope || cityLooksLikeDocRef) {
+                        console.warn('⚠️ project_city looks like scope/TOC text, setting null:', projectCity.substring(0, 60));
+                        projectCity = null;
+                    } else if (projectCity.includes('•') || projectCity.split(',').length > 2) {
+                        console.warn('⚠️ Project city contains multiple locations, attempting to clean:', projectCity);
+                        const firstCity = projectCity.split(/[•,]/)[0].trim();
+                        if (firstCity.length < 30) projectCity = firstCity;
                     }
                 }
 
@@ -9441,6 +9491,16 @@ ${truncatedText}`
                         projectCity = parts[0].trim();
                     }
                     console.log('🧹 Cleaned project_city:', projectCity);
+                }
+
+                // Reject project names that look like document/revision numbers, not real names
+                if (projectName) {
+                    const nameIsDocRef = /^No\.\s*\d+|^\d{4,}\s*[-–]|\b\d{5,}\b.*\b\d{4}\b/.test(projectName);
+                    const nameIsSheetList = /SHEET\s+\d|COVER SHEET|GENERAL LAYOUT/i.test(projectName);
+                    if (nameIsDocRef || nameIsSheetList) {
+                        console.warn('⚠️ project_name looks like a doc ref/sheet list, clearing:', projectName.substring(0, 60));
+                        projectName = null;
+                    }
                 }
 
                 // Ensure project_name doesn't default to "Untitled" if we have ANY identifying info
@@ -15457,7 +15517,14 @@ Respond now:`;
             // Capture risk tags
             const riskTags = Array.from(document.querySelectorAll('.gcRiskTag:checked')).map(cb => cb.value);
 
-            await saveClient({ name: fullName, clientType: clientType, rating: rating, bids: 0, wins: 0, riskTags });
+            try {
+                await saveClientOrThrow({ name: fullName, clientType: clientType, rating: rating, bids: 0, wins: 0, riskTags });
+            } catch (saveErr) {
+                console.error('saveNewGC: save failed:', saveErr);
+                alert('❌ Could not save client: ' + (saveErr.message || 'Database error. Please try again.'));
+                return;
+            }
+
             closeModal('addGCModal');
 
             // Show success notification
