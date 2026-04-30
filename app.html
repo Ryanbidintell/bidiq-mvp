@@ -8712,13 +8712,14 @@ ${truncatedText}`
         }
 
         // Module 2: Bid Risk Flag
-        function calculateBidRisk(extracted) {
+        function calculateBidRisk(extracted, gcs) {
             const flags = {};
             const pubTypes = ['Government', 'Education', 'Higher Education', 'Infrastructure'];
             flags.isPublicBid = pubTypes.includes(extracted.building_type);
             flags.multipleBidders = !!extracted.multiple_bidders_expected;
             flags.bidShoppingLanguage = !!extracted.bid_shopping_language;
             flags.vagueScope = !!extracted.vague_scope;
+            flags.firstTimeClient = !!(gcs && gcs.length > 0 && gcs.some(gc => !gc.bids || gc.bids === 0));
             if (extracted.bid_deadline) {
                 const deadline = new Date(extracted.bid_deadline);
                 if (!isNaN(deadline.getTime())) {
@@ -8837,11 +8838,12 @@ ${truncatedText}`
             const colors = { moderate: 'var(--warning)', elevated: 'var(--danger)', high: '#7f1d1d' };
             const labels = { moderate: '⚠️ Moderate', elevated: '🔴 Elevated', high: '🚨 High' };
             const flagLabels = {
-                isPublicBid: 'Public/government bid (all bids are public)',
-                multipleBidders: 'Many competing bidders expected',
-                bidShoppingLanguage: 'Bid shopping language detected',
-                vagueScope: 'Vague or incomplete scope detected',
-                rushedTimeline: 'Rushed bid timeline (<10 days)'
+                isPublicBid: 'Public bid — all bids are visible to competitors',
+                multipleBidders: 'High competition expected',
+                firstTimeClient: 'First-time client — no past bid history to go on',
+                bidShoppingLanguage: 'Bid shopping language in documents',
+                vagueScope: 'Scope has undefined sections (TBD / "by others")',
+                rushedTimeline: 'Tight deadline — less than 10 days to bid'
             };
             const activeFlags = Object.entries(risk.flags).filter(([,v]) => v).map(([k]) => flagLabels[k]);
             return `<div style="margin-top:12px;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);border-left:3px solid ${colors[risk.level]};display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -9774,8 +9776,7 @@ ${truncatedText}`
                     ? `${extracted.project_city} Metro, ${extracted.project_state}`
                     : null;
 
-                const bidRisk = calculateBidRisk(extracted);
-                const winnersCurseRisk = calculateWinnersCurseRisk(extracted, selectedGCs, contractRisks);
+                const bidRisk = calculateBidRisk(extracted, selectedGCs);
                 const gcNames = selectedGCs.map(g => g.name);
                 const scores = await calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks, tradeDetection, gcNames, foundSections, scopeFound);
 
@@ -9824,7 +9825,6 @@ ${truncatedText}`
                     buildingType,
                     marketMetroArea,
                     bidRisk,
-                    winnersCurseRisk,
                     createdAt: new Date().toISOString(),
                     outcome: 'pending', // Default outcome
                     // Intelligence Engine Data
@@ -12621,8 +12621,7 @@ ${truncatedText}`
                 }
 
                 // Recalculate risk flags from saved extracted data
-                const bidRisk = calculateBidRisk(p.extracted);
-                const winnersCurseRisk = calculateWinnersCurseRisk(p.extracted, p.gcs || [], p.contractRisks || null);
+                const bidRisk = calculateBidRisk(p.extracted, p.gcs || []);
 
                 // Pre-compute profile completeness prompts
                 const profileWarningHtml = await renderProfileWarningHtml(settings);
