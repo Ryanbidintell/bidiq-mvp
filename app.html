@@ -4350,7 +4350,7 @@ Respond in this exact JSON format:
     }
   ],
   "overall_risk_level": "high",
-  "risk_summary": "2-3 sentence summary of the contract's overall risk profile for a subcontractor",
+  "risk_summary": "2-3 sentences describing the contract risk profile based only on clauses actually found. Do NOT call the documents an 'invitation to bid' — the user uploaded drawings, specs, and/or contract conditions. If no actual subcontract clauses were found, say so.",
   "risk_score_penalty": 20
 }
 
@@ -4363,6 +4363,8 @@ The risk_score_penalty should be:
 IMPORTANT: If you detect a pay-if-paid clause with "condition precedent" language, ALWAYS classify it as pay-if-paid (not pay-when-paid). This distinction matters legally.
 
 FINAL CHECK before flagging any risk: Ask yourself — "Can I quote the exact clause verbatim from the text?" If no, do not include it. A false negative (missing a real clause) is better than a false positive (flagging something that isn't there).
+
+SELF-VALIDATION: Before returning your response, check each item in risks_found: does its exact_quote contain at least one of these words: shall, must, agree, liable, indemnif, waive, terminat, require, condition precedent, not entitled, responsible for? If not, REMOVE it. A quote like "X is requesting bid proposals" has NO obligation language and must be deleted.
 
 Contract text:
 ${fullText.substring(0, 40000)}`;
@@ -4399,27 +4401,39 @@ ${fullText.substring(0, 40000)}`;
                     plainEnglish: r.plain_english || ''
                 }));
 
+                // Client-side guard: reject any risk whose quote contains no obligation language.
+                // This catches AI false positives where a descriptive sentence (e.g. "X is requesting
+                // bid proposals") gets flagged despite having no binding terms.
+                const OBLIGATION_RE = /\b(shall|must|agree[sd]?\s+to|liable|indemnif|waive[rd]?|terminat|condition\s+precedent|not\s+entitled|responsible\s+for|require[sd]?|to\s+be\s+(included|provided|performed|paid|completed)|bears?\s+the\s+risk)\b/i;
+                const validRisks = normalizedRisks.filter(r => {
+                    if (!r.evidence) return false;
+                    const ok = OBLIGATION_RE.test(r.evidence);
+                    if (!ok) console.warn(`⚠️ Contract risk filtered (no obligation language): "${r.classification}" — "${r.evidence.substring(0, 80)}"`);
+                    return ok;
+                });
+
                 // Categorize by severity tier
                 const risksByTier = {
-                    high: normalizedRisks.filter(r => r.severity === 'high'),
-                    medium: normalizedRisks.filter(r => r.severity === 'medium'),
-                    low: normalizedRisks.filter(r => r.severity === 'low')
+                    high: validRisks.filter(r => r.severity === 'high'),
+                    medium: validRisks.filter(r => r.severity === 'medium'),
+                    low: validRisks.filter(r => r.severity === 'low')
                 };
 
                 console.log('🎯 Contract risk detection complete:', {
-                    total: normalizedRisks.length,
+                    rawFromAI: normalizedRisks.length,
+                    afterFilter: validRisks.length,
                     high: risksByTier.high.length,
                     medium: risksByTier.medium.length,
                     low: risksByTier.low.length,
                     penalty: riskScorePenalty,
-                    risks: normalizedRisks.map(r => ({ type: r.type, severity: r.severity, classification: r.classification }))
+                    risks: validRisks.map(r => ({ type: r.type, severity: r.severity, classification: r.classification }))
                 });
 
                 return {
                     hasContractLanguage: true,
-                    risksDetected: normalizedRisks,
+                    risksDetected: validRisks,
                     risksByTier: risksByTier,
-                    totalRisks: normalizedRisks.length,
+                    totalRisks: validRisks.length,
                     riskScorePenalty: riskScorePenalty,
                     overallRiskLevel: overallRiskLevel,
                     riskSummary: riskSummary
