@@ -9137,6 +9137,22 @@ ${truncatedText}`
             return null;
         }
 
+        // Deduplicate a client list by space-stripped normalized name token.
+        // "McCown Gordon Construction" and "McCownGordon Construction" both reduce to
+        // "mccowngordon" after normalizing + stripping spaces, so they collapse to one.
+        // Keeps whichever record has more bid history; ties go to the first seen.
+        function deduplicateClients(clients) {
+            const byToken = new Map();
+            for (const c of clients) {
+                const token = normalizeCompanyName(c.name).replace(/\s/g, '') || c.name.toLowerCase().replace(/\s/g, '');
+                const existing = byToken.get(token);
+                if (!existing || (c.bids || 0) > (existing.bids || 0)) {
+                    byToken.set(token, c);
+                }
+            }
+            return Array.from(byToken.values());
+        }
+
         // Auto-select GCs that are geographically close to user's office
         async function autoSelectNearbyGCs(extracted) {
             if (!currentUser || !supabaseClient) return;
@@ -15341,7 +15357,7 @@ Respond now:`;
 
         function renderClientRows(clients) {
             const sortKey = _clientSortKey || 'name';
-            const sorted = [...clients].sort((a, b) => {
+            const sorted = [...deduplicateClients(clients)].sort((a, b) => {
                 if (sortKey === 'win_rate') {
                     const rA = a.bids > 0 ? a.wins / a.bids : -1;
                     const rB = b.bids > 0 ? b.wins / b.bids : -1;
@@ -19255,16 +19271,8 @@ Respond now:`;
             // Get all GCs from database
             const allGCs = await getGCs();
 
-            // Deduplicate by normalized name (handle "Turner Construction - Denver" vs "Turner Construction" etc)
-            const seen = new Map();
-            const deduped = [];
-            for (const gc of allGCs) {
-                const normalized = normalizeCompanyName(gc.name);
-                if (!seen.has(normalized)) {
-                    seen.set(normalized, true);
-                    deduped.push(gc);
-                }
-            }
+            // Deduplicate by space-stripped normalized token — catches "McCown Gordon" vs "McCownGordon"
+            const deduped = deduplicateClients(allGCs);
 
             // Filter matching GCs (match from beginning of name only)
             const matches = deduped.filter(gc =>
