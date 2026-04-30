@@ -4290,6 +4290,9 @@ CRITICAL DETECTION RULES:
 1. Clauses often do NOT use their common names. "Paid-when-paid" never literally appears — look for the LEGAL MECHANISM instead.
 2. Pay attention to WHO bears the risk in each clause.
 3. Distinguish between severity levels based on legal enforceability and financial impact.
+4. NEVER flag a clause you cannot directly quote. If the exact contract language is not present in the text, do NOT flag it. "The contract likely contains X" is NOT acceptable — the language must actually appear.
+5. Invitation to Bid documents, RFPs, bid instructions, cover letters, and proposal request forms are NOT subcontracts. Do not flag hypothetical risks from these documents — only flag clauses found in actual contract, general conditions, special conditions, or subcontract agreement sections.
+6. The exact_quote MUST contain obligation language such as "shall", "must", "agrees to", "liable for", "indemnify", "waive", "terminate" — NOT descriptive prose about the project or bidding process.
 
 CLAUSE LIBRARY — What to look for and HOW they actually appear:
 
@@ -4358,6 +4361,8 @@ The risk_score_penalty should be:
 - 26-30: Extremely aggressive, recommend legal review before bidding
 
 IMPORTANT: If you detect a pay-if-paid clause with "condition precedent" language, ALWAYS classify it as pay-if-paid (not pay-when-paid). This distinction matters legally.
+
+FINAL CHECK before flagging any risk: Ask yourself — "Can I quote the exact clause verbatim from the text?" If no, do not include it. A false negative (missing a real clause) is better than a false positive (flagging something that isn't there).
 
 Contract text:
 ${fullText.substring(0, 40000)}`;
