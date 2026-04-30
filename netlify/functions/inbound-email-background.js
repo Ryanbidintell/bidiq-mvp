@@ -221,6 +221,14 @@ exports.handler = async (event) => {
         return { statusCode: 200, body: 'ok' };
     }
 
+    // Verify shared secret to block spoofed Postmark webhooks.
+    // Set POSTMARK_INBOUND_TOKEN in Netlify env and in Postmark's custom header (X-Inbound-Token).
+    const inboundToken = event.headers['x-inbound-token'] || event.headers['X-Inbound-Token'];
+    if (process.env.POSTMARK_INBOUND_TOKEN && inboundToken !== process.env.POSTMARK_INBOUND_TOKEN) {
+        console.warn('inbound-email: rejected — invalid or missing X-Inbound-Token');
+        return { statusCode: 200, body: 'ok' }; // 200 to stop Postmark retries
+    }
+
     let payload;
     try {
         payload = JSON.parse(event.body || '{}');

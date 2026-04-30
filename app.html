@@ -2905,15 +2905,14 @@
         async function callAI(operation, text, systemPrompt, projectId = null) {
             const startTime = Date.now();
             try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
                 const response = await fetch(`${API_BASE_URL}/analyze`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userId: currentUser?.id || 'anonymous',
-                        operation,
-                        text,
-                        systemPrompt
-                    })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token || ''}`
+                    },
+                    body: JSON.stringify({ operation, text, systemPrompt })
                 });
 
                 if (!response.ok) {

@@ -1,7 +1,18 @@
 // Serverless function for sending notifications and emails
 // Deploys to Netlify as /.netlify/functions/notify
 
+const { createClient } = require('@supabase/supabase-js');
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+
+const ADMIN_EMAILS = ['ryan@bidintell.ai', 'ryan@fsikc.com'];
+
+// Admin-only email types that require a valid JWT from an admin account
+const ADMIN_ONLY_TYPES = ['beta_approval', 'founding_coupon', 'beta_to_paid_warning'];
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function sendEmail({ to, subject, htmlBody }) {
     const isInternalOnly = to === 'ryan@fsikc.com';
@@ -28,9 +39,9 @@ async function sendEmail({ to, subject, htmlBody }) {
 
 exports.handler = async function(event, context) {
     const headers = {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': 'https://bidintell.ai',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Content-Type': 'application/json'
     };
 
@@ -40,6 +51,19 @@ exports.handler = async function(event, context) {
     try {
         const body = JSON.parse(event.body);
         const { emailType } = body;
+
+        // Admin-only types require a valid Supabase JWT from an admin account
+        if (ADMIN_ONLY_TYPES.includes(emailType)) {
+            const authHeader = event.headers['authorization'] || event.headers['Authorization'] || '';
+            const token = authHeader.replace(/^Bearer\s+/i, '');
+            if (!token) {
+                return { statusCode: 401, headers, body: JSON.stringify({ error: 'Authentication required' }) };
+            }
+            const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+            if (authError || !user || !ADMIN_EMAILS.includes(user.email)) {
+                return { statusCode: 403, headers, body: JSON.stringify({ error: 'Admin access required' }) };
+            }
+        }
 
         // ── Error notification (original behavior) ──────────────────────────
         if (!emailType || emailType === 'error') {
