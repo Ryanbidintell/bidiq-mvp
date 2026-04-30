@@ -4346,7 +4346,7 @@ Respond in this exact JSON format:
       "classification": "pay-if-paid (condition precedent)",
       "exact_quote": "the first 20-30 words of the actual clause text...",
       "page_reference": "estimated page or section if detectable",
-      "plain_english": "What this means for the subcontractor in one sentence"
+      "plain_english": "Financial consequence for the subcontractor — be specific: who bears the cost, what payment right is waived, or what dollar risk is shifted. Example: 'If the owner doesn't pay the GC, the GC owes you nothing — you absorb the owner's credit risk.' Not: 'GC can withhold payment.'"
     }
   ],
   "overall_risk_level": "high",
@@ -8272,6 +8272,34 @@ ${sampleText}`;
             return sorted.map(i => allPages[i]);
         }
 
+        // Build a contract-focused text block from ALL pages, not just trade-targeted ones.
+        // Division 00/01 spec pages and general conditions rarely appear in the trade-targeted
+        // set but are exactly where pay-when-paid, indemnification, and termination clauses live.
+        function buildContractText(allPages) {
+            const CONTRACT_RE = /\b(indemnif|liquidated\s+damages?|terminat(?:ion)?\s+for|condition\s+precedent|pay.if.paid|pay.when.paid|hold\s+harmless|waive[rd]?\s+\w+\s+claim|general\s+conditions?|supplementary\s+conditions?|special\s+conditions?|subcontract\s+agree|shall\s+be\s+(?:liable|responsible)|insurance\s+require|not\s+entitled\s+to|no\s+damage\s+for\s+delay)\b/gi;
+
+            const scores = allPages.map((p, idx) => ({
+                idx,
+                hits: ((p.text || '').match(CONTRACT_RE) || []).length
+            }));
+
+            // Top 20 pages by contract keyword hit count, re-sorted into page order
+            const topIndices = scores
+                .filter(s => s.hits > 0)
+                .sort((a, b) => b.hits - a.hits)
+                .slice(0, 20)
+                .map(s => s.idx);
+
+            // Always include the first 3 pages (front matter, cover sheet)
+            const contractIndices = new Set([0, 1, 2, ...topIndices].filter(i => i < allPages.length));
+            const contractPages = Array.from(contractIndices)
+                .sort((a, b) => a - b)
+                .map(i => allPages[i]);
+
+            console.log(`📋 Contract targeting: ${contractPages.length} pages (${topIndices.length} hit pages from ${allPages.length} total)`);
+            return contractPages.map(p => `[Page ${p.num}]\n${p.text}`).join('\n\n');
+        }
+
         function getAnalysisConfidence(docMap, targetedPageCount, totalPageCount) {
             const phase = docMap.phase || 'unknown';
             const hasFinishSchedule = (docMap.finish_schedule_pages || []).length > 0 ||
@@ -8879,6 +8907,19 @@ ${truncatedText}`
                 <span style="font-weight:700;font-size:12px;color:${colors[risk.level]};white-space:nowrap;">${labels[risk.level]} Bid Risk</span>
                 <span style="font-size:12px;color:var(--text-muted);">${activeFlags.join(' · ')}</span>
             </div>`;
+        }
+
+        // Compact chip strip showing detected contract clause types in the score header.
+        // Gives subs a reason to open the Contract tab before committing estimating hours.
+        function renderContractRiskChips(contractRisks) {
+            if (!contractRisks?.risksDetected?.length) return '';
+            const chips = contractRisks.risksDetected.map(r => {
+                const color  = r.severity === 'high' ? 'var(--danger)' : r.severity === 'medium' ? 'var(--warning)' : 'rgba(255,255,255,0.45)';
+                const bg     = r.severity === 'high' ? 'rgba(239,68,68,0.15)' : r.severity === 'medium' ? 'rgba(234,179,8,0.15)' : 'rgba(255,255,255,0.07)';
+                const border = r.severity === 'high' ? 'rgba(239,68,68,0.35)' : r.severity === 'medium' ? 'rgba(234,179,8,0.35)' : 'rgba(255,255,255,0.15)';
+                return `<span style="background:${bg};border:1px solid ${border};color:${color};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;">${r.classification}</span>`;
+            }).join('');
+            return `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px;" title="See Contract tab for details">${chips}</div>`;
         }
 
         // Bid Economics: estimate hours to prepare a bid based on document complexity
@@ -9744,8 +9785,9 @@ ${truncatedText}`
 
                 updateProgress(55, 'Detecting contract risks...');
 
-                // Layer 0: AI Contract Risk Detection
-                const contractRisks = await detectContractRisks(fullText);
+                // Layer 0: AI Contract Risk Detection — scan ALL pages for contract language,
+                // not just trade-targeted pages. Div 00/01 specs are skipped by selectTargetPages.
+                const contractRisks = await detectContractRisks(buildContractText(allPages));
 
                 // Fix: Update has_contract_language based on actual detection results
                 // The AI extraction might return false, but detectContractRisks is more accurate
@@ -10713,6 +10755,7 @@ ${truncatedText}`
                         ${volumeHtml}
                         ${gcRiskHtml}
                         ${analysis.bidRisk ? renderBidRiskCard(analysis.bidRisk) : ''}
+                        ${renderContractRiskChips(analysis.contractRisks)}
                     </div>
                     ${await renderProfileWarningHtml(settings)}
                     ${tradeWarningBanner}
@@ -12759,6 +12802,7 @@ ${truncatedText}`
                                 </div>
                             </details>
                             ${bidRisk ? renderBidRiskCard(bidRisk) : ''}
+                            ${renderContractRiskChips(contractRisks)}
                             ${p.bid_divisions_submitted && p.bid_divisions_submitted.length > 0 ? `<div style="margin-top:12px;padding:10px 14px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);font-size:13px;"><span style="font-weight:600;color:var(--text-primary);">📋 Submitted:</span> <span style="color:var(--text-secondary);">${p.bid_divisions_submitted.map(d => 'Div ' + d).join(', ')}</span></div>` : ''}
                         </div>
                         ${profileWarningHtml}
