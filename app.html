@@ -1878,7 +1878,7 @@
                     <div id="keywordsNudge" style="display:none; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">No trade terms added yet.</strong> Add your work type terms (like "roller shades" or "demountable partitions") so BidIntell can confirm your work is in each bid — directly improves Trade Match accuracy.</div>
                     <div class="help-text">
                         <strong>Three separate lists, three different jobs:</strong><br>
-                        • <span style="color: var(--accent)">My Trade Terms</span> = <strong>what your company installs/sells</strong> — BidIntell searches bid docs for these to confirm <em>your scope is in this project</em> (feeds Trade Match). Examples: "roller shades", "demountable partitions", "resilient flooring"<br>
+                        • <span style="color: var(--accent)">My Trade Terms</span> = <strong>scope items AND preferred manufacturers</strong> — BidIntell searches the spec book and drawings for these to confirm <em>your work is in this bid</em> (feeds Trade Match). Add your work type terms ("roller shades", "demountable partitions") AND your key manufacturers ("MechoShade", "Draper", "SWF Contract") — a manufacturer call-out is even stronger confirmation your trade is specified<br>
                         • <span style="color: var(--success)">Favorable Contract Conditions</span> = <strong>how the contract works</strong> — terms that signal a good project for your business, like "design-assist", "negotiated", "owner-specified" (+8 pts each, feeds Contract Terms)<br>
                         • <span style="color: var(--danger)">Risk Terms</span> = extra contract red flags beyond what BidIntell auto-detects — standard clauses like liquidated damages and pay-if-paid are already flagged automatically (feeds Contract Terms)<br><br>
                         <strong>Tip:</strong> Separate by commas to add multiple at once.
@@ -1888,7 +1888,7 @@
                             <div class="keywords-section-header"><h4 style="color:var(--accent);">My Trade Terms — what you install/sell (BidIntell searches for these to confirm your scope is in the bid)</h4></div>
                             <div class="keywords-list" id="scopeKeywordsList"></div>
                             <div class="keywords-input-row">
-                                <input type="text" id="scopeKeywordInput" placeholder='e.g. "roller shades, motorized blinds, window treatments, demountable partitions"' onkeypress="if(event.key==='Enter'){event.preventDefault();addScopeKeyword();}">
+                                <input type="text" id="scopeKeywordInput" placeholder='Scope items or manufacturers, e.g. "roller shades, MechoShade, demountable partitions"' onkeypress="if(event.key==='Enter'){event.preventDefault();addScopeKeyword();}">
                                 <button class="btn btn-sm btn-secondary" onclick="addScopeKeyword()">Add</button>
                             </div>
                             <div id="keywordSuggestions" style="display:none; margin-top:14px; padding-top:12px; border-top:1px solid var(--border);"></div>
