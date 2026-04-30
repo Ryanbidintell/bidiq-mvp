@@ -1873,35 +1873,34 @@
 
             <!-- Keywords Tab -->
             <div class="tab-content" id="tab-keywords">
-                <header class="page-header"><h2 class="page-title">Keywords</h2><p class="page-subtitle">Configure what BidIntell looks for in bid documents</p></header>
+                <header class="page-header"><h2 class="page-title">Keywords</h2><p class="page-subtitle">Set your trade terms (Trade Match) and contract signals (Contract Terms)</p></header>
                 <div class="page-content">
-                    <div id="keywordsNudge" style="display:none; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">No keywords added yet.</strong> Add your trade terms (like "resilient flooring" or "fire alarm") so BidIntell can find your work in bid documents — directly improves Trade Match accuracy.</div>
+                    <div id="keywordsNudge" style="display:none; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">No trade terms added yet.</strong> Add your work type terms (like "roller shades" or "demountable partitions") so BidIntell can confirm your work is in each bid — directly improves Trade Match accuracy.</div>
                     <div class="help-text">
-                        <strong>Keywords serve two different purposes — keep them separated.</strong><br>
-                        • <span style="color: var(--accent)">Scope keywords</span> confirm <em>your work is in this bid</em> — use your work type terms like "roller shades", "resilient flooring", "fire alarm" (feeds Trade Match)<br>
-                        • <span style="color: var(--success)">Favorable terms</span> signal good contract conditions specific to your business — "design-assist", "negotiated", "owner-specified" (+8 pts each, feeds Contract Terms)<br>
-                        • <span style="color: var(--danger)">Risk terms</span> are for anything BidIntell doesn't already catch automatically — standard clauses like liquidated damages and pay-if-paid are already flagged for you (feeds Contract Terms)<br><br>
+                        <strong>Three separate lists, three different jobs:</strong><br>
+                        • <span style="color: var(--accent)">My Trade Terms</span> = <strong>what your company installs/sells</strong> — BidIntell searches bid docs for these to confirm <em>your scope is in this project</em> (feeds Trade Match). Examples: "roller shades", "demountable partitions", "resilient flooring"<br>
+                        • <span style="color: var(--success)">Favorable Contract Conditions</span> = <strong>how the contract works</strong> — terms that signal a good project for your business, like "design-assist", "negotiated", "owner-specified" (+8 pts each, feeds Contract Terms)<br>
+                        • <span style="color: var(--danger)">Risk Terms</span> = extra contract red flags beyond what BidIntell auto-detects — standard clauses like liquidated damages and pay-if-paid are already flagged automatically (feeds Contract Terms)<br><br>
                         <strong>Tip:</strong> Separate by commas to add multiple at once.
                     </div>
                     <div class="keywords-grid" style="grid-template-columns:1fr;gap:16px;">
                         <div class="keywords-section" style="border-color:var(--accent);background:rgba(242,101,34,0.04);">
-                            <div class="keywords-section-header"><h4 style="color:var(--accent);">Scope Keywords — confirms your work is in scope (feeds Trade Match)</h4></div>
+                            <div class="keywords-section-header"><h4 style="color:var(--accent);">My Trade Terms — what you install/sell (BidIntell searches for these to confirm your scope is in the bid)</h4></div>
                             <div class="keywords-list" id="scopeKeywordsList"></div>
                             <div class="keywords-input-row">
-                                <input type="text" id="scopeKeywordInput" placeholder='e.g. "roller shades, motorized blinds, window treatments"' onkeypress="if(event.key==='Enter'){event.preventDefault();addScopeKeyword();}">
+                                <input type="text" id="scopeKeywordInput" placeholder='e.g. "roller shades, motorized blinds, window treatments, demountable partitions"' onkeypress="if(event.key==='Enter'){event.preventDefault();addScopeKeyword();}">
                                 <button class="btn btn-sm btn-secondary" onclick="addScopeKeyword()">Add</button>
                             </div>
                             <div id="keywordSuggestions" style="display:none; margin-top:14px; padding-top:12px; border-top:1px solid var(--border);"></div>
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                             <div class="keywords-section good">
-                                <div class="keywords-section-header"><h4>Favorable Terms (+8 pts each, feeds Contract Terms)</h4></div>
+                                <div class="keywords-section-header"><h4>Favorable Contract Conditions — how the contract works, not what you install (+8 pts each)</h4></div>
                                 <div class="keywords-list" id="goodKeywordsList"></div>
                                 <div class="keywords-input-row">
-                                    <input type="text" id="goodKeywordInput" placeholder='e.g. "design-assist, negotiated"' onkeypress="if(event.key==='Enter'){event.preventDefault();addGoodKeyword();}">
+                                    <input type="text" id="goodKeywordInput" placeholder='e.g. "design-assist, negotiated, owner-specified"' onkeypress="if(event.key==='Enter'){event.preventDefault();addGoodKeyword();}">
                                     <button class="btn btn-sm btn-secondary" onclick="addGoodKeyword()">Add</button>
                                 </div>
-                                <div id="favorableTermSuggestions" style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border);"></div>
                             </div>
                             <div class="keywords-section bad">
                                 <div class="keywords-section-header"><h4>Risk Terms (penalty, feeds Contract Terms)</h4></div>
@@ -15619,7 +15618,7 @@ Respond now:`;
             container.style.display = 'block';
             const label = document.createElement('div');
             label.style.cssText = 'font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;';
-            label.textContent = 'Suggested for your trades — click to add:';
+            label.textContent = 'Suggested trade terms based on your CSI sections — click to add to My Trade Terms:';
             container.innerHTML = '';
             container.appendChild(label);
 
@@ -15645,51 +15644,13 @@ Respond now:`;
         }
 
         async function renderFavorableTermSuggestions() {
-            const container = document.getElementById('favorableTermSuggestions');
-            if (!container) return;
-            const kw = await getKeywords();
-            const existing = new Set((kw.good || []).map(k => k.toLowerCase()));
-            const ALL_FAVORABLE = [
-                'design-assist', 'negotiated', 'owner-specified', 'owner-directed',
-                'sole source', 'preferred sub', 'pre-qualified', 'invited bidder',
-                'cost-plus', 'GMP', 'time and materials', 'direct purchase',
-                'repeat customer', 'relationship project', 'early involvement',
-                'no bond required', 'open shop', 'no retainage', 'fast pay',
-                'pilot project', 'introductory project'
-            ];
-            const suggestions = ALL_FAVORABLE.filter(t => !existing.has(t.toLowerCase()));
-            while (container.firstChild) container.removeChild(container.firstChild);
-            if (suggestions.length === 0) return;
-
-            const label = document.createElement('div');
-            label.style.cssText = 'font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;';
-            label.textContent = 'Common favorable terms — click to add:';
-            container.appendChild(label);
-
-            const chips = document.createElement('div');
-            chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
-            suggestions.forEach(term => {
-                const chip = document.createElement('span');
-                chip.textContent = term;
-                chip.style.cssText = 'cursor:pointer;padding:4px 10px;border-radius:20px;font-size:12px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-secondary);transition:all 0.15s;';
-                chip.onmouseenter = () => { chip.style.borderColor = 'var(--success)'; chip.style.color = 'var(--success)'; };
-                chip.onmouseleave = () => { chip.style.borderColor = 'var(--border)'; chip.style.color = 'var(--text-secondary)'; };
-                chip.onclick = async () => {
-                    chip.remove();
-                    const kwData = await getKeywords();
-                    if (!kwData.good.includes(term)) kwData.good.push(term);
-                    await saveKeywordsStorage(kwData);
-                    await loadKeywords();
-                };
-                chips.appendChild(chip);
-            });
-            container.appendChild(chips);
+            // Removed: hardcoded favorable terms list replaced by manual entry only
         }
 
         // Keywords - FIXED
         async function loadKeywords() {
             const kw = await getKeywords();
-            document.getElementById('scopeKeywordsList').innerHTML = (kw.scope || []).map(k => `<span class="keyword-tag" style="background:rgba(242,101,34,0.12);border-color:rgba(242,101,34,0.3);color:var(--accent);">${k}<span class="remove" onclick="removeKeyword('scope','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No scope keywords yet</span>';
+            document.getElementById('scopeKeywordsList').innerHTML = (kw.scope || []).map(k => `<span class="keyword-tag" style="background:rgba(242,101,34,0.12);border-color:rgba(242,101,34,0.3);color:var(--accent);">${k}<span class="remove" onclick="removeKeyword('scope','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No trade terms yet — add what your company installs/sells</span>';
             document.getElementById('goodKeywordsList').innerHTML = kw.good.map(k => `<span class="keyword-tag good">${k}<span class="remove" onclick="removeKeyword('good','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No favorable terms yet</span>';
             document.getElementById('badKeywordsList').innerHTML = kw.bad.map(k => `<span class="keyword-tag bad">${k}<span class="remove" onclick="removeKeyword('bad','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No risk terms yet</span>';
             const kwNudge = document.getElementById('keywordsNudge');
