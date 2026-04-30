@@ -8610,7 +8610,7 @@ ${sampleText}`;
   "building_type": "Classify as ONE of: Healthcare, Office, Multifamily, Retail, Industrial, Education, Higher Education, Government, Religious, Mixed-Use, Infrastructure, Other. RULES: Multiple uses together = Mixed-Use. 'LOFTS' in name = Multifamily. Apartments/condos/townhomes/student housing = Multifamily. School/university = Education. NEVER classify residential as Office. Owner inference: 'City of', 'County of', 'State of', 'Federal', 'Department of', 'Corps of Engineers' → Government. 'Hospital', 'Medical Center', 'Health System', 'Clinic', 'Surgery Center', 'MOB' → Healthcare. 'Church', 'Temple', 'Mosque', 'Chapel', 'Parish', 'Diocese' → Religious. 'Parking Garage', 'Transit', 'Airport', 'Bridge', 'Water Treatment' → Infrastructure.",
   "project_type": "Classify as ONE of: New Construction, Renovation, Addition, Tenant Improvement, Demolition, Mixed. Default to New Construction if unspecified.",
   "bid_deadline": "The date bids must be submitted. Look for: 'Bids Due', 'Bid Deadline', 'Bids Received Until', 'Bid Opening', 'Proposals Due'. IGNORE: Pre-bid Meeting, Pre-bid Conference, RFI Deadline, Questions Due, Substantial Completion, Notice to Proceed, Award Date. If an addendum changes the deadline, use the NEW date. Return ONLY a date/time string like 'February 15, 2026 at 2:00 PM' or null.",
-  "project_size_sf": "Total building square footage as an integer. Search everywhere: code notes, building info tables, cover page, Section 01. Look for SF/sq ft/GSF patterns. Use the LARGEST number found. EXCLUDE: individual unit sizes, parking areas, lot areas, site acreage, individual tenant suite areas. PREFER labels: 'Total Building Area', 'Gross Floor Area', 'GFA'. If only floor-by-floor areas listed, sum them. Return null if not found.",
+  "project_size_sf": "Total building square footage as an integer. Search the ENTIRE document: cover page, title block, project data table, Section 01 10 00, Section 01 11 00, General Notes, Drawing Index, Specifications Summary. Look for ANY of these labels: 'Total Building Area', 'Gross Floor Area', 'GFA', 'BGSF', 'Gross SF', 'Building Area', 'Total Area', 'Square Footage', 'Floor Area', 'Sq. Ft.', 'Building SF', 'Total SF', or any number immediately followed by 'SF' or 'sq ft' or 'sqft' or 'square feet'. If floor-by-floor areas are listed (1st Floor: 50,000 SF, 2nd Floor: 50,000 SF, etc.), SUM them. EXCLUDE: parking areas, lot/site areas, acreage, individual tenant suite areas. Return the LARGEST plausible total building area found. Return null ONLY if truly no SF figure appears anywhere.",
   "estimated_value": "Estimated project value/budget if stated. Return as a number or null.",
   "owner_name": "The project owner or client name.",
   "architect_name": "The architect or design firm name if mentioned.",
@@ -8642,7 +8642,7 @@ IMPORTANT RULES:
 - For bid_deadline: The bid SUBMISSION deadline only. IGNORE: pre-bid meeting dates, RFI deadlines, substantial completion, award dates, project milestones. Return date string or null only.
 - For gc_names: Text documents only. Not drawings.
 - For sheet_disciplines_found: Letter prefix from sheet numbers. 'M-101' → 'M'.
-- For project_size_sf: Search everywhere. Largest number. Digits only.
+- For project_size_sf: Search everywhere — cover page, title block, project data, Section 01. Any number + SF/sq ft/sqft counts. Sum floor areas if listed separately. Digits only.
 - For building_type: CHECK IN ORDER: 1) Multiple uses = Mixed-Use. 2) LOFTS = Multifamily. 3) Apartments/condos/townhomes = Multifamily.
 
 Here is the bid document text:
@@ -9403,7 +9403,7 @@ IMPORTANT RULES:
 - For spec_divisions_found: 2-digit CSI numbers only (01-49).
 - For sheet_disciplines_found: Extract letter prefix from EVERY sheet number in the sheet index. 'M-101' → 'M', 'E-201' → 'E', 'FP-101' → 'FP'. Return unique codes. If drawings are image-only with no text, return [].
 - For scope_of_work_trades: Combine sheet_disciplines_found + spec_divisions_found + explicit scope text. Sheet codes: M → Mechanical/HVAC, P → Plumbing, E → Electrical, FP → Fire Protection/Sprinkler. Legacy CSI: Div 7 → Roofing, Div 8 → Openings, Div 9 → Finishes, Div 12 → Furnishings. Modern MasterFormat: Div 21 → Fire Suppression, Div 22 → Plumbing, Div 23 → HVAC, Div 26 → Electrical, Div 27 → Low Voltage/AV, Div 28 → Security, Div 31 → Earthwork, Div 32 → Site Paving, Div 33 → Site Utilities.
-- For project_size_sf: Search EVERYWHERE. Use largest number found. Digits only, no commas.
+- For project_size_sf: Search EVERYWHERE — cover page, title block, project data table, Section 01, General Notes, Drawing Index. Look for any number followed by SF/sq ft/sqft/square feet, or labels like Total Building Area, Gross Floor Area, GFA, BGSF, Building SF. Sum floor-by-floor areas if listed individually. Digits only, no commas. Return null only if truly absent.
 - For contract_risk_clauses: Only mark true if explicitly present. If no contract language exists, mark all as false.
 
 Here is the bid document text:
