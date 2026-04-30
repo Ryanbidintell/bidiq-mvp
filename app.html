@@ -15457,8 +15457,8 @@ Respond now:`;
             await loadGCDatabase();
         }
 
-        async function showAddGCModal() {
-            document.getElementById('newGCName').value = '';
+        async function showAddGCModal(prefillName) {
+            document.getElementById('newGCName').value = prefillName || '';
             document.getElementById('newGCLocation').value = '';
             // Clear risk tags
             document.querySelectorAll('.gcRiskTag').forEach(cb => cb.checked = false);
@@ -15545,9 +15545,10 @@ Respond now:`;
             await renderGCSelector();
         }
 
-        // Wrapper function for new UI
+        // Wrapper function for new UI — pre-fills name from the client search box if present
         async function showAddClientModal() {
-            return await showAddGCModal();
+            const searchVal = (document.getElementById('clientSearchInput')?.value || '').trim();
+            return await showAddGCModal(searchVal);
         }
 
         async function rateGC(name, rating) {
