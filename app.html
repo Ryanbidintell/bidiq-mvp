@@ -8606,35 +8606,60 @@ ${sampleText}`;
             return true;
         }
 
-        // Keyword search with validation
+        // Keyword search with validation and fuzzy plural/partial matching.
+        // Matching strategy (most specific to least):
+        //   1. Full phrase + optional trailing s  ("roller shade" → "roller shade" OR "roller shades")
+        //   2. Singular form when keyword already ends in s ("roller shades" → "roller shade")
+        //   3. Each significant word (5+ chars) from a multi-word keyword, also de-pluralized
+        //      ("roller shades" → also matches "shade" or "roller" standing alone)
+        // Uses 'i' flag only — never 'g' — to avoid lastIndex drift across pages.
         function searchKeywords(pages, keywords) {
+            const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+            const buildPatterns = (kw) => {
+                const patterns = [
+                    // Full phrase, optional trailing s
+                    new RegExp('\\b' + escape(kw) + 's?\\b', 'i')
+                ];
+
+                // Singular fallback when keyword ends in 's' ("roller shades" → "roller shade")
+                if (kw.endsWith('s') && kw.length > 4) {
+                    patterns.push(new RegExp('\\b' + escape(kw.slice(0, -1)) + 's?\\b', 'i'));
+                }
+
+                // Individual word fallback for multi-word keywords
+                const words = kw.trim().split(/\s+/);
+                if (words.length > 1) {
+                    words.filter(w => w.length >= 5).forEach(w => {
+                        const stem = w.endsWith('s') ? w.slice(0, -1) : w;
+                        patterns.push(new RegExp('\\b' + escape(stem) + 's?\\b', 'i'));
+                    });
+                }
+
+                return patterns;
+            };
+
             const results = [];
             for (const kw of keywords) {
-                // Filter out garbage keywords
                 if (!isValidKeyword(kw)) {
                     console.warn('Skipping invalid keyword:', kw);
                     continue;
                 }
 
+                const patterns = buildPatterns(kw);
                 const found = [];
-                // Case-insensitive regex with 'gi' flag, with optional plural 's'
-                const rx = new RegExp('\\b' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + 's?\\b', 'gi');
 
                 for (const p of pages) {
-                    if (rx.test(p.text)) {
-                        // Include filename for multi-file support
-                        found.push({
-                            page: p.num,
-                            filename: p.filename || 'Document'
-                        });
+                    if (patterns.some(rx => rx.test(p.text || ''))) {
+                        found.push({ page: p.num, filename: p.filename || 'Document' });
                     }
                 }
 
                 if (found.length > 0) {
                     results.push({
                         keyword: kw,
-                        pages: found.map(f => f.page), // Keep legacy format for compatibility
-                        locations: found // New format with filename
+                        pages: found.map(f => f.page),
+                        locations: found
                     });
                 }
             }
