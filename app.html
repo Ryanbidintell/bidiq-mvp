@@ -15050,6 +15050,7 @@ Respond now:`;
                 const { error: updateError } = await supabaseClient.from('projects').update({
                     outcome: projectOutcome,
                     outcome_data: newOutcomeData,
+                    outcome_confidence: 3,
                     outcome_nudge_count: 0,
                     updated_at: new Date().toISOString()
                 }).eq('id', id);
