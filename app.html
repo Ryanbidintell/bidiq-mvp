@@ -8977,22 +8977,17 @@ ${truncatedText}`
         function normalizeCompanyName(name) {
             if (!name) return '';
 
-            // Convert to lowercase for comparison
             let normalized = name.toLowerCase().trim();
 
-            // Remove project-specific suffixes (e.g., "at Overlook Core and Shell JV")
             normalized = normalized
                 .replace(/\s+(at|for|on)\s+[\w\s]+(project|building|office|tower|center|jv|joint venture)/gi, '')
-                // Remove JV/Joint Venture indicators
                 .replace(/\s+(jv|joint venture)$/gi, '')
-                // Remove office/project locations: "Offices at Downtown", "Tower Project"
                 .replace(/\s+(offices?|buildings?|projects?|towers?|centers?)\s+(at|in|on|for)\s+[\w\s]+/gi, '')
-                // Remove common office/branch indicators
                 .replace(/[,\-\(]\s*([\w\s]+\s+(office|branch|division|location|region|regional))\)*/gi, '')
-                .replace(/\s*[,\-]\s*[a-z]{2,}(?:\s+[a-z]{2,}){0,2}\s*$/, '') // Remove trailing "- Phoenix" style location suffixes
-                // Remove LLC, Inc, Corp suffixes
+                .replace(/\s*[,\-]\s*[a-z]{2,}(?:\s+[a-z]{2,}){0,2}\s*$/, '')
+                // Remove entity type suffixes — legal and trade
                 .replace(/\s*(llc|l\.l\.c\.|inc\.?|incorporated|corp\.?|corporation|ltd\.?|limited)\s*$/gi, '')
-                // Clean up extra spaces and punctuation
+                .replace(/\s*(construction|constructors|contracting|contractors?|contractor|builders?|building|company|co\.?|group|associates?|services?|enterprises?)\s*$/gi, '')
                 .replace(/\s+/g, ' ')
                 .replace(/[,\-\(\)]+$/g, '')
                 .trim();
@@ -9003,19 +8998,33 @@ ${truncatedText}`
         // Find if a similar client already exists (fuzzy match)
         function findSimilarGC(newName, existingClients) {
             const normalizedNew = normalizeCompanyName(newName);
+            // Space-stripped token for catching "McCownGordon" vs "mccown gordon"
+            const tokenNew = normalizedNew.replace(/\s/g, '');
 
             for (const client of existingClients) {
                 const normalizedExisting = normalizeCompanyName(client.name);
+                const tokenExisting = normalizedExisting.replace(/\s/g, '');
 
                 if (normalizedExisting === normalizedNew) return client;
+                if (tokenNew.length > 5 && tokenExisting === tokenNew) return client;
 
-                // Substring containment — require the shorter name to be ≥70% of the longer
-                // name's length. Prevents "Johnson" (7) from matching "Johnson Controls" (16, ratio 44%).
+                // Substring containment — require shorter ≥70% of longer length
                 if (normalizedNew.length > 5 && normalizedExisting.length > 5) {
                     const shorter = Math.min(normalizedNew.length, normalizedExisting.length);
                     const longer = Math.max(normalizedNew.length, normalizedExisting.length);
                     if (shorter / longer >= 0.70) {
                         if (normalizedNew.includes(normalizedExisting) || normalizedExisting.includes(normalizedNew)) {
+                            return client;
+                        }
+                    }
+                }
+
+                // Token substring — catches space differences after suffix stripping
+                if (tokenNew.length > 5 && tokenExisting.length > 5) {
+                    const shorter = Math.min(tokenNew.length, tokenExisting.length);
+                    const longer = Math.max(tokenNew.length, tokenExisting.length);
+                    if (shorter / longer >= 0.80) {
+                        if (tokenNew.includes(tokenExisting) || tokenExisting.includes(tokenNew)) {
                             return client;
                         }
                     }
