@@ -12704,7 +12704,6 @@ ${truncatedText}`
                             </details>
                             ${contractRisksHtml}
                             ${bidRisk ? renderBidRiskCard(bidRisk) : ''}
-                            ${winnersCurseRisk ? renderWinnersCurseCard(winnersCurseRisk) : ''}
                             ${p.bid_divisions_submitted && p.bid_divisions_submitted.length > 0 ? `<div style="margin-top:12px;padding:10px 14px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);font-size:13px;"><span style="font-weight:600;color:var(--text-primary);">📋 Submitted:</span> <span style="color:var(--text-secondary);">${p.bid_divisions_submitted.map(d => 'Div ' + d).join(', ')}</span></div>` : ''}
                         </div>
                         ${profileWarningHtml}
