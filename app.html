@@ -8867,7 +8867,7 @@ ${truncatedText}`
             if (complexTypes.includes(bt)) hours += 1.5;
             else if (moderateTypes.includes(bt)) hours += 0.75;
             // Contract risk count (complex specs = more time)
-            const risks = (analysis.contractRisks || []).length;
+            const risks = (analysis.contractRisks?.risksDetected || []).length;
             hours += Math.min(risks * 0.2, 1.0);
             // File count
             const files = analysis.fileCount || 1;
