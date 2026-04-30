@@ -8747,6 +8747,16 @@ ${truncatedText}`
             if (panel) panel.style.display = 'block';
         }
 
+        // Tab switching for fresh analysis view (ar- panels)
+        window.switchAnalysisTab = function(btn, panelId) {
+            const container = btn.closest('.analysis-tabs-container');
+            container.querySelectorAll('.rpt-tab').forEach(t => t.classList.remove('rpt-tab-active'));
+            container.querySelectorAll('.ar-panel').forEach(p => p.style.display = 'none');
+            btn.classList.add('rpt-tab-active');
+            const panel = container.querySelector('#' + panelId);
+            if (panel) panel.style.display = 'block';
+        };
+
         // Module 3: Client Relationship Classification
         function classifyGCRelationship(gc) {
             if (!gc || (gc.bids || 0) === 0) return { type: 'unknown', label: '❓ No History', color: 'var(--text-muted)' };
@@ -10675,38 +10685,57 @@ ${truncatedText}`
                                 BidIndex™ scores bid fit on a 0–100 scale across five weighted factors. ≥80 = GO · 60–79 = REVIEW · &lt;60 = PASS.
                                 <div style="margin-top:8px;display:grid;gap:5px;">
                                     <div><strong>Location Fit</strong> — Distance from your office to the job site.</div>
-                                    <div><strong>Contract Terms</strong> — Favorable terms you want to find (design-assist, negotiated, etc.) add points. Risk terms (liquidated damages, pay-if-paid) penalize based on your risk tolerance.</div>
-                                    <div><strong>Trade Match</strong> — Finds your CSI spec sections in the spec book. On drawings-only bids, falls back to your scope keywords to confirm your work type is included.</div>
-                                    <div><strong>Client Relationship</strong> — Your star rating, bid count, and win rate with the specific client inviting you.</div>
-                                    <div><strong>Competitive Pressure</strong> — How many subs typically bid this client's jobs. Unlocks after 3 logged outcomes.</div>
+                                    <div><strong>Contract Terms</strong> — Favorable terms you want (design-assist, negotiated, etc.) add points. Risk terms (liquidated damages, pay-if-paid) subtract based on your tolerance.</div>
+                                    <div><strong>Trade Match</strong> — Finds your CSI spec sections in the spec book. Falls back to scope keywords on drawings-only bids.</div>
+                                    <div><strong>Client Relationship</strong> — Your star rating, bid count, and win rate with the specific client.</div>
+                                    <div><strong>Competitive Pressure</strong> — Unlocks after 3 logged outcomes.</div>
                                 </div>
-                                <div style="margin-top:8px;font-size:11px;opacity:0.6;">Each component's weight is adjustable in Settings → Score Weights.</div>
+                                <div style="margin-top:8px;font-size:11px;opacity:0.6;">Weights adjustable in Settings → Score Weights.</div>
                             </div>
                         </details>
                         ${capMsg}
                         ${duplicateHtml}
                         ${similarBidHtml}
                         ${volumeHtml}
-                        ${contractRisksHtml}
                         ${gcRiskHtml}
                         ${analysis.bidRisk ? renderBidRiskCard(analysis.bidRisk) : ''}
                     </div>
                     ${await renderProfileWarningHtml(settings)}
                     ${tradeWarningBanner}
-                    ${renderComponent('', 'Location Fit', analysis.scores.components.location)}
-                    ${renderComponent('', 'Contract Terms', analysis.scores.components.keywords)}
-                    ${renderComponent('', 'Client Relationship', analysis.scores.components.gc)}
-                    ${renderComponent('', settings.companyType === 'subcontractor' ? 'Trade Match' : 'Product Match', analysis.scores.components.trade)}
-                    ${(analysis.scores.components.trade?.score < 50 && !((settings.preferred_csi_sections||[]).length > 0) && !((settings.trades||[]).length > 0)) ? `<div class="profile-incomplete-callout" style="margin:0 0 2px;">No trade types configured — this score is a rough estimate. <span class="link" onclick="switchTab('settings')">Set your trade types →</span></div>` : ''}
-                    ${analysis.scores.components.competitive?.weight > 0 ? renderComponent('', 'Competitive Pressure', analysis.scores.components.competitive) : ''}
-
-                    ${renderExtractedDataSection(analysis.extracted, analysis.gcs)}
-
-                    ${await renderAIInsights(analysis, settings)}
-
-                    ${renderImprovementTips(analysis.scores)}
-                    
                 </div>
+
+                <div class="analysis-tabs-container">
+                    <div style="display:flex;gap:0;border-bottom:2px solid var(--border-color);margin-bottom:20px;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+                        <button class="rpt-tab rpt-tab-active" onclick="switchAnalysisTab(this,'ar-score')">Score</button>
+                        <button class="rpt-tab" onclick="switchAnalysisTab(this,'ar-contract')">Contract</button>
+                        <button class="rpt-tab" onclick="switchAnalysisTab(this,'ar-intel')">Intelligence</button>
+                        <button class="rpt-tab" onclick="switchAnalysisTab(this,'ar-economics')">Economics</button>
+                    </div>
+
+                    <div id="ar-score" class="ar-panel">
+                        ${renderComponent('', 'Location Fit', analysis.scores.components.location)}
+                        ${renderComponent('', 'Contract Terms', analysis.scores.components.keywords)}
+                        ${renderComponent('', 'Client Relationship', analysis.scores.components.gc)}
+                        ${renderComponent('', settings.companyType === 'subcontractor' ? 'Trade Match' : 'Product Match', analysis.scores.components.trade)}
+                        ${(analysis.scores.components.trade?.score < 50 && !((settings.preferred_csi_sections||[]).length > 0) && !((settings.trades||[]).length > 0)) ? `<div class="profile-incomplete-callout" style="margin:0 0 2px;">No trade types configured — this score is a rough estimate. <span class="link" onclick="switchTab('settings')">Set your trade types →</span></div>` : ''}
+                        ${analysis.scores.components.competitive?.weight > 0 ? renderComponent('', 'Competitive Pressure', analysis.scores.components.competitive) : ''}
+                    </div>
+
+                    <div id="ar-contract" class="ar-panel" style="display:none">
+                        ${contractRisksHtml || '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:14px;">No contract language detected in this document.</div>'}
+                    </div>
+
+                    <div id="ar-intel" class="ar-panel" style="display:none">
+                        ${renderExtractedDataSection(analysis.extracted, analysis.gcs)}
+                        ${await renderAIInsights(analysis, settings)}
+                        ${renderImprovementTips(analysis.scores)}
+                    </div>
+
+                    <div id="ar-economics" class="ar-panel" style="display:none">
+                        ${renderBidEconomicsCard(analysis, settings, null)}
+                    </div>
+                </div>
+
                 <div style="display:flex;gap:8px;margin-top:16px;align-items:center;">
                     <button class="btn btn-primary" id="saveProjectBtn" onclick="saveProjectManually()" style="flex:1;">Save to Projects</button>
                     <button class="btn btn-secondary" onclick="showOutcomeFromReport()">+ Add Outcome</button>
@@ -12715,7 +12744,6 @@ ${truncatedText}`
                                     <div style="margin-top:8px;font-size:11px;opacity:0.6;">Each component's weight is adjustable in Settings → Score Weights.</div>
                                 </div>
                             </details>
-                            ${contractRisksHtml}
                             ${bidRisk ? renderBidRiskCard(bidRisk) : ''}
                             ${p.bid_divisions_submitted && p.bid_divisions_submitted.length > 0 ? `<div style="margin-top:12px;padding:10px 14px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border-color);font-size:13px;"><span style="font-weight:600;color:var(--text-primary);">📋 Submitted:</span> <span style="color:var(--text-secondary);">${p.bid_divisions_submitted.map(d => 'Div ' + d).join(', ')}</span></div>` : ''}
                         </div>
