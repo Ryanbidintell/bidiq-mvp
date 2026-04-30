@@ -5252,7 +5252,6 @@ ${fullText.substring(0, 40000)}`;
                     outcome,
                     outcome_data: outcomeData,
                     outcome_confidence: outcomeData.confidence || null,
-                    outcome_nudge_count: 0,
                     updated_at: new Date().toISOString()
                 }).eq('id', id).select().single();
 
@@ -15050,7 +15049,6 @@ Respond now:`;
                 const { error: updateError } = await supabaseClient.from('projects').update({
                     outcome: projectOutcome,
                     outcome_data: newOutcomeData,
-                    outcome_nudge_count: 0,
                     updated_at: new Date().toISOString()
                 }).eq('id', id);
 
