@@ -8971,9 +8971,14 @@ ${truncatedText}`
             return Math.min(Math.round(hours * 2) / 2, 8.0); // round to nearest 0.5h, cap at 8h
         }
 
-        // Global handler for bid economics real-time calculation
-        window.updateBidEconomics = function(value, estimatedHours, winRate, margin) {
-            const v = parseFloat(value);
+        // Global handler for bid economics real-time calculation.
+        // Reads all values from the DOM so hours and scope are both editable.
+        window.updateBidEconomics = function() {
+            const v = parseFloat(document.getElementById('bidEconValue')?.value);
+            const h = parseFloat(document.getElementById('bidEconHours')?.value) || 1;
+            const card = document.getElementById('bidEconCard');
+            const winRate = card ? parseFloat(card.dataset.winRate) : -1;
+            const margin  = card ? parseFloat(card.dataset.margin)  : 15;
             const expectedEl = document.getElementById('bidEconExpected');
             const dphEl = document.getElementById('bidEconDollarPerHour');
             const dphValEl = document.getElementById('bidEconDph');
@@ -8984,7 +8989,7 @@ ${truncatedText}`
                 return;
             }
             const expected = v * (margin / 100) * (winRate / 100);
-            const dph = estimatedHours > 0 ? expected / estimatedHours : 0;
+            const dph = h > 0 ? expected / h : 0;
             const fmt = n => n >= 1000 ? '$' + (n / 1000).toFixed(1) + 'k' : '$' + n.toFixed(0);
             expectedEl.innerHTML = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">EXPECTED VALUE</div><div style="font-size:18px;font-weight:700;color:var(--success);">${fmt(expected)}</div><div style="font-size:10px;color:var(--text-muted);">scope × margin × win rate</div>`;
             if (dphEl && dphValEl) {
@@ -9015,7 +9020,8 @@ ${truncatedText}`
             let expectedHtml, dphHtml;
             if (savedAmount && winRate) {
                 const expected = savedAmount * (margin / 100) * (winRate / 100);
-                const dph = estimatedHours > 0 ? expected / estimatedHours : 0;
+                const hoursForInit = actualHours || estimatedHours;
+                const dph = hoursForInit > 0 ? expected / hoursForInit : 0;
                 expectedHtml = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;">Expected Value</div><div style="font-size:20px;font-weight:700;color:var(--success);">${fmt(expected)}</div><div style="font-size:10px;color:var(--text-muted);">scope × margin × win rate</div>`;
                 dphHtml = `<div style="display:block;padding:10px 12px;background:rgba(242,101,34,0.08);border:1px solid rgba(242,101,34,0.2);border-radius:var(--radius);text-align:center;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-muted);">Expected return per estimating hour: </span><span style="font-size:17px;font-weight:700;color:var(--accent);">${fmt(dph)}/hr</span></div>`;
             } else if (savedAmount && !winRate) {
@@ -9027,21 +9033,23 @@ ${truncatedText}`
                 dphHtml = '';
             }
 
-            const hoursHtml = actualHours
-                ? `<div style="font-size:28px;font-weight:700;color:var(--text-primary);line-height:1;">${actualHours}<span style="font-size:13px;color:var(--text-muted);font-weight:400;">h actual</span></div><div style="font-size:11px;color:var(--text-muted);">est. ${estimatedHours}h from doc complexity</div>`
-                : `<div style="font-size:28px;font-weight:700;color:var(--text-primary);line-height:1;">${estimatedHours}<span style="font-size:13px;color:var(--text-muted);font-weight:400;">h</span></div><div style="font-size:11px;color:var(--text-muted);">based on doc complexity</div>`;
+            const hoursValue = actualHours || estimatedHours;
+            const hoursSubtitle = actualHours
+                ? `from your outcome · est. was ${estimatedHours}h`
+                : `est. from doc complexity — edit if you know better`;
 
-            return `<div style="padding:16px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border);">
+            return `<div id="bidEconCard" data-win-rate="${winRateJs}" data-margin="${margin}" style="padding:16px;background:var(--bg-secondary);border-radius:var(--radius);border:1px solid var(--border);">
                 <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.12em;color:var(--accent);font-weight:700;margin-bottom:10px;">BID ECONOMICS</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
                     <div>
                         <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.08em;">Your Scope Value ($)</div>
-                        <input type="number" class="form-input" id="bidEconValue" value="${savedAmount}" placeholder="Enter your scope ($)" style="font-size:14px;" oninput="updateBidEconomics(this.value, ${estimatedHours}, ${winRateJs}, ${margin})">
+                        <input type="number" class="form-input" id="bidEconValue" value="${savedAmount}" placeholder="Enter your scope ($)" style="font-size:14px;" oninput="updateBidEconomics()">
                         ${savedAmount ? '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">from outcome tracking</div>' : ''}
                     </div>
                     <div>
                         <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.08em;">Hours to Bid</div>
-                        ${hoursHtml}
+                        <input type="number" class="form-input" id="bidEconHours" value="${hoursValue}" min="0.5" max="40" step="0.5" style="font-size:14px;" oninput="updateBidEconomics()">
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${hoursSubtitle}</div>
                     </div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">
