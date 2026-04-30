@@ -1901,6 +1901,7 @@
                                     <input type="text" id="goodKeywordInput" placeholder='e.g. "design-assist, negotiated"' onkeypress="if(event.key==='Enter'){event.preventDefault();addGoodKeyword();}">
                                     <button class="btn btn-sm btn-secondary" onclick="addGoodKeyword()">Add</button>
                                 </div>
+                                <div id="favorableTermSuggestions" style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border);"></div>
                             </div>
                             <div class="keywords-section bad">
                                 <div class="keywords-section-header"><h4>Risk Terms (penalty, feeds Contract Terms)</h4></div>
@@ -4834,46 +4835,9 @@ ${fullText.substring(0, 40000)}`;
             return await saveClients(gcsArray);
         }
 
-        async function saveClient(client) {
-            if (!supabaseClient || !currentUser) return client;
-            dataCache.clients = null; // Invalidate cache
-            dataCache.gcs = null; // Clear legacy cache too
-
-            try {
-                const { data, error } = await supabaseClient.from('clients').upsert({
-                    id: client.id || undefined,
-                    user_id: currentUser.id,
-                    name: client.name,
-                    client_type: client.clientType || 'general_contractor',
-                    rating: client.rating,
-                    bids: client.bids || 0,
-                    wins: client.wins || 0,
-                    losses: client.losses || 0,
-                    ghosts: client.ghosts || 0,
-                    risk_tags: client.riskTags || [],
-                    notes: client.notes || null,
-                    avg_rfi: client.avg_rfi || null,
-                    rfi_count: client.rfi_count || 0,
-                    payment_flag: client.payment_flag || null,
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'id' }).select().single();
-
-                if (error) throw error;
-                return data || client;
-            } catch (e) {
-                console.error('saveClient error:', e);
-                return client;
-            }
-        }
-
-        // Throws on DB error — use when the caller needs to know if the save failed
-        async function saveClientOrThrow(client) {
-            if (!supabaseClient || !currentUser) throw new Error('Not authenticated');
-            dataCache.clients = null;
-            dataCache.gcs = null;
-            const { data, error } = await supabaseClient.from('clients').upsert({
-                id: client.id || undefined,
-                user_id: currentUser.id,
+        function _buildClientRow(client, userId) {
+            return {
+                user_id: userId,
                 name: client.name,
                 client_type: client.clientType || 'general_contractor',
                 rating: client.rating,
@@ -4887,7 +4851,46 @@ ${fullText.substring(0, 40000)}`;
                 rfi_count: client.rfi_count || 0,
                 payment_flag: client.payment_flag || null,
                 updated_at: new Date().toISOString()
-            }, { onConflict: 'id' }).select().single();
+            };
+        }
+
+        async function saveClient(client) {
+            if (!supabaseClient || !currentUser) return client;
+            dataCache.clients = null;
+            dataCache.gcs = null;
+
+            try {
+                const row = _buildClientRow(client, currentUser.id);
+                let query;
+                if (client.id) {
+                    // Update existing record by primary key
+                    query = supabaseClient.from('clients').upsert({ id: client.id, ...row }, { onConflict: 'id' });
+                } else {
+                    // Insert new record — let DB generate the UUID
+                    query = supabaseClient.from('clients').insert(row);
+                }
+                const { data, error } = await query.select().single();
+                if (error) throw error;
+                return data || client;
+            } catch (e) {
+                console.error('saveClient error:', e);
+                return client;
+            }
+        }
+
+        // Throws on DB error — use when the caller needs to know if the save failed
+        async function saveClientOrThrow(client) {
+            if (!supabaseClient || !currentUser) throw new Error('Not authenticated');
+            dataCache.clients = null;
+            dataCache.gcs = null;
+            const row = _buildClientRow(client, currentUser.id);
+            let query;
+            if (client.id) {
+                query = supabaseClient.from('clients').upsert({ id: client.id, ...row }, { onConflict: 'id' });
+            } else {
+                query = supabaseClient.from('clients').insert(row);
+            }
+            const { data, error } = await query.select().single();
             if (error) throw error;
             return data || client;
         }
@@ -15641,6 +15644,48 @@ Respond now:`;
             container.appendChild(chips);
         }
 
+        async function renderFavorableTermSuggestions() {
+            const container = document.getElementById('favorableTermSuggestions');
+            if (!container) return;
+            const kw = await getKeywords();
+            const existing = new Set((kw.good || []).map(k => k.toLowerCase()));
+            const ALL_FAVORABLE = [
+                'design-assist', 'negotiated', 'owner-specified', 'owner-directed',
+                'sole source', 'preferred sub', 'pre-qualified', 'invited bidder',
+                'cost-plus', 'GMP', 'time and materials', 'direct purchase',
+                'repeat customer', 'relationship project', 'early involvement',
+                'no bond required', 'open shop', 'no retainage', 'fast pay',
+                'pilot project', 'introductory project'
+            ];
+            const suggestions = ALL_FAVORABLE.filter(t => !existing.has(t.toLowerCase()));
+            while (container.firstChild) container.removeChild(container.firstChild);
+            if (suggestions.length === 0) return;
+
+            const label = document.createElement('div');
+            label.style.cssText = 'font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;';
+            label.textContent = 'Common favorable terms — click to add:';
+            container.appendChild(label);
+
+            const chips = document.createElement('div');
+            chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+            suggestions.forEach(term => {
+                const chip = document.createElement('span');
+                chip.textContent = term;
+                chip.style.cssText = 'cursor:pointer;padding:4px 10px;border-radius:20px;font-size:12px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-secondary);transition:all 0.15s;';
+                chip.onmouseenter = () => { chip.style.borderColor = 'var(--success)'; chip.style.color = 'var(--success)'; };
+                chip.onmouseleave = () => { chip.style.borderColor = 'var(--border)'; chip.style.color = 'var(--text-secondary)'; };
+                chip.onclick = async () => {
+                    chip.remove();
+                    const kwData = await getKeywords();
+                    if (!kwData.good.includes(term)) kwData.good.push(term);
+                    await saveKeywordsStorage(kwData);
+                    await loadKeywords();
+                };
+                chips.appendChild(chip);
+            });
+            container.appendChild(chips);
+        }
+
         // Keywords - FIXED
         async function loadKeywords() {
             const kw = await getKeywords();
@@ -15650,6 +15695,7 @@ Respond now:`;
             const kwNudge = document.getElementById('keywordsNudge');
             if (kwNudge) kwNudge.style.display = ((kw.scope || []).length === 0 && kw.good.length === 0) ? 'block' : 'none';
             await renderKeywordSuggestions();
+            await renderFavorableTermSuggestions();
         }
 
         // Add scope keyword(s) - supports comma-separated input
