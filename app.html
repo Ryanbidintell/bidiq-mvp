@@ -9599,10 +9599,7 @@ ${truncatedText}`
 
                 // ── Pass 2: Full extraction on targeted pages ──────────────────
                 updateProgress(50, `Analyzing ${targetedPages.length} of ${allPages.length} pages...`);
-                let fullText = targetedPages.map(p => `[Page ${p.num}]
-${p.text}`).join('
-
-');
+                let fullText = targetedPages.map(p => `[Page ${p.num}]\n${p.text}`).join('\n\n');
 
                 // Sanitize text: Remove null characters that Postgres can't handle
                 fullText = fullText.replace(/ /g, '');
