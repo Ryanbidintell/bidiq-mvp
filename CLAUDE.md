@@ -588,6 +588,47 @@ const newAvg = Math.round(((prevAvg * prevCount) + newValue) / (prevCount + 1) *
 **Displayed in:** the collapsible Competitive Pressure score section — each source project shown with a colored outcome badge (green=won, red=lost/ghost, amber=pending).
 **allProjectsCache join:** source projects are resolved by joining `gc_competition_density.project_id` against `allProjectsCache` at score time. If cache is cold this join silently returns 'Unknown project' — acceptable.
 
+### Supabase Updates — Always Check { error } (Apr 30, 2026)
+
+**Critical pattern:** `await supabaseClient.from('table').update({...}).eq('id', id)` NEVER throws on failure. Errors are returned in the response object. If you don't destructure and check, failures are completely silent — the update fails, cache clears, DB re-fetch returns old data, UI looks stuck.
+
+```javascript
+// ❌ WRONG — errors swallowed silently
+await supabaseClient.from('projects').update({ outcome: 'won' }).eq('id', id);
+
+// ✅ CORRECT — errors surface as alerts
+const { error } = await supabaseClient.from('projects').update({ outcome: 'won' }).eq('id', id);
+if (error) throw error;
+```
+
+**Lesson:** Three stacked silent failures (missing column, check constraint, custom validator) caused outcome saves to appear broken for weeks. Always destructure `{ error }` on any mutating Supabase call.
+
+### DB Constraints on projects Table (Apr 30, 2026)
+
+When writing outcome saves, these constraints must ALL be satisfied:
+- `check_outcome_confidence_required`: `outcome_confidence` must be non-null when outcome ≠ `'pending'` → always include `outcome_confidence: 3` (or user-supplied value)
+- `check_outcome_data_structure`: calls `validate_outcome_data(outcome_data, outcome)` — for `won`: needs `bid_submissions` entry with `outcome='won'` + `margin` field (new format), or top-level `amount` + `margin` (legacy). For `lost`: submission with `howHigh` field.
+- `projects_outcome_check`: allowed values = `pending`, `won`, `lost`, `ghost`, `declined`, `gc_lost`, `no_bid`
+- `projects_outcome_confidence_check`: outcome_confidence must be 1–5
+
+**saveSubmissionOutcomes must include:** `outcome`, `outcome_data`, `outcome_confidence`, `outcome_nudge_count`, `updated_at`.
+
+### viewReport — contractRisks Variable Scope (Apr 30, 2026)
+
+In `viewReport()`, use `p.contractRisks` (from the saved project object) — NOT bare `contractRisks`. The bare variable only exists during a fresh live analysis run. Using it in `viewReport` causes "contractRisks is not defined" crash when loading saved reports.
+
+```javascript
+// ❌ WRONG in viewReport
+${renderContractRiskChips(contractRisks)}
+
+// ✅ CORRECT in viewReport
+${renderContractRiskChips(p.contractRisks)}
+```
+
+### Migrations Applied via MCP (Apr 30, 2026)
+- **Migration 009** (`009_outcome_nudge.sql`): adds `outcome_nudge_count` (int default 0), `last_nudge_sent_at` (timestamptz) to projects; `outcome_reminder_days` (int default 21) to user_settings. ✅ Applied.
+- **Migration 010** (`010_fix_outcome_constraints`): rewrites `validate_outcome_data()` to handle bid_submissions format; adds `gc_lost` + `no_bid` to outcome check constraint. ✅ Applied.
+
 ---
 
 ## 🚫 ABSOLUTE PROHIBITIONS
