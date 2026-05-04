@@ -277,7 +277,55 @@
                 </table>
             </div>
 
-            <!-- SECTION F: Email Tools -->
+            <!-- SECTION F: Outbound Prospecting -->
+            <div class="section" id="prospecting-section">
+                <h2 class="section-title">📨 Outbound Prospecting</h2>
+                <p style="color:#666;font-size:13px;margin-bottom:20px;">Upload a CSV of target prospects. Sequences start on the next scheduler run (daily 9am CDT). Day 0 → Day 4 → Day 10. Stops on unsubscribe or reply.</p>
+
+                <!-- Funnel metrics -->
+                <div id="prospect-funnel" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px;margin-bottom:24px;">
+                    <div class="metric-card" style="padding:14px;"><div class="metric-label">Prospects</div><div class="metric-value" id="pf-total" style="font-size:22px;">—</div></div>
+                    <div class="metric-card" style="padding:14px;"><div class="metric-label">Active</div><div class="metric-value" id="pf-active" style="font-size:22px;">—</div></div>
+                    <div class="metric-card" style="padding:14px;"><div class="metric-label">Emailed ≥1x</div><div class="metric-value" id="pf-emailed" style="font-size:22px;">—</div></div>
+                    <div class="metric-card" style="padding:14px;"><div class="metric-label">Replied</div><div class="metric-value" id="pf-replied" style="font-size:22px;">—</div></div>
+                    <div class="metric-card" style="padding:14px;"><div class="metric-label">Unsubscribed</div><div class="metric-value" id="pf-unsub" style="font-size:22px;">—</div></div>
+                    <div class="metric-card" style="padding:14px;"><div class="metric-label">Converted</div><div class="metric-value" id="pf-converted" style="font-size:22px;">—</div></div>
+                    <div class="metric-card" style="padding:14px;"><div class="metric-label">Reply Rate</div><div class="metric-value" id="pf-reply-rate" style="font-size:22px;">—</div></div>
+                </div>
+
+                <!-- Apollo pull -->
+                <h3 style="font-size:15px;margin:0 0 6px;color:#333;">Pull from Apollo.io</h3>
+                <p style="color:#666;font-size:12px;margin-bottom:10px;">Pulls ICP-matched contacts (owner/president/CEO · construction/specialty contractor · 10–100 employees · US) from Apollo.io and adds new ones to the prospect list.</p>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+                    <button id="apollo-pull-btn" onclick="pullFromApollo()" style="background:#0EA5E9;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;">Pull from Apollo</button>
+                </div>
+                <div id="apollo-pull-log" style="font-size:12px;color:#666;margin-bottom:20px;"></div>
+
+                <!-- CSV upload -->
+                <h3 style="font-size:15px;margin:0 0 6px;color:#333;">Upload Prospects CSV</h3>
+                <p style="color:#666;font-size:12px;margin-bottom:10px;">Required columns: <code>company_name</code>, <code>owner_email</code> — Optional: <code>owner_name</code>, <code>trade</code>, <code>geography</code>, <code>estimated_revenue</code></p>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+                    <input type="file" id="prospect-csv-input" accept=".csv" style="font-size:13px;">
+                    <button id="prospect-upload-btn" onclick="uploadProspectCSV()" style="background:#4F46E5;color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;">Upload CSV</button>
+                </div>
+                <div id="prospect-upload-log" style="font-size:12px;color:#666;margin-bottom:20px;"></div>
+
+                <!-- Prospect list controls -->
+                <h3 style="font-size:15px;margin:0 0 8px;color:#333;">Prospect List</h3>
+                <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+                    <button onclick="loadProspects('all')" style="font-size:12px;background:#e5e7eb;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:500;">All</button>
+                    <button onclick="loadProspects('active')" style="font-size:12px;background:#e5e7eb;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:500;">Active</button>
+                    <button onclick="loadProspects('paused')" style="font-size:12px;background:#e5e7eb;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:500;">Paused</button>
+                    <button onclick="loadProspects('replied')" style="font-size:12px;background:#e5e7eb;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:500;">Replied</button>
+                    <button onclick="loadProspects('completed')" style="font-size:12px;background:#e5e7eb;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:500;">Completed</button>
+                    <button onclick="loadProspects('unsubscribed')" style="font-size:12px;background:#e5e7eb;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:500;">Unsubscribed</button>
+                </div>
+                <div id="prospect-list-container" style="font-size:13px;overflow-x:auto;">
+                    <p style="color:#999;font-style:italic;">Click a filter above to load prospects.</p>
+                </div>
+            </div>
+
+            <!-- SECTION G: Email Tools -->
             <div class="section" id="email-tool-section">
                 <h2 class="section-title">📧 Email Tools</h2>
                 <p style="color:#555;margin-bottom:4px;font-size:12px;background:#fff8ed;border:1px solid #f26522;border-radius:4px;padding:6px 10px;">BCC copies go to <strong>ryan@bidintell.ai</strong> — not ryan@fsikc.com. Check that inbox for copies.</p>
@@ -948,11 +996,289 @@
             btn.textContent = `Sent ${sent}/${emailUserData.length}`;
         }
 
+        // ── Outbound prospecting ─────────────────────────────────────────────────
+
+        async function loadProspectMetrics() {
+            const { data, error } = await supabaseClient.from('prospects').select('status, sequence_step');
+            if (error || !data) return;
+
+            const total = data.length;
+            const active = data.filter(p => p.status === 'active').length;
+            const emailed = data.filter(p => p.sequence_step >= 1).length;
+            const replied = data.filter(p => p.status === 'replied').length;
+            const unsub = data.filter(p => p.status === 'unsubscribed').length;
+            const converted = data.filter(p => p.status === 'converted').length;
+            const replyRate = emailed > 0 ? ((replied / emailed) * 100).toFixed(1) + '%' : '—';
+
+            document.getElementById('pf-total').textContent = total;
+            document.getElementById('pf-active').textContent = active;
+            document.getElementById('pf-emailed').textContent = emailed;
+            document.getElementById('pf-replied').textContent = replied;
+            document.getElementById('pf-unsub').textContent = unsub;
+            document.getElementById('pf-converted').textContent = converted;
+            document.getElementById('pf-reply-rate').textContent = replyRate;
+        }
+
+        async function loadProspects(filter) {
+            const container = document.getElementById('prospect-list-container');
+            container.textContent = 'Loading…';
+
+            let query = supabaseClient.from('prospects').select('*').order('created_at', { ascending: false });
+            if (filter !== 'all') query = query.eq('status', filter);
+            const { data, error } = await query;
+
+            if (error) { container.textContent = error.message; return; }
+            if (!data || data.length === 0) {
+                container.textContent = `No prospects with status "${filter}".`;
+                return;
+            }
+
+            const statusColors = { active: '#2563eb', completed: '#16a34a', replied: '#7c3aed', unsubscribed: '#9ca3af', converted: '#f26522', paused: '#f59e0b' };
+            const stepLabel = { 0: 'Queued', 1: 'Day-0 sent', 2: 'Day-4 sent', 3: 'Day-10 sent' };
+
+            const table = document.createElement('table');
+            table.style.cssText = 'width:100%;border-collapse:collapse;min-width:900px;';
+
+            const thead = document.createElement('thead');
+            const headerCells = ['Name', 'Company', 'Trade', 'Geo', 'Email', 'Status', 'Step', 'Last Email', 'Added', 'Actions'];
+            const tr = document.createElement('tr');
+            tr.style.background = '#f9fafb';
+            headerCells.forEach(label => {
+                const th = document.createElement('th');
+                th.textContent = label;
+                th.style.cssText = 'padding:8px 12px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;border-bottom:1px solid #e5e7eb;';
+                tr.appendChild(th);
+            });
+            thead.appendChild(tr);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            data.forEach(p => {
+                const row = document.createElement('tr');
+                const lastSent = p.last_email_sent_at ? new Date(p.last_email_sent_at).toLocaleDateString() : '—';
+                const added = new Date(p.created_at).toLocaleDateString();
+                const cells = [
+                    p.owner_name || '—',
+                    p.company_name,
+                    p.trade || '—',
+                    p.geography || '—',
+                    p.owner_email,
+                    p.status,
+                    stepLabel[p.sequence_step] || String(p.sequence_step),
+                    lastSent,
+                    added
+                ];
+                cells.forEach((val, idx) => {
+                    const td = document.createElement('td');
+                    td.style.cssText = 'padding:10px 12px;border-bottom:1px solid #e5e7eb;';
+                    td.textContent = val;
+                    if (idx === 5) {
+                        td.style.fontWeight = '600';
+                        td.style.color = statusColors[p.status] || '#666';
+                    }
+                    row.appendChild(td);
+                });
+
+                // Actions cell
+                const actionsTd = document.createElement('td');
+                actionsTd.style.cssText = 'padding:10px 12px;border-bottom:1px solid #e5e7eb;white-space:nowrap;';
+                if (p.status === 'active') {
+                    const btn = document.createElement('button');
+                    btn.textContent = 'Pause';
+                    btn.style.cssText = 'font-size:11px;background:#fef9c3;border:1px solid #ca8a04;color:#92400e;padding:3px 8px;border-radius:4px;cursor:pointer;margin-right:4px;';
+                    btn.addEventListener('click', () => setProspectStatus(p.id, 'paused'));
+                    actionsTd.appendChild(btn);
+                }
+                if (p.status === 'paused') {
+                    const btn = document.createElement('button');
+                    btn.textContent = 'Resume';
+                    btn.style.cssText = 'font-size:11px;background:#dcfce7;border:1px solid #16a34a;color:#166534;padding:3px 8px;border-radius:4px;cursor:pointer;margin-right:4px;';
+                    btn.addEventListener('click', () => setProspectStatus(p.id, 'active'));
+                    actionsTd.appendChild(btn);
+                }
+                if (p.status === 'active' || p.status === 'paused') {
+                    const btn = document.createElement('button');
+                    btn.textContent = 'Replied';
+                    btn.style.cssText = 'font-size:11px;background:#ede9fe;border:1px solid #7c3aed;color:#5b21b6;padding:3px 8px;border-radius:4px;cursor:pointer;';
+                    btn.addEventListener('click', () => markReplied(p.id));
+                    actionsTd.appendChild(btn);
+                }
+                row.appendChild(actionsTd);
+                tbody.appendChild(row);
+            });
+            table.appendChild(tbody);
+
+            container.textContent = '';
+            const countP = document.createElement('p');
+            countP.style.cssText = 'color:#666;font-size:12px;margin-bottom:8px;';
+            countP.textContent = `${data.length} prospect${data.length !== 1 ? 's' : ''}`;
+            container.appendChild(countP);
+            container.appendChild(table);
+        }
+
+        async function setProspectStatus(id, newStatus) {
+            const { error } = await supabaseClient.from('prospects').update({ status: newStatus }).eq('id', id);
+            if (error) { alert('Error: ' + error.message); return; }
+            await supabaseClient.from('prospect_sequence_events').insert({
+                prospect_id: id,
+                event_type: newStatus === 'active' ? 'resumed' : 'paused'
+            });
+            location.reload();
+        }
+
+        async function markReplied(id) {
+            if (!confirm('Mark this prospect as replied? Their sequence will stop immediately.')) return;
+            const now = new Date().toISOString();
+            const { error } = await supabaseClient.from('prospects').update({ status: 'replied', replied_at: now }).eq('id', id);
+            if (error) { alert('Error: ' + error.message); return; }
+            await supabaseClient.from('prospect_sequence_events').insert({
+                prospect_id: id,
+                event_type: 'reply_marked',
+                metadata: { marked_at: now }
+            });
+            location.reload();
+        }
+
+        function parseCSV(text) {
+            const lines = text.trim().split(/\r?\n/);
+            if (lines.length < 2) return { headers: [], rows: [] };
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase().replace(/\s+/g, '_'));
+            const rows = [];
+            for (let i = 1; i < lines.length; i++) {
+                const cells = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+                if (cells.every(c => !c)) continue;
+                const row = {};
+                headers.forEach((h, idx) => { row[h] = cells[idx] || ''; });
+                rows.push(row);
+            }
+            return { headers, rows };
+        }
+
+        async function pullFromApollo() {
+            const btn = document.getElementById('apollo-pull-btn');
+            const log = document.getElementById('apollo-pull-log');
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.textContent = 'Pulling…';
+            log.style.color = '#666';
+            log.textContent = 'Contacting Apollo.io…';
+
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            const token = session?.access_token;
+            if (!token) {
+                log.textContent = 'Not authenticated.';
+                log.style.color = 'red';
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.textContent = 'Pull from Apollo';
+                return;
+            }
+
+            try {
+                const res = await fetch('/.netlify/functions/prospect-apollo-pull', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({})
+                });
+                const result = await res.json();
+                if (res.ok && result.success) {
+                    log.style.color = 'green';
+                    log.textContent = `✅ Apollo returned ${result.apollo_total} contacts — ${result.inserted} new prospects added, ${result.skipped_existing} already existed, ${result.skipped_no_email} skipped (no email/gated).`;
+                    if (result.pagination) {
+                        const p = result.pagination;
+                        const note = document.createElement('div');
+                        note.style.color = '#666';
+                        note.style.marginTop = '4px';
+                        note.textContent = `Page ${p.page} of ${p.total_pages || '?'} (${p.total_entries || '?'} total matches). Use per_page/page params to pull more.`;
+                        log.appendChild(note);
+                    }
+                    await loadProspectMetrics();
+                } else {
+                    log.textContent = `❌ ${result.error || 'Unknown error'}`;
+                    log.style.color = 'red';
+                }
+            } catch (e) {
+                log.textContent = `❌ Request failed: ${e.message}`;
+                log.style.color = 'red';
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.textContent = 'Pull from Apollo';
+            }
+        }
+
+        async function uploadProspectCSV() {
+            const fileInput = document.getElementById('prospect-csv-input');
+            const log = document.getElementById('prospect-upload-log');
+            const btn = document.getElementById('prospect-upload-btn');
+
+            if (!fileInput.files || !fileInput.files[0]) {
+                log.textContent = 'Select a CSV file first.';
+                log.style.color = 'red';
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const text = await file.text();
+            const { headers, rows } = parseCSV(text);
+
+            if (!headers.includes('owner_email') || !headers.includes('company_name')) {
+                log.textContent = 'CSV must have owner_email and company_name columns.';
+                log.style.color = 'red';
+                return;
+            }
+
+            log.textContent = `Parsed ${rows.length} rows. Uploading…`;
+            log.style.color = '#666';
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            const token = session?.access_token;
+            if (!token) {
+                log.textContent = 'Not authenticated.';
+                log.style.color = 'red';
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                return;
+            }
+
+            try {
+                const res = await fetch('/.netlify/functions/prospect-upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ prospects: rows })
+                });
+                const result = await res.json();
+                if (res.ok && result.success) {
+                    log.textContent = `✅ Inserted ${result.inserted} new prospects. Skipped ${result.skipped_existing} already existing.`;
+                    log.style.color = 'green';
+                    if (result.validation_errors?.length) {
+                        const warn = document.createElement('div');
+                        warn.style.color = '#f59e0b';
+                        warn.textContent = `⚠️ ${result.validation_errors.join('; ')}`;
+                        log.appendChild(warn);
+                    }
+                    await loadProspectMetrics();
+                } else {
+                    log.textContent = `Error: ${result.error || 'Unknown error'}`;
+                    log.style.color = 'red';
+                }
+            } catch (e) {
+                log.textContent = `Request failed: ${e.message}`;
+                log.style.color = 'red';
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        }
+
         // Initialize
         (async () => {
             const isAuth = await checkAuth();
             if (isAuth) {
                 await loadMetrics();
+                await loadProspectMetrics();
             }
         })();
     </script>

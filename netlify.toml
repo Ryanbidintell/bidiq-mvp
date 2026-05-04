@@ -30,6 +30,12 @@
 [functions."outcome-reminder"]
   schedule = "0 12 * * *"
 
+[functions."outcome-snooze"]
+  timeout = 10
+
+[functions."prospect-sequence"]
+  schedule = "0 14 * * *"
+
 [build.environment]
   NODE_VERSION = "18"
   SECRETS_SCAN_ENABLED = "false"  # Disabled - secrets in old git history, already removed and rotated
