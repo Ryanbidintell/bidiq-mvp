@@ -2,12 +2,11 @@
 // POST /api/prospect-apollo-pull  (admin auth required for HTTP; scheduled runs bypass auth)
 // Scheduled: daily at 13:00 UTC (8am CDT) via netlify.toml
 //
-// Persona mode (preferred): set APOLLO_SAVED_SEARCH_IDS=id1,id2 in Netlify env.
-//   Runs one search per saved-search ID, 50 contacts each (100/day total).
-//   Persona IDs are visible in the Apollo UI URL when viewing a saved search.
+// Runs two title-based persona searches per day (50 contacts each, 100/day total):
+//   Persona 1: "Estimator"       — specialty sub/construction, $2M–$20M rev, US
+//   Persona 2: "Chief Estimator" — same ICP filters
 //
-// Fallback mode (if APOLLO_SAVED_SEARCH_IDS not set): uses hardcoded ICP criteria —
-//   owner/president/estimator titles, specialty subcontractor industry, $2M–$20M revenue, US
+// Override: set APOLLO_SAVED_SEARCH_IDS=id1,id2 in Netlify env to use Apollo saved-search IDs instead.
 
 const { createClient } = require('@supabase/supabase-js');
 const { syncProspectToPipedrive } = require('./pipedrive-utils');
@@ -21,8 +20,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 const APOLLO_SEARCH_URL = 'https://api.apollo.io/v1/mixed_people/search';
 
-// Fallback ICP criteria used when no saved search IDs are configured
-const ICP_TITLES = ['owner', 'president', 'ceo', 'co-owner', 'principal', 'estimator'];
 const ICP_INDUSTRIES = [
     'construction',
     'specialty contractor',
@@ -33,6 +30,12 @@ const ICP_INDUSTRIES = [
     'electrical contractor'
 ];
 const ICP_REVENUE_RANGES = ['2000000,20000000'];
+
+// Two title-based personas that map to Ryan's Apollo outreach lists
+const DEFAULT_PERSONAS = [
+    { label: 'Estimator', person_titles: ['estimator'] },
+    { label: 'Chief Estimator', person_titles: ['chief estimator'] }
+];
 
 function normalizeTrade(industry) {
     if (!industry) return null;
@@ -123,30 +126,43 @@ exports.handler = async (event) => {
     const perPage = Math.min(parseInt(body.per_page) || 50, 100);
     const page = parseInt(body.page) || 1;
 
-    // Determine search mode: saved-persona IDs or fallback ICP criteria
+    // Build searches: saved-search IDs override if set; otherwise use two named title personas
     const savedSearchIds = (process.env.APOLLO_SAVED_SEARCH_IDS || '')
         .split(',').map(s => s.trim()).filter(Boolean);
 
-    const searches = savedSearchIds.length > 0
-        ? savedSearchIds.map(id => ({ api_key: APOLLO_API_KEY, saved_search_id: id, per_page: perPage, page }))
-        : [{ api_key: APOLLO_API_KEY, person_titles: ICP_TITLES, organization_industry_tag_names: ICP_INDUSTRIES, organization_annual_revenue_ranges: ICP_REVENUE_RANGES, person_locations: ['United States'], per_page: perPage, page }];
-
-    const mode = savedSearchIds.length > 0 ? `${savedSearchIds.length} saved persona(s)` : 'fallback ICP criteria';
+    let searches, mode;
+    if (savedSearchIds.length > 0) {
+        searches = savedSearchIds.map(id => ({ api_key: APOLLO_API_KEY, saved_search_id: id, per_page: perPage, page }));
+        mode = `${savedSearchIds.length} saved search ID(s)`;
+    } else {
+        searches = DEFAULT_PERSONAS.map(p => ({
+            api_key: APOLLO_API_KEY,
+            person_titles: p.person_titles,
+            organization_industry_tag_names: ICP_INDUSTRIES,
+            organization_annual_revenue_ranges: ICP_REVENUE_RANGES,
+            person_locations: ['United States'],
+            per_page: perPage,
+            page,
+            _label: p.label
+        }));
+        mode = DEFAULT_PERSONAS.map(p => p.label).join(' + ');
+    }
     console.log(`Apollo pull starting: ${mode}, page=${page}, per_page=${perPage}`);
 
-    // Run all searches (sequential to avoid Apollo rate limits)
+    // Run all searches sequentially to stay within Apollo rate limits
     const perSearchStats = [];
     const allPeople = [];
     for (const payload of searches) {
+        const label = payload._label || payload.saved_search_id || 'search';
+        const { _label, ...apolloPayload } = payload;
         try {
-            const data = await callApollo(payload);
+            const data = await callApollo(apolloPayload);
             const people = data.people || [];
-            const label = payload.saved_search_id || 'fallback';
-            console.log(`  ${label}: ${people.length} returned`);
+            console.log(`  [${label}]: ${people.length} returned`);
             perSearchStats.push({ search: label, returned: people.length, pagination: data.pagination || null });
             allPeople.push(...people);
         } catch (err) {
-            console.error(`Apollo search failed (${payload.saved_search_id || 'fallback'}):`, err.message);
+            console.error(`Apollo search failed [${label}]:`, err.message);
             return {
                 statusCode: 502,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
