@@ -1,10 +1,13 @@
 // Prospect Apollo Pull - Netlify HTTP + Scheduled Function
-// POST /api/prospect-apollo-pull  (admin auth required)
-// Scheduled: daily at 15:00 UTC (10am CDT) via netlify.toml
-// Calls Apollo.io People Search API to pull ICP-matched contacts into the prospects table.
+// POST /api/prospect-apollo-pull  (admin auth required for HTTP; scheduled runs bypass auth)
+// Scheduled: daily at 13:00 UTC (8am CDT) via netlify.toml
 //
-// ICP filter: owner/president/estimator titles, specialty subcontractor industry,
-// $2M–$20M revenue, United States
+// Persona mode (preferred): set APOLLO_SAVED_SEARCH_IDS=id1,id2 in Netlify env.
+//   Runs one search per saved-search ID, 50 contacts each (100/day total).
+//   Persona IDs are visible in the Apollo UI URL when viewing a saved search.
+//
+// Fallback mode (if APOLLO_SAVED_SEARCH_IDS not set): uses hardcoded ICP criteria —
+//   owner/president/estimator titles, specialty subcontractor industry, $2M–$20M revenue, US
 
 const { createClient } = require('@supabase/supabase-js');
 const { syncProspectToPipedrive } = require('./pipedrive-utils');
@@ -18,6 +21,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 const APOLLO_SEARCH_URL = 'https://api.apollo.io/v1/mixed_people/search';
 
+// Fallback ICP criteria used when no saved search IDs are configured
 const ICP_TITLES = ['owner', 'president', 'ceo', 'co-owner', 'principal', 'estimator'];
 const ICP_INDUSTRIES = [
     'construction',
@@ -30,7 +34,6 @@ const ICP_INDUSTRIES = [
 ];
 const ICP_REVENUE_RANGES = ['2000000,20000000'];
 
-// Normalize Apollo industry strings to readable trade labels
 function normalizeTrade(industry) {
     if (!industry) return null;
     const s = industry.toLowerCase();
@@ -49,6 +52,36 @@ function normalizeTrade(industry) {
     return industry;
 }
 
+async function callApollo(payload) {
+    const res = await fetch(APOLLO_SEARCH_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
+        body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Apollo ${res.status}: ${errText.slice(0, 200)}`);
+    }
+    return res.json();
+}
+
+function mapPerson(person) {
+    const email = (person.email || '').trim().toLowerCase();
+    if (!email || !email.includes('@') || !email.includes('.')) return null;
+    const companyName = (person.organization?.name || '').trim();
+    if (!companyName) return null;
+    const city = (person.city || '').trim();
+    const state = (person.state || '').trim();
+    return {
+        company_name: companyName,
+        owner_email: email,
+        owner_name: [person.first_name, person.last_name].filter(Boolean).join(' ') || null,
+        trade: normalizeTrade(person.organization?.industry),
+        geography: city && state ? `${city}, ${state}` : city || state || null,
+        estimated_revenue: person.organization?.estimated_annual_revenue || null
+    };
+}
+
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -62,140 +95,89 @@ exports.handler = async (event) => {
         if (event.httpMethod === 'OPTIONS') {
             return { statusCode: 204, headers: corsHeaders, body: '' };
         }
-
         if (event.httpMethod !== 'POST') {
             return { statusCode: 405, body: 'Method not allowed' };
         }
-
-        // Verify admin session first — auth before revealing env config state
         const authHeader = event.headers['authorization'] || event.headers['Authorization'] || '';
         if (!authHeader.startsWith('Bearer ')) {
-            return {
-                statusCode: 401,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ error: 'Unauthorized' })
-            };
+            return { statusCode: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Unauthorized' }) };
         }
         const token = authHeader.slice(7);
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
         if (authError || !user || !ADMIN_EMAILS.includes(user.email)) {
-            return {
-                statusCode: 403,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ error: 'Forbidden' })
-            };
+            return { statusCode: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Forbidden' }) };
         }
     }
 
-    // Fail gracefully if Apollo key not configured — clear error, not a 500
     if (!APOLLO_API_KEY) {
         return {
             statusCode: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: 'APOLLO_API_KEY environment variable is not configured. Add it to Netlify environment settings.' })
+            body: JSON.stringify({ error: 'APOLLO_API_KEY not configured in Netlify environment settings.' })
         };
     }
 
-    // Optional params: page and per_page from request body
     let body = {};
-    try {
-        body = JSON.parse(event.body || '{}');
-    } catch { /* use defaults */ }
+    try { body = JSON.parse(event.body || '{}'); } catch { /* use defaults */ }
 
     const perPage = Math.min(parseInt(body.per_page) || 50, 100);
     const page = parseInt(body.page) || 1;
 
-    // Call Apollo People Search
-    const apolloPayload = {
-        api_key: APOLLO_API_KEY,
-        person_titles: ICP_TITLES,
-        organization_industry_tag_names: ICP_INDUSTRIES,
-        organization_annual_revenue_ranges: ICP_REVENUE_RANGES,
-        person_locations: ['United States'],
-        per_page: perPage,
-        page
-    };
+    // Determine search mode: saved-persona IDs or fallback ICP criteria
+    const savedSearchIds = (process.env.APOLLO_SAVED_SEARCH_IDS || '')
+        .split(',').map(s => s.trim()).filter(Boolean);
 
-    let apolloData;
-    try {
-        const res = await fetch(APOLLO_SEARCH_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
-            body: JSON.stringify(apolloPayload)
-        });
-        if (!res.ok) {
-            const errText = await res.text();
-            console.error('Apollo API error:', res.status, errText);
+    const searches = savedSearchIds.length > 0
+        ? savedSearchIds.map(id => ({ api_key: APOLLO_API_KEY, saved_search_id: id, per_page: perPage, page }))
+        : [{ api_key: APOLLO_API_KEY, person_titles: ICP_TITLES, organization_industry_tag_names: ICP_INDUSTRIES, organization_annual_revenue_ranges: ICP_REVENUE_RANGES, person_locations: ['United States'], per_page: perPage, page }];
+
+    const mode = savedSearchIds.length > 0 ? `${savedSearchIds.length} saved persona(s)` : 'fallback ICP criteria';
+    console.log(`Apollo pull starting: ${mode}, page=${page}, per_page=${perPage}`);
+
+    // Run all searches (sequential to avoid Apollo rate limits)
+    const perSearchStats = [];
+    const allPeople = [];
+    for (const payload of searches) {
+        try {
+            const data = await callApollo(payload);
+            const people = data.people || [];
+            const label = payload.saved_search_id || 'fallback';
+            console.log(`  ${label}: ${people.length} returned`);
+            perSearchStats.push({ search: label, returned: people.length, pagination: data.pagination || null });
+            allPeople.push(...people);
+        } catch (err) {
+            console.error(`Apollo search failed (${payload.saved_search_id || 'fallback'}):`, err.message);
             return {
                 statusCode: 502,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ error: `Apollo API returned ${res.status}: ${errText.slice(0, 200)}` })
+                body: JSON.stringify({ error: err.message })
             };
         }
-        apolloData = await res.json();
-    } catch (err) {
-        console.error('Apollo fetch error:', err);
-        return {
-            statusCode: 502,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: `Failed to reach Apollo API: ${err.message}` })
-        };
     }
 
-    const people = apolloData.people || [];
-    console.log(`Apollo returned ${people.length} contacts (page ${page}, per_page ${perPage})`);
-
-    // Map Apollo fields to prospects schema; skip records without usable email
+    // Map to prospects schema; dedup within this batch by email
+    const seenEmails = new Set();
     const valid = [];
     let skippedNoEmail = 0;
 
-    for (const person of people) {
-        const email = (person.email || '').trim().toLowerCase();
-        if (!email || !email.includes('@') || !email.includes('.')) {
-            // Apollo free tier gates/obscures many emails — skip gracefully, no crash
-            skippedNoEmail++;
-            console.log(`Skipped (no email): ${person.first_name || ''} ${person.last_name || ''} @ ${person.organization?.name || 'unknown'}`);
-            continue;
-        }
-
-        const companyName = (person.organization?.name || '').trim();
-        if (!companyName) {
-            skippedNoEmail++;
-            console.log(`Skipped (no company): ${email}`);
-            continue;
-        }
-
-        const city = (person.city || '').trim();
-        const state = (person.state || '').trim();
-        const geography = city && state ? `${city}, ${state}` : city || state || null;
-
-        valid.push({
-            company_name: companyName,
-            owner_email: email,
-            owner_name: [person.first_name, person.last_name].filter(Boolean).join(' ') || null,
-            trade: normalizeTrade(person.organization?.industry),
-            geography,
-            estimated_revenue: person.organization?.estimated_annual_revenue || null
-        });
+    for (const person of allPeople) {
+        const mapped = mapPerson(person);
+        if (!mapped) { skippedNoEmail++; continue; }
+        if (seenEmails.has(mapped.owner_email)) continue;
+        seenEmails.add(mapped.owner_email);
+        valid.push(mapped);
     }
 
     if (valid.length === 0) {
-        console.log(`Apollo pull complete: 0 insertable contacts (${skippedNoEmail} skipped, no email/company)`);
+        console.log(`Apollo pull complete: 0 insertable contacts (${skippedNoEmail} skipped no-email/company)`);
         return {
             statusCode: 200,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                success: true,
-                inserted: 0,
-                skipped_existing: 0,
-                skipped_no_email: skippedNoEmail,
-                apollo_total: people.length,
-                pagination: apolloData.pagination || null
-            })
+            body: JSON.stringify({ success: true, inserted: 0, skipped_existing: 0, skipped_no_email: skippedNoEmail, apollo_total: allPeople.length, searches: perSearchStats })
         };
     }
 
-    // Deduplicate against existing prospects — same logic as prospect-upload.js
+    // Deduplicate against existing prospects table
     const emails = valid.map(p => p.owner_email);
     const { data: existing } = await supabase.from('prospects').select('owner_email').in('owner_email', emails);
     const existingSet = new Set((existing || []).map(p => p.owner_email));
@@ -213,7 +195,6 @@ exports.handler = async (event) => {
             };
         }
 
-        // Sync new prospects to Pipedrive — non-fatal, email sequence is not blocked
         let pipedriveCount = 0;
         for (const p of newProspects) {
             try {
@@ -223,10 +204,10 @@ exports.handler = async (event) => {
                 console.error(`Pipedrive sync failed for ${p.owner_email}:`, err.message);
             }
         }
-        if (pipedriveCount > 0) console.log(`🔗 Pipedrive: ${pipedriveCount} prospects synced`);
+        if (pipedriveCount > 0) console.log(`Pipedrive: ${pipedriveCount} prospects synced`);
     }
 
-    console.log(`✅ Apollo pull: ${newProspects.length} inserted, ${skippedExisting} existing dupes skipped, ${skippedNoEmail} no-email skipped`);
+    console.log(`Apollo pull done: ${newProspects.length} inserted, ${skippedExisting} existing dupes, ${skippedNoEmail} no-email`);
 
     return {
         statusCode: 200,
@@ -236,8 +217,8 @@ exports.handler = async (event) => {
             inserted: newProspects.length,
             skipped_existing: skippedExisting,
             skipped_no_email: skippedNoEmail,
-            apollo_total: people.length,
-            pagination: apolloData.pagination || null
+            apollo_total: allPeople.length,
+            searches: perSearchStats
         })
     };
 };
