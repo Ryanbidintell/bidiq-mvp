@@ -33,6 +33,9 @@
 [functions."outcome-snooze"]
   timeout = 10
 
+[functions."prospect-apollo-pull"]
+  schedule = "0 13 * * *"
+
 [functions."prospect-sequence"]
   schedule = "0 14 * * *"
 

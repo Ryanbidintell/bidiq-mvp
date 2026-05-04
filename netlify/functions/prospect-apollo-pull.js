@@ -1,12 +1,13 @@
-// Prospect Apollo Pull - Netlify HTTP Function
-// POST /api/prospect-apollo-pull
+// Prospect Apollo Pull - Netlify HTTP + Scheduled Function
+// POST /api/prospect-apollo-pull  (admin auth required)
+// Scheduled: daily at 15:00 UTC (10am CDT) via netlify.toml
 // Calls Apollo.io People Search API to pull ICP-matched contacts into the prospects table.
-// Admin-only: requires valid Supabase session token for ryan@bidintell.ai or ryan@fsikc.com
 //
-// ICP filter: owner/president/CEO titles, construction/specialty contractor industry,
-// 10–100 employees, United States
+// ICP filter: owner/president/estimator titles, specialty subcontractor industry,
+// $2M–$20M revenue, United States
 
 const { createClient } = require('@supabase/supabase-js');
+const { syncProspectToPipedrive } = require('./pipedrive-utils');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -17,7 +18,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 const APOLLO_SEARCH_URL = 'https://api.apollo.io/v1/mixed_people/search';
 
-const ICP_TITLES = ['owner', 'president', 'ceo', 'co-owner', 'principal'];
+const ICP_TITLES = ['owner', 'president', 'ceo', 'co-owner', 'principal', 'estimator'];
 const ICP_INDUSTRIES = [
     'construction',
     'specialty contractor',
@@ -27,7 +28,7 @@ const ICP_INDUSTRIES = [
     'mechanical contractor',
     'electrical contractor'
 ];
-const ICP_EMPLOYEE_RANGES = ['10,100'];
+const ICP_REVENUE_RANGES = ['2000000,20000000'];
 
 // Normalize Apollo industry strings to readable trade labels
 function normalizeTrade(industry) {
@@ -55,31 +56,35 @@ const corsHeaders = {
 };
 
 exports.handler = async (event) => {
-    if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 204, headers: corsHeaders, body: '' };
-    }
+    const isScheduled = !!event.schedule;
 
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: 'Method not allowed' };
-    }
+    if (!isScheduled) {
+        if (event.httpMethod === 'OPTIONS') {
+            return { statusCode: 204, headers: corsHeaders, body: '' };
+        }
 
-    // Verify admin session first — auth before revealing env config state
-    const authHeader = event.headers['authorization'] || event.headers['Authorization'] || '';
-    if (!authHeader.startsWith('Bearer ')) {
-        return {
-            statusCode: 401,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: 'Unauthorized' })
-        };
-    }
-    const token = authHeader.slice(7);
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user || !ADMIN_EMAILS.includes(user.email)) {
-        return {
-            statusCode: 403,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: 'Forbidden' })
-        };
+        if (event.httpMethod !== 'POST') {
+            return { statusCode: 405, body: 'Method not allowed' };
+        }
+
+        // Verify admin session first — auth before revealing env config state
+        const authHeader = event.headers['authorization'] || event.headers['Authorization'] || '';
+        if (!authHeader.startsWith('Bearer ')) {
+            return {
+                statusCode: 401,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ error: 'Unauthorized' })
+            };
+        }
+        const token = authHeader.slice(7);
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user || !ADMIN_EMAILS.includes(user.email)) {
+            return {
+                statusCode: 403,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ error: 'Forbidden' })
+            };
+        }
     }
 
     // Fail gracefully if Apollo key not configured — clear error, not a 500
@@ -97,7 +102,7 @@ exports.handler = async (event) => {
         body = JSON.parse(event.body || '{}');
     } catch { /* use defaults */ }
 
-    const perPage = Math.min(parseInt(body.per_page) || 25, 100);
+    const perPage = Math.min(parseInt(body.per_page) || 50, 100);
     const page = parseInt(body.page) || 1;
 
     // Call Apollo People Search
@@ -105,7 +110,7 @@ exports.handler = async (event) => {
         api_key: APOLLO_API_KEY,
         person_titles: ICP_TITLES,
         organization_industry_tag_names: ICP_INDUSTRIES,
-        organization_num_employees_ranges: ICP_EMPLOYEE_RANGES,
+        organization_annual_revenue_ranges: ICP_REVENUE_RANGES,
         person_locations: ['United States'],
         per_page: perPage,
         page
@@ -207,6 +212,18 @@ exports.handler = async (event) => {
                 body: JSON.stringify({ error: insertError.message })
             };
         }
+
+        // Sync new prospects to Pipedrive — non-fatal, email sequence is not blocked
+        let pipedriveCount = 0;
+        for (const p of newProspects) {
+            try {
+                await syncProspectToPipedrive(p.owner_email, p.owner_name, p.company_name, p.trade, p.geography);
+                pipedriveCount++;
+            } catch (err) {
+                console.error(`Pipedrive sync failed for ${p.owner_email}:`, err.message);
+            }
+        }
+        if (pipedriveCount > 0) console.log(`🔗 Pipedrive: ${pipedriveCount} prospects synced`);
     }
 
     console.log(`✅ Apollo pull: ${newProspects.length} inserted, ${skippedExisting} existing dupes skipped, ${skippedNoEmail} no-email skipped`);
