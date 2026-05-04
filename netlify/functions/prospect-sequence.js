@@ -46,7 +46,7 @@ The email should:
 - Name a real problem: chasing bid invites that were never going to convert, or not knowing which GCs are worth the effort
 - Mention BidIntell as something that scores bids before you spend time on them
 - One clear call to action: try it free at bidintell.ai
-- No subject line. No sign-off. Just the body text.`;
+- No subject line. No salutation. No sign-off. Just the body text — the salutation and signature are added separately.`;
 
     const user = `Write a first-touch outbound email to:
 - Name: ${prospect.owner_name || 'the owner'}
@@ -123,7 +123,7 @@ function buildHtml(bodyText, unsubscribeUrl) {
 
     return `<div style="background:#ffffff; font-family:'Helvetica Neue',Arial,sans-serif; max-width:560px; margin:0 auto; padding:40px 32px; color:#0B0F14;">
     ${paragraphs}
-    <p style="font-size:15px; line-height:1.7; color:#6b7280; margin:0 0 32px;">— Ryan<br><span style="font-size:14px;">Founder, BidIntell</span></p>
+    <p style="font-size:15px; line-height:1.7; color:#374151; margin:0 0 32px;">Ryan Elder<br>Founder<br><a href="https://bidintell.ai" style="color:#374151;">bidintell.ai</a></p>
     <hr style="border:none; border-top:1px solid #e5e7eb; margin:0 0 16px;">
     <p style="font-size:11px; color:#9ca3af; margin:0;">
         You're receiving this because your company was identified as a potential fit for BidIntell.<br>
@@ -184,8 +184,12 @@ exports.handler = async () => {
 
         if (step === null) { skipped++; continue; }
 
+        const firstName = (prospect.owner_name || '').split(' ')[0];
+        const salutation = firstName ? `Hi ${firstName},` : 'Hi,';
+        const fullBody = salutation + '\n\n' + bodyText;
+
         const subject = getSubject(step, prospect);
-        const htmlBody = buildHtml(bodyText, unsubscribeUrl);
+        const htmlBody = buildHtml(fullBody, unsubscribeUrl);
         const newStatus = step === 3 ? 'completed' : 'active';
         const nowIso = now.toISOString();
 
