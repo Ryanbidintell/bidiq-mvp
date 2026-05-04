@@ -308,7 +308,7 @@ img { max-width: 100%; display: block; }
 
 /* ===== HERO ===== */
 .hero {
-  padding: 140px 0 80px;
+  padding: 160px 0 120px;
   position: relative;
   overflow: hidden;
 }
@@ -550,9 +550,43 @@ img { max-width: 100%; display: block; }
   50% { transform: translateY(-8px); }
 }
 
+/* ===== PRESS STRIP ===== */
+.press-strip {
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.press-strip-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.press-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--slate-light);
+  white-space: nowrap;
+}
+.press-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--slate);
+  flex-shrink: 0;
+}
+.press-outlet {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--fog);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
 /* ===== SOCIAL PROOF BAR ===== */
 .proof-bar {
-  padding: 48px 0;
+  padding: 68px 0;
   border-top: 1px solid rgba(255,255,255,0.04);
   border-bottom: 1px solid rgba(255,255,255,0.04);
 }
@@ -575,7 +609,7 @@ img { max-width: 100%; display: block; }
 .proof-divider { width: 1px; height: 40px; background: var(--slate); }
 
 /* ===== PROBLEM / SOLUTION ===== */
-.problem-section { padding: 100px 0; }
+.problem-section { padding: 140px 0; }
 .section-header { max-width: 640px; margin-bottom: 64px; }
 .section-tag {
   font-family: var(--mono);
@@ -630,7 +664,7 @@ img { max-width: 100%; display: block; }
 
 /* ===== HOW IT WORKS ===== */
 .how-section {
-  padding: 100px 0;
+  padding: 140px 0;
   background: var(--ink-light);
   border-top: 1px solid rgba(255,255,255,0.04);
   border-bottom: 1px solid rgba(255,255,255,0.04);
@@ -667,7 +701,7 @@ img { max-width: 100%; display: block; }
 .step p { font-size: 0.9rem; color: var(--fog); line-height: 1.6; max-width: 280px; margin: 0 auto; }
 
 /* ===== FEATURE DEEP DIVE ===== */
-.features-section { padding: 100px 0; }
+.features-section { padding: 140px 0; }
 .feature-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -783,7 +817,7 @@ img { max-width: 100%; display: block; }
 
 /* ===== TESTIMONIAL ===== */
 .testimonial-section {
-  padding: 80px 0;
+  padding: 112px 0;
   background: var(--ink-light);
   border-top: 1px solid rgba(255,255,255,0.04);
   border-bottom: 1px solid rgba(255,255,255,0.04);
@@ -826,7 +860,7 @@ img { max-width: 100%; display: block; }
 .ta-info .ta-role { font-size: 0.8rem; color: var(--fog); }
 
 /* ===== PRICING ===== */
-.pricing-section { padding: 100px 0; }
+.pricing-section { padding: 140px 0; }
 .pricing-section .section-header { text-align: center; margin-left: auto; margin-right: auto; }
 .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1100px; margin: 0 auto; }
 .pricing-card {
@@ -871,7 +905,7 @@ img { max-width: 100%; display: block; }
 
 /* ===== CTA ===== */
 .cta-section {
-  padding: 100px 0;
+  padding: 140px 0;
   background: var(--ink-light);
   border-top: 1px solid rgba(255,255,255,0.04);
   text-align: center;
@@ -946,7 +980,7 @@ img { max-width: 100%; display: block; }
 @media (max-width: 640px) {
   .nav-links { display: none; }
   .mobile-menu-btn { display: block; }
-  .hero { padding: 120px 0 60px; }
+  .hero { padding: 140px 0 80px; }
   .hero-actions { flex-direction: column; align-items: stretch; }
   .proof-bar-inner { gap: 32px; }
   .proof-divider { display: none; }
@@ -970,7 +1004,7 @@ img { max-width: 100%; display: block; }
 
 /* ===== THEORY SECTION ===== */
 .theory-section {
-  padding: 100px 0;
+  padding: 140px 0;
   background: var(--ink);
   position: relative;
   overflow: hidden;
@@ -1068,7 +1102,7 @@ img { max-width: 100%; display: block; }
 
 /* ===== ROI CALCULATOR ===== */
 .roi-section {
-  padding: 100px 0;
+  padding: 140px 0;
   background: var(--ink-light);
   border-top: 1px solid rgba(255,255,255,0.04);
 }
@@ -1235,7 +1269,7 @@ img { max-width: 100%; display: block; }
 
 /* ===== FAQ ===== */
 .faq-section {
-  padding: 80px 0;
+  padding: 112px 0;
   border-top: 1px solid rgba(255,255,255,0.04);
 }
 .faq-section .section-header { text-align: center; margin-left: auto; margin-right: auto; }
@@ -1290,7 +1324,7 @@ img { max-width: 100%; display: block; }
 
 /* ===== MID-PAGE CTA STRIP ===== */
 .midpage-cta {
-  padding: 56px 0;
+  padding: 80px 0;
   background: var(--ink-light);
   border-top: 1px solid rgba(255,255,255,0.04);
   border-bottom: 1px solid rgba(255,255,255,0.04);
@@ -1305,7 +1339,7 @@ img { max-width: 100%; display: block; }
 .midpage-cta-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
 
 /* ===== BIDINDEX SCORE EXPLAINER ===== */
-.bidindex-section { padding: 100px 0; border-top: 1px solid rgba(255,255,255,0.04); }
+.bidindex-section { padding: 140px 0; border-top: 1px solid rgba(255,255,255,0.04); }
 .bidindex-section .section-header { text-align: center; margin-left: auto; margin-right: auto; }
 .section-sub {
   font-size: 1rem; color: var(--fog); line-height: 1.7;
@@ -1380,7 +1414,7 @@ img { max-width: 100%; display: block; }
 
 /* Learning loop */
 .learning-section {
-  padding: 80px 0; border-top: 1px solid rgba(255,255,255,0.04);
+  padding: 112px 0; border-top: 1px solid rgba(255,255,255,0.04);
   background: var(--ink-light);
 }
 .learning-section .section-header { text-align: center; margin-left: auto; margin-right: auto; }
@@ -1425,7 +1459,7 @@ img { max-width: 100%; display: block; }
       <li><a href="#who">Who It's For</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li><a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=nav-cta" style="color: var(--cloud);">Sign In</a></li>
-      <li><a href="/demo" class="nav-cta">Schedule a Demo →</a></li>
+      <li><a href="/demo" class="nav-cta">Schedule a Demo</a></li>
     </ul>
     <button class="mobile-menu-btn" aria-label="Menu">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1447,7 +1481,7 @@ img { max-width: 100%; display: block; }
         <h1>Know Which Bids <span>Are Worth Your Time</span></h1>
         <p class="hero-sub">BidIntell scores every opportunity 0–100 — personalized to your trade, region, and client history. GO, REVIEW, or PASS before estimating starts.</p>
         <div class="hero-actions">
-          <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=hero-cta" class="btn-primary" onclick="gtag('event','cta_click',{cta_location:'hero',cta_text:'Score Your First Bid Free'})">Score Your First Bid Free →</a>
+          <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=hero-cta" class="btn-primary" onclick="gtag('event','cta_click',{cta_location:'hero',cta_text:'Score Your First Bid Free'})">Score Your First Bid Free</a>
           <a href="#how" class="btn-secondary">See How It Works</a>
         </div>
         <p style="margin-top:14px; font-size:0.8rem; color:var(--slate-light);">7-day free trial &nbsp;•&nbsp; No credit card required &nbsp;•&nbsp; Setup takes 5 minutes</p>
@@ -1511,6 +1545,19 @@ img { max-width: 100%; display: block; }
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRESS STRIP -->
+<section class="press-strip">
+  <div class="container">
+    <div class="press-strip-inner">
+      <span class="press-label">As featured in</span>
+      <div class="press-divider"></div>
+      <span class="press-outlet">Construction Dive</span>
+      <div class="press-divider"></div>
+      <span class="press-outlet">TheJobWalk</span>
     </div>
   </div>
 </section>
@@ -1686,11 +1733,11 @@ img { max-width: 100%; display: block; }
 </section>
 
 <!-- ICP CTA STRIP -->
-<section style="padding:48px 0; background:var(--ink-light); border-top:1px solid rgba(255,255,255,0.04); border-bottom:1px solid rgba(255,255,255,0.04);">
+<section style="padding:68px 0; background:var(--ink-light); border-top:1px solid rgba(255,255,255,0.04); border-bottom:1px solid rgba(255,255,255,0.04);">
   <div class="container" style="text-align:center;">
     <p style="font-size:1.1rem; color:var(--white); font-weight:600; margin-bottom:8px;">Sound like you? Score your next bid in under 2 minutes.</p>
     <p style="font-size:0.9rem; color:var(--fog); margin-bottom:24px;">7-day free trial. No credit card at signup.</p>
-    <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=icp-cta" class="btn-primary" onclick="gtag('event','cta_click',{cta_location:'icp',cta_text:'Score Your First Bid Free'})">Score Your First Bid Free →</a>
+    <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=icp-cta" class="btn-primary" onclick="gtag('event','cta_click',{cta_location:'icp',cta_text:'Score Your First Bid Free'})">Score Your First Bid Free</a>
   </div>
 </section>
 
@@ -1833,7 +1880,6 @@ img { max-width: 100%; display: block; }
 
     <!-- Part 1: Score Explainer -->
     <div class="section-header fade-up">
-      <div class="version-tag">BidIndex Score · v1.9</div>
       <span class="section-tag">How scoring works</span>
       <h2>What the BidIndex Score actually measures</h2>
     </div>
@@ -2155,11 +2201,11 @@ img { max-width: 100%; display: block; }
           <div id="roi-email-wrap" style="margin-bottom:14px;">
             <div class="roi-email-row">
               <input type="email" class="roi-email-input" id="roi-email-input" placeholder="your@email.com">
-              <button class="roi-email-btn" id="roi-email-btn" onclick="submitROIEmail()">Email Me My ROI Breakdown →</button>
+              <button class="roi-email-btn" id="roi-email-btn" onclick="submitROIEmail()">Email Me My ROI Breakdown</button>
             </div>
             <div class="roi-email-success" id="roi-email-success">Check your inbox! 📬 We saved your numbers.</div>
           </div>
-          <a href="#apply" class="btn-primary">Get Started Free →</a>
+          <a href="#apply" class="btn-primary">Get Started Free</a>
         </div>
       </div>
     </div>
@@ -2172,7 +2218,7 @@ img { max-width: 100%; display: block; }
     <h3>Score your first bid free — 7-day trial, cancel anytime.</h3>
     <p>No sales call. Upload a bid and get a BidIndex Score in about a minute.</p>
     <div class="midpage-cta-actions">
-      <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=midpage-cta" class="btn-primary" onclick="gtag('event','cta_click',{cta_location:'midpage',cta_text:'Start Free Trial'})">Start Free Trial →</a>
+      <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=midpage-cta" class="btn-primary" onclick="gtag('event','cta_click',{cta_location:'midpage',cta_text:'Start Free Trial'})">Start Free Trial</a>
       <a href="/demo" class="btn-secondary" onclick="gtag('event','cta_click',{cta_location:'midpage',cta_text:'Schedule a Demo'})">Schedule a Demo</a>
     </div>
   </div>
@@ -2204,7 +2250,7 @@ img { max-width: 100%; display: block; }
           <li>Contract risk flagging</li>
         </ul>
         <div style="font-size:0.78rem;color:#22c55e;margin-bottom:16px;font-weight:500;">Annual billing available — save 20% ($470/yr)</div>
-        <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=pricing-solo-cta" class="btn-secondary btn-full" onclick="gtag('event','cta_click',{cta_location:'pricing',cta_text:'Solo'})">Get Started Free →</a>
+        <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=pricing-solo-cta" class="btn-secondary btn-full" onclick="gtag('event','cta_click',{cta_location:'pricing',cta_text:'Solo'})">Get Started Free</a>
       </div>
       <!-- Team -->
       <div class="pricing-card featured">
@@ -2223,7 +2269,7 @@ img { max-width: 100%; display: block; }
           <li>Team analytics</li>
         </ul>
         <div style="font-size:0.78rem;color:#22c55e;margin-bottom:16px;font-weight:500;">Annual billing available — save 20% ($950/yr)</div>
-        <a href="/app?tier=team&utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=pricing-team-cta" class="btn-primary btn-full" onclick="gtag('event','cta_click',{cta_location:'pricing',cta_text:'Team'})">Get Started Free →</a>
+        <a href="/app?tier=team&utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=pricing-team-cta" class="btn-primary btn-full" onclick="gtag('event','cta_click',{cta_location:'pricing',cta_text:'Team'})">Get Started Free</a>
       </div>
       <!-- Company -->
       <div class="pricing-card">
@@ -2240,7 +2286,7 @@ img { max-width: 100%; display: block; }
           <li>Priority support</li>
         </ul>
         <div style="font-size:0.78rem;color:#22c55e;margin-bottom:16px;font-weight:500;">Annual billing available — save 20% ($1,720/yr)</div>
-        <a href="/app?tier=company&utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=pricing-company-cta" class="btn-secondary btn-full" onclick="gtag('event','cta_click',{cta_location:'pricing',cta_text:'Company'})">Get Started Free →</a>
+        <a href="/app?tier=company&utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=pricing-company-cta" class="btn-secondary btn-full" onclick="gtag('event','cta_click',{cta_location:'pricing',cta_text:'Company'})">Get Started Free</a>
       </div>
     </div>
   </div>
@@ -2336,7 +2382,7 @@ img { max-width: 100%; display: block; }
     <p>Forward a bid invite and get a scored report back in under 2 minutes — no calls, no setup, no contracts. Founding member pricing locks in for the life of your subscription. We're raising prices after the first 50 members.</p>
     <form id="beta-form" class="cta-form" onsubmit="handleBetaSubmit(event)">
       <input type="email" id="email" name="email" placeholder="your@company.com" required>
-      <button type="submit" class="btn-primary" style="white-space:nowrap;">Start Free Trial →</button>
+      <button type="submit" class="btn-primary" style="white-space:nowrap;">Start Free Trial</button>
     </form>
     <div id="form-message" style="margin-top: 12px; font-size: 0.9rem; text-align: center;"></div>
     <p style="font-size:0.8rem; color:var(--slate-light); margin-top:12px;">7-day free trial · Cancel before day 8 and pay nothing · Founding pricing locks in forever</p>
