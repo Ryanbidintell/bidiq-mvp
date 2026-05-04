@@ -1,8 +1,11 @@
 // Prospect Sequence - Netlify Scheduled Function
 // Runs daily at 14:00 UTC (9am CDT)
-// Step 0 → 1: Day-0 personalized initial email (Claude-generated, template fallback)
-// Step 1 → 2: Day-4 follow-up if still active
-// Step 2 → 3: Day-10 break-up email, marks sequence completed
+// 5-touch sequence (v2 Owner Outreach, Hormozi frame):
+// Step 0 → 1: Day-0  personalized initial email (dollar math hook)
+// Step 1 → 2: Day-2  tribal knowledge / data moat
+// Step 2 → 3: Day-5  full offer + pricing
+// Step 3 → 4: Day-9  founding-member pricing reminder
+// Step 4 → 5: Day-14 break-up, marks sequence completed
 
 const { createClient } = require('@supabase/supabase-js');
 
@@ -36,16 +39,16 @@ async function sendEmail({ to, subject, htmlBody }) {
 async function generateClaudeEmail(prospect) {
     if (!ANTHROPIC_API_KEY) return null;
 
-    const system = `You are writing outbound sales emails on behalf of Ryan, founder of BidIntell — a bid intelligence tool for specialty subcontractors in commercial construction.
+    const system = `You are writing outbound sales emails on behalf of Ryan, founder of BidIntell — a bid intelligence tool for specialty subcontractors and building products distributors in commercial construction.
 
 Voice: "confidently boring." Write like a 20-year commercial estimator who found a useful tool, not a startup founder pitching. Short sentences. No buzzwords. No exclamation points. No "game-changing" or "revolutionize." Sound like an email from a real person.
 
 The email should:
 - Be 3–5 sentences total
-- Reference the recipient's trade and geography specifically
-- Name a real problem: chasing bid invites that were never going to convert, or not knowing which GCs are worth the effort
-- Mention BidIntell as something that scores bids before you spend time on them
-- One clear call to action: try it free at bidintell.ai
+- Reference the recipient's trade and company specifically
+- Open with the cost of a bad bid: 1 bad bid = 6–20 estimating hours × $75–$150/hr = $450–$3,000 wasted
+- Mention BidIntell scores bid invites before you commit estimating hours to them
+- One clear CTA: forward 5 bid invites to ryan@bidintell.ai for a free 1-page scoring report within 24 hours. No call. No pitch.
 - No subject line. No salutation. No sign-off. Just the body text — the salutation and signature are added separately.`;
 
     const user = `Write a first-touch outbound email to:
@@ -80,38 +83,73 @@ Output only the email body text.`;
     }
 }
 
+// Day 0 — dollar math hook + free 5-invite audit CTA
 function templateStep1(prospect) {
-    const trade = prospect.trade || 'specialty sub';
-    const geo = prospect.geography ? ` in ${prospect.geography}` : '';
-    return `Most ${trade} owners${geo} I talk to are losing 10–20 hours a month chasing invites that were never going to convert — GCs who price-shop, project types outside their wheelhouse, scopes with margin already gone.
+    const company = prospect.company_name || 'your company';
+    return `Quick math on bid triage:
 
-BidIntell scores bid invitations before you spend time on them. Based on the GC, the project type, your win history, and how the specs are written. Most guys who try it start declining 20–30% of their chase list within a few weeks.
+- 1 bad bid = 6–20 estimating hours
+- Loaded estimator cost = $75–$150/hr
+- Cost of one bad bid: $450 to $3,000
 
-Free to try at bidintell.ai. No credit card required.`;
+If ${company} is chasing more than one of those a month, BidIntell pays for itself 5–50x over.
+
+Free offer: forward 5 of ${company}'s bid invites to ryan@bidintell.ai this week and I'll send back a 1-page report scoring each across 5 factors (location, contract risk, client history, trade match, competitive pressure) within 24 hrs. No call. No pitch.`;
 }
 
+// Day 2 — tribal knowledge / data moat
+function templateStep2(prospect) {
+    const company = prospect.company_name || 'your company';
+    return `Most subs I talk to win with certain GCs and lose with others — but it's tribal knowledge in someone's head.
+
+BidIntell quantifies it. Win rate by GC. Win rate by project type. Pay behavior. Bid-shopping signals. Over 6–12 months it becomes ${company}'s internal bidding algorithm — not gut feel.
+
+That's how you scale past today's relationships.
+
+Free 5-invite audit still on the table. Forward to ryan@bidintell.ai.`;
+}
+
+// Day 5 — full offer + pricing
+function templateStep3(prospect) {
+    const company = prospect.company_name || 'your company';
+    return `Here's the deal if ${company} wants in:
+
+You get: BidIntell scoring engine (5 factors, every invite), GC database that learns your win/loss patterns over time, contract risk detection (pay-if-paid, LDs, etc.), and founder-led onboarding. Founding-member pricing locks for the life of your subscription.
+
+You pay: $470 / $950 / $1,720 per year (Starter / Pro / Team)
+
+Want to start with the free 5-invite audit? Forward to ryan@bidintell.ai.`;
+}
+
+// Day 9 — founding-member pricing reminder + urgency
 function templateStep4(prospect) {
-    const trade = prospect.trade || 'your trade';
-    return `Sent you a note a few days ago about BidIntell — just making sure it didn't get buried.
+    const company = prospect.company_name || 'your company';
+    return `Founding-member pricing locks for life — the rate you sign up at stays put as long as you're a customer.
 
-If you're spending hours on bids you probably shouldn't be chasing, it might be worth 10 minutes. The scoring is specific to ${trade} work and accounts for GC behavior in your market.
+If ${company} gets 20+ invites a week and you're tired of chasing the wrong ones, hit reply or forward 5 to ryan@bidintell.ai.
 
-Free trial at bidintell.ai if you want to run a few through it.`;
+Worst case: free audit. Best case: you kill a bad bid in week 1 and the tool pays for the year.`;
 }
 
-function templateStep10() {
-    return `Last note from me on this.
+// Day 14 — break-up
+function templateStep5(prospect) {
+    const company = prospect.company_name || 'your company';
+    return `Last note from me.
 
-If the timing isn't right or bid volume isn't a problem, totally understand. I'll leave it here.
+If bid triage isn't a priority at ${company} right now, no worries — just hit reply with "not now" and I'll back off.
 
-If anything changes, bidintell.ai is there when you need it.`;
+If it is, even a one-line reply works.
+
+Either way, thanks for your time.`;
 }
 
 function getSubject(step, prospect) {
-    const trade = (prospect.trade || '').toLowerCase();
-    if (step === 1) return trade ? `scoring ${trade} invites before you chase them` : 'scoring bid invites before you chase them';
-    if (step === 2) return 're: BidIntell';
-    return 'closing the loop';
+    const company = prospect.company_name || '';
+    if (step === 1) return 'the math says 1 bad bid costs you $450–$3,000';
+    if (step === 2) return 'scale past tribal knowledge';
+    if (step === 3) return 'the offer (founding-member pricing)';
+    if (step === 4) return 'founding pricing — still available';
+    return company ? `closing the file on ${company}?` : 'closing the loop';
 }
 
 function buildHtml(bodyText, unsubscribeUrl) {
@@ -145,14 +183,16 @@ exports.handler = async () => {
     console.log('📬 Prospect sequence running:', new Date().toISOString());
 
     const now = new Date();
+    const day2Cutoff = new Date(now - 2 * 24 * 60 * 60 * 1000).toISOString();
+    const day3Cutoff = new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString();
     const day4Cutoff = new Date(now - 4 * 24 * 60 * 60 * 1000).toISOString();
-    const day6Cutoff = new Date(now - 6 * 24 * 60 * 60 * 1000).toISOString();
+    const day5Cutoff = new Date(now - 5 * 24 * 60 * 60 * 1000).toISOString();
 
     const { data: prospects, error } = await supabase
         .from('prospects')
         .select('*')
         .eq('status', 'active')
-        .lt('sequence_step', 3)
+        .lt('sequence_step', 5)
         .order('created_at', { ascending: true });
 
     if (error) {
@@ -174,12 +214,18 @@ exports.handler = async () => {
             step = 1;
             const generated = await generateClaudeEmail(prospect);
             bodyText = generated || templateStep1(prospect);
-        } else if (prospect.sequence_step === 1 && prospect.last_email_sent_at <= day4Cutoff) {
+        } else if (prospect.sequence_step === 1 && prospect.last_email_sent_at <= day2Cutoff) {
             step = 2;
-            bodyText = templateStep4(prospect);
-        } else if (prospect.sequence_step === 2 && prospect.last_email_sent_at <= day6Cutoff) {
+            bodyText = templateStep2(prospect);
+        } else if (prospect.sequence_step === 2 && prospect.last_email_sent_at <= day3Cutoff) {
             step = 3;
-            bodyText = templateStep10();
+            bodyText = templateStep3(prospect);
+        } else if (prospect.sequence_step === 3 && prospect.last_email_sent_at <= day4Cutoff) {
+            step = 4;
+            bodyText = templateStep4(prospect);
+        } else if (prospect.sequence_step === 4 && prospect.last_email_sent_at <= day5Cutoff) {
+            step = 5;
+            bodyText = templateStep5(prospect);
         }
 
         if (step === null) { skipped++; continue; }
@@ -190,7 +236,7 @@ exports.handler = async () => {
 
         const subject = getSubject(step, prospect);
         const htmlBody = buildHtml(fullBody, unsubscribeUrl);
-        const newStatus = step === 3 ? 'completed' : 'active';
+        const newStatus = step === 5 ? 'completed' : 'active';
         const nowIso = now.toISOString();
 
         try {
