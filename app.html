@@ -10806,6 +10806,7 @@ ${truncatedText}`
                             ${deadlineChip}
                             ${analyzedChip}
                         </div>
+                        ${renderTopFactorsHtml(buildTopFactors(analysis.scores, settings, analysis.extracted || {}))}
                         <details style="margin-top:12px;">
                             <summary style="font-size:12px;color:rgba(255,255,255,0.5);cursor:pointer;list-style:none;outline:none;user-select:none;">ℹ How is this score calculated?</summary>
                             <div style="margin-top:8px;font-size:12px;line-height:1.7;background:rgba(0,0,0,0.2);padding:12px;border-radius:6px;color:rgba(255,255,255,0.75);text-align:left;">
@@ -10968,6 +10969,166 @@ ${truncatedText}`
                     </div>
                 </div>
             `;
+        }
+
+        /**
+         * Build top 3–5 plain-language factors from score components.
+         * "Confidently boring" voice — written like a 20-year estimator.
+         * Returns [{label, detail, strength, direction}], sorted strongest first.
+         */
+        function buildTopFactors(scores, settings, extracted) {
+            const c = scores.components || {};
+            const candidates = [];
+
+            // ── Location ─────────────────────────────────────────────────────
+            const loc = c.location;
+            if (loc && !loc.needsAddress && loc.details?.dist !== undefined) {
+                const dist = loc.details.dist;
+                if (dist <= 25) {
+                    candidates.push({ label: 'Close to your shop', detail: `This job is ${dist} miles from your office — an easy drive.`, strength: 'strong', direction: '+', _sort: 9 });
+                } else if (dist <= 60) {
+                    candidates.push({ label: 'Within your area', detail: `This job is ${dist} miles out — within your normal range.`, strength: 'moderate', direction: '+', _sort: 5 });
+                } else if (dist <= 100) {
+                    candidates.push({ label: 'Distance adds cost', detail: `This job is ${dist} miles out. Add windshield time to your number.`, strength: 'moderate', direction: '-', _sort: 6 });
+                } else {
+                    candidates.push({ label: 'Long haul job', detail: `This job is ${dist} miles out — price travel carefully before you commit estimating time.`, strength: 'strong', direction: '-', _sort: 10 });
+                }
+            }
+
+            // ── Contract Terms ────────────────────────────────────────────────
+            const kw = c.keywords;
+            if (kw) {
+                const goodTerms = (kw.details || []).filter(d => d.type === 'good').map(d => d.keyword);
+                const badTerms  = (kw.details || []).filter(d => d.type === 'bad').map(d => d.keyword);
+                const aiRisks   = kw.aiRisks?.risksDetected?.length || 0;
+
+                if (badTerms.length >= 2 || aiRisks >= 2) {
+                    const n = badTerms.length + aiRisks;
+                    const list = badTerms.slice(0, 2).join(', ') || '';
+                    candidates.push({ label: 'Contract has red flags', detail: `${n} unfavorable clause${n > 1 ? 's' : ''} detected${list ? ': ' + list : ''}. Open the Contract tab before you pull a takeoff.`, strength: 'strong', direction: '-', _sort: 10 });
+                } else if (badTerms.length === 1 || aiRisks === 1) {
+                    const term = badTerms[0] || kw.aiRisks?.risksDetected?.[0]?.classification || 'risk clause';
+                    candidates.push({ label: 'Contract flag worth reviewing', detail: `${term} detected. Check the Contract tab — may affect your margin.`, strength: 'moderate', direction: '-', _sort: 6 });
+                } else if (goodTerms.length >= 2) {
+                    candidates.push({ label: 'Favorable contract terms', detail: `Specs include terms that work in your favor: ${goodTerms.slice(0, 3).join(', ')}.`, strength: 'moderate', direction: '+', _sort: 5 });
+                } else if (goodTerms.length === 1) {
+                    candidates.push({ label: 'Good contract term found', detail: `${goodTerms[0]} — a favorable condition for subs.`, strength: 'moderate', direction: '+', _sort: 4 });
+                }
+            }
+
+            // ── Client Relationship ───────────────────────────────────────────
+            const gc = c.gc;
+            if (gc?.details) {
+                const best = gc.details.bestGC;
+                const gcCount = gc.details.gcCount || 0;
+                const compPenalty = gc.details.compPenalty || 0;
+
+                if (best) {
+                    const hasBidHistory = best.rate !== null && best.rate !== undefined;
+                    // Find total bids for best GC
+                    const gcRecord = (gc.details.allGCs || []).find(g => g.name === best.name) || {};
+                    const totalBids = gcRecord.bids || 0;
+                    const totalWins = gcRecord.wins || 0;
+
+                    if (hasBidHistory && totalBids >= 3) {
+                        const rate = Math.round(best.rate);
+                        if (rate >= 40) {
+                            candidates.push({ label: `Strong record with ${best.name}`, detail: `You've won ${rate}% of your bids with ${best.name} (${totalWins} of ${totalBids} jobs).`, strength: 'strong', direction: '+', _sort: 10 });
+                        } else if (rate >= 20) {
+                            candidates.push({ label: `Moderate record with ${best.name}`, detail: `Your win rate with ${best.name} is ${rate}% (${totalWins} of ${totalBids} bids).`, strength: 'moderate', direction: '+', _sort: 5 });
+                        } else {
+                            candidates.push({ label: `Tough track record with ${best.name}`, detail: `You're ${rate}% (${totalWins} of ${totalBids}) with ${best.name} — that's a hard hill to climb.`, strength: 'moderate', direction: '-', _sort: 7 });
+                        }
+                    } else if (hasBidHistory && totalBids > 0) {
+                        candidates.push({ label: `Limited history with ${best.name}`, detail: `Only ${totalBids} logged bid${totalBids > 1 ? 's' : ''} with ${best.name} — not enough data to call it.`, strength: 'weak', direction: 'n', _sort: 2 });
+                    } else if (best.rating >= 4) {
+                        candidates.push({ label: `Good relationship with ${best.name}`, detail: `You've rated ${best.name} ${best.rating}★ — a solid working relationship.`, strength: 'moderate', direction: '+', _sort: 4 });
+                    } else if (best.rating <= 2) {
+                        candidates.push({ label: `Difficult GC`, detail: `You've rated ${best.name} ${best.rating}★. Go in with clear scope and eyes open.`, strength: 'moderate', direction: '-', _sort: 6 });
+                    } else {
+                        candidates.push({ label: `Known GC`, detail: `${best.name} is in your database — keep logging outcomes to sharpen this score.`, strength: 'weak', direction: 'n', _sort: 1 });
+                    }
+                }
+
+                if (compPenalty >= 10) {
+                    candidates.push({ label: 'Crowded bid list', detail: `${gcCount} subs bidding this job — expect price pressure from the competition.`, strength: 'moderate', direction: '-', _sort: 6 });
+                }
+            }
+
+            // ── Trade Match ───────────────────────────────────────────────────
+            const trade = c.trade;
+            if (trade?.details) {
+                const d = trade.details;
+                const mode = d.scoring_mode;
+
+                if (mode === 'section' && d.foundSections?.length > 0 && d.allSections?.length > 0) {
+                    const found = d.foundSections.length;
+                    const total = d.allSections.length;
+                    if (found === total) {
+                        candidates.push({ label: 'Your scope is in this job', detail: `All ${total} of your spec section${total > 1 ? 's' : ''} are in the spec book — your work is confirmed.`, strength: 'strong', direction: '+', _sort: 9 });
+                    } else {
+                        candidates.push({ label: `Partial scope match`, detail: `${found} of your ${total} spec sections found — some of your work is in scope.`, strength: 'moderate', direction: '+', _sort: 5 });
+                    }
+                } else if (mode === 'section' && d.foundSections?.length === 0) {
+                    if (d.scopeKeywordsFound?.length > 0) {
+                        candidates.push({ label: 'Scope confirmed by keywords', detail: `No spec sections found, but scope keywords in the drawings confirm your work type is in these plans.`, strength: 'moderate', direction: 'n', _sort: 3 });
+                    } else {
+                        candidates.push({ label: 'Scope not confirmed', detail: `Your spec sections weren't found in this book. Verify your work is in scope before pulling a takeoff.`, strength: 'moderate', direction: '-', _sort: 7 });
+                    }
+                } else if (mode === 'division' && d.found?.length > 0) {
+                    const found = d.found.length;
+                    candidates.push({ label: 'Trade confirmed in specs', detail: `${found} of your trade division${found > 1 ? 's' : ''} found in this spec book — your work is in scope.`, strength: 'strong', direction: '+', _sort: 9 });
+                } else if (mode === 'keyword_fallback' && d.scopeKeywordsFound?.length > 0) {
+                    candidates.push({ label: 'Scope confirmed by keywords', detail: `No division codes detected, but scope keywords in the drawings confirm your work type is in these plans.`, strength: 'moderate', direction: 'n', _sort: 3 });
+                } else if (trade.score < 50) {
+                    candidates.push({ label: "Your trade wasn't confirmed", detail: `Your trade type wasn't found in this spec book. Double-check the division list before committing estimating hours.`, strength: 'moderate', direction: '-', _sort: 7 });
+                }
+            }
+
+            // ── Competitive Pressure (data-dependent, only shown when active) ─
+            const comp = c.competitive;
+            if (comp?.weight > 0 && comp.details?.avgBidders) {
+                const avg = Math.round(comp.details.avgBidders);
+                const gcName = comp.details.sourceProjects?.[0]?.gc || '';
+                const gcRef = gcName ? ` on ${gcName} jobs` : '';
+                if (avg >= 7) {
+                    candidates.push({ label: 'Heavy competition on this one', detail: `This GC averages ${avg} subs per invitation${gcRef} — the field is crowded, which squeezes margin.`, strength: 'strong', direction: '-', _sort: 8 });
+                } else if (avg <= 3) {
+                    candidates.push({ label: 'Less crowded field', detail: `This GC typically invites ${avg} subs${gcRef} — less competition means more room to price it right.`, strength: 'moderate', direction: '+', _sort: 5 });
+                }
+            }
+
+            // Sort: highest _sort first (negatives already weighted heavier in _sort)
+            candidates.sort((a, b) => b._sort - a._sort);
+            return candidates.slice(0, 5);
+        }
+
+        function renderTopFactorsHtml(factors) {
+            if (!factors || factors.length === 0) return '';
+            const rows = factors.map(f => {
+                const isPos = f.direction === '+';
+                const isNeg = f.direction === '-';
+                const color = isPos ? 'var(--success)' : isNeg ? 'var(--danger)' : 'rgba(255,255,255,0.4)';
+                const bg    = isPos ? 'rgba(34,197,94,0.07)' : isNeg ? 'rgba(239,68,68,0.07)' : 'rgba(255,255,255,0.04)';
+                const arrow = isPos ? '↑' : isNeg ? '↓' : '→';
+                const pill  = f.strength === 'strong' ? `<span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:${color};opacity:0.85;">Strong</span>`
+                            : f.strength === 'moderate' ? `<span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:${color};opacity:0.7;">Moderate</span>`
+                            : `<span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,0.35);">Weak</span>`;
+                return `<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <div style="font-size:15px;font-weight:700;color:${color};min-width:16px;line-height:1.4;">${arrow}</div>
+                    <div style="flex:1;text-align:left;">
+                        <div style="display:flex;align-items:baseline;gap:7px;margin-bottom:2px;">
+                            <span style="font-weight:600;font-size:13px;color:var(--text-primary);">${f.label}</span>
+                            ${pill}
+                        </div>
+                        <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">${f.detail}</div>
+                    </div>
+                </div>`;
+            }).join('');
+            return `<div style="margin-top:14px;background:rgba(0,0,0,0.18);border-radius:8px;padding:4px 14px 4px;border:1px solid rgba(255,255,255,0.07);">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,0.35);padding:8px 0 2px;">Why this score</div>
+                ${rows}
+            </div>`;
         }
 
         function renderComponent(icon, title, comp) {
@@ -12624,38 +12785,47 @@ ${truncatedText}`
                 return;
             }
 
-            // Banner: surface bids past deadline (or 30+ days old) still awaiting outcome
+            // Banner: surface bids 7+ days old still pending an outcome
+            // Skip banner entirely if user has turned off reminders
+            const cachedSettings = dataCache?.settings;
+            if (cachedSettings && cachedSettings.outcome_reminder_days === null) {
+                document.getElementById('pendingOutcomesBanner').style.display = 'none';
+                applyProjectFilters();
+                return;
+            }
             const now = new Date();
-            const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+            const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
             const needsOutcome = projects.filter(p => {
                 if (p.outcome && p.outcome !== 'pending') return false;
                 const deadline = p.extracted?.bid_deadline ? new Date(p.extracted.bid_deadline) : null;
                 const analyzedAt = p.created_at ? new Date(p.created_at) : null;
                 return (deadline && !isNaN(deadline) && deadline < now) ||
-                       (analyzedAt && analyzedAt < thirtyDaysAgo);
+                       (analyzedAt && analyzedAt < sevenDaysAgo);
             });
             const banner = document.getElementById('pendingOutcomesBanner');
             if (needsOutcome.length > 0) {
                 banner.style.display = 'block';
                 const count = needsOutcome.length;
-                const firstId = needsOutcome[0].id; // UUID — safe for event listener
+                // Sort oldest first so the first click addresses the most stale bid
+                needsOutcome.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                const firstId = needsOutcome[0].id;
                 const wrap = document.createElement('div');
-                wrap.style.cssText = 'background:rgba(242,101,34,0.1);border:1px solid rgba(242,101,34,0.3);border-radius:var(--radius);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;';
+                wrap.style.cssText = 'background:rgba(242,101,34,0.08);border:1px solid rgba(242,101,34,0.3);border-left:3px solid #F26522;border-radius:var(--radius);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;';
                 const left = document.createElement('div');
-                left.style.cssText = 'display:flex;align-items:center;gap:10px;';
+                left.style.cssText = 'display:flex;align-items:center;gap:10px;flex:1;min-width:0;';
                 const textDiv = document.createElement('div');
                 const titleEl = document.createElement('div');
                 titleEl.style.cssText = 'font-weight:600;color:var(--text-primary);font-size:14px;';
-                titleEl.textContent = count + ' bid' + (count !== 1 ? 's' : '') + ' waiting for an outcome';
+                titleEl.textContent = count + ' bid' + (count !== 1 ? 's' : '') + ' waiting on an outcome';
                 const subEl = document.createElement('div');
                 subEl.style.cssText = 'font-size:12px;color:var(--text-muted);margin-top:2px;';
-                subEl.textContent = 'Logging outcomes trains the AI and improves your score accuracy.';
+                subEl.textContent = 'Every result you log — even Ghost or Declined — sharpens your BidIndex score.';
                 textDiv.appendChild(titleEl);
                 textDiv.appendChild(subEl);
                 left.appendChild(textDiv);
                 const btn = document.createElement('button');
                 btn.className = 'btn btn-sm';
-                btn.style.cssText = 'background:#F26522;color:white;white-space:nowrap;';
+                btn.style.cssText = 'background:#F26522;color:white;white-space:nowrap;flex-shrink:0;';
                 btn.textContent = 'Log Outcome \u2192';
                 btn.addEventListener('click', () => showOutcome(firstId));
                 wrap.appendChild(left);
@@ -12858,6 +13028,7 @@ ${truncatedText}`
                                 <div class="rec-pill ${recClassSaved}">${p.scores.recommendation}${recTextSaved ? ` — ${recTextSaved}` : ''}</div>
                             </div>
                             ${(locStrSaved || btSaved) ? `<div class="meta-chips-row">${locStrSaved ? `<span class="meta-chip">📍 ${locStrSaved}</span>` : ''}${btSaved ? `<span class="meta-chip">🏗️ ${btSaved}</span>` : ''}</div>` : ''}
+                            ${renderTopFactorsHtml(buildTopFactors(p.scores, settings, p.extracted || {}))}
                             <details style="margin-top:12px;">
                                 <summary style="font-size:12px;color:rgba(255,255,255,0.5);cursor:pointer;list-style:none;outline:none;user-select:none;">ℹ How is this score calculated?</summary>
                                 <div style="margin-top:8px;font-size:12px;line-height:1.7;background:rgba(0,0,0,0.2);padding:12px;border-radius:6px;color:rgba(255,255,255,0.75);text-align:left;">

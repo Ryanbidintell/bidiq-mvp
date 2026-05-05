@@ -6,30 +6,29 @@ const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
-const POSTMARK_API_KEY = process.env.POSTMARK_API_KEY;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = 'BidIntell <hello@bidintell.ai>';
 const BCC_EMAIL = 'ryan@bidintell.ai';
 const APP_URL = 'https://bidintell.ai/app';
 
 async function sendEmail({ to, subject, html }) {
-    const res = await fetch('https://api.postmarkapp.com/email', {
+    const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-Postmark-Server-Token': POSTMARK_API_KEY
+            'Authorization': `Bearer ${RESEND_API_KEY}`
         },
         body: JSON.stringify({
-            From: FROM_EMAIL,
-            To: to,
-            Bcc: BCC_EMAIL,
-            Subject: subject,
-            HtmlBody: html,
-            MessageStream: 'outbound'
+            from: FROM_EMAIL,
+            to: [to],
+            bcc: [BCC_EMAIL],
+            subject,
+            html
         })
     });
     if (!res.ok) {
         const body = await res.text().catch(() => '');
-        throw new Error(`Postmark ${res.status}: ${body}`);
+        throw new Error(`Resend ${res.status}: ${body}`);
     }
 }
 
@@ -104,7 +103,7 @@ function buildDigestHtml({ companyName, weekBids, weekOutcomes, allTimeWinRate, 
 exports.handler = async () => {
     console.log('[weekly-digest] Started:', new Date().toISOString());
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !POSTMARK_API_KEY) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !RESEND_API_KEY) {
         console.error('[weekly-digest] Missing env vars');
         return { statusCode: 500, body: JSON.stringify({ error: 'Missing env vars' }) };
     }

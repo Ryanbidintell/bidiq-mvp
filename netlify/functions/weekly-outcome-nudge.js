@@ -15,7 +15,7 @@ const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
-const POSTMARK_API_KEY = process.env.POSTMARK_API_KEY;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
 const APP_URL = 'https://bidintell.ai/app';
 const FROM_EMAIL = 'hello@bidintell.ai';
@@ -34,24 +34,23 @@ function isoWeekNumber(date) {
 }
 
 async function sendPlainTextEmail({ to, subject, textBody }) {
-    const response = await fetch('https://api.postmarkapp.com/email', {
+    const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-Postmark-Server-Token': POSTMARK_API_KEY
+            'Authorization': `Bearer ${RESEND_API_KEY}`
         },
         body: JSON.stringify({
-            From: FROM_EMAIL,
-            To: to,
-            Bcc: BCC_EMAIL,
-            Subject: subject,
-            TextBody: textBody,
-            MessageStream: 'outbound'
+            from: FROM_EMAIL,
+            to: [to],
+            bcc: [BCC_EMAIL],
+            subject,
+            text: textBody
         })
     });
     if (!response.ok) {
         const errBody = await response.text().catch(() => '');
-        throw new Error(`Postmark ${response.status}: ${errBody}`);
+        throw new Error(`Resend ${response.status}: ${errBody}`);
     }
 }
 
@@ -67,7 +66,7 @@ exports.handler = async (event, context) => {
     }
     console.log(`[outcome-nudge] Week ${weekNum} (even) — proceeding.`);
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !POSTMARK_API_KEY) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !RESEND_API_KEY) {
         console.error('[outcome-nudge] Missing required env vars');
         return { statusCode: 500, body: JSON.stringify({ error: 'Missing env vars' }) };
     }
@@ -196,6 +195,20 @@ BidIntell`;
                     stats.bidsUpdated++;
                 }
             }
+
+            // ── Attribution log — correlate with outcome changes to measure lift ──
+            await supabase.from('admin_events').insert({
+                user_id,
+                event_type: 'outcome_reminder_sent',
+                event_data: {
+                    channel: 'email_weekly_nudge',
+                    email: user_email,
+                    bid_count: bids.length,
+                    bid_ids: bids.map(b => b.id),
+                    week: weekNum,
+                    sent_at: now.toISOString()
+                }
+            }).catch(e => console.warn('[outcome-nudge] attribution log failed:', e.message));
         } catch (sendErr) {
             console.error(`[outcome-nudge] Failed to send to ${user_email}:`, sendErr.message);
             stats.errors++;
