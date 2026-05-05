@@ -2,6 +2,7 @@
 // Automatically syncs subscription data to user_revenue table
 
 const { createClient } = require('@supabase/supabase-js');
+const { convertToCustomer } = require('./pipedrive-utils');
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -138,6 +139,19 @@ async function sendWelcomeEmail(subscription) {
         });
 
         console.log(`✅ Welcome email sent to ${userEmail}`);
+
+        // Sync to Pipedrive — non-fatal, never blocks the webhook response
+        try {
+            const mrr = subscription.items?.data?.reduce((sum, item) => sum + (item.plan?.amount || 0) / 100, 0);
+            await convertToCustomer(userEmail, {
+                subscriptionStatus: subscription.status,
+                planType: planName,
+                mrr,
+                accountEmail: userEmail,
+            });
+        } catch (pErr) {
+            console.error('Pipedrive customer conversion failed:', pErr.message);
+        }
     } catch (err) {
         console.error('❌ sendWelcomeEmail failed:', err.message);
         // Never throw — don't block the webhook response

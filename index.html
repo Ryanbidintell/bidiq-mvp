@@ -408,16 +408,34 @@ img { max-width: 100%; display: block; }
   gap: 8px;
   padding: 14px 28px;
   background: transparent;
-  color: var(--cloud);
-  border: 1px solid var(--slate);
+  color: #F26522;
+  border: 2px solid #F26522;
   border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.btn-secondary:hover { background: rgba(242, 101, 34, 0.1); }
+.btn-text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #F26522;
+  text-decoration: underline;
+  text-underline-offset: 3px;
   font-family: var(--font);
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  padding: 0;
+  transition: color 0.2s;
 }
-.btn-secondary:hover { border-color: var(--fog); color: var(--white); }
+.btn-text-link:hover { color: var(--accent-dark); }
 
 /* Hero Right - Score Card Mock */
 .hero-visual { position: relative; }
@@ -587,8 +605,15 @@ img { max-width: 100%; display: block; }
 /* ===== SOCIAL PROOF BAR ===== */
 .proof-bar {
   padding: 68px 0;
-  border-top: 1px solid rgba(255,255,255,0.04);
+  background: var(--ink-light);
+  border-top: 1px solid rgba(255,255,255,0.07);
   border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.proof-bar .stat-source {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  margin-top: 0.2rem;
 }
 .proof-bar-inner {
   display: flex;
@@ -629,6 +654,11 @@ img { max-width: 100%; display: block; }
   margin-bottom: 16px;
 }
 .section-header p { font-size: 1.05rem; color: var(--fog); line-height: 1.7; }
+.problem-section .section-header h2,
+.theory-section .section-header h2,
+.pricing-section .section-header h2 {
+  font-size: clamp(1.85rem, 3.2vw, 2.6rem);
+}
 
 .problem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 .problem-card {
@@ -666,7 +696,7 @@ img { max-width: 100%; display: block; }
 .how-section {
   padding: 140px 0;
   background: var(--ink-light);
-  border-top: 1px solid rgba(255,255,255,0.04);
+  border-top: 1px solid rgba(255,255,255,0.07);
   border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 .how-section .section-header { text-align: center; margin-left: auto; margin-right: auto; }
@@ -701,7 +731,26 @@ img { max-width: 100%; display: block; }
 .step p { font-size: 0.9rem; color: var(--fog); line-height: 1.6; max-width: 280px; margin: 0 auto; }
 
 /* ===== FEATURE DEEP DIVE ===== */
-.features-section { padding: 140px 0; }
+.features-section {
+  padding: 140px 0;
+  background: #F0F4F8;
+  color: #0B0F14;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.features-section .section-header h2,
+.features-section .section-header p {
+  color: #0B0F14;
+}
+.features-section .feature-content h3 { color: #0B0F14; }
+.features-section .feature-content p { color: #374151; }
+.features-section .feature-list li { color: #374151; }
+.features-section .feature-list li::before { color: #16a34a; }
+.features-section .feature-card,
+.features-section .feature-visual {
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.08);
+  color: #0B0F14;
+}
 .feature-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -860,7 +909,11 @@ img { max-width: 100%; display: block; }
 .ta-info .ta-role { font-size: 0.8rem; color: var(--fog); }
 
 /* ===== PRICING ===== */
-.pricing-section { padding: 140px 0; }
+.pricing-section {
+  padding: 140px 0;
+  background: var(--ink-light);
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
 .pricing-section .section-header { text-align: center; margin-left: auto; margin-right: auto; }
 .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1100px; margin: 0 auto; }
 .pricing-card {
@@ -906,10 +959,24 @@ img { max-width: 100%; display: block; }
 /* ===== CTA ===== */
 .cta-section {
   padding: 140px 0;
-  background: var(--ink-light);
-  border-top: 1px solid rgba(255,255,255,0.04);
+  background: var(--ink);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  position: relative;
+  overflow: hidden;
   text-align: center;
 }
+.cta-section::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 700px; height: 450px;
+  background: radial-gradient(ellipse, var(--accent-glow), transparent 70%);
+  pointer-events: none;
+  opacity: 0.65;
+  z-index: 0;
+}
+.cta-section .container { position: relative; z-index: 1; }
 .cta-section h2 {
   font-size: clamp(1.75rem, 3vw, 2.5rem);
   font-weight: 700;
@@ -942,6 +1009,33 @@ img { max-width: 100%; display: block; }
 }
 .cta-form input::placeholder { color: var(--slate-light); }
 .cta-form input:focus { border-color: var(--accent); }
+
+/* ===== PHOTOGRAPHY PLACEHOLDERS ===== */
+.hero { position: relative; }
+.hero-bg-photo {
+  position: absolute;
+  inset: 0;
+  background-image: url('/images/hero-construction.jpg');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.12;
+  z-index: 0;
+}
+.hero .container { position: relative; z-index: 1; }
+.photo-break {
+  height: 320px;
+  background-image: url('/images/estimator-at-work.jpg');
+  background-size: cover;
+  background-position: center 30%;
+  position: relative;
+  background-color: var(--ink-mid);
+}
+.photo-break::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(11,15,20,0.5), rgba(11,15,20,0.7));
+}
 
 /* ===== FOOTER ===== */
 .footer { padding: 48px 0 36px; border-top: 1px solid rgba(255,255,255,0.04); }
@@ -1104,7 +1198,7 @@ img { max-width: 100%; display: block; }
 .roi-section {
   padding: 140px 0;
   background: var(--ink-light);
-  border-top: 1px solid rgba(255,255,255,0.04);
+  border-top: 1px solid rgba(255,255,255,0.07);
 }
 .roi-card {
   background: var(--ink);
@@ -1270,7 +1364,7 @@ img { max-width: 100%; display: block; }
 /* ===== FAQ ===== */
 .faq-section {
   padding: 112px 0;
-  border-top: 1px solid rgba(255,255,255,0.04);
+  border-top: 1px solid rgba(255,255,255,0.07);
 }
 .faq-section .section-header { text-align: center; margin-left: auto; margin-right: auto; }
 .faq-list { max-width: 720px; margin: 0 auto; display: grid; gap: 8px; }
@@ -1325,9 +1419,9 @@ img { max-width: 100%; display: block; }
 /* ===== MID-PAGE CTA STRIP ===== */
 .midpage-cta {
   padding: 80px 0;
-  background: var(--ink-light);
-  border-top: 1px solid rgba(255,255,255,0.04);
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  background: var(--ink);
+  border-top: 2px solid rgba(242, 101, 34, 0.35);
+  border-bottom: 2px solid rgba(242, 101, 34, 0.35);
   text-align: center;
 }
 .midpage-cta h3 {
@@ -1339,7 +1433,7 @@ img { max-width: 100%; display: block; }
 .midpage-cta-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
 
 /* ===== BIDINDEX SCORE EXPLAINER ===== */
-.bidindex-section { padding: 140px 0; border-top: 1px solid rgba(255,255,255,0.04); }
+.bidindex-section { padding: 140px 0; border-top: 1px solid rgba(255,255,255,0.07); }
 .bidindex-section .section-header { text-align: center; margin-left: auto; margin-right: auto; }
 .section-sub {
   font-size: 1rem; color: var(--fog); line-height: 1.7;
@@ -1471,6 +1565,7 @@ img { max-width: 100%; display: block; }
 
 <!-- HERO -->
 <section class="hero">
+  <div class="hero-bg-photo"></div>
   <div class="container">
     <div class="hero-grid">
       <div class="hero-text">
@@ -1568,17 +1663,20 @@ img { max-width: 100%; display: block; }
     <div class="proof-bar-inner">
       <div class="proof-stat">
         <span class="num">1 in 5</span>
-        <span class="label">Average bids a sub wins</span>
+        <span class="label">bids won on average</span>
+        <span class="stat-source">industry estimate</span>
       </div>
       <div class="proof-divider"></div>
       <div class="proof-stat">
         <span class="num">80%</span>
-        <span class="label">Of estimating time spent on unwinnable work</span>
+        <span class="label">faster takeoff qualification</span>
+        <span class="stat-source">BidIntell beta users</span>
       </div>
       <div class="proof-divider"></div>
       <div class="proof-stat">
         <span class="num">$75–$300</span>
-        <span class="label">Wasted per bad bid decision before estimating even starts</span>
+        <span class="label">per estimate saved</span>
+        <span class="stat-source">industry estimate</span>
       </div>
     </div>
     <p style="text-align:center; margin-top:24px; font-size:0.85rem; color:var(--fog);">BidIntell helps you filter out the 80% before your estimators invest a single hour.</p>
@@ -1737,7 +1835,7 @@ img { max-width: 100%; display: block; }
   <div class="container" style="text-align:center;">
     <p style="font-size:1.1rem; color:var(--white); font-weight:600; margin-bottom:8px;">Sound like you? Score your next bid in under 2 minutes.</p>
     <p style="font-size:0.9rem; color:var(--fog); margin-bottom:24px;">7-day free trial. No credit card at signup.</p>
-    <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=icp-cta" class="btn-primary" onclick="gtag('event','cta_click',{cta_location:'icp',cta_text:'Score Your First Bid Free'})">Score Your First Bid Free</a>
+    <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=icp-cta" class="btn-secondary" onclick="gtag('event','cta_click',{cta_location:'icp',cta_text:'Score Your First Bid Free'})">Score Your First Bid Free</a>
   </div>
 </section>
 
@@ -2205,12 +2303,15 @@ img { max-width: 100%; display: block; }
             </div>
             <div class="roi-email-success" id="roi-email-success">Check your inbox! 📬 We saved your numbers.</div>
           </div>
-          <a href="#apply" class="btn-primary">Get Started Free</a>
+          <a href="#apply" class="btn-secondary">Get Started Free</a>
         </div>
       </div>
     </div>
   </div>
 </section>
+
+<!-- PHOTO BREAK (image: /images/estimator-at-work.jpg — Ryan to provide) -->
+<section class="photo-break"></section>
 
 <!-- MID-PAGE CTA STRIP -->
 <section class="midpage-cta">
@@ -2218,7 +2319,7 @@ img { max-width: 100%; display: block; }
     <h3>Score your first bid free — 7-day trial, cancel anytime.</h3>
     <p>No sales call. Upload a bid and get a BidIndex Score in about a minute.</p>
     <div class="midpage-cta-actions">
-      <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=midpage-cta" class="btn-primary" onclick="gtag('event','cta_click',{cta_location:'midpage',cta_text:'Start Free Trial'})">Start Free Trial</a>
+      <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=midpage-cta" class="btn-secondary" onclick="gtag('event','cta_click',{cta_location:'midpage',cta_text:'Start Free Trial'})">Start Free Trial</a>
       <a href="/demo" class="btn-secondary" onclick="gtag('event','cta_click',{cta_location:'midpage',cta_text:'Schedule a Demo'})">Schedule a Demo</a>
     </div>
   </div>
@@ -2269,7 +2370,7 @@ img { max-width: 100%; display: block; }
           <li>Team analytics</li>
         </ul>
         <div style="font-size:0.78rem;color:#22c55e;margin-bottom:16px;font-weight:500;">Annual billing available — save 20% ($950/yr)</div>
-        <a href="/app?tier=team&utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=pricing-team-cta" class="btn-primary btn-full" onclick="gtag('event','cta_click',{cta_location:'pricing',cta_text:'Team'})">Get Started Free</a>
+        <a href="/app?tier=team&utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=pricing-team-cta" class="btn-secondary btn-full" onclick="gtag('event','cta_click',{cta_location:'pricing',cta_text:'Team'})">Get Started Free</a>
       </div>
       <!-- Company -->
       <div class="pricing-card">
