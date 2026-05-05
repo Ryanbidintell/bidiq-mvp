@@ -36,7 +36,26 @@ exports.handler = async (event) => {
     if (searchData.data && searchData.data.items && searchData.data.items.length > 0) {
       personId = searchData.data.items[0].item.id;
     } else {
-      // Step 2: Create new person
+      // Step 2: Find or create organization
+      let orgId;
+      const orgSearchRes = await fetch(`${PIPEDRIVE_BASE}/organizations/search?term=${encodeURIComponent(company)}&exact_match=false&api_token=${token}`);
+      const orgSearchData = await orgSearchRes.json();
+      if (orgSearchData.data && orgSearchData.data.items && orgSearchData.data.items.length > 0) {
+        orgId = orgSearchData.data.items[0].item.id;
+      } else {
+        const createOrgRes = await fetch(`${PIPEDRIVE_BASE}/organizations?api_token=${token}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: company }),
+        });
+        const createOrgData = await createOrgRes.json();
+        if (!createOrgData.success) {
+          throw new Error(`Failed to create organization: ${JSON.stringify(createOrgData)}`);
+        }
+        orgId = createOrgData.data.id;
+      }
+
+      // Step 3: Create new person linked to organization
       const createPersonRes = await fetch(`${PIPEDRIVE_BASE}/persons?api_token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,7 +63,7 @@ exports.handler = async (event) => {
           name: fullName,
           email: [{ value: email, primary: true }],
           phone: phone ? [{ value: phone, primary: true }] : undefined,
-          org_name: company,
+          org_id: orgId,
         }),
       });
       const createPersonData = await createPersonRes.json();
@@ -54,7 +73,7 @@ exports.handler = async (event) => {
       personId = createPersonData.data.id;
     }
 
-    // Step 3: Create lead
+    // Step 4: Create lead
     const leadTitle = `${company} — Demo Request`;
     const createLeadRes = await fetch(`${PIPEDRIVE_BASE}/leads?api_token=${token}`, {
       method: 'POST',
@@ -70,7 +89,7 @@ exports.handler = async (event) => {
     }
     const leadId = createLeadData.data.id;
 
-    // Step 4: Add note to lead
+    // Step 5: Add note to lead
     const noteContent = [
       'Demo Request — BidIntell',
       `Trade: ${trade}`,
