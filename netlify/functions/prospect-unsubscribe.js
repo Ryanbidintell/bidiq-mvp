@@ -3,6 +3,7 @@
 // Permanently marks the prospect as unsubscribed — no further emails sent.
 
 const { createClient } = require('@supabase/supabase-js');
+const { markOptedOut } = require('./pipedrive-utils');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -83,6 +84,13 @@ exports.handler = async (event) => {
     });
 
     console.log(`✅ Unsubscribed: ${prospect.owner_email}`);
+
+    // Sync opt-out to Pipedrive — non-fatal
+    try {
+        await markOptedOut(prospect.owner_email);
+    } catch (pErr) {
+        console.error('Pipedrive opt-out sync failed:', pErr.message);
+    }
 
     return {
         statusCode: 200,

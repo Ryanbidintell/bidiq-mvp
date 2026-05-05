@@ -8,6 +8,7 @@
 // Step 4 → 5: Day-14 break-up, marks sequence completed
 
 const { createClient } = require('@supabase/supabase-js');
+const { syncEmailStepToPipedrive } = require('./pipedrive-utils');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -48,7 +49,7 @@ The email should:
 - Reference the recipient's trade and company specifically
 - Open with the cost of a bad bid: 1 bad bid = 6–20 estimating hours × $75–$150/hr = $450–$3,000 wasted
 - Mention BidIntell scores bid invites before you commit estimating hours to them
-- One clear CTA: forward 5 bid invites to ryan@bidintell.ai for a free 1-page scoring report within 24 hours. No call. No pitch.
+- One clear CTA: free to try at bidintell.ai — no credit card, no calls. Drop your next bid invite in and see the score.
 - No subject line. No salutation. No sign-off. Just the body text — the salutation and signature are added separately.`;
 
     const user = `Write a first-touch outbound email to:
@@ -83,7 +84,7 @@ Output only the email body text.`;
     }
 }
 
-// Day 0 — dollar math hook + free 5-invite audit CTA
+// Day 0 — dollar math hook + self-serve signup CTA
 function templateStep1(prospect) {
     const company = prospect.company_name || 'your company';
     return `Quick math on bid triage:
@@ -94,7 +95,7 @@ function templateStep1(prospect) {
 
 If ${company} is chasing more than one of those a month, BidIntell pays for itself 5–50x over.
 
-Free offer: forward 5 of ${company}'s bid invites to ryan@bidintell.ai this week and I'll send back a 1-page report scoring each across 5 factors (location, contract risk, client history, trade match, competitive pressure) within 24 hrs. No call. No pitch.`;
+Free to try at bidintell.ai — no credit card, no calls. Drop your next bid invite in and see the score.`;
 }
 
 // Day 2 — tribal knowledge / data moat
@@ -106,7 +107,7 @@ BidIntell quantifies it. Win rate by GC. Win rate by project type. Pay behavior.
 
 That's how you scale past today's relationships.
 
-Free 5-invite audit still on the table. Forward to ryan@bidintell.ai.`;
+Free to try at bidintell.ai — no credit card, no calls.`;
 }
 
 // Day 5 — full offer + pricing
@@ -118,7 +119,11 @@ You get: BidIntell scoring engine (5 factors, every invite), GC database that le
 
 You pay: $470 / $950 / $1,720 per year (Starter / Pro / Team)
 
-Want to start with the free 5-invite audit? Forward to ryan@bidintell.ai.`;
+Kill at least 1 bad bid in 30 days or we refund you, no questions.
+
+We are capping founding members at 50. After that, founding pricing goes away.
+
+Try it free at bidintell.ai — no credit card, no calls.`;
 }
 
 // Day 9 — founding-member pricing reminder + urgency
@@ -126,9 +131,11 @@ function templateStep4(prospect) {
     const company = prospect.company_name || 'your company';
     return `Founding-member pricing locks for life — the rate you sign up at stays put as long as you're a customer.
 
-If ${company} gets 20+ invites a week and you're tired of chasing the wrong ones, hit reply or forward 5 to ryan@bidintell.ai.
+We are capping founding members at 50. After that, founding pricing goes away.
 
-Worst case: free audit. Best case: you kill a bad bid in week 1 and the tool pays for the year.`;
+If ${company} gets 20+ invites a week and you're tired of chasing the wrong ones, try it free at bidintell.ai.
+
+Kill at least 1 bad bid in 30 days or we refund you, no questions.`;
 }
 
 // Day 14 — break-up
@@ -247,6 +254,13 @@ exports.handler = async () => {
             await logEvent(prospect.id, 'email_sent', step, { subject, sent_at: nowIso });
             sent++;
             console.log(`✅ Step ${step} → ${prospect.owner_email}`);
+
+            // Sync email step to Pipedrive — non-fatal, does not affect email delivery
+            try {
+                await syncEmailStepToPipedrive(prospect.owner_email, step, subject);
+            } catch (pErr) {
+                console.error(`Pipedrive step sync failed for ${prospect.owner_email}:`, pErr.message);
+            }
         } catch (err) {
             console.error(`❌ Failed for ${prospect.owner_email}:`, err.message);
             skipped++;
