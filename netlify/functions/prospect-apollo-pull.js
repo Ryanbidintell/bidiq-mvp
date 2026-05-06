@@ -56,10 +56,15 @@ function normalizeTrade(industry) {
 }
 
 async function callApollo(payload) {
+    const { api_key, ...body } = payload;
     const res = await fetch(APOLLO_SEARCH_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
-        body: JSON.stringify(payload)
+        headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-Api-Key': api_key || APOLLO_API_KEY
+        },
+        body: JSON.stringify(body)
     });
     if (!res.ok) {
         const errText = await res.text();
