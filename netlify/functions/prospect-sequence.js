@@ -190,10 +190,11 @@ exports.handler = async () => {
     console.log('📬 Prospect sequence running:', new Date().toISOString());
 
     const now = new Date();
-    const day2Cutoff = new Date(now - 2 * 24 * 60 * 60 * 1000).toISOString();
-    const day3Cutoff = new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString();
-    const day4Cutoff = new Date(now - 4 * 24 * 60 * 60 * 1000).toISOString();
-    const day5Cutoff = new Date(now - 5 * 24 * 60 * 60 * 1000).toISOString();
+    const H = 60 * 60 * 1000; // 2-hour buffer guards against Netlify early-fire timing drift
+    const day2Cutoff = new Date(now - (48 - 2) * H).toISOString();
+    const day3Cutoff = new Date(now - (72 - 2) * H).toISOString();
+    const day4Cutoff = new Date(now - (96 - 2) * H).toISOString();
+    const day5Cutoff = new Date(now - (120 - 2) * H).toISOString();
 
     const { data: prospects, error } = await supabase
         .from('prospects')
