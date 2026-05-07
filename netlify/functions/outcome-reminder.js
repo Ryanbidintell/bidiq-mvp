@@ -171,7 +171,7 @@ exports.handler = async () => {
             .eq('outcome', 'pending')
             .lt('created_at', cutoff.toISOString())
             .lt('outcome_nudge_count', MAX_NUDGES)
-            .neq('extracted_data->>bc_source', 'buildingconnected');
+            .or('extracted_data->>bc_source.is.null,extracted_data->>bc_source.neq.buildingconnected');
 
         if (bidsErr) {
             console.warn(`[outcome-reminder] Error loading bids for ${user_email}:`, bidsErr.message);
