@@ -74,7 +74,7 @@ function buildReminderHtml({ name, nudgeCount, bids, snoozeUrl7, snoozeUrl14, sk
     }).join('');
 
     const headline = nudgeCount === 0
-        ? `Hey ${name} — what happened with ${bidCount === 1 ? 'this bid' : 'these bids'}?`
+        ? `What happened with ${bidCount === 1 ? 'this bid' : 'these bids'}?`
         : `Still waiting on ${bidCount === 1 ? 'one outcome' : `${bidCount} outcomes`}`;
 
     const intro = nudgeCount === 0
@@ -210,7 +210,7 @@ exports.handler = async () => {
 
         const bidCount = bidsWithTokens.length;
         const subject = nudgeCount === 0
-            ? (bidCount === 1 ? `What happened with that bid? — 1 outcome missing` : `What happened with those ${bidCount} bids? — outcomes missing`)
+            ? (bidCount === 1 ? `What happened with that bid?` : `What happened with those ${bidCount} bids?`)
             : (bidCount === 1 ? `Still waiting on 1 outcome` : `Still waiting on ${bidCount} outcomes`);
 
         const html = buildReminderHtml({
