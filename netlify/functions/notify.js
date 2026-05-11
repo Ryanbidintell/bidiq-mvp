@@ -15,7 +15,7 @@ const ADMIN_ONLY_TYPES = ['beta_approval', 'founding_coupon', 'beta_to_paid_warn
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function sendEmail({ to, subject, htmlBody }) {
-    const isInternalOnly = to === 'ryan@fsikc.com';
+    const isInternalOnly = to === 'ryan@bidintell.ai';
     const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -69,7 +69,7 @@ exports.handler = async function(event, context) {
         if (!emailType || emailType === 'error') {
             const { errorType, errorMessage, userEmail, stackTrace } = body;
             await sendEmail({
-                to: 'ryan@fsikc.com',
+                to: 'ryan@bidintell.ai',
                 subject: `🚨 BidIntell Error: ${errorType}`,
                 htmlBody: `
                     <h2>Error Report</h2>
@@ -108,7 +108,7 @@ exports.handler = async function(event, context) {
 
             // Notification to Ryan
             await sendEmail({
-                to: 'ryan@fsikc.com',
+                to: 'ryan@bidintell.ai',
                 subject: `🔔 New BidIntell beta application: ${fullName}`,
                 htmlBody: `
                     <h2>New Beta Application</h2>
@@ -170,7 +170,7 @@ exports.handler = async function(event, context) {
             `;
             const contactSubject = `[BidIntell Contact] ${subject} — from ${fullName}`;
 
-            await sendEmail({ to: 'ryan@fsikc.com', subject: contactSubject, htmlBody: contactHtml });
+            await sendEmail({ to: 'ryan@bidintell.ai', subject: contactSubject, htmlBody: contactHtml });
 
             return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
         }
@@ -218,7 +218,7 @@ exports.handler = async function(event, context) {
 
             // Notify Ryan too
             await sendEmail({
-                to: 'ryan@fsikc.com',
+                to: 'ryan@bidintell.ai',
                 subject: `✅ Beta-to-paid warning sent to ${fullName} (${userEmail})`,
                 htmlBody: `<p>Beta-to-paid transition email sent to <strong>${fullName}</strong> (${userEmail}) for the <strong>${plan}</strong> plan at <strong>${price}/mo</strong>.</p>`
             });
@@ -379,7 +379,7 @@ exports.handler = async function(event, context) {
 
             // Internal notification
             await sendEmail({
-                to: 'ryan@fsikc.com',
+                to: 'ryan@bidintell.ai',
                 subject: `📊 New ROI calculator lead: ${userEmail}`,
                 htmlBody: `<p>New ROI calculator lead captured.</p><p><strong>Email:</strong> ${userEmail}</p><p><strong>Numbers:</strong> ${bids} bids/yr, ${hours} hrs/bid, ${winRate}% win rate, ${fmt(avgValue)} avg value, ${margin}% margin</p><p><strong>Projected additional margin:</strong> ${fmt(addlMargin)}/yr</p>`
             });
@@ -483,7 +483,7 @@ exports.handler = async function(event, context) {
 
             // Internal notification — fire and forget, never block user on this
             sendEmail({
-                to: 'ryan@fsikc.com',
+                to: 'ryan@bidintell.ai',
                 subject: isNewUser ? `New signup: ${userEmail}` : `Login link sent: ${userEmail}`,
                 htmlBody: isNewUser
                     ? `<p>New user — magic link sent.</p><p><strong>Email:</strong> ${userEmail}</p>`
