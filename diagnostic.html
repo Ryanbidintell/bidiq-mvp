@@ -74,6 +74,7 @@
     .nav-links a:hover { color: var(--white); }
     .nav-cta { display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px; background: var(--accent); color: white !important; border-radius: var(--radius); font-weight: 600; font-size: 0.875rem; transition: background 0.2s, transform 0.15s; }
     .nav-cta:hover { background: var(--accent-dark); transform: translateY(-1px); }
+    .mobile-menu-btn { display: none; background: none; border: none; color: var(--fog); cursor: pointer; padding: 8px; }
 
     /* ── HERO ── */
     .hero { padding: 160px 0 120px; position: relative; overflow: hidden; }
@@ -214,7 +215,8 @@
       .section, .section-alt { padding: 80px 0; }
       .two-col { grid-template-columns: 1fr; }
       .card, .problem-card { padding: 28px 24px; }
-      .nav-links li:not(:last-child):not(:nth-last-child(2)) { display: none; }
+      .nav-links { display: none; }
+      .mobile-menu-btn { display: block; }
     }
   </style>
 </head>
@@ -227,11 +229,19 @@
         BidIntell
       </a>
       <ul class="nav-links">
-        <li><a href="/">Home</a></li>
+        <li><a href="/#how">How It Works</a></li>
+        <li><a href="/#features">Features</a></li>
+        <li><a href="/#who">Who It's For</a></li>
+        <li><a href="/#pricing">Pricing</a></li>
         <li><a href="/diagnostic" style="color: var(--white); font-weight: 600;">Diagnostic</a></li>
-        <li><a href="/app" style="color: var(--cloud);">Sign In</a></li>
+        <li><a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=nav-cta" style="color: var(--cloud);">Sign In</a></li>
         <li><a href="/demo" class="nav-cta">Schedule a Demo</a></li>
       </ul>
+      <button class="mobile-menu-btn" aria-label="Menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12h18M3 6h18M3 18h18"/>
+        </svg>
+      </button>
     </div>
   </nav>
 
@@ -261,7 +271,7 @@
             <div class="mc-eyebrow">Sample Diagnostic Memo</div>
             <div class="mc-header">
               <div>
-                <span class="mc-company">Summit Sealants</span>
+                <span class="mc-company">Apex Mechanical</span>
                 <span class="mc-date">May 8, 2026 &nbsp;·&nbsp; Overland Park, KS</span>
               </div>
               <div class="mc-badge">Delivered</div>
@@ -563,6 +573,24 @@
       if (typeof gtag === 'function') gtag('event', 'diagnostic_cta_click', { location, page: 'diagnostic' });
     }
     if (typeof gtag === 'function') gtag('event', 'diagnostic_page_view');
+    document.querySelector('.mobile-menu-btn')?.addEventListener('click', () => {
+      const links = document.querySelector('.nav-links');
+      const isVisible = links.style.display === 'flex';
+      if (!isVisible) {
+        links.style.display = 'flex';
+        links.style.position = 'absolute';
+        links.style.top = '64px';
+        links.style.left = '0';
+        links.style.right = '0';
+        links.style.background = 'rgba(11,15,20,0.98)';
+        links.style.flexDirection = 'column';
+        links.style.padding = '16px 24px 24px';
+        links.style.gap = '16px';
+        links.style.borderBottom = '1px solid rgba(255,255,255,0.06)';
+      } else {
+        links.style.display = 'none';
+      }
+    });
     window.addEventListener('message', function(e) {
       if (!e.data || typeof e.data.event !== 'string') return;
       if (e.data.event === 'calendly.event_scheduled') {
