@@ -1431,6 +1431,17 @@ img { max-width: 100%; display: block; }
 }
 .midpage-cta p { font-size: 1rem; color: var(--fog); margin-bottom: 28px; max-width: 480px; margin-left: auto; margin-right: auto; }
 .midpage-cta-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.diag-callout-section { padding: 80px 0; background: var(--ink-light); }
+.diag-callout-card { display: grid; grid-template-columns: 1fr auto; gap: 60px; align-items: center; border: 1px solid rgba(242,101,34,0.25); border-radius: 16px; padding: 48px 56px; position: relative; overflow: hidden; }
+.diag-callout-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), transparent 60%); }
+.diag-callout-left .section-tag { margin-bottom: 12px; }
+.diag-callout-left h2 { font-size: clamp(1.4rem, 2.5vw, 2rem); font-weight: 700; letter-spacing: -0.025em; margin: 0 0 16px; color: var(--white); }
+.diag-callout-left p { color: var(--fog); font-size: 1rem; line-height: 1.7; margin-bottom: 28px; max-width: 520px; }
+.diag-callout-right { display: flex; flex-direction: column; gap: 28px; min-width: 140px; }
+.diag-stat { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.diag-stat-num { font-family: 'Geist Mono', monospace; font-size: 2.25rem; font-weight: 700; color: var(--accent); line-height: 1; }
+.diag-stat-label { font-size: 0.7rem; color: var(--fog); margin-top: 5px; letter-spacing: 0.06em; text-transform: uppercase; }
+@media (max-width: 860px) { .diag-callout-card { grid-template-columns: 1fr; padding: 36px 28px; } .diag-callout-right { flex-direction: row; justify-content: flex-start; gap: 32px; } }
 
 /* ===== BIDINDEX SCORE EXPLAINER ===== */
 .bidindex-section { padding: 140px 0; border-top: 1px solid rgba(255,255,255,0.07); }
@@ -1552,6 +1563,7 @@ img { max-width: 100%; display: block; }
       <li><a href="#features">Features</a></li>
       <li><a href="#who">Who It's For</a></li>
       <li><a href="#pricing">Pricing</a></li>
+      <li><a href="/diagnostic">Diagnostic</a></li>
       <li><a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=nav-cta" style="color: var(--cloud);">Sign In</a></li>
       <li><a href="/demo" class="nav-cta">Schedule a Demo</a></li>
     </ul>
@@ -2321,6 +2333,25 @@ img { max-width: 100%; display: block; }
     <div class="midpage-cta-actions">
       <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=midpage-cta" class="btn-secondary" onclick="gtag('event','cta_click',{cta_location:'midpage',cta_text:'Start Free Trial'})">Start Free Trial</a>
       <a href="/demo" class="btn-secondary" onclick="gtag('event','cta_click',{cta_location:'midpage',cta_text:'Schedule a Demo'})">Schedule a Demo</a>
+    </div>
+  </div>
+</section>
+
+<!-- DIAGNOSTIC CALLOUT -->
+<section class="diag-callout-section">
+  <div class="container">
+    <div class="diag-callout-card">
+      <div class="diag-callout-left">
+        <span class="section-tag">Free offer</span>
+        <h2>Not sure BidIntell is right for you?</h2>
+        <p>Book a free 30-minute Bid Selection Diagnostic. We'll review 3–5 of your recent bids, pinpoint where you're leaking win rate or margin, and send you a written brief — no pitch, no strings.</p>
+        <a href="/diagnostic" class="btn-primary" onclick="gtag('event','cta_click',{cta_location:'diag_callout',cta_text:'Get My Free Diagnostic'})">Get My Free Diagnostic →</a>
+      </div>
+      <div class="diag-callout-right">
+        <div class="diag-stat"><span class="diag-stat-num">30</span><span class="diag-stat-label">min call</span></div>
+        <div class="diag-stat"><span class="diag-stat-num">3–5</span><span class="diag-stat-label">days to insights</span></div>
+        <div class="diag-stat"><span class="diag-stat-num">$0</span><span class="diag-stat-label">cost</span></div>
+      </div>
     </div>
   </div>
 </section>

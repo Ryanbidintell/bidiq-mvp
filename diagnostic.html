@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Bid Selection Diagnostic for Specialty Sub Owners | BidIntell</title>
+  <meta name="description" content="30 minutes on a call. Written one-page read on your bid selection patterns. No pitch attached. For owner/presidents at specialty subcontractors $2M-$20M.">
+  <meta property="og:title" content="Free Bid Selection Diagnostic for Specialty Sub Owners">
+  <meta property="og:description" content="30 minutes. Written read on your bid selection. No pitch.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://bidintell.ai/diagnostic">
+  <meta property="og:site_name" content="BidIntell">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="canonical" href="https://bidintell.ai/diagnostic">
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XGYJLV0E6G"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XGYJLV0E6G');
+  </script>
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "vtnhbrqro2");
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    :root {
+      --ink: #0B0F14;
+      --ink-light: #141A23;
+      --ink-mid: #1C2533;
+      --slate: #384254;
+      --slate-light: #5A6A7E;
+      --fog: #94A3B8;
+      --cloud: #CBD5E1;
+      --white: #F8FAFC;
+      --accent: #F26522;
+      --accent-dark: #D4551A;
+      --accent-glow: rgba(242, 101, 34, 0.15);
+      --green: #22C55E;
+      --green-muted: rgba(34, 197, 94, 0.12);
+      --red: #EF4444;
+      --red-muted: rgba(239, 68, 68, 0.12);
+      --yellow: #EAB308;
+      --yellow-muted: rgba(234, 179, 8, 0.12);
+      --radius: 6px;
+      --radius-lg: 10px;
+      --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --mono: 'Geist Mono', monospace;
+    }
+
+    body { font-family: var(--font); background: var(--ink); color: var(--cloud); line-height: 1.6; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    a { color: inherit; text-decoration: none; }
+    .container { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── NAV ── */
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(11,15,20,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .nav-inner { max-width: 1160px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.25rem; color: var(--white); letter-spacing: -0.02em; }
+    .logo-mark { width: 32px; height: 32px; background: var(--accent); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.75rem; font-weight: 700; color: white; letter-spacing: -0.04em; flex-shrink: 0; }
+    .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+    .nav-links a { font-size: 0.875rem; font-weight: 500; color: var(--fog); transition: color 0.2s; white-space: nowrap; }
+    .nav-links a:hover { color: var(--white); }
+    .nav-cta { display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px; background: var(--accent); color: white !important; border-radius: var(--radius); font-weight: 600; font-size: 0.875rem; transition: background 0.2s, transform 0.15s; }
+    .nav-cta:hover { background: var(--accent-dark); transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .hero { padding: 160px 0 120px; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 800px; height: 600px; background: radial-gradient(ellipse, var(--accent-glow), transparent 70%); pointer-events: none; opacity: 0.5; }
+    .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; position: relative; }
+    .hero-tag { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--accent-glow); border: 1px solid rgba(242,101,34,0.25); border-radius: 100px; font-size: 0.8rem; font-weight: 600; color: var(--accent); margin-bottom: 24px; letter-spacing: 0.02em; }
+    .hero-tag .dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+    .hero h1 { font-size: clamp(2.25rem, 4.5vw, 3.25rem); font-weight: 700; color: var(--white); line-height: 1.15; letter-spacing: -0.03em; margin-bottom: 20px; }
+    .hero h1 span { color: var(--accent); }
+    .hero-sub { font-size: 1.125rem; color: var(--fog); line-height: 1.7; margin-bottom: 36px; max-width: 480px; }
+    .hero-actions { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+    .hero-meta { font-size: 0.8rem; color: var(--slate-light); margin-top: 14px; }
+
+    /* ── BUTTONS ── */
+    .btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: var(--accent); color: white; border: none; border-radius: var(--radius); font-family: var(--font); font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s; letter-spacing: -0.01em; text-decoration: none; }
+    .btn-primary:hover { background: var(--accent-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(242,101,34,0.3); color: white; }
+    .btn-secondary { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: transparent; color: var(--cloud); border: 1px solid var(--slate); border-radius: var(--radius); font-family: var(--font); font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+    .btn-secondary:hover { border-color: var(--fog); color: var(--white); }
+
+    /* ── MEMO CARD (hero visual) ── */
+    .memo-card { background: var(--ink-light); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-lg); padding: 28px; box-shadow: 0 24px 80px rgba(0,0,0,0.4); position: relative; }
+    .memo-card::after { content: ''; position: absolute; inset: -1px; border-radius: var(--radius-lg); background: linear-gradient(135deg, rgba(242,101,34,0.12), transparent 50%); z-index: -1; }
+    .mc-eyebrow { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate-light); margin-bottom: 14px; font-weight: 500; font-family: var(--mono); }
+    .mc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .mc-company { font-weight: 600; color: var(--white); font-size: 1rem; display: block; margin-bottom: 4px; }
+    .mc-date { font-size: 0.8rem; color: var(--fog); display: block; }
+    .mc-badge { padding: 4px 12px; border-radius: 100px; font-size: 0.75rem; font-weight: 700; font-family: var(--mono); letter-spacing: 0.02em; background: var(--green-muted); color: var(--green); white-space: nowrap; }
+    .mc-section-label { font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 10px; }
+    .mc-finding { background: var(--ink-mid); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px; }
+    .mc-finding p { font-size: 0.875rem; color: var(--cloud); line-height: 1.5; }
+    .mc-rows { display: grid; gap: 8px; margin-bottom: 16px; }
+    .mc-row { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: var(--fog); }
+    .mc-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .mc-dot.red { background: var(--red); }
+    .mc-dot.green { background: var(--green); }
+    .mc-dot.accent { background: var(--accent); }
+    .mc-footer { padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; gap: 10px; flex-wrap: wrap; }
+    .mc-tag { display: flex; align-items: center; gap: 6px; padding: 5px 10px; background: var(--ink-mid); border-radius: var(--radius); font-size: 0.75rem; color: var(--fog); font-family: var(--mono); }
+
+    /* ── PROOF / STATS BAR ── */
+    .proof-bar { padding: 56px 0; background: var(--ink-light); border-top: 1px solid rgba(255,255,255,0.07); border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .proof-bar-inner { display: flex; align-items: center; justify-content: center; gap: 56px; flex-wrap: wrap; }
+    .proof-stat { text-align: center; }
+    .proof-stat .num { font-family: var(--mono); font-size: 1.5rem; font-weight: 700; color: var(--white); display: block; }
+    .proof-stat .label { font-size: 0.8rem; color: var(--fog); margin-top: 4px; }
+    .proof-divider { width: 1px; height: 40px; background: var(--slate); }
+
+    /* ── SECTION WRAPPERS ── */
+    .section { padding: 120px 0; }
+    .section-alt { padding: 120px 0; background: var(--ink-light); border-top: 1px solid rgba(255,255,255,0.07); border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .section-header { max-width: 640px; margin-bottom: 64px; }
+    .section-tag { font-family: var(--mono); font-size: 0.75rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 16px; display: block; }
+    .section-header h2 { font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 700; color: var(--white); line-height: 1.2; letter-spacing: -0.025em; margin-bottom: 16px; }
+    .section-header p { font-size: 1.05rem; color: var(--fog); line-height: 1.7; }
+
+    /* ── STEPS (how it works — exact from index.html) ── */
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; position: relative; }
+    .steps::before { content: ''; position: absolute; top: 24px; left: calc(33.33% / 2 + 24px); right: calc(33.33% / 2 + 24px); height: 2px; background: var(--slate); z-index: 0; }
+    .step { text-align: center; position: relative; z-index: 1; }
+    .step-num { width: 48px; height: 48px; background: var(--ink); border: 2px solid var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 1rem; font-weight: 700; color: var(--accent); margin: 0 auto 20px; }
+    .step-icon { font-size: 1.5rem; margin-bottom: 12px; color: var(--fog); }
+    .step h3 { font-size: 1.05rem; font-weight: 600; color: var(--white); margin-bottom: 8px; }
+    .step p { font-size: 0.9rem; color: var(--fog); line-height: 1.6; max-width: 280px; margin: 0 auto; }
+
+    /* ── PROBLEM CARDS (exact from index.html) ── */
+    .problem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .problem-card { background: var(--ink-light); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-lg); padding: 40px 32px; transition: border-color 0.3s, transform 0.2s; }
+    .problem-card:hover { border-color: rgba(242,101,34,0.2); transform: translateY(-2px); }
+    .pc-icon { width: 44px; height: 44px; background: var(--ink-mid); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; color: var(--accent); }
+    .problem-card h3 { font-size: 1.1rem; font-weight: 600; color: var(--white); margin-bottom: 12px; letter-spacing: -0.01em; }
+    .problem-card p { font-size: 0.95rem; color: var(--fog); line-height: 1.65; }
+    .stat-callout { margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); font-family: var(--mono); font-size: 0.85rem; color: var(--accent); font-weight: 700; }
+
+    /* ── TWO-COL CARDS ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .card { background: var(--ink-light); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-lg); padding: 40px 32px; transition: border-color 0.3s, transform 0.2s; }
+    .card:hover { border-color: rgba(242,101,34,0.2); transform: translateY(-2px); }
+    .card.highlight { border-color: rgba(242,101,34,0.25); background: linear-gradient(135deg, rgba(242,101,34,0.07) 0%, var(--ink-light) 60%); }
+    .card h3 { font-size: 1.25rem; font-weight: 600; color: var(--white); margin-bottom: 16px; letter-spacing: -0.01em; }
+    .card h3.accent { color: var(--accent); }
+    .card h3.muted { color: var(--slate-light); }
+    .card p { font-size: 0.95rem; color: var(--fog); line-height: 1.65; margin-bottom: 14px; }
+    .card p:last-child { margin-bottom: 0; }
+    .card p strong { color: var(--cloud); font-weight: 600; }
+
+    /* ── CALLOUT QUOTE ── */
+    .callout { background: var(--ink-light); border-left: 3px solid var(--accent); padding: 28px 32px; border-radius: 0 var(--radius-lg) var(--radius-lg) 0; margin-top: 40px; }
+    .callout p { font-size: 1.1rem; line-height: 1.65; color: var(--cloud); font-style: italic; }
+
+    /* ── CHECK / X LISTS ── */
+    .check-list { list-style: none; padding: 0; margin-top: 8px; }
+    .check-list li { padding: 11px 0 11px 28px; position: relative; color: var(--fog); font-size: 0.95rem; line-height: 1.5; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .check-list li:last-child { border-bottom: none; }
+    .check-list li::before { content: ""; position: absolute; left: 0; top: 17px; width: 15px; height: 15px; background: var(--accent); mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'><path d='M3 8L7 12L13 4' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat center; -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'><path d='M3 8L7 12L13 4' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat center; }
+    .x-list li::before { background: var(--slate-light); mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'><path d='M4 4L12 12M12 4L4 12' stroke='black' stroke-width='2.5' stroke-linecap='round'/></svg>") no-repeat center; -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'><path d='M4 4L12 12M12 4L4 12' stroke='black' stroke-width='2.5' stroke-linecap='round'/></svg>") no-repeat center; }
+
+    /* ── ABOUT ── */
+    .about-wrap { max-width: 680px; margin: 0 auto; text-align: center; }
+    .about-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--accent); display: inline-flex; align-items: center; justify-content: center; color: #fff; font-family: var(--mono); font-size: 1.5rem; font-weight: 700; margin-bottom: 24px; }
+    .about-wrap h2 { font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 700; color: var(--white); letter-spacing: -0.025em; margin-bottom: 24px; }
+    .about-wrap p { color: var(--fog); font-size: 1.05rem; line-height: 1.7; margin-bottom: 14px; }
+    .about-wrap p strong { color: var(--cloud); font-weight: 600; }
+
+    /* ── BOOK / CALENDLY ── */
+    .book-header { text-align: center; margin-bottom: 48px; }
+    .book-header h2 { font-size: clamp(1.75rem, 3vw, 2.5rem); font-weight: 700; color: var(--white); letter-spacing: -0.025em; margin-bottom: 14px; }
+    .book-header p { font-size: 1.05rem; color: var(--fog); }
+    .calendly-wrap { background: var(--ink-light); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-lg); overflow: hidden; }
+
+    /* ── FAQ ── */
+    .faq-list { max-width: 760px; margin: 0 auto; }
+    .faq-item { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 24px 0; }
+    .faq-item h3 { font-size: 1rem; font-weight: 600; color: var(--white); margin-bottom: 8px; }
+    .faq-item p { color: var(--fog); font-size: 0.95rem; line-height: 1.65; }
+    .faq-item a { color: var(--accent); }
+    .faq-item a:hover { text-decoration: underline; }
+
+    /* ── FOOTER ── */
+    .footer { padding: 48px 0 36px; border-top: 1px solid rgba(255,255,255,0.04); }
+    .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+    .footer-left { display: flex; align-items: center; gap: 10px; }
+    .footer-left .logo-mark { width: 28px; height: 28px; background: var(--accent); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.65rem; font-weight: 700; color: white; }
+    .footer-copy { font-size: 0.8rem; color: var(--slate-light); }
+    .footer-links { display: flex; gap: 24px; list-style: none; }
+    .footer-links a { font-size: 0.8rem; color: var(--fog); transition: color 0.2s; }
+    .footer-links a:hover { color: var(--white); }
+
+    /* ── MOBILE ── */
+    @media (max-width: 900px) {
+      .hero-grid { grid-template-columns: 1fr; }
+      .hero-visual { display: none; }
+      .steps { grid-template-columns: 1fr; }
+      .steps::before { display: none; }
+      .problem-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .hero { padding: 120px 0 80px; }
+      .section, .section-alt { padding: 80px 0; }
+      .two-col { grid-template-columns: 1fr; }
+      .card, .problem-card { padding: 28px 24px; }
+      .nav-links li:not(:last-child):not(:nth-last-child(2)) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <div class="logo-mark">BI</div>
+        BidIntell
+      </a>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/diagnostic" style="color: var(--white); font-weight: 600;">Diagnostic</a></li>
+        <li><a href="/app" style="color: var(--cloud);">Sign In</a></li>
+        <li><a href="/demo" class="nav-cta">Schedule a Demo</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-grid">
+        <div>
+          <div class="hero-tag">
+            <span class="dot"></span>
+            Free · 10 slots per month
+          </div>
+          <h1>Free <span>bid selection diagnostic</span> for specialty sub owners</h1>
+          <p class="hero-sub">
+            30 minutes on a call. Written one-page read on your bid selection patterns. No pitch attached, no product walkthrough.
+          </p>
+          <div class="hero-actions">
+            <a href="#book" class="btn-primary" onclick="trackCTA('hero')">Book a diagnostic →</a>
+            <a href="#how" class="btn-secondary">See how it works</a>
+          </div>
+          <p class="hero-meta">Owner/Presidents at specialty subs $2M–$20M &nbsp;•&nbsp; No credit card</p>
+        </div>
+
+        <!-- MEMO CARD MOCK -->
+        <div class="hero-visual">
+          <div class="memo-card">
+            <div class="mc-eyebrow">Sample Diagnostic Memo</div>
+            <div class="mc-header">
+              <div>
+                <span class="mc-company">Summit Sealants</span>
+                <span class="mc-date">May 8, 2026 &nbsp;·&nbsp; Overland Park, KS</span>
+              </div>
+              <div class="mc-badge">Delivered</div>
+            </div>
+
+            <div class="mc-section-label">Key pattern identified</div>
+            <div class="mc-finding">
+              <p>3 of your last 5 losses involved GCs you've noted as slow payers. The bids are competitive — the client selection isn't serving your business.</p>
+            </div>
+
+            <div class="mc-section-label">Recommendations</div>
+            <div class="mc-rows">
+              <div class="mc-row">
+                <span class="mc-dot red"></span>
+                Stop chasing: Consolidated Construction
+              </div>
+              <div class="mc-row">
+                <span class="mc-dot green"></span>
+                Double down: Medical &amp; tenant finish scope
+              </div>
+              <div class="mc-row">
+                <span class="mc-dot accent"></span>
+                Explore: South KC commercial corridor
+              </div>
+            </div>
+
+            <div class="mc-footer">
+              <span class="mc-tag">10 bids reviewed</span>
+              <span class="mc-tag">4 patterns found</span>
+              <span class="mc-tag">1-page memo</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROOF BAR -->
+  <section class="proof-bar">
+    <div class="container">
+      <div class="proof-bar-inner">
+        <div class="proof-stat">
+          <span class="num">30 min</span>
+          <span class="label">structured call</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-stat">
+          <span class="num">3–5 days</span>
+          <span class="label">memo turnaround</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-stat">
+          <span class="num">10 slots</span>
+          <span class="label">per month cap</span>
+        </div>
+        <div class="proof-divider"></div>
+        <div class="proof-stat">
+          <span class="num">$0</span>
+          <span class="label">no pitch on the call</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" id="how">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">How it works</span>
+        <h2>Book. Talk. Read your memo.</h2>
+        <p>The whole process takes 30 minutes of your time. The analysis takes me 3–5 days after the call.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+          <h3>Book a 30-minute slot</h3>
+          <p>Pick a time below. The intake form asks for your trade, revenue range, and a rough summary of your recent bid history — takes 60 seconds.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <h3>Walk through your last 10 bids</h3>
+          <p>Wins, losses, the ones you regret chasing. No prep needed — rough recall is fine. I ask the questions, you talk.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <h3>Receive your written memo</h3>
+          <p>A one-page read on the patterns in your bid selection — GCs to flag, scopes to prioritize, decisions you're making on gut that data could inform.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section class="section-alt">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">The problem this addresses</span>
+        <h2>Most subs lose money on the bids they shouldn't have chased — not the ones they lost.</h2>
+        <p>If you've ever finished a bid pursuit thinking "I knew on day 3 we weren't going to win this one," this diagnostic is built for you.</p>
+      </div>
+      <div class="problem-grid">
+        <div class="problem-card">
+          <div class="pc-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <h3>No bid/no-bid process</h3>
+          <p>The invite hits, the takeoff starts, and three hours later inertia carries it the rest of the way. There was never a real decision made.</p>
+          <div class="stat-callout">Most shops can't name their decision criteria</div>
+        </div>
+        <div class="problem-card">
+          <div class="pc-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <h3>Chasing the wrong clients</h3>
+          <p>Slow payers, GCs who bid-shop, clients outside your geographic core. The pattern is usually obvious once someone maps it — it's just never been mapped.</p>
+          <div class="stat-callout">Client selection is the biggest lever most subs ignore</div>
+        </div>
+        <div class="problem-card">
+          <div class="pc-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+            </svg>
+          </div>
+          <h3>No feedback loop</h3>
+          <p>Win or lose, the knowledge stays in someone's head. Your bid history is the most valuable data you have — but only if you look at it as a pattern, not a list.</p>
+          <div class="stat-callout">The memo is that outside look</div>
+        </div>
+      </div>
+      <div class="callout">
+        <p>The bids that hurt aren't usually the close losses. They're the ones where the invite hit, the takeoff started, and three hours later inertia carried it the rest of the way.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE EXCHANGE -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">The exchange</span>
+        <h2>What you get. What I get.</h2>
+        <p>A fair trade — your time and honest answers, in exchange for an outside read on your bid selection.</p>
+      </div>
+      <div class="two-col">
+        <div class="card highlight">
+          <h3>What you get</h3>
+          <p>A 30-minute structured conversation walking through your last 10 bids — wins, losses, and the ones you regret chasing.</p>
+          <p>Three to five business days later, a written one-page memo on the patterns I see in your bid selection: GCs to flag, scopes to second-guess, decisions you're making on gut that you could be making on data.</p>
+          <p><strong>No product walkthrough. No pitch on the call. The deliverable is the memo.</strong></p>
+        </div>
+        <div class="card">
+          <h3>What I get</h3>
+          <p>Honest input from sub owners on what actually drives bid/no-bid decisions.</p>
+          <p>I'm building BidIntell — software that scores bids before you commit estimating time. The only way to build it right is by talking to the people doing the work.</p>
+          <p>If something in the memo sparks a conversation about BidIntell afterward, I'll send one short follow-up email. If not, no pressure either way.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FIT CHECK -->
+  <section class="section-alt">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Fit check</span>
+        <h2>Who this is built for</h2>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <h3 class="accent">This is for you if</h3>
+          <ul class="check-list">
+            <li>You're the owner or president of a specialty subcontractor</li>
+            <li>$2M to $20M in annual revenue</li>
+            <li>Commercial work — Division 10/12, flooring, insulation, MEP, glazing, and similar trades</li>
+            <li>You make or heavily influence the bid/no-bid call</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 class="muted">This isn't for you if</h3>
+          <ul class="check-list x-list">
+            <li>You're a GC or CM (different problem, different tool)</li>
+            <li>You're an estimator looking for takeoff software (BidIntell doesn't do takeoff)</li>
+            <li>Your company is under $1M or over $50M (different bid economics)</li>
+            <li>You're not the one making the bid/no-bid decision</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="section">
+    <div class="container">
+      <div class="about-wrap">
+        <div class="about-avatar">RE</div>
+        <h2>About me</h2>
+        <p><strong>Ryan Elder.</strong> Spent 20+ years in commercial construction. Built a Division 10/12 specialty sub from zero to roughly $8M before shutting it down when it stopped being profitable — partly because I bid wrong too many times.</p>
+        <p>Founded BidIntell because I built every spreadsheet workaround I could and none of them worked. Based in Overland Park, KS.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOOK -->
+  <section class="section-alt" id="book">
+    <div class="container">
+      <div class="book-header">
+        <span class="section-tag" style="display:block; margin-bottom:16px;">Schedule</span>
+        <h2>Ready to see your bid selection in writing?</h2>
+        <p>Pick a time below. The intake form takes 60 seconds. Memo arrives 3–5 business days after the call.</p>
+      </div>
+      <div class="calendly-wrap">
+        <div
+          class="calendly-inline-widget"
+          data-url="https://calendly.com/ryan-bidintell/bidintell-bid-selection-diagnostic?hide_event_type_details=1&hide_gdpr_banner=1&background_color=141A23&text_color=CBD5E1&primary_color=F26522"
+          style="min-width: 320px; height: 700px;"
+        ></div>
+        <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header" style="max-width:100%; text-align:center;">
+        <span class="section-tag">Common questions</span>
+        <h2 style="font-size:clamp(1.75rem,3vw,2.5rem); font-weight:700; color:var(--white); letter-spacing:-0.025em;">FAQ</h2>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item">
+          <h3>Is this really free?</h3>
+          <p>Yes. I cap at 10 of these per month while I'm building BidIntell. The pattern data I get from these conversations is worth more to me than the time cost.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Will you pitch me on the call?</h3>
+          <p>No. The memo is the deliverable. About a week after I send it, I'll follow up with one short email that mentions BidIntell because that's where this research feeds. You can reply or ignore.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What do I need to prepare?</h3>
+          <p>Nothing. Just be ready to talk through your last 10 bids. Rough recall is fine — you don't need to pull files.</p>
+        </div>
+        <div class="faq-item">
+          <h3>How long until I get the memo?</h3>
+          <p>Three to five business days after the call.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Can I see a sample memo?</h3>
+          <p>I don't share other shops' memos — every prospect trusts me with their bid data and the deliverable is theirs alone. The only way to see what one looks like is to do one.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Do you record the call?</h3>
+          <p>Yes, with Granola. The recording stays private and is only used so I can write your memo without trying to remember everything in real time. If recording is a deal-breaker, reply to your confirmation email and I'll take notes by hand.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What if the calendar is full?</h3>
+          <p>Email <a href="mailto:ryan@bidintell.ai">ryan@bidintell.ai</a> and I'll see what I can do. The 10/month cap exists to keep memo quality high.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-left">
+          <div class="logo-mark">BI</div>
+          <span class="footer-copy">© 2026 BidIntell. Built by the industry, for the industry.</span>
+        </div>
+        <ul class="footer-links">
+          <li><a href="/">Home</a></li>
+          <li><a href="/legal#privacy">Privacy</a></li>
+          <li><a href="/legal#terms">Terms</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function trackCTA(location) {
+      if (typeof gtag === 'function') gtag('event', 'diagnostic_cta_click', { location, page: 'diagnostic' });
+    }
+    if (typeof gtag === 'function') gtag('event', 'diagnostic_page_view');
+    window.addEventListener('message', function(e) {
+      if (!e.data || typeof e.data.event !== 'string') return;
+      if (e.data.event === 'calendly.event_scheduled') {
+        if (typeof gtag === 'function') gtag('event', 'diagnostic_booked', { source: 'inline_widget' });
+      }
+    });
+  </script>
+
+</body>
+</html>

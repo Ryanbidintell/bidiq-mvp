@@ -97,6 +97,11 @@
   to = "/works-with-crm.html"
   status = 200
 
+[[redirects]]
+  from = "/diagnostic"
+  to = "/diagnostic.html"
+  status = 200
+
 [[headers]]
   for = "/api/*"
   [headers.values]
