@@ -3,6 +3,9 @@
   publish = "."
   functions = "netlify/functions"
 
+[functions."diagnostic-prep"]
+  timeout = 60
+
 [functions."bc-sync"]
   timeout = 26
 
