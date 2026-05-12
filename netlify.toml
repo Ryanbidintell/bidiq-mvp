@@ -108,6 +108,11 @@
   to = "/diagnostic.html"
   status = 200
 
+[[redirects]]
+  from = "/bid-no-bid-checklist"
+  to = "/bid-no-bid-checklist.html"
+  status = 200
+
 [[headers]]
   for = "/api/*"
   [headers.values]
