@@ -42,6 +42,9 @@
 [functions."prospect-sequence"]
   schedule = "0 14 * * *"
 
+[functions."seo-weekly"]
+  schedule = "0 14 * * 5"
+
 [build.environment]
   NODE_VERSION = "18"
   SECRETS_SCAN_ENABLED = "false"  # Disabled - secrets in old git history, already removed and rotated
