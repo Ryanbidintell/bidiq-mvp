@@ -18,10 +18,11 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 // ── Google auth ──────────────────────────────────────────────────────────────
 
 function getSearchConsoleClient() {
-    const keyJson     = Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString('utf-8');
-    const credentials = JSON.parse(keyJson);
-    const auth        = new google.auth.GoogleAuth({
-        credentials,
+    const auth = new google.auth.GoogleAuth({
+        credentials: {
+            client_email: process.env.GOOGLE_CLIENT_EMAIL,
+            private_key: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+        },
         scopes: ['https://www.googleapis.com/auth/webmasters.readonly'],
     });
     return google.webmasters({ version: 'v3', auth });

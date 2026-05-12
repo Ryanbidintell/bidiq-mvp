@@ -4,24 +4,21 @@
 
 const { google } = require('googleapis');
 
-/**
- * Build authenticated Drive client using service account creds.
- */
-function getDriveClient() {
-  const keyJson = Buffer.from(
-    process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
-    'base64'
-  ).toString('utf-8');
-  const credentials = JSON.parse(keyJson);
+function getGoogleCredentials() {
+  return {
+    client_email: process.env.GOOGLE_CLIENT_EMAIL,
+    private_key: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+  };
+}
 
+function getDriveClient() {
   const auth = new google.auth.GoogleAuth({
-    credentials,
+    credentials: getGoogleCredentials(),
     scopes: [
       'https://www.googleapis.com/auth/drive',
       'https://www.googleapis.com/auth/spreadsheets',
     ],
   });
-
   return google.drive({ version: 'v3', auth });
 }
 
