@@ -910,6 +910,73 @@ a.press-outlet:hover { color: var(--white); }
 .ta-info .ta-name { font-weight: 600; color: var(--white); font-size: 0.9rem; }
 .ta-info .ta-role { font-size: 0.8rem; color: var(--fog); }
 
+/* ===== RESOURCES ===== */
+.resources-section {
+  padding: 140px 0;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 48px;
+}
+
+.resource-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 28px 24px;
+  text-decoration: none;
+  transition: border-color 0.25s, transform 0.2s;
+}
+.resource-card:hover {
+  border-color: rgba(242, 101, 34, 0.3);
+  transform: translateY(-3px);
+}
+
+.resource-tag {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.resource-card h3 {
+  font-size: 0.975rem;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.resource-card p {
+  font-size: 0.85rem;
+  color: var(--fog);
+  line-height: 1.6;
+  flex: 1;
+}
+
+.resource-link {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 4px;
+}
+
+@media (max-width: 900px) {
+  .resources-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 540px) {
+  .resources-grid { grid-template-columns: 1fr; }
+}
+
 /* ===== PRICING ===== */
 .pricing-section {
   padding: 140px 0;
@@ -2358,6 +2425,43 @@ a.press-outlet:hover { color: var(--white); }
   </div>
 </section>
 
+<!-- RESOURCES -->
+<section class="resources-section">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Resources</span>
+      <h2>Learn how specialty subs win more work</h2>
+      <p>Practical guides built around how BidIntell actually works — and how the best estimating teams make bid decisions.</p>
+    </div>
+    <div class="resources-grid">
+      <a href="/bid-no-bid-checklist" class="resource-card">
+        <span class="resource-tag">Decision Framework</span>
+        <h3>The Bid / No-Bid Checklist</h3>
+        <p>The five factors that predict whether a bid is worth the estimate — location, contract terms, client relationship, trade fit, and competitive pressure.</p>
+        <span class="resource-link">Read the guide →</span>
+      </a>
+      <a href="/works-with-plan-rooms" class="resource-card">
+        <span class="resource-tag">Workflow Guide</span>
+        <h3>BidIntell + Plan Rooms</h3>
+        <p>How BidIntell fits into your existing plan room workflow — and what it adds that Dodge, Construct Connect, and BuildingConnected don't track.</p>
+        <span class="resource-link">Read the guide →</span>
+      </a>
+      <a href="/works-with-estimating-tools" class="resource-card">
+        <span class="resource-tag">Workflow Guide</span>
+        <h3>BidIntell + Estimating Tools</h3>
+        <p>BidIntell sits upstream of your estimating software — helping you decide which bids are worth opening before the takeoff starts.</p>
+        <span class="resource-link">Read the guide →</span>
+      </a>
+      <a href="/works-with-crm" class="resource-card">
+        <span class="resource-tag">Workflow Guide</span>
+        <h3>BidIntell + CRMs</h3>
+        <p>Your CRM tracks contacts. BidIntell tracks win rates, ghost rates, and contract risk by client — data no general CRM was built to capture.</p>
+        <span class="resource-link">Read the guide →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
 <!-- PRICING -->
 <section class="pricing-section" id="pricing">
   <div class="container">
@@ -2535,6 +2639,7 @@ a.press-outlet:hover { color: var(--white); }
         <li><a href="/legal#privacy">Privacy</a></li>
         <li><a href="/legal#terms">Terms</a></li>
         <li><a href="/contact">Contact</a></li>
+        <li><a href="/bid-no-bid-checklist">Bid/No-Bid Checklist</a></li>
         <li><a href="/works-with-plan-rooms">Plan Rooms</a></li>
         <li><a href="/works-with-estimating-tools">Estimating Tools</a></li>
         <li><a href="/works-with-crm">CRMs</a></li>
