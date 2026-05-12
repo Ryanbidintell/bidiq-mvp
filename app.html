@@ -7770,10 +7770,7 @@ Rules:
 - furniture_plan_pages: sheets titled FURNITURE PLAN, FF&E PLAN, FURNITURE LAYOUT.
 - product_schedule_pages: sheets with PRODUCT SCHEDULE, EQUIPMENT SCHEDULE, HARDWARE SCHEDULE.
 - floor_plan_pages: sheets titled FLOOR PLAN (architectural, not structural).
-- interior_elevation_pages: sheets titled INTERIOR ELEVATIONS, INT. ELEVATIONS.
-
-Document text:
-${sampleText}`;
+- interior_elevation_pages: sheets titled INTERIOR ELEVATIONS, INT. ELEVATIONS.`;
 
             try {
                 const content = await callAI('doc_classify', sampleText, prompt);
@@ -8694,7 +8691,8 @@ ${sampleText}`;
 
         // OpenAI API extraction (fallback)
         async function extractWithOpenAI(text) {
-            const maxChars = 50000;
+            // GPT-4o has 128K token context; 100K chars ≈ 25K tokens is safe
+            const maxChars = 100000;
             const truncatedText = text.length > maxChars ? text.substring(0, maxChars) + '\n\n[Document truncated...]' : text;
 
             const prompt = `You are analyzing construction bid documents for a subcontractor. Extract the following information and return it as a JSON object. Be precise — only extract what is explicitly stated in the documents.
@@ -9519,8 +9517,8 @@ IMPORTANT RULES:
 
         // Claude API extraction
         async function extractWithClaude(text) {
-            // Truncate text if too long (Claude has token limits)
-            const maxChars = 50000;
+            // Claude Sonnet 4.x has 200K token context; 150K chars ≈ 37K tokens, well within limit
+            const maxChars = 150000;
             const truncatedText = text.length > maxChars ? text.substring(0, maxChars) + '\n\n[Document truncated...]' : text;
             
             const prompt = `You are analyzing construction bid documents for a subcontractor. Extract the following information and return it as a JSON object. Be precise — only extract what is explicitly stated in the documents.
@@ -9632,6 +9630,35 @@ IMPORTANT RULES:
                     bidDeadline = null;
                 }
 
+                // Validate project_address — reject garbage values
+                if (projectAddress) {
+                    const addrLooksLikeTitle = /^(Sheet|Page|Cover|Title Block|Table of Contents|TOC|Drawing)\s*/i.test(projectAddress);
+                    const addrLooksLikeScope = /^(Civil|Water Main|Sewer|Storm|Utility|Phase\s+\d)/i.test(projectAddress);
+                    const addrTooShort = projectAddress.trim().length < 5;
+                    // Firm/company names without a street number are not addresses
+                    const addrIsCompanyName = /LLC|Inc\.|Corp\.|Ltd\.|P\.C\.|PLLC|Architects|Engineers|Consultants|Construction/i.test(projectAddress) && !/^\d+\s/.test(projectAddress);
+                    if (addrLooksLikeTitle || addrLooksLikeScope || addrTooShort || addrIsCompanyName) {
+                        console.warn('⚠️ project_address looks like garbage, setting null:', projectAddress.substring(0, 60));
+                        projectAddress = null;
+                    }
+                }
+
+                // Validate project_zip — must be 5 digits, optionally 5+4
+                let projectZip = extracted.project_zip ? String(extracted.project_zip).trim() : null;
+                if (projectZip && !/^\d{5}(-\d{4})?$/.test(projectZip)) {
+                    console.warn('⚠️ project_zip invalid format, setting null:', projectZip);
+                    projectZip = null;
+                }
+
+                // Validate project_size_sf — sanitize and reject > 10M SF (OCR error)
+                let projectSizeSF = extracted.project_size_sf
+                    ? (parseInt(String(extracted.project_size_sf).replace(/\D/g, '')) || null)
+                    : null;
+                if (projectSizeSF && projectSizeSF > 10000000) {
+                    console.warn('⚠️ project_size_sf > 10M SF, likely OCR error:', projectSizeSF);
+                    projectSizeSF = null;
+                }
+
                 // FIX BUG 4: Validate project_city - reject garbage values
                 if (projectCity) {
                     // Reject if it looks like a sheet list, table of contents, or scope description
@@ -9729,13 +9756,11 @@ IMPORTANT RULES:
                     project_city: projectCity,
                     project_state: projectState,
                     project_address: projectAddress,
-                    project_zip: extracted.project_zip || null,
+                    project_zip: projectZip,
                     building_type: buildingType,
                     project_type: extracted.project_type || null,
                     bid_deadline: bidDeadline,
-                    project_size_sf: extracted.project_size_sf
-                        ? (parseInt(String(extracted.project_size_sf).replace(/\D/g, '')) || null)
-                        : null,
+                    project_size_sf: projectSizeSF,
                     estimated_value: parseMonetaryValue(extracted.estimated_value),
                     owner_name: extracted.owner_name || null,
                     architect_name: extracted.architect_name || null,
@@ -9845,7 +9870,7 @@ IMPORTANT RULES:
 
                 // ── Pass 2: Full extraction on targeted pages ──────────────────
                 updateProgress(50, `Analyzing ${targetedPages.length} of ${allPages.length} pages...`);
-                let fullText = targetedPages.map(p => `[Page ${p.num}]\n${p.text}`).join('\n\n');
+                let fullText = targetedPages.map(p => `[Page ${p.num} — ${p.filename}]\n${p.text}`).join('\n\n');
 
                 // Sanitize text: Remove null characters that Postgres can't handle
                 fullText = fullText.replace(/ /g, '');
@@ -13701,17 +13726,33 @@ IMPORTANT RULES:
                 btn.innerHTML = '⏳ Processing...';
                 progressDiv.style.display = 'block';
 
-                // Step 1: Extract text from PDFs
+                // Step 1: Extract text from PDFs (same positional reconstruction as initial analysis)
                 progressText.textContent = 'Extracting text from PDFs...';
-                progressBar.style.width = '20%';
+                progressBar.style.width = '15%';
 
-                let combinedText = '';
+                let reuploadAllPages = [];
                 for (let i = 0; i < reuploadFiles.length; i++) {
                     const file = reuploadFiles[i];
                     progressText.textContent = `Extracting text from ${file.name} (${i + 1}/${reuploadFiles.length})...`;
-                    const text = await extractTextFromPDF(file);
-                    combinedText += `\n\n--- ${file.name} ---\n\n${text}`;
+                    const pages = await extractPDF(file);
+                    reuploadAllPages = reuploadAllPages.concat(pages);
                 }
+
+                if (reuploadAllPages.length === 0) {
+                    throw new Error('Could not extract text from the uploaded PDFs');
+                }
+
+                // Step 1.5: Classify document structure + select targeted pages (same Pass 1 as initial)
+                progressText.textContent = 'Mapping document structure...';
+                progressBar.style.width = '30%';
+                const reuploadSettings = await getSettings();
+                const reuploadDocMap = await classifyDocument(reuploadAllPages);
+                const reuploadCSISections = reuploadSettings.preferred_csi_sections || [];
+                const reuploadTargetedPages = selectTargetPages(reuploadAllPages, reuploadDocMap, reuploadCSISections);
+                console.log(`📊 Reupload: ${reuploadTargetedPages.length} of ${reuploadAllPages.length} pages targeted (${reuploadDocMap.doc_type})`);
+
+                // Assemble text with filename context (matches initial analysis format)
+                let combinedText = reuploadTargetedPages.map(p => `[Page ${p.num} — ${p.filename}]\n${p.text}`).join('\n\n');
 
                 if (combinedText.length < 100) {
                     throw new Error('Could not extract text from PDFs');
