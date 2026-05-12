@@ -25,7 +25,7 @@ function checkRateLimit(userId) {
     return true;
 }
 
-async function callClaudeAPI(messages, systemPrompt, model = 'claude-sonnet-4-20250514') {
+async function callClaudeAPI(messages, systemPrompt, model = 'claude-sonnet-4-6') {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {

@@ -1,0 +1,13 @@
+{
+  "_comment": "Add these dependencies to your existing bidintell package.json. Run npm install after adding.",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "googleapis": "^144.0.0"
+  },
+  "_notes": [
+    "@anthropic-ai/sdk — official Anthropic Node SDK with web_search tool support.",
+    "googleapis — official Google Node.js client (Drive + Sheets APIs).",
+    "node-fetch is a dev fallback for older Node — Netlify Functions on Node 18+ have global fetch.",
+    "If your existing package.json already lists @anthropic-ai/sdk, ensure it's >=0.32.1 for web_search tool."
+  ]
+}

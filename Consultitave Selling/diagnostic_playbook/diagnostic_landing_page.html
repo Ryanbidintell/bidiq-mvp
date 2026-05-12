@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<!--
+  bidintell.ai/diagnostic
+  Lives at: bidiq-mvp/diagnostic.html (or as /diagnostic route in Netlify)
+
+  Visual system synced with index.html:
+    --brand-primary: #4F46E5  (indigo)
+    --brand-primary-dark: #4338CA
+    --bg: #FFFFFF
+    --text: #111827 (near-black)
+    --text-muted: #6B7280
+    --border: #E5E7EB
+    Font: Inter (Google Fonts), system fallback
+    Buttons: rounded, indigo solid primary, indigo border ghost secondary
+    No emojis. No exclamation points (per Confidently Boring brand).
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Bid Selection Diagnostic for Specialty Sub Owners | BidIntell</title>
+  <meta name="description" content="30 minutes on a call. Written one-page read on your bid selection patterns. No pitch attached. For owner/presidents at specialty subcontractors $2M-$20M.">
+
+  <!-- OG -->
+  <meta property="og:title" content="Free Bid Selection Diagnostic for Specialty Sub Owners">
+  <meta property="og:description" content="30 minutes. Written read on your bid selection. No pitch.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://bidintell.ai/diagnostic">
+  <meta property="og:site_name" content="BidIntell">
+
+  <!-- Same fonts as index.html -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- GA4 (existing measurement ID) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XGYJLV0E6G"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XGYJLV0E6G');
+  </script>
+
+  <!-- Microsoft Clarity (existing, replace placeholder before publishing) -->
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "CLARITY_PROJECT_ID");
+  </script>
+
+  <style>
+    :root {
+      --brand-primary: #4F46E5;
+      --brand-primary-dark: #4338CA;
+      --brand-primary-light: #EEF2FF;
+      --bg: #FFFFFF;
+      --bg-soft: #F9FAFB;
+      --text: #111827;
+      --text-muted: #6B7280;
+      --text-subtle: #9CA3AF;
+      --border: #E5E7EB;
+      --success: #059669;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--brand-primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ===== NAV ===== */
+    .nav {
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .nav-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+    .logo {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .logo-mark {
+      color: var(--brand-primary);
+    }
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    .nav-links a {
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 28px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: none;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn:hover { text-decoration: none; }
+    .btn-primary {
+      background: var(--brand-primary);
+      color: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+    .btn-primary:hover {
+      background: var(--brand-primary-dark);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--brand-primary);
+      border: 1.5px solid var(--brand-primary);
+    }
+    .btn-ghost:hover {
+      background: var(--brand-primary-light);
+    }
+    .btn-large { padding: 16px 32px; font-size: 16px; }
+
+    /* ===== HERO ===== */
+    .hero {
+      padding: 80px 0 64px;
+      text-align: left;
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      padding: 6px 12px;
+      background: var(--brand-primary-light);
+      color: var(--brand-primary);
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 6px;
+      margin-bottom: 24px;
+      letter-spacing: 0.02em;
+    }
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 1.1;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: var(--text);
+      max-width: 720px;
+      margin-bottom: 24px;
+    }
+    .hero h1 .accent { color: var(--brand-primary); }
+    .hero-sub {
+      font-size: 19px;
+      color: var(--text-muted);
+      max-width: 640px;
+      margin-bottom: 36px;
+      line-height: 1.5;
+    }
+    .hero-cta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .hero-cta-meta {
+      font-size: 14px;
+      color: var(--text-subtle);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hero-cta-meta::before {
+      content: "•";
+      color: var(--text-subtle);
+    }
+
+    /* ===== SECTIONS ===== */
+    section { padding: 64px 0; }
+    section.alt { background: var(--bg-soft); }
+
+    .section-header {
+      max-width: 720px;
+      margin-bottom: 48px;
+    }
+    .section-eyebrow {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--brand-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(28px, 3.5vw, 36px);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    .section-sub {
+      font-size: 17px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ===== PROBLEM CALLOUT ===== */
+    .callout {
+      background: var(--bg-soft);
+      border-left: 3px solid var(--brand-primary);
+      padding: 28px 32px;
+      border-radius: 0 8px 8px 0;
+      margin: 32px 0;
+    }
+    .callout p {
+      font-size: 19px;
+      line-height: 1.5;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* ===== TWO-COLUMN ===== */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+      .two-col { grid-template-columns: 1fr; gap: 32px; }
+    }
+    .col-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+    }
+    .col-card.highlight {
+      border-color: var(--brand-primary);
+      background: var(--brand-primary-light);
+    }
+    .col-card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    .col-card p {
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ===== LISTS ===== */
+    .check-list {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0;
+    }
+    .check-list li {
+      padding: 12px 0 12px 32px;
+      position: relative;
+      color: var(--text);
+      line-height: 1.5;
+      border-bottom: 1px solid var(--border);
+    }
+    .check-list li:last-child { border-bottom: none; }
+    .check-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 18px;
+      width: 16px;
+      height: 16px;
+      background: var(--brand-primary);
+      mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'><path d='M3 8L7 12L13 4' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat center;
+      -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'><path d='M3 8L7 12L13 4' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat center;
+    }
+    .x-list li::before {
+      background: var(--text-subtle);
+      mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'><path d='M4 4L12 12M12 4L4 12' stroke='black' stroke-width='2.5' stroke-linecap='round'/></svg>") no-repeat center;
+      -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'><path d='M4 4L12 12M12 4L4 12' stroke='black' stroke-width='2.5' stroke-linecap='round'/></svg>") no-repeat center;
+    }
+
+    /* ===== ABOUT ===== */
+    .about {
+      max-width: 760px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .about-avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: var(--brand-primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+    .about p {
+      color: var(--text-muted);
+      font-size: 17px;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+    .about p strong { color: var(--text); font-weight: 600; }
+
+    /* ===== CTA BANNER ===== */
+    .cta-banner {
+      background: var(--brand-primary);
+      color: #fff;
+      padding: 56px 32px;
+      border-radius: 16px;
+      text-align: center;
+      margin: 32px 0;
+    }
+    .cta-banner h2 {
+      font-size: clamp(26px, 3vw, 34px);
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+    .cta-banner p {
+      font-size: 17px;
+      opacity: 0.9;
+      margin-bottom: 28px;
+    }
+    .cta-banner .btn-primary {
+      background: #fff;
+      color: var(--brand-primary);
+    }
+    .cta-banner .btn-primary:hover {
+      background: var(--bg-soft);
+    }
+
+    /* ===== FAQ ===== */
+    .faq-list {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding: 24px 0;
+    }
+    .faq-item h3 {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .faq-item p {
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+      color: var(--text-subtle);
+      font-size: 14px;
+    }
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    /* ===== UTILITY ===== */
+    .text-muted { color: var(--text-muted); }
+    .mt-32 { margin-top: 32px; }
+    .mb-16 { margin-bottom: 16px; }
+
+    /* ===== MOBILE ===== */
+    @media (max-width: 640px) {
+      .hero { padding: 48px 0 40px; }
+      section { padding: 48px 0; }
+      .nav-links a:not(:last-child) { display: none; }
+      .col-card { padding: 24px; }
+      .cta-banner { padding: 40px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <span class="logo-mark">Bid</span>Intell
+      </a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/diagnostic" style="color: var(--text); font-weight: 600;">Diagnostic</a>
+        <a href="/auth" class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px;">Sign In</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <span class="hero-eyebrow">Free · 10 slots per month</span>
+      <h1>Free <span class="accent">bid selection diagnostic</span> for specialty sub owners</h1>
+      <p class="hero-sub">
+        30 minutes on a call. Written one-page read on your bid selection patterns. No pitch attached, no product walkthrough on the call.
+      </p>
+      <div class="hero-cta">
+        <a href="#book" class="btn btn-primary btn-large" onclick="trackCTA('hero')">Book a diagnostic →</a>
+        <span class="hero-cta-meta">Owner/Presidents at specialty subs $2M–$20M</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section class="alt">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-eyebrow">The problem this addresses</div>
+        <h2 class="section-title">Most subs lose money on the bids they shouldn't have chased — not the ones they lost.</h2>
+        <p class="section-sub">
+          If you've ever finished a bid pursuit thinking "I knew on day 3 we weren't going to win this one," this diagnostic is built for you.
+        </p>
+      </div>
+
+      <div class="callout">
+        <p>The bids that hurt aren't usually the close losses. They're the ones where the invite hit, the takeoff started, and three hours later inertia carried it the rest of the way. There was never a real bid/no-bid decision.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT YOU GET / WHAT I GET -->
+  <section>
+    <div class="container">
+      <div class="section-header">
+        <div class="section-eyebrow">The exchange</div>
+        <h2 class="section-title">What you get. What I get.</h2>
+        <p class="section-sub">A fair trade — your time and honest answers, in exchange for an outside read on your bid selection.</p>
+      </div>
+
+      <div class="two-col">
+        <div class="col-card highlight">
+          <h3>What you get</h3>
+          <p style="margin-bottom: 16px;">
+            A 30-minute structured conversation walking through your last 10 bids — wins, losses, and the ones you regret chasing.
+          </p>
+          <p style="margin-bottom: 16px;">
+            Three to five business days later, a written one-page memo on the patterns I see in your bid selection: GCs to flag, scopes to second-guess, decisions you're making on gut that you could be making on data.
+          </p>
+          <p>
+            <strong style="color: var(--text);">No product walkthrough. No pitch on the call. The deliverable is the memo.</strong>
+          </p>
+        </div>
+
+        <div class="col-card">
+          <h3>What I get</h3>
+          <p style="margin-bottom: 16px;">
+            Honest input from sub owners on what actually drives bid/no-bid decisions.
+          </p>
+          <p style="margin-bottom: 16px;">
+            I'm building BidIntell — software that scores bids before you commit estimating time. The only way to build it right is by talking to the people doing the work.
+          </p>
+          <p>
+            If something in the memo sparks a conversation about BidIntell afterward, I'll send one short follow-up email. If not, no pressure either way.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHO IT'S FOR -->
+  <section class="alt">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-eyebrow">Fit check</div>
+        <h2 class="section-title">Who this is built for</h2>
+      </div>
+
+      <div class="two-col">
+        <div class="col-card">
+          <h3 style="color: var(--brand-primary);">This is for you if</h3>
+          <ul class="check-list">
+            <li>You're the owner or president of a specialty subcontractor</li>
+            <li>$2M to $20M in annual revenue</li>
+            <li>Commercial work — Division 10/12, flooring, insulation, MEP, glazing, and similar trades</li>
+            <li>You make or heavily influence the bid/no-bid call</li>
+          </ul>
+        </div>
+
+        <div class="col-card">
+          <h3 style="color: var(--text-muted);">This isn't for you if</h3>
+          <ul class="check-list x-list">
+            <li>You're a GC or CM (different problem, different tool)</li>
+            <li>You're an estimator looking for takeoff software (BidIntell doesn't do takeoff)</li>
+            <li>Your company is under $1M or over $50M (different bid economics)</li>
+            <li>You're not the one making the bid/no-bid decision</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section>
+    <div class="container">
+      <div class="about">
+        <div class="about-avatar">RE</div>
+        <h2 class="section-title" style="margin-bottom: 24px;">About me</h2>
+        <p>
+          <strong>Ryan Elder.</strong> Spent 20+ years in commercial construction. Built a Division 10/12 specialty sub from zero to roughly $8M before shutting it down when it stopped being profitable — partly because I bid wrong too many times.
+        </p>
+        <p>
+          Founded BidIntell because I built every spreadsheet workaround I could and none of them worked. Based in Overland Park, KS.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BANNER -->
+  <section id="book">
+    <div class="container">
+      <div class="cta-banner">
+        <h2>Ready to see your bid selection in writing?</h2>
+        <p>Pick a time on the next page. The intake form takes 60 seconds.</p>
+
+        <!-- Calendly inline embed -->
+        <!-- Replace data-url with your real Calendly URL before publishing -->
+        <div
+          class="calendly-inline-widget"
+          data-url="https://calendly.com/ryan-bidintell/diagnostic?hide_event_type_details=1&hide_gdpr_banner=1&background_color=ffffff&text_color=111827&primary_color=4F46E5"
+          style="min-width: 320px; height: 700px; background: #fff; border-radius: 12px; overflow: hidden; margin-top: 8px;"
+        ></div>
+        <script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+
+        <p style="margin-top: 28px; font-size: 14px; opacity: 0.85;">
+          Memo arrives 3-5 business days after the call.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="alt">
+    <div class="container">
+      <div class="section-header" style="text-align: center; margin: 0 auto 48px;">
+        <div class="section-eyebrow">Common questions</div>
+        <h2 class="section-title">FAQ</h2>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-item">
+          <h3>Is this really free?</h3>
+          <p>Yes. I cap at 10 of these per month while I'm building BidIntell. The pattern data I get from these conversations is worth more to me than the time cost.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Will you pitch me on the call?</h3>
+          <p>No. The memo is the deliverable. About a week after I send it, I'll follow up with one short email that mentions BidIntell because that's where this research feeds. You can reply or ignore.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What do I need to prepare?</h3>
+          <p>Nothing. Just be ready to talk through your last 10 bids. Rough recall is fine — you don't need to pull files.</p>
+        </div>
+        <div class="faq-item">
+          <h3>How long until I get the memo?</h3>
+          <p>Three to five business days after the call.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Can I see a sample memo?</h3>
+          <p>I don't share other shops' memos — every prospect trusts me with their bid data and the deliverable is theirs alone. The only way to see what one looks like is to do one.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Do you record the call?</h3>
+          <p>Yes, with Granola. The recording stays private and is only used so I can write your memo without trying to remember everything in real time. If recording is a deal-breaker, reply to your confirmation email and I'll take notes by hand.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What if the calendar is full?</h3>
+          <p>Email <a href="mailto:ryan@bidintell.ai">ryan@bidintell.ai</a> and I'll see what I can do. The 10/month cap exists to keep memo quality high.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container footer-inner">
+      <div>
+        <strong style="color: var(--text);">BidIntell</strong> · <a href="/">bidintell.ai</a>
+      </div>
+      <div>
+        <a href="/" class="text-muted">Home</a> ·
+        <a href="/legal" class="text-muted">Legal</a> ·
+        <a href="mailto:ryan@bidintell.ai" class="text-muted">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // GA4 CTA tracking
+    function trackCTA(location) {
+      if (typeof gtag === 'function') {
+        gtag('event', 'diagnostic_cta_click', {
+          location: location,
+          page: 'diagnostic'
+        });
+      }
+    }
+
+    // Page view event (extra signal beyond default GA pageview)
+    if (typeof gtag === 'function') {
+      gtag('event', 'diagnostic_page_view');
+    }
+
+    // Calendly booking event listener — fires when prospect completes booking
+    window.addEventListener('message', function(e) {
+      if (!e.data || typeof e.data.event !== 'string') return;
+      if (e.data.event === 'calendly.event_scheduled') {
+        if (typeof gtag === 'function') {
+          gtag('event', 'diagnostic_booked', { source: 'inline_widget' });
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>
