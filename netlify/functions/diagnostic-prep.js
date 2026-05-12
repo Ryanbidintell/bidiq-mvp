@@ -206,10 +206,11 @@ exports.handler = async (event) => {
   // we're handling a Calendly retry. Short-circuit before spending Claude tokens.
   try {
     const { google } = require('googleapis');
-    const keyJson = Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_KEY, 'base64').toString('utf-8');
-    const credentials = JSON.parse(keyJson);
     const auth = new google.auth.GoogleAuth({
-      credentials,
+      credentials: {
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        private_key: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+      },
       scopes: ['https://www.googleapis.com/auth/drive'],
     });
     const drive = google.drive({ version: 'v3', auth });
