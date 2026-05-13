@@ -133,6 +133,62 @@ async function sendFounderEmail({ subject, body, driveFolderUrl }) {
   });
 }
 
+// Sent when the main agent flow fails to send the founder email.
+// Guarantees we hear about failures instead of them disappearing into Netlify logs.
+async function sendFailureAlert(prospect, status) {
+  const recipient = process.env.DIAGNOSTIC_NOTIFY_EMAIL || 'ryan@bidintell.ai';
+  const fetchFn = global.fetch || require('node-fetch');
+
+  const p = prospect || {};
+  const subject = `[BidIntell agent FAILED] ${p.companyName || 'Unknown'} — ${p.prospectName || 'unknown prospect'}`;
+
+  const errorLines = (status.errors && status.errors.length > 0)
+    ? status.errors.map((e) => `  - ${e}`).join('\n')
+    : '  (none recorded)';
+
+  const body = [
+    `The diagnostic agent failed during processing.`,
+    `The Calendly booking still happened, but some or all prep artifacts may be missing.`,
+    ``,
+    `Prospect: ${p.prospectName || '(unknown)'}`,
+    `Company:  ${p.companyName || '(unknown)'}`,
+    `Email:    ${p.email || '(unknown)'}`,
+    `Trade:    ${p.trade || '(unknown)'}`,
+    `Call:     ${p.callTime || '(unknown)'}`,
+    ``,
+    `Agent step status:`,
+    `  research: ${status.research}`,
+    `  script:   ${status.script}`,
+    `  drive:    ${status.drive}`,
+    `  sheet:    ${status.sheet}`,
+    `  email:    ${status.email}`,
+    ``,
+    `Errors recorded:`,
+    errorLines,
+    ``,
+    `Next steps:`,
+    `  1. Check Netlify function logs for diagnostic-prep around this booking time.`,
+    `  2. If a Google credential error is listed, verify GOOGLE_PRIVATE_KEY format in Netlify.`,
+    `  3. Manually set up the prep folder + intake until the agent is fixed.`,
+  ].join('\n');
+
+  await fetchFn('https://api.postmarkapp.com/email', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-Postmark-Server-Token': process.env.POSTMARK_API_KEY,
+    },
+    body: JSON.stringify({
+      From: 'hello@bidintell.ai',
+      To: recipient,
+      Subject: subject,
+      TextBody: body,
+      MessageStream: 'outbound',
+    }),
+  });
+}
+
 // ---------- Intake doc markdown ----------
 
 function buildIntakeDoc(prospect) {
@@ -371,6 +427,18 @@ exports.handler = async (event) => {
       status.email = 'failed';
       status.errors.push(`email: ${err.message}`);
       console.error('Founder email failed:', err);
+    }
+  }
+
+  // Fallback alert — if the founder email didn't send and this wasn't a retry,
+  // send a barebones plain-text alert so silent failures become loud.
+  if (status.email !== 'ok' && !folderAlreadyExisted) {
+    try {
+      await sendFailureAlert(prospect, status);
+      status.failureAlert = 'sent';
+    } catch (alertErr) {
+      status.failureAlert = 'failed';
+      console.error('Failure alert email also failed:', alertErr);
     }
   }
 
