@@ -428,9 +428,15 @@ const additionalRevenue = additionalWins * avgProjectSize;
 **Lesson:** Copy should match actual user experience - exaggerated claims hurt credibility
 
 #### Google Analytics Integration
-**Implementation:** Added GA4 tracking code to both index.html and app.html
-**Code:** Standard gtag.js snippet in `<head>` with placeholder G-XXXXXXXXXX
-**Next Step:** User needs to replace placeholder with actual Measurement ID from their GA4 property
+**Implementation:** GA4 tracking wired across all user-facing pages with measurement ID **`G-XGYJLV0E6G`**.
+**Pages with GA4:** `index.html`, `app.html`, `demo.html`, `diagnostic.html`, `roi-calculator.html`, `contact.html`, `bid-no-bid-checklist.html`, `works-with-crm.html`, `works-with-plan-rooms.html`, `works-with-estimating-tools.html`.
+**Pages WITHOUT GA4:** `auth.html` (magic-link gap — landing → /app funnel skips this step in GA), `legal.html` (intentional).
+**Also live:** Microsoft Clarity (ID `vtnhbrqro2`) — session replay + heatmaps.
+**Custom events fired:** `cta_click` (with `cta_location`, `cta_text`) on landing page; `sign_up`, `project_saved`, `onboarding_step_viewed`, `onboarding_completed`, `onboarding_skipped`, `bid_uploaded` on `app.html`.
+
+**Verified May 14, 2026:** Playwright network trace confirms `POST https://www.google-analytics.com/g/collect?v=2&tid=G-XGYJLV0E6G&...&en=page_view` returning 204. GA4 is firing in production.
+
+**Note on third-party audit tools:** Older site auditors (e.g. okara.ai as of May 14, 2026) sometimes report "no GA4 found" — they often detect legacy Universal Analytics (`analytics.js`) or look for a Google Tag Manager container (`GTM-XXXX`), and miss direct `gtag.js` installs. Verify with browser DevTools Network tab (filter `collect`) before chasing.
 
 **Lesson:** Analytics should be added early - track user behavior from day one of beta
 
