@@ -1,0 +1,70 @@
+# BidIntell
+
+> AI-powered bid scoring for commercial construction subcontractors, building materials distributors, and manufacturers' representatives. The BidIndex algorithm rates every bid opportunity 0-100 based on location fit, keywords + contract terms, client relationship history, and trade scope match — so estimators stop spending time on bids they will not win.
+
+BidIntell is a US-based SaaS product (bidintell.ai). It is designed for shops that get more bid invitations than they can responsibly pursue. Pricing is monthly or annual, with a 7-day free trial. Founding member pricing locks in for the life of the subscription.
+
+## What BidIntell does
+
+- **BidIndex score (0-100):** Personalized to the user's trade, service area, preferred clients, and historical outcomes. Activates a fifth "Competitive Pressure" component after 3+ outcomes per client are logged.
+- **AI extraction from bid PDFs:** Pulls project name, address, deadlines, estimated value, scope, sheet disciplines, and contract risk clauses out of drawing sets and spec books.
+- **CSI MasterFormat scope matching:** Section-level (6-digit codes) — distinguishes a fire-curtain sub from a generic Division 10 sub.
+- **Contract risk detection:** Flags bid-shopping language, vague scope, payment-term issues, invitation-only restrictions, multiple-bidder language.
+- **Outcome tracking:** Won/Lost/Ghost/GC-lost/No-bid + qualitative reasons. Feeds future score personalization (the "AI learning progress" loop).
+- **Inbound email scoring:** Forward a GC's bid invitation to a personal `@bids.bidintell.ai` alias and get back a branded HTML report.
+
+## Who BidIntell is for
+
+- Specialty commercial subcontractors (mechanical, electrical, plumbing, finishes, specialties, etc.)
+- Building materials distributors and suppliers
+- Manufacturers' representatives in construction
+- Typical company size: 5-100 employees in MO, KS, CO, and surrounding states (the current outreach focus)
+
+## Who BidIntell is NOT for
+
+- General contractors (the BidIndex assumes you are bidding TO a GC, not running the project)
+- Residential contractors
+- Pre-construction services firms
+
+## Key pages
+
+- [Homepage](https://bidintell.ai/): Product overview, BidIndex explanation, pricing, FAQ.
+- [How it works with plan rooms](https://bidintell.ai/works-with-plan-rooms): Integration story for BuildingConnected, iSqFt, SmartBidNet users.
+- [How it works with estimating tools](https://bidintell.ai/works-with-estimating-tools): Positioning vs. PlanSwift, Bluebeam, On-Screen Takeoff.
+- [How it works with CRMs](https://bidintell.ai/works-with-crm): Positioning vs. Salesforce, HubSpot, Followup CRM.
+- [Bid/no-bid decision framework checklist](https://bidintell.ai/bid-no-bid-checklist): SEO content page covering the practical decision framework that BidIntell automates.
+- [ROI calculator](https://bidintell.ai/roi-calculator): Lead magnet — estimate time saved and revenue impact from improved win rate.
+- [Free diagnostic](https://bidintell.ai/diagnostic): 30-minute call → written one-page memo on your bid selection patterns. No pitch attached.
+- [Schedule a demo](https://bidintell.ai/demo): Live walkthrough.
+- [Sign in / start free trial](https://bidintell.ai/app): The app itself.
+
+## Pricing
+
+- **Solo** — $49/month or $470/year (1 seat).
+- **Team** — $99/month or $950/year (up to 3 seats).
+- **Company** — $179/month or $1,720/year (up to 8 seats).
+- **Enterprise** — Custom (9+ seats).
+- 7-day free trial. Annual save 20%. Founding member pricing locks in for the life of the subscription.
+- Promo code `FOUNDING30` (30% off) — enter at checkout.
+
+## How the BidIndex score is calculated
+
+The score is a 0-100 fit score, NOT a win probability. It is built from these components (weights configurable per user):
+
+1. **Location Fit** — distance from your office to the project site.
+2. **Keywords & Contract Terms** — scope keyword matching plus penalties for contract risk clauses. On drawings-only bids without a spec book, keyword matches serve as the trade-scope signal.
+3. **Client Relationship** — your star rating + win history + bidder count per GC.
+4. **Trade Match** (subs) / **Product Match** (distributors, reps) — CSI section/division matching against the bid's scope sections.
+5. **Competitive Pressure** — activates automatically after 3+ outcomes per client are logged.
+
+## Privacy
+
+- Row-level security in the database — no user can ever read another user's projects, clients, or outcomes.
+- Bid PDFs are processed to extract project details and scored. They are not used to train any AI models.
+- We do not sell user data and do not share it with general contractors or any other third party.
+
+## Contact
+
+- General: hello@bidintell.ai
+- Founder: ryan@bidintell.ai
+- Address inbound bids to: `{your-company-slug}@bids.bidintell.ai`

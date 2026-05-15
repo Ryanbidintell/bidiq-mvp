@@ -7,6 +7,9 @@ Allow: /
 # Sitemap location
 Sitemap: https://bidintell.ai/sitemap.xml
 
+# LLM-friendly site description (llmstxt.org)
+# Allow: /llms.txt
+
 # Disallow admin and internal pages
 Disallow: /app.html
 Disallow: /admin.html

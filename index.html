@@ -17,6 +17,12 @@
 <meta property="og:title" content="BidIntell – AI Bid Scoring for Subs, Suppliers & Reps">
 <meta property="og:description" content="Score every bid opportunity 0-100 with BidIndex. Personalized to your trade, region, and client history. Built for subcontractors, distributors, and manufacturers' reps. Plans from $49/mo.">
 <meta property="og:image" content="https://bidintell.ai/og-image.png">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="BidIntell">
+<meta http-equiv="content-language" content="en-US">
+
+<!-- AI engine discovery -->
+<link rel="alternate" type="text/markdown" title="LLM-friendly site description" href="/llms.txt">
 
 <!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image">
@@ -52,12 +58,38 @@
   "@context": "https://schema.org",
   "@graph": [
     {
+      "@type": "WebSite",
+      "@id": "https://bidintell.ai/#website",
+      "url": "https://bidintell.ai",
+      "name": "BidIntell",
+      "description": "AI bid scoring for construction subcontractors, distributors, and manufacturers' reps. Score every opportunity 0-100 with BidIndex before estimating time is spent.",
+      "inLanguage": "en-US",
+      "publisher": { "@id": "https://bidintell.ai/#organization" }
+    },
+    {
       "@type": "SoftwareApplication",
+      "@id": "https://bidintell.ai/#software",
       "name": "BidIntell",
       "url": "https://bidintell.ai",
       "applicationCategory": "BusinessApplication",
+      "applicationSubCategory": "Construction Bid Management Software",
       "operatingSystem": "Web",
+      "inLanguage": "en-US",
       "description": "AI-powered bid scoring platform for construction subcontractors, distributors, and manufacturers' reps. BidIndex scores bid opportunities 0-100 based on location, trade match, client relationship, and contract risk.",
+      "featureList": [
+        "BidIndex 0-100 scoring on location fit, keywords & contract risk, client relationship, and trade match",
+        "AI extraction of project details from bid PDFs and drawing sets",
+        "Contract risk clause detection (bid shopping, vague scope, payment terms)",
+        "Outcome tracking that personalizes future scores to your win history",
+        "Competitive Pressure component activates after 3+ outcomes per client",
+        "CSI MasterFormat section-level scope matching (6-digit codes)",
+        "Inbound email forwarding — score bids by forwarding the GC invite",
+        "Estimator override with GO / REVIEW / PASS reason capture"
+      ],
+      "audience": {
+        "@type": "BusinessAudience",
+        "audienceType": "Specialty subcontractors, building materials distributors, and manufacturers' representatives in commercial construction"
+      },
       "offers": [
         {
           "@type": "Offer",
@@ -87,17 +119,34 @@
     },
     {
       "@type": "Organization",
+      "@id": "https://bidintell.ai/#organization",
       "name": "BidIntell",
       "url": "https://bidintell.ai",
       "logo": "https://bidintell.ai/og-image.png",
+      "inLanguage": "en-US",
+      "areaServed": {
+        "@type": "Country",
+        "name": "United States"
+      },
+      "knowsAbout": [
+        "Construction bid scoring",
+        "Specialty subcontractor bid selection",
+        "CSI MasterFormat",
+        "Contract risk detection",
+        "General contractor relationship tracking",
+        "Bid/no-bid decision frameworks",
+        "Commercial construction estimating"
+      ],
       "contactPoint": {
         "@type": "ContactPoint",
         "email": "hello@bidintell.ai",
-        "contactType": "customer support"
+        "contactType": "customer support",
+        "availableLanguage": ["English"]
       }
     },
     {
       "@type": "FAQPage",
+      "inLanguage": "en-US",
       "mainEntity": [
         {
           "@type": "Question",
