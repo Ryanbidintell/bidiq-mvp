@@ -36,13 +36,16 @@
 [functions."outcome-snooze"]
   timeout = 10
 
-[functions."prospect-apollo-pull"]
-  schedule = "0 13 * * *"
+# [functions."prospect-apollo-pull"]
+#   schedule = "0 13 * * *"
+# DISABLED 2026-05-15 — BID-142. Apollo filter was admitting GCs/EPCs and estimator-tier
+# titles, not specialty-sub owners. Re-enable only after the Apollo persona/industry
+# filters in prospect-apollo-pull.js are fixed AND Ryan approves on BID-142.
 
 # [functions."prospect-sequence"]
 #   schedule = "0 14 * * *"
 # DISABLED 2026-05-15 — Ryan got BCC'd on cold outreach ("stop all outbound emails").
-# Re-enable only after recipient list and funnel are reviewed (see BID-138).
+# Re-enable only after recipient list and funnel are reviewed (see BID-138, BID-142).
 
 [functions."seo-weekly"]
   schedule = "0 14 * * 5"
