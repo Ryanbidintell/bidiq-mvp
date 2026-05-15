@@ -1,5 +1,5 @@
 [build]
-  command = "node scripts/check-app-syntax.js"
+  command = "node scripts/check-app-syntax.js && node scripts/build-takeoff.js"
   publish = "."
   functions = "netlify/functions"
 
@@ -127,6 +127,11 @@
   from = "/bid-no-bid-checklist"
   to = "/bid-no-bid-checklist.html"
   status = 200
+
+[[redirects]]
+  from = "/takeoff"
+  to = "/takeoff/"
+  status = 301
 
 [[headers]]
   for = "/api/*"

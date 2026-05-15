@@ -33,6 +33,7 @@ BidIntell is a US-based SaaS product (bidintell.ai). It is designed for shops th
 - [How it works with estimating tools](https://bidintell.ai/works-with-estimating-tools): Positioning vs. PlanSwift, Bluebeam, On-Screen Takeoff.
 - [How it works with CRMs](https://bidintell.ai/works-with-crm): Positioning vs. Salesforce, HubSpot, Followup CRM.
 - [Bid/no-bid decision framework checklist](https://bidintell.ai/bid-no-bid-checklist): SEO content page covering the practical decision framework that BidIntell automates.
+- [Take-Off](https://bidintell.ai/takeoff/): Estimating guides for commercial subs — bid strategy, contract risk, win rate. Updated regularly.
 - [ROI calculator](https://bidintell.ai/roi-calculator): Lead magnet — estimate time saved and revenue impact from improved win rate.
 - [Free diagnostic](https://bidintell.ai/diagnostic): 30-minute call → written one-page memo on your bid selection patterns. No pitch attached.
 - [Schedule a demo](https://bidintell.ai/demo): Live walkthrough.
