@@ -39,8 +39,10 @@
 [functions."prospect-apollo-pull"]
   schedule = "0 13 * * *"
 
-[functions."prospect-sequence"]
-  schedule = "0 14 * * *"
+# [functions."prospect-sequence"]
+#   schedule = "0 14 * * *"
+# DISABLED 2026-05-15 — Ryan got BCC'd on cold outreach ("stop all outbound emails").
+# Re-enable only after recipient list and funnel are reviewed (see BID-138).
 
 [functions."seo-weekly"]
   schedule = "0 14 * * 5"
