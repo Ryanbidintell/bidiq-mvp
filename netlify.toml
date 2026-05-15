@@ -12,26 +12,36 @@
 [functions."inbound-email-background"]
   timeout = 900
 
-[functions."weekly-outcome-nudge"]
-  schedule = "0 23 * * 0"
+###############################################################################
+# ALL SCHEDULED EMAIL FUNCTIONS DISABLED 2026-05-15
+# Ryan: "shut off all emails" (after outcome-reminder nudged him today).
+# Re-enable individually only after Ryan's explicit approval per function.
+# User-action-triggered email paths (invite, stripe-webhook, prospect-reply,
+# prospect-unsubscribe, inbound-email-background, notify) are NOT touched —
+# they only fire on user actions and are required for product flow.
+###############################################################################
 
-[functions."weekly-health-check"]
-  schedule = "0 9 * * 1"
+# [functions."weekly-outcome-nudge"]
+#   schedule = "0 23 * * 0"
 
-[functions."weekly-digest"]
-  schedule = "0 13 * * 1"
+# [functions."weekly-health-check"]
+#   schedule = "0 9 * * 1"
 
-[functions."daily-digest"]
-  schedule = "0 8 * * *"
+# [functions."weekly-digest"]
+#   schedule = "0 13 * * 1"
 
-[functions."activation-check"]
-  schedule = "0 10 * * *"
+# [functions."daily-digest"]
+#   schedule = "0 8 * * *"
 
-[functions."conversion-sequence"]
-  schedule = "0 11 * * *"
+# [functions."activation-check"]
+#   schedule = "0 10 * * *"
 
-[functions."outcome-reminder"]
-  schedule = "0 12 * * *"
+# [functions."conversion-sequence"]
+#   schedule = "0 11 * * *"
+
+# [functions."outcome-reminder"]
+#   schedule = "0 12 * * *"
+# DISABLED 2026-05-15 — Ryan got nudged by this; he asked to shut off all emails.
 
 [functions."outcome-snooze"]
   timeout = 10
@@ -47,8 +57,8 @@
 # DISABLED 2026-05-15 — Ryan got BCC'd on cold outreach ("stop all outbound emails").
 # Re-enable only after recipient list and funnel are reviewed (see BID-138, BID-142).
 
-[functions."seo-weekly"]
-  schedule = "0 14 * * 5"
+# [functions."seo-weekly"]
+#   schedule = "0 14 * * 5"
 
 [build.environment]
   NODE_VERSION = "18"
