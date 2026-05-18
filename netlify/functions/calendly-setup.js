@@ -6,9 +6,12 @@
 //                                                             and creates a fresh one. Returns the new
 //                                                             signing_key for CALENDLY_WEBHOOK_SECRET.
 //
-// Required env vars:
-//   CALENDLY_API_TOKEN     — Personal Access Token from calendly.com/integrations/api_webhooks
-//   CALENDLY_SETUP_SECRET  — random string to gate this endpoint (set anything; pass in ?key=)
+// Auth:
+//   CALENDLY_SETUP_SECRET env var (gate)   — pass in ?key=<secret>
+//   Calendly API token                     — pass in Authorization: Bearer <token> header
+//                                            (NOT stored in env vars — JWT is ~1KB and we're tight on
+//                                             the 4KB Lambda env limit). Falls back to env var
+//                                             CALENDLY_API_TOKEN if header is absent — for backward compat.
 //
 // After running recreate, you must:
 //   1. Copy signing_key from the response
@@ -81,12 +84,16 @@ exports.handler = async (event) => {
     return { statusCode: 401, body: 'Unauthorized — set CALENDLY_SETUP_SECRET env var and pass it in ?key=' };
   }
 
-  const token = process.env.CALENDLY_API_TOKEN;
+  // Token from Authorization: Bearer <token> header (preferred — keeps the JWT
+  // out of persistent env vars). Falls back to CALENDLY_API_TOKEN env var if set.
+  const authHeader = (event.headers && (event.headers.authorization || event.headers.Authorization)) || '';
+  const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+  const token = bearerMatch ? bearerMatch[1] : process.env.CALENDLY_API_TOKEN;
   if (!token) {
     return {
-      statusCode: 500,
+      statusCode: 401,
       body: JSON.stringify({
-        error: 'CALENDLY_API_TOKEN env var is not set in Netlify. Generate a Personal Access Token at https://calendly.com/integrations/api_webhooks and add it to Netlify environment variables.',
+        error: 'No Calendly API token. Pass via Authorization: Bearer <token> header, or set CALENDLY_API_TOKEN env var. Generate a token at https://calendly.com/integrations/api_webhooks.',
       }, null, 2),
     };
   }
