@@ -460,16 +460,16 @@ function renderIndex(articles) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Take-Off — Estimating Guides for Commercial Subs | BidIntell</title>
-  <meta name="description" content="Practical estimating guides for commercial subcontractors. Bid strategy, contract risk, win rate — straight from the field.">
+  <title>Take-Off: Bid Strategy for Commercial Subs | BidIntell</title>
+  <meta name="description" content="Practical bid strategy guides for commercial subcontractors — bid qualification, win-rate math, contract risk, pricing. Written for estimators, by the field.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="${SITE_ORIGIN}/takeoff/">
   <link rel="icon" href="/favicon.png">
 
   <meta property="og:type" content="website">
   <meta property="og:url" content="${SITE_ORIGIN}/takeoff/">
-  <meta property="og:title" content="Take-Off — Estimating Guides for Commercial Subs | BidIntell">
-  <meta property="og:description" content="Practical estimating guides for commercial subcontractors. Bid strategy, contract risk, win rate — straight from the field.">
+  <meta property="og:title" content="Take-Off: Bid Strategy for Commercial Subs | BidIntell">
+  <meta property="og:description" content="Practical bid strategy guides for commercial subcontractors — bid qualification, win-rate math, contract risk, pricing. Written for estimators, by the field.">
   <meta property="og:image" content="${SITE_ORIGIN}/og-image.png">
   <meta property="og:site_name" content="BidIntell">
   <meta property="og:locale" content="en_US">
@@ -477,8 +477,8 @@ function renderIndex(articles) {
 
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="${SITE_ORIGIN}/takeoff/">
-  <meta property="twitter:title" content="Take-Off — Estimating Guides for Commercial Subs | BidIntell">
-  <meta property="twitter:description" content="Practical estimating guides for commercial subcontractors.">
+  <meta property="twitter:title" content="Take-Off: Bid Strategy for Commercial Subs | BidIntell">
+  <meta property="twitter:description" content="Practical bid strategy guides for commercial subcontractors — bid qualification, win-rate math, contract risk, pricing.">
   <meta property="twitter:image" content="${SITE_ORIGIN}/og-image.png">
 
   <link rel="alternate" type="text/markdown" title="LLM-friendly site description" href="/llms.txt">
@@ -490,8 +490,8 @@ function renderIndex(articles) {
       {
         "@type": "CollectionPage",
         "@id": "${SITE_ORIGIN}/takeoff/#collection",
-        "name": "Take-Off — Estimating Guides for Commercial Subs",
-        "description": "Practical estimating guides for commercial subcontractors. Bid strategy, contract risk, win rate.",
+        "name": "Take-Off: Bid Strategy for Commercial Subs",
+        "description": "Practical bid strategy guides for commercial subcontractors — bid qualification, win-rate math, contract risk, pricing.",
         "url": "${SITE_ORIGIN}/takeoff/",
         "inLanguage": "en-US",
         "isPartOf": { "@id": "${SITE_ORIGIN}/#website" },

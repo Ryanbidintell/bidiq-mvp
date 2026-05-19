@@ -150,6 +150,46 @@
       "mainEntity": [
         {
           "@type": "Question",
+          "name": "Is the BidIndex Score a win probability?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. The BidIndex Score is a fit score, not a prediction of whether you'll win. A 90 means this bid is a strong match for your business — your trade, your area, a client you know, scope that fits. It doesn't account for competitor pricing, owner relationships, or timing. Use it as a triage tool, not a guarantee."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What's the fastest way to improve my scores?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Complete your profile in Settings. Set your service area, add your CSI trade sections, enter a few good and bad keywords, and rate the clients you work with most. Each of those inputs directly feeds one of the four score factors. Incomplete profiles produce neutral 50-point scores on most factors — which tells you nothing."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I adjust the factor weights?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. In Settings → Scoring, you can shift weight between the four factors to match how your business actually evaluates bids. If client relationship is everything for you, push more weight there. If you travel and location is irrelevant, reduce it or turn it off entirely. Weights must add up to 100."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What if I disagree with a score?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Good — that's useful information. On any bid report, you can flag whether you agree or disagree with the score and leave a note. That feedback helps build a clearer picture of where your settings don't reflect reality. The most common fix is updating your keyword list or adjusting a client's rating after you've seen how a job actually played out."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does the score account for how busy we already are?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, through the Capacity setting. When you're in 'aggressive' mode, BidIntell is more inclusive — borderline bids lean toward REVIEW rather than PASS. When you're 'steady' or 'slow,' the threshold tightens. This isn't a score adjustment — it affects how the GO / REVIEW / PASS recommendation is applied on top of the score."
+          }
+        },
+        {
+          "@type": "Question",
           "name": "Is BidIntell easy to use if I'm not great with technology?",
           "acceptedAnswer": {
             "@type": "Answer",
@@ -169,7 +209,7 @@
           "name": "How long does setup take?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "About 5 minutes. Enter your trade, service area, and preferred clients. Then upload your first bid and see your BidIndex score."
+            "text": "About 5 minutes. Enter your trade, service area, and your key clients. Then upload your first bid and see your BidIndex score."
           }
         },
         {
@@ -193,7 +233,7 @@
           "name": "Can my competitors see what bids I'm analyzing?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "No. Your data is completely private to your account. We use row-level security — meaning the database itself enforces that no other user can ever access your projects, client relationships, or bid history."
+            "text": "No. Your data is completely private to your account. We use row-level security — meaning the database itself enforces that no other user can ever access your projects, client relationships, or bid history. Not even us."
           }
         },
         {
@@ -206,10 +246,26 @@
         },
         {
           "@type": "Question",
-          "name": "Do you sell my data or share it with clients?",
+          "name": "Do you sell my data or share it with clients or GCs?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Never. We don't sell data, share it with clients, or let anyone outside your account see your activity. Your client ratings, win rates, and bid decisions stay private."
+            "text": "Never. We don't sell data, share it with clients or GCs, or let anyone outside your account see your activity. Your client ratings, win rates, and bid decisions stay private."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is my data kept private?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Your bid data is private to your account and never shared with other users, clients, or third parties. We use magic link login — no passwords to steal or forget."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What happens to my data if I cancel?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Your data stays in your account for 90 days after cancellation. You can export it anytime. After 90 days it's permanently deleted."
           }
         }
       ]
