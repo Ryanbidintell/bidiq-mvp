@@ -148,6 +148,7 @@ exports.handler = async (event) => {
             state: fresh.state,
           },
           signing_key: fresh.signing_key,
+          raw_calendly_resource: fresh,
           next_steps: [
             '1. Copy the signing_key value above',
             '2. Update CALENDLY_WEBHOOK_SECRET in Netlify env vars to that value',
