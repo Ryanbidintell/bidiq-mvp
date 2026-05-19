@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schedule a Demo — BidIntell</title>
-  <meta name="description" content="See BidIntell score a real bid in your trade in 20 minutes.">
+  <title>Schedule a Free Demo | BidIntell Bid Scoring Software</title>
+  <meta name="description" content="Book a free 20-minute demo and watch BidIntell score a real bid in your trade. See how our AI-powered bid scoring software helps contractors win more work.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://bidintell.ai/demo">
   <link rel="icon" href="/favicon.png">
@@ -12,8 +12,8 @@
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://bidintell.ai/demo">
-  <meta property="og:title" content="Schedule a Demo — BidIntell">
-  <meta property="og:description" content="See BidIntell score a real bid in your trade in 20 minutes.">
+  <meta property="og:title" content="Schedule a Free Demo | BidIntell Bid Scoring Software">
+  <meta property="og:description" content="Book a free 20-minute demo and watch BidIntell score a real bid in your trade. See how our AI-powered bid scoring software helps contractors win more work.">
   <meta property="og:image" content="https://bidintell.ai/og-image.png">
   <meta property="og:site_name" content="BidIntell">
   <meta property="og:locale" content="en_US">
@@ -22,8 +22,8 @@
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="https://bidintell.ai/demo">
-  <meta property="twitter:title" content="Schedule a Demo — BidIntell">
-  <meta property="twitter:description" content="See BidIntell score a real bid in your trade in 20 minutes.">
+  <meta property="twitter:title" content="Schedule a Free Demo | BidIntell Bid Scoring Software">
+  <meta property="twitter:description" content="Book a free 20-minute demo and watch BidIntell score a real bid in your trade. See how our AI-powered bid scoring software helps contractors win more work.">
   <meta property="twitter:image" content="https://bidintell.ai/og-image.png">
 
   <link rel="alternate" type="text/markdown" title="LLM-friendly site description" href="/llms.txt">
@@ -35,8 +35,8 @@
       {
         "@type": "WebPage",
         "@id": "https://bidintell.ai/demo#webpage",
-        "name": "Schedule a Demo — BidIntell",
-        "description": "See BidIntell score a real bid in your trade in 20 minutes.",
+        "name": "Schedule a Free Demo | BidIntell Bid Scoring Software",
+        "description": "Book a free 20-minute demo and watch BidIntell score a real bid in your trade. See how our AI-powered bid scoring software helps contractors win more work.",
         "url": "https://bidintell.ai/demo",
         "inLanguage": "en-US",
         "isPartOf": { "@id": "https://bidintell.ai/#website" },
@@ -47,6 +47,17 @@
         "itemListElement": [
           { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bidintell.ai/" },
           { "@type": "ListItem", "position": 2, "name": "Schedule a Demo", "item": "https://bidintell.ai/demo" }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://bidintell.ai/demo#faq",
+        "mainEntity": [
+          { "@type": "Question", "name": "How long is the BidIntell demo?", "acceptedAnswer": { "@type": "Answer", "text": "The demo takes 20 minutes and includes a live scoring of a real bid in your trade." } },
+          { "@type": "Question", "name": "Is the BidIntell demo free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes — completely free, no credit card required." } },
+          { "@type": "Question", "name": "Do I need to share a real bid in advance?", "acceptedAnswer": { "@type": "Answer", "text": "No advance prep needed. Bring a current bid invitation to the call if you have one — otherwise we will use a representative example from your trade." } },
+          { "@type": "Question", "name": "Who is BidIntell built for?", "acceptedAnswer": { "@type": "Answer", "text": "Specialty subcontractors, distributors, and manufacturers' reps in commercial construction — anyone deciding which bid invitations are worth pursuing." } },
+          { "@type": "Question", "name": "What happens after the demo?", "acceptedAnswer": { "@type": "Answer", "text": "If it is a fit, you start a free 7-day trial and we help you score your first batch of real bids. No pressure on the call." } }
         ]
       }
     ]
@@ -207,6 +218,61 @@
       border-top: 1px solid var(--border);
       margin: 28px 0 24px;
     }
+
+    /* ── What to Expect ── */
+    .expect-section, .faq {
+      margin-top: 32px;
+      padding: 32px 36px;
+      background: var(--ink-light);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+    .expect-section h2, .faq h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .expect-section .lede {
+      color: var(--fog);
+      margin-bottom: 24px;
+      line-height: 1.65;
+    }
+    .timeline { display: grid; }
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 18px;
+      align-items: start;
+      padding: 16px 0;
+      border-top: 1px solid var(--border);
+    }
+    .timeline-row:first-child { border-top: none; padding-top: 0; }
+    .timeline-time {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent);
+      padding-top: 2px;
+    }
+    .timeline-text { color: var(--cloud); line-height: 1.6; }
+    .timeline-text strong { color: var(--white); font-weight: 600; }
+    .credibility {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      color: var(--fog);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    /* ── FAQ ── */
+    .faq h2 { margin-bottom: 20px; }
+    .faq-item { padding: 18px 0; border-top: 1px solid var(--border); }
+    .faq-item:first-of-type { border-top: none; padding-top: 0; }
+    .faq-q { font-weight: 600; color: var(--white); margin-bottom: 8px; font-size: 1rem; }
+    .faq-a { color: var(--cloud); line-height: 1.65; }
 
     /* ── Form ── */
     .form-row {
@@ -375,8 +441,10 @@
     /* ── Mobile ── */
     @media (max-width: 500px) {
       .card { padding: 24px 20px; }
+      .expect-section, .faq { padding: 24px 20px; }
       .form-row { grid-template-columns: 1fr; gap: 0; }
       .page-header h1 { font-size: 1.6rem; }
+      .timeline-row { grid-template-columns: 1fr; gap: 4px; }
     }
   </style>
 </head>
@@ -401,7 +469,7 @@
     <div class="container">
 
       <div class="page-header">
-        <h1>See BidIntell<br><span>in 20 Minutes</span></h1>
+        <h1>See BidIntell Bid Scoring Software<br><span>in 20 Minutes</span></h1>
         <p>Tell us a little about your shop and we'll score a real bid in your trade — live, on the call.</p>
       </div>
 
@@ -510,6 +578,51 @@
 
         </form>
       </div>
+
+      <section class="expect-section" aria-labelledby="expect-heading">
+        <h2 id="expect-heading">What happens in your 20-minute demo</h2>
+        <p class="lede">No canned slides. We score a real bid in your trade, on the call.</p>
+        <div class="timeline">
+          <div class="timeline-row">
+            <div class="timeline-time">MIN 1–5</div>
+            <div class="timeline-text">We learn about your <strong>trade, typical bid volume, and current workflow</strong>.</div>
+          </div>
+          <div class="timeline-row">
+            <div class="timeline-time">MIN 6–15</div>
+            <div class="timeline-text">We <strong>score a real bid from your industry live</strong> — no canned examples. Bring one you're actually weighing.</div>
+          </div>
+          <div class="timeline-row">
+            <div class="timeline-time">MIN 16–20</div>
+            <div class="timeline-text">You ask questions; we walk through <strong>pricing, onboarding, and how the AI learns</strong> from your bid outcomes over time.</div>
+          </div>
+        </div>
+        <p class="credibility">Built by a construction-tech founder with <strong style="color: var(--white); font-weight: 600;">23 years in the trade</strong> — every part of the product is shaped by jobsite reality, not just software theory.</p>
+      </section>
+
+      <section class="faq" aria-labelledby="faq-heading">
+        <h2 id="faq-heading">Demo FAQ</h2>
+        <div class="faq-item">
+          <div class="faq-q">How long is the BidIntell demo?</div>
+          <div class="faq-a">The demo takes 20 minutes and includes a live scoring of a real bid in your trade.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Is the BidIntell demo free?</div>
+          <div class="faq-a">Yes — completely free, no credit card required.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Do I need to share a real bid in advance?</div>
+          <div class="faq-a">No advance prep needed. Bring a current bid invitation to the call if you have one — otherwise we'll use a representative example from your trade.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Who is BidIntell built for?</div>
+          <div class="faq-a">Specialty subcontractors, distributors, and manufacturers' reps in commercial construction — anyone deciding which bid invitations are worth pursuing.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">What happens after the demo?</div>
+          <div class="faq-a">If it's a fit, you start a free 7-day trial and we help you score your first batch of real bids. No pressure on the call.</div>
+        </div>
+      </section>
+
     </div>
   </div>
 
