@@ -41,6 +41,41 @@ function parseFrontmatter(raw) {
 }
 
 // =====================================================================
+// FAQ extractor — finds `## FAQ` / `## FAQs` section and pulls
+// **Question?** + following paragraph pairs for FAQPage schema.
+// Schema stays aligned with visible content because both come from
+// the same source.
+// =====================================================================
+function extractFaqs(body) {
+  const lines = body.split(/\r?\n/);
+  const faqs = [];
+  let inFaqSection = false;
+  let currentQ = null;
+  let currentA = [];
+  const finalize = () => {
+    if (currentQ) {
+      const answer = currentA.join(' ').trim();
+      if (answer) faqs.push({ question: currentQ, answer });
+    }
+    currentQ = null;
+    currentA = [];
+  };
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (/^##\s+FAQs?\s*$/i.test(line)) { inFaqSection = true; continue; }
+    if (!inFaqSection) continue;
+    // Next H1/H2 ends the FAQ section
+    if (/^#{1,2}\s+/.test(line)) { finalize(); inFaqSection = false; continue; }
+    const qMatch = line.match(/^\*\*([^*]+?)\*\*\s*$/);
+    if (qMatch) { finalize(); currentQ = qMatch[1].trim(); continue; }
+    if (line === '' && currentA.length > 0) { finalize(); continue; }
+    if (currentQ && line && !line.startsWith('---')) currentA.push(line);
+  }
+  finalize();
+  return faqs;
+}
+
+// =====================================================================
 // Markdown → HTML (regex-based, supports the subset we need)
 // =====================================================================
 function escapeHtml(s) {
@@ -516,6 +551,15 @@ function renderArticle(article) {
   const canonical = `${SITE_ORIGIN}/takeoff/${m.slug}/`;
   const seoTitle = m.seoTitle || m.title;
   const seoDescription = m.seoDescription || m.excerpt || '';
+  const faqs = extractFaqs(article.body);
+  const faqSchemaEntry = faqs.length === 0 ? '' : `,
+      {
+        "@type": "FAQPage",
+        "@id": "${canonical}#faq",
+        "mainEntity": [
+          ${faqs.map((f) => `{ "@type": "Question", "name": ${JSON.stringify(f.question)}, "acceptedAnswer": { "@type": "Answer", "text": ${JSON.stringify(f.answer)} } }`).join(',\n          ')}
+        ]
+      }`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -578,7 +622,7 @@ function renderArticle(article) {
           { "@type": "ListItem", "position": 2, "name": "Take-Off", "item": "${SITE_ORIGIN}/takeoff/" },
           { "@type": "ListItem", "position": 3, "name": ${JSON.stringify(m.title)}, "item": "${canonical}" }
         ]
-      }
+      }${faqSchemaEntry}
     ]
   }
   </script>

@@ -114,3 +114,22 @@ The opportunity isn't to invent qualification. It's to make the decision your be
 That's the operating change. Score every bid before estimating begins. Capture every outcome after it ends. Let the patterns inform the next decision.
 
 BidIntell exists to make that loop work without adding hours to your team's week. [Score your first bid free at bidintell.ai](https://bidintell.ai).
+
+---
+
+## FAQs
+
+**What is bid qualification in commercial construction?**
+Bid qualification is the decision step between an invite arriving and an estimator committing hours to a takeoff. A clean qualification step checks scope fit, geographic fit, GC history, crew capacity, and contract terms — and it runs in minutes per invite, not hours.
+
+**How much does it cost a commercial sub to produce a single bid estimate?**
+Industry estimates for fully-loaded cost run roughly $100 to $300 per bid, depending on trade, complexity, and estimator labor rate. A common rule of thumb is $150. At 30 invites per month and a 20% win rate, that's around $54,000 a year in estimating labor spent on bids the shop did not win.
+
+**What contract terms should a subcontractor check before estimating?**
+The terms most likely to erode margin after award: pay-if-paid clauses, retainage held until final completion, vague scope language that creates uncovered work, and aggressive timelines with liquidated damages attached. Surface these before the estimator opens the drawings — when walking away still costs nothing.
+
+**Why should a subcontractor log bid outcomes?**
+Logging won/lost/ghosted creates a history asset. Over six months, patterns surface — which GCs ghost, which project types win at a higher rate, which scopes the shop consistently underprices. That history is the most useful input to the next qualification decision, and most shops throw it away.
+
+**What is the difference between bid qualification and bid scoring?**
+Qualification is the decision. Scoring is one method to make the decision repeatable. A bid score (like the BidIndex Score) assigns a numerical value to each invite based on trade fit, geographic fit, client relationship, and contract terms — so qualification is consistent across estimators and projects rather than dependent on one person's gut.
