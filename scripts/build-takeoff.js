@@ -6,12 +6,14 @@
 // zero npm dependencies. Run as part of Netlify build.
 //
 // Frontmatter per article:
-//   title:        "Article Title"
-//   excerpt:      "1-2 sentence pull"
-//   category:     "Bid Strategy" | "Contract Risk" | "Win Rate" | etc.
-//   readTime:     "8 min read"
-//   publishedAt:  "2026-05-15"
-//   slug:         "kebab-case-slug"
+//   title:           "Article Title"               (used for visible H1 + breadcrumb)
+//   seoTitle:        "Short title <=48 chars"      (optional — drives <title>/og:title/twitter:title; falls back to title)
+//   excerpt:         "1-2 sentence pull"           (used for the card grid on the hub)
+//   seoDescription:  "<=160 char meta description" (optional — drives meta description + schema; falls back to excerpt)
+//   category:        "Bid Strategy" | "Contract Risk" | "Win Rate" | etc.
+//   readTime:        "8 min read"
+//   publishedAt:     "2026-05-15"
+//   slug:            "kebab-case-slug"
 //
 // Articles sorted by publishedAt desc on the index page.
 
@@ -226,7 +228,7 @@ img { max-width: 100%; display: block; }
 .nav-inner { max-width: 1160px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px; }
 .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.25rem; color: var(--white); letter-spacing: -0.02em; }
 .logo-mark { width: 32px; height: 32px; background: var(--accent); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.75rem; font-weight: 700; color: white; letter-spacing: -0.04em; flex-shrink: 0; }
-.nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+.nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
 .nav-links a { font-size: 0.875rem; font-weight: 500; color: var(--fog); transition: color 0.2s; white-space: nowrap; }
 .nav-links a:hover { color: var(--white); }
 .nav-links a.active { color: var(--white); }
@@ -322,10 +324,8 @@ img { max-width: 100%; display: block; }
 }
 
 function getNav(activePath) {
-  const link = (href, label) => {
-    const cls = activePath === href ? ' class="active"' : '';
-    return `<li><a href="${href}"${cls}>${label}</a></li>`;
-  };
+  const activeStyle = ' style="color: var(--white); font-weight: 600;"';
+  const takeoffStyle = activePath === '/takeoff/' ? activeStyle : '';
   return `<nav class="nav">
   <div class="nav-inner">
     <a href="/" class="nav-logo">
@@ -333,11 +333,12 @@ function getNav(activePath) {
       BidIntell
     </a>
     <ul class="nav-links">
-      ${link('/', 'Home')}
-      ${link('/takeoff/', 'Take-Off')}
-      ${link('/diagnostic', 'Diagnostic')}
-      ${link('/bid-no-bid-checklist', 'Checklist')}
-      ${link('/roi-calculator', 'ROI Calculator')}
+      <li><a href="/#how">How It Works</a></li>
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/#who">Who It's For</a></li>
+      <li><a href="/#pricing">Pricing</a></li>
+      <li><a href="/takeoff/"${takeoffStyle}>Take-Off</a></li>
+      <li><a href="/diagnostic">Diagnostic</a></li>
       <li><a href="/app?utm_source=website&utm_medium=takeoff&utm_campaign=nav" style="color: var(--cloud);">Sign In</a></li>
       <li><a href="/demo" class="nav-cta">Schedule a Demo</a></li>
     </ul>
@@ -513,22 +514,24 @@ function renderArticle(article) {
   const m = article.meta;
   const bodyHtml = renderMarkdown(article.body);
   const canonical = `${SITE_ORIGIN}/takeoff/${m.slug}/`;
+  const seoTitle = m.seoTitle || m.title;
+  const seoDescription = m.seoDescription || m.excerpt || '';
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(m.title)} | BidIntell</title>
-  <meta name="description" content="${escapeHtml(m.excerpt || '')}">
+  <title>${escapeHtml(seoTitle)} | BidIntell</title>
+  <meta name="description" content="${escapeHtml(seoDescription)}">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="${canonical}">
   <link rel="icon" href="/favicon.png">
 
   <meta property="og:type" content="article">
   <meta property="og:url" content="${canonical}">
-  <meta property="og:title" content="${escapeHtml(m.title)}">
-  <meta property="og:description" content="${escapeHtml(m.excerpt || '')}">
+  <meta property="og:title" content="${escapeHtml(seoTitle)}">
+  <meta property="og:description" content="${escapeHtml(seoDescription)}">
   <meta property="og:image" content="${SITE_ORIGIN}/og-image.png">
   <meta property="og:site_name" content="BidIntell">
   <meta property="og:locale" content="en_US">
@@ -538,8 +541,8 @@ function renderArticle(article) {
 
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="${canonical}">
-  <meta property="twitter:title" content="${escapeHtml(m.title)}">
-  <meta property="twitter:description" content="${escapeHtml(m.excerpt || '')}">
+  <meta property="twitter:title" content="${escapeHtml(seoTitle)}">
+  <meta property="twitter:description" content="${escapeHtml(seoDescription)}">
   <meta property="twitter:image" content="${SITE_ORIGIN}/og-image.png">
 
   <link rel="alternate" type="text/markdown" title="LLM-friendly site description" href="/llms.txt">
@@ -552,7 +555,7 @@ function renderArticle(article) {
         "@type": "Article",
         "@id": "${canonical}#article",
         "headline": ${JSON.stringify(m.title)},
-        "description": ${JSON.stringify(m.excerpt || '')},
+        "description": ${JSON.stringify(seoDescription)},
         "url": "${canonical}",
         "datePublished": "${escapeHtml(m.publishedAt || '')}",
         "dateModified": "${escapeHtml(m.publishedAt || '')}",

@@ -1,6 +1,8 @@
 ---
 title: How to Calculate Your Bid-Hit Ratio (And Why Most Subs Are Measuring It Wrong)
+seoTitle: Calculate Bid-Hit Ratio: The Right Formula
 excerpt: Most specialty subs calculate bid-hit ratio wrong — counting invites instead of submissions, ignoring cost per bid, and lumping hard bids in with negotiated work. Here's the formula that actually tells you something.
+seoDescription: Most subs calculate bid-hit ratio wrong — counting invites, ignoring bid cost, mixing hard with negotiated work. Here's the formula that works.
 category: Win Rate
 readTime: 8 min read
 publishedAt: 2026-05-15
