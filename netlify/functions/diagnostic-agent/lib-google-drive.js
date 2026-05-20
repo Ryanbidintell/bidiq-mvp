@@ -35,6 +35,8 @@ async function getNextProspectId(drive) {
     q: `'${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: 'files(name)',
     pageSize: 1000,
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
   });
 
   const existing = res.data.files || [];
@@ -75,6 +77,8 @@ async function findExistingProspectFolder(drive, { prospectName, companyName }) 
     fields: 'files(id,name,webViewLink,createdTime)',
     orderBy: 'createdTime desc',
     pageSize: 50,
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
   });
 
   const compShort = (companyName || '').split(/\s+/).slice(0, 2).join(' ').toLowerCase();
@@ -122,6 +126,7 @@ async function createProspectFolder({ prospectName, companyName }) {
       parents: [parentId],
     },
     fields: 'id,webViewLink',
+    supportsAllDrives: true,
   });
 
   return {
@@ -151,6 +156,7 @@ async function writeMarkdownAsDoc({ folderId, fileName, markdown }) {
       body: markdown,
     },
     fields: 'id,webViewLink',
+    supportsAllDrives: true,
   });
 
   return {
@@ -177,6 +183,7 @@ async function writePlainText({ folderId, fileName, text, mimeType = 'text/plain
       body: text,
     },
     fields: 'id,webViewLink',
+    supportsAllDrives: true,
   });
 
   return {
