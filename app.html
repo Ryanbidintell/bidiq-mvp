@@ -2260,6 +2260,17 @@
                         </div>
                     </div>
 
+                    <!-- Email Integration (gated to admins until full feature ships) -->
+                    <div class="settings-card" id="emailIntegrationCard" style="display:none;">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">Email Integration <span style="background: rgba(79,70,229,0.15); color: var(--brand-primary); font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px; margin-left: 8px;">ADMIN PREVIEW</span></div>
+                            <div class="settings-card-description">BidIntell sends follow-ups from your own email so they look authentic to the GC. We use industry-standard OAuth — your password is never shared with BidIntell.</div>
+                        </div>
+                        <div class="settings-card-body" id="emailIntegrationBody">
+                            <div style="color: var(--text-muted); font-size: 13px;">Loading...</div>
+                        </div>
+                    </div>
+
                     <!-- Follow-Up Sequences (gated to admins until full feature ships — see loadFollowupTemplates) -->
                     <div class="settings-card" id="followupSequencesCard" style="display:none;">
                         <div class="settings-card-header">
@@ -17150,6 +17161,8 @@ Respond now:`;
 
             // Load follow-up sequence templates (system + user)
             loadFollowupTemplates().catch(err => console.warn('loadFollowupTemplates non-fatal:', err));
+            // Load Gmail / M365 email integration status
+            loadEmailIntegration().catch(err => console.warn('loadEmailIntegration non-fatal:', err));
         }
 
         async function addSettingsProductLine() {
@@ -17680,6 +17693,199 @@ Respond now:`;
             } catch (err) {
                 console.error('setDefaultFollowupTemplate failed:', err);
                 alert(`Could not set default: ${err.message || 'unknown error'}`);
+            }
+        }
+
+        // ============================================
+        // EMAIL INTEGRATION (Gmail OAuth — Week 4 of follow-up automation)
+        // ============================================
+        // Connects the user's Gmail account so BidIntell can send follow-ups
+        // from their actual email address. Restricted gmail.send scope —
+        // requires Google verification before going to non-admin users.
+
+        async function loadEmailIntegration() {
+            if (!supabaseClient || !currentUser) return;
+            const card = document.getElementById('emailIntegrationCard');
+            const body = document.getElementById('emailIntegrationBody');
+            if (!card || !body) return;
+
+            if (!isAdmin()) {
+                card.style.display = 'none';
+                return;
+            }
+            card.style.display = '';
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('user_email_integrations')
+                    .select('provider, email_address, is_active, connected_at, disconnected_at, last_send_at, total_sends, scopes_granted')
+                    .eq('user_id', currentUser.id)
+                    .maybeSingle();
+                if (error) throw error;
+
+                renderEmailIntegrationCard(data);
+            } catch (err) {
+                console.error('loadEmailIntegration failed:', err);
+                body.innerHTML = `<div style="color: var(--danger); font-size: 13px;">Could not load email integration: ${escapeHtml(err.message || 'unknown error')}</div>`;
+            }
+        }
+
+        function renderEmailIntegrationCard(integration) {
+            const body = document.getElementById('emailIntegrationBody');
+            if (!body) return;
+
+            const isConnected = integration && integration.is_active === true;
+
+            if (!isConnected) {
+                const wasDisconnected = !!integration?.disconnected_at;
+                const reconnectNote = wasDisconnected
+                    ? `<div style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">Previously connected ${formatRelativeDate(integration.connected_at)} as <strong>${escapeHtml(integration.email_address)}</strong>. Reconnecting will replace the existing record.</div>`
+                    : '';
+                body.innerHTML = `
+                    <div style="padding: 16px; background: var(--bg-input); border-radius: var(--radius);">
+                        <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px;">Connect your Gmail account so BidIntell can send follow-ups from <em>your</em> email address. You'll review and approve every single send — nothing leaves your inbox without your click.</div>
+                        <button class="btn btn-primary" onclick="connectGmail()" style="font-size: 14px; padding: 10px 16px;">
+                            <span style="display:inline-flex;align-items:center;gap:8px;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.11 2.58-2.36 3.39v2.8h3.81C22.18 18.66 24 15.77 24 12.27z"/><path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.81-2.8c-1.05.7-2.4 1.13-4.12 1.13-3.17 0-5.86-2.14-6.83-5.02H1.27v3.15C3.24 21.45 7.31 24 12 24z"/><path d="M5.17 14.4c-.25-.7-.39-1.45-.39-2.4s.14-1.7.39-2.4V6.45H1.27C.46 8.04 0 9.94 0 12s.46 3.96 1.27 5.55l3.9-3.15z"/><path d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.39-3.39C17.95 1.19 15.24 0 12 0 7.31 0 3.24 2.55 1.27 6.45l3.9 3.15C6.14 6.89 8.83 4.75 12 4.75z"/></svg>
+                                Connect Gmail
+                            </span>
+                        </button>
+                        ${reconnectNote}
+                    </div>
+                `;
+                return;
+            }
+
+            const totalSends = integration.total_sends || 0;
+            const lastSend = integration.last_send_at ? formatRelativeDate(integration.last_send_at) : 'never';
+            const connectedRelative = formatRelativeDate(integration.connected_at);
+            const providerLabel = integration.provider === 'google' ? 'Gmail' : (integration.provider === 'microsoft' ? 'Microsoft 365' : integration.provider);
+
+            body.innerHTML = `
+                <div style="padding: 16px; background: var(--bg-input); border-radius: var(--radius);">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+                        <div style="width: 36px; height: 36px; background: rgba(34,197,94,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">Connected · ${escapeHtml(providerLabel)}</div>
+                            <div style="font-size: 13px; color: var(--text-secondary);">${escapeHtml(integration.email_address)}</div>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+                        <div style="padding: 10px 12px; background: var(--bg-secondary); border-radius: var(--radius);">
+                            <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Connected</div>
+                            <div style="font-size: 13px; color: var(--text-primary);">${escapeHtml(connectedRelative)}</div>
+                        </div>
+                        <div style="padding: 10px 12px; background: var(--bg-secondary); border-radius: var(--radius);">
+                            <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Last send</div>
+                            <div style="font-size: 13px; color: var(--text-primary);">${escapeHtml(lastSend)}</div>
+                        </div>
+                        <div style="padding: 10px 12px; background: var(--bg-secondary); border-radius: var(--radius);">
+                            <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Total sends</div>
+                            <div style="font-size: 13px; color: var(--text-primary);">${totalSends}</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary" onclick="connectGmail()" style="font-size: 12px; padding: 6px 12px;">Reconnect</button>
+                        <button class="btn btn-secondary" onclick="disconnectEmailIntegration(false)" style="font-size: 12px; padding: 6px 12px; color: var(--danger);">Disconnect</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatRelativeDate(iso) {
+            if (!iso) return 'never';
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) return 'unknown';
+            const ms = Date.now() - d.getTime();
+            const min = Math.floor(ms / 60000);
+            if (min < 1) return 'just now';
+            if (min < 60) return `${min} min ago`;
+            const hr = Math.floor(min / 60);
+            if (hr < 24) return `${hr} hour${hr === 1 ? '' : 's'} ago`;
+            const day = Math.floor(hr / 24);
+            if (day < 30) return `${day} day${day === 1 ? '' : 's'} ago`;
+            return d.toLocaleDateString();
+        }
+
+        async function connectGmail() {
+            if (!supabaseClient || !currentUser) {
+                alert('Please sign in first.');
+                return;
+            }
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session?.access_token) {
+                    alert('Could not get your auth token — try refreshing the page.');
+                    return;
+                }
+                const url = `/.netlify/functions/google-oauth-start?user_token=${encodeURIComponent(session.access_token)}`;
+                window.location.href = url;
+            } catch (err) {
+                console.error('connectGmail failed:', err);
+                alert('Could not start the Gmail connection flow. See console for details.');
+            }
+        }
+
+        async function disconnectEmailIntegration(revoke) {
+            if (!supabaseClient || !currentUser) return;
+            const confirmMsg = revoke
+                ? 'Disconnect AND revoke access at Google? You\'ll need to re-grant permission to reconnect.'
+                : 'Disconnect your email integration? BidIntell will stop sending follow-ups until you reconnect. Your refresh token stays in our database (encrypted) so reconnecting is one click.';
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session?.access_token) {
+                    alert('Could not get your auth token — try refreshing the page.');
+                    return;
+                }
+                const res = await fetch('/.netlify/functions/email-integration-disconnect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_token: session.access_token, revoke: !!revoke }),
+                });
+                if (!res.ok) {
+                    const errBody = await res.json().catch(() => ({}));
+                    throw new Error(errBody.error || `Disconnect failed (${res.status})`);
+                }
+                await loadEmailIntegration();
+            } catch (err) {
+                console.error('disconnectEmailIntegration failed:', err);
+                alert(`Could not disconnect: ${err.message}`);
+            }
+        }
+
+        // Handle OAuth callback query params (?gmail_connected=true or ?gmail_error=...)
+        // Surface a toast-style banner so the user knows what happened.
+        function checkGmailOAuthRedirect() {
+            const params = new URLSearchParams(window.location.search);
+            const connected = params.get('gmail_connected');
+            const errorCode = params.get('gmail_error');
+            if (!connected && !errorCode) return;
+            // Clean the URL so refreshing doesn't re-trigger the message
+            const url = new URL(window.location);
+            url.searchParams.delete('gmail_connected');
+            url.searchParams.delete('gmail_error');
+            window.history.replaceState({}, '', url);
+
+            if (connected) {
+                alert('Gmail connected successfully. BidIntell can now draft follow-ups from your email.');
+            } else if (errorCode) {
+                const messages = {
+                    denied: 'Gmail connection was cancelled. You can try again any time from Settings.',
+                    not_configured: 'Gmail integration is not configured yet. Contact support.',
+                    missing_token: 'Authentication token missing — try again from Settings.',
+                    auth_failed: 'Could not verify your session. Please sign in again.',
+                    state_invalid: 'The connection link expired or was tampered with. Try connecting again.',
+                    token_exchange: 'Google did not return tokens. Try connecting again.',
+                    token_incomplete: 'Google did not return a refresh token. Try connecting again — make sure you click "Allow" on every screen.',
+                    email_unavailable: 'Could not read your email address from Google. Try connecting again.',
+                    encryption_failed: 'Server encryption error. Contact support.',
+                    db_save: 'Could not save the connection. Try again or contact support.',
+                };
+                alert(messages[errorCode] || `Gmail connection failed: ${errorCode}`);
             }
         }
 
@@ -19436,6 +19642,9 @@ Respond now:`;
                     showNotification(msg, 'error');
                     window.history.replaceState({}, '', window.location.pathname);
                 }
+
+                // Handle Gmail OAuth return params (gmail_connected, gmail_error)
+                checkGmailOAuthRedirect();
 
                 // Show admin tabs for founders only
                 if (isAdmin()) {
