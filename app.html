@@ -2585,6 +2585,35 @@
                     <label class="form-label">Notes <span style="color:var(--text-muted);font-weight:400;font-size:12px;">Optional</span></label>
                     <textarea class="form-input" id="logBidNotes" rows="2" placeholder="e.g. VE alternates included"></textarea>
                 </div>
+
+                <!-- Follow-up activation (admin-gated until full feature ships) -->
+                <div id="logBidFollowupSection" style="display:none; margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px;">
+                        <input type="checkbox" id="logBidEnableFollowup" style="width:16px;height:16px;cursor:pointer;">
+                        <span style="font-size:14px;font-weight:600;color:var(--text-primary);">Set up follow-up sequence</span>
+                        <span style="background: rgba(79,70,229,0.15); color: var(--brand-primary); font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px;">ADMIN PREVIEW</span>
+                    </label>
+                    <div id="logBidFollowupFields" style="display:none; padding: 12px; background: var(--bg-input); border-radius: var(--radius); display:none;">
+                        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.4;">Follow-ups go to one GC per bid for now. Pick the GC and contact you want BidIntell to follow up with — touches will be drafted ~24h before each scheduled send for your approval.</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">GC contact name</label>
+                                <input type="text" class="form-input" id="logBidGCContactName" placeholder="Pat Stevens">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">GC contact email</label>
+                                <input type="email" class="form-input" id="logBidGCContactEmail" placeholder="pat@gccompany.com">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sequence template</label>
+                            <select class="form-input" id="logBidFollowupTemplate">
+                                <option value="">Loading templates...</option>
+                            </select>
+                            <div id="logBidFollowupTemplatePreview" style="font-size:11px;color:var(--text-muted);margin-top:6px;font-family: var(--font-mono, ui-monospace, monospace);"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('logBidModal')">Cancel</button>
@@ -14740,7 +14769,218 @@ Respond now:`;
                 gcContainer.appendChild(buildLogBidGCRow('', null, true));
             }
 
+            // Admin-gated: show the follow-up sequence setup section. Until the full
+            // feature ships (post-Week 10 soft launch), non-admins don't see this at all.
+            setupLogBidFollowupSection(project);
+
             openModal('logBidModal');
+        }
+
+        async function setupLogBidFollowupSection(project) {
+            const section = document.getElementById('logBidFollowupSection');
+            const fields = document.getElementById('logBidFollowupFields');
+            const enableCb = document.getElementById('logBidEnableFollowup');
+            const nameEl = document.getElementById('logBidGCContactName');
+            const emailEl = document.getElementById('logBidGCContactEmail');
+            const select = document.getElementById('logBidFollowupTemplate');
+            const preview = document.getElementById('logBidFollowupTemplatePreview');
+            if (!section || !enableCb || !select) return;
+
+            if (!isAdmin()) {
+                section.style.display = 'none';
+                enableCb.checked = false;
+                return;
+            }
+            section.style.display = '';
+
+            // Pre-fill from existing project columns if present
+            nameEl.value = project?.gcContactName || project?.gc_contact_name || '';
+            emailEl.value = project?.gcContactEmail || project?.gc_contact_email || '';
+
+            // If a schedule already exists for this project we don't re-create on save.
+            // Default enable state: on if no existing schedule and user has an email pre-filled.
+            const hasExistingSchedule = !!(project?.followUpScheduleId || project?.follow_up_schedule_id);
+            enableCb.checked = !hasExistingSchedule && !!emailEl.value;
+            fields.style.display = enableCb.checked ? '' : 'none';
+            enableCb.disabled = hasExistingSchedule;
+            if (hasExistingSchedule) {
+                enableCb.parentElement.querySelector('span').textContent = 'Follow-up sequence already active';
+            }
+
+            enableCb.onchange = () => {
+                fields.style.display = enableCb.checked ? '' : 'none';
+            };
+
+            // Make sure templates are loaded before we populate the dropdown
+            if (!_followupTemplatesCache) {
+                await loadFollowupTemplates();
+            }
+
+            const cache = _followupTemplatesCache;
+            select.innerHTML = '';
+            if (!cache) {
+                select.innerHTML = '<option value="">No templates available</option>';
+                return;
+            }
+
+            // Default selection: user's own default template, else system "Standard GC"
+            const userDefault = (cache.userTemplates || []).find(t => t.is_default);
+            const standardGC = (cache.systemTemplates || []).find(t => t.name === 'Standard GC');
+            const defaultId = userDefault?.id || standardGC?.id || (cache.systemTemplates[0]?.id);
+
+            const buildOption = (t) => {
+                const stepCount = (cache.stepsByTemplate[t.id] || []).length;
+                const label = `${t.name} — ${stepCount} touch${stepCount === 1 ? '' : 'es'}`;
+                return `<option value="${t.id}" ${t.id === defaultId ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+            };
+
+            const userOpts = (cache.userTemplates || []).map(buildOption).join('');
+            const systemOpts = (cache.systemTemplates || []).map(buildOption).join('');
+            select.innerHTML = (userOpts ? `<optgroup label="Your templates">${userOpts}</optgroup>` : '')
+                + `<optgroup label="System templates">${systemOpts}</optgroup>`;
+
+            const renderPreview = () => {
+                const id = select.value;
+                const steps = (cache.stepsByTemplate[id] || []).slice().sort((a,b) => a.step_number - b.step_number);
+                if (steps.length === 0) { preview.textContent = ''; return; }
+                preview.textContent = steps.map(s => `T${s.step_number} · Day ${s.days_offset} · ${PRINCIPLE_LABELS[s.primary_principle] || s.primary_principle}`).join('  →  ');
+            };
+            select.onchange = renderPreview;
+            renderPreview();
+        }
+
+        // ── Follow-up schedule activation ──────────────────────────────────────
+
+        function addBusinessDays(start, n) {
+            const d = new Date(start);
+            let added = 0;
+            while (added < n) {
+                d.setDate(d.getDate() + 1);
+                const day = d.getDay();
+                if (day !== 0 && day !== 6) added++;
+            }
+            return d;
+        }
+
+        function addCalendarDays(start, n) {
+            const d = new Date(start);
+            d.setDate(d.getDate() + n);
+            return d;
+        }
+
+        async function activateFollowupSchedule({ projectId, templateId, gcContactName, gcContactEmail }) {
+            if (!supabaseClient || !currentUser) throw new Error('Not authenticated');
+            if (!projectId || !templateId || !gcContactEmail) throw new Error('Missing required fields');
+
+            // Get the template + steps (use cache when available, else query)
+            let template = null;
+            let steps = [];
+            if (_followupTemplatesCache) {
+                template = [..._followupTemplatesCache.systemTemplates, ..._followupTemplatesCache.userTemplates].find(t => t.id === templateId);
+                steps = (_followupTemplatesCache.stepsByTemplate[templateId] || []).slice().sort((a,b) => a.step_number - b.step_number);
+            }
+            if (!template) {
+                const [{ data: tData, error: tErr }, { data: sData, error: sErr }] = await Promise.all([
+                    supabaseClient.from('follow_up_sequence_templates').select('id, use_business_days').eq('id', templateId).maybeSingle(),
+                    supabaseClient.from('follow_up_sequence_steps').select('*').eq('template_id', templateId).order('step_number'),
+                ]);
+                if (tErr) throw tErr;
+                if (sErr) throw sErr;
+                template = tData;
+                steps = sData || [];
+            }
+            if (!template) throw new Error('Template not found');
+            if (steps.length === 0) throw new Error('Template has no steps');
+
+            const submittedAt = new Date();
+            const submittedIso = submittedAt.toISOString();
+
+            // Create the schedule
+            const { data: schedule, error: schErr } = await supabaseClient
+                .from('follow_up_schedules')
+                .insert({
+                    project_id: projectId,
+                    user_id: currentUser.id,
+                    template_id: templateId,
+                    bid_submitted_at: submittedIso,
+                    status: 'active',
+                })
+                .select()
+                .single();
+            if (schErr) throw schErr;
+
+            // Generate touches with computed scheduled_at
+            const useBusinessDays = template.use_business_days !== false;
+            const touchRows = steps.map(s => {
+                const scheduledAt = useBusinessDays
+                    ? addBusinessDays(submittedAt, s.days_offset)
+                    : addCalendarDays(submittedAt, s.days_offset);
+                return {
+                    schedule_id: schedule.id,
+                    user_id: currentUser.id,
+                    touch_number: s.step_number,
+                    scheduled_at: scheduledAt.toISOString(),
+                    status: 'pending',
+                    primary_principle: s.primary_principle,
+                    secondary_principle: s.secondary_principle,
+                    recipient_email: gcContactEmail,
+                    recipient_name: gcContactName || null,
+                };
+            });
+            const { error: tErr } = await supabaseClient
+                .from('follow_up_touches')
+                .insert(touchRows);
+            if (tErr) throw tErr;
+
+            // Stamp the project with contact + schedule reference
+            const { error: pErr } = await supabaseClient
+                .from('projects')
+                .update({
+                    bid_submitted_at: submittedIso,
+                    gc_contact_name: gcContactName || null,
+                    gc_contact_email: gcContactEmail,
+                    follow_up_schedule_id: schedule.id,
+                })
+                .eq('id', projectId);
+            if (pErr) throw pErr;
+
+            console.log(`✅ Follow-up schedule activated: ${schedule.id} with ${touchRows.length} touches`);
+            return { scheduleId: schedule.id, touchCount: touchRows.length };
+        }
+
+        async function cancelFollowupSchedule(projectId, reason) {
+            if (!supabaseClient || !currentUser) return;
+            try {
+                const { data: schedule, error: findErr } = await supabaseClient
+                    .from('follow_up_schedules')
+                    .select('id')
+                    .eq('project_id', projectId)
+                    .eq('status', 'active')
+                    .maybeSingle();
+                if (findErr) throw findErr;
+                if (!schedule) return; // No active schedule, nothing to do
+
+                const { error: touchErr } = await supabaseClient
+                    .from('follow_up_touches')
+                    .update({ status: 'cancelled' })
+                    .eq('schedule_id', schedule.id)
+                    .in('status', ['pending', 'awaiting_approval']);
+                if (touchErr) throw touchErr;
+
+                const { error: schErr } = await supabaseClient
+                    .from('follow_up_schedules')
+                    .update({
+                        status: 'completed',
+                        cancelled_reason: reason || 'outcome_logged',
+                        updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', schedule.id);
+                if (schErr) throw schErr;
+
+                console.log(`✅ Follow-up schedule ${schedule.id} cancelled (${reason})`);
+            } catch (err) {
+                console.warn('cancelFollowupSchedule failed (non-fatal):', err);
+            }
         }
 
         async function saveLogBid() {
@@ -14787,6 +15027,36 @@ Respond now:`;
                 if (divisions.length > 0) {
                     await supabaseClient.from('projects').update({ bid_divisions_submitted: divisions }).eq('id', id);
                 }
+
+                // Admin-gated: activate the follow-up schedule if the user opted in
+                const enableCb = document.getElementById('logBidEnableFollowup');
+                if (isAdmin() && enableCb && enableCb.checked && !enableCb.disabled) {
+                    const tmplEl = document.getElementById('logBidFollowupTemplate');
+                    const nameEl = document.getElementById('logBidGCContactName');
+                    const emailEl = document.getElementById('logBidGCContactEmail');
+                    const templateId = tmplEl?.value || '';
+                    const gcContactName = (nameEl?.value || '').trim();
+                    const gcContactEmail = (emailEl?.value || '').trim();
+                    if (!gcContactEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(gcContactEmail)) {
+                        alert('GC contact email is required to set up a follow-up sequence. Bid submission was saved, but no follow-up was scheduled.');
+                    } else if (!templateId) {
+                        alert('Pick a sequence template to set up follow-ups. Bid submission was saved, but no follow-up was scheduled.');
+                    } else {
+                        try {
+                            const result = await activateFollowupSchedule({
+                                projectId: id,
+                                templateId,
+                                gcContactName,
+                                gcContactEmail,
+                            });
+                            console.log(`✅ Follow-up schedule activated with ${result.touchCount} touches`);
+                        } catch (followupErr) {
+                            console.error('❌ Follow-up activation failed:', followupErr);
+                            alert(`Bid was logged, but follow-up sequence couldn't be activated: ${followupErr.message}`);
+                        }
+                    }
+                }
+
                 closeModal('logBidModal');
                 dataCache.projects = null;
                 await loadProjects();
@@ -15374,6 +15644,12 @@ Respond now:`;
                 }
                 console.log('✅ Outcome written to DB:', projectOutcome);
 
+                // Cancel any active follow-up schedule on this project — outcome supersedes follow-ups.
+                // Non-fatal: failures log but don't block outcome save.
+                if (projectOutcome !== 'pending') {
+                    await cancelFollowupSchedule(id, 'outcome_logged');
+                }
+
                 // Update client stats — won and lost only (not gc_lost)
                 for (const sub of pendingSubmissions) {
                     const outcome = submissionOutcomeSelections[sub.id];
@@ -15552,6 +15828,11 @@ Respond now:`;
                 }
 
                 await updateProjectOutcome(id, type, outcomeData);
+
+                // Cancel any active follow-up schedule — legacy outcome path
+                if (type === 'won' || type === 'lost' || type === 'ghost' || type === 'declined') {
+                    await cancelFollowupSchedule(id, 'outcome_logged');
+                }
 
                 // Aggregate outcome, RFI, and payment data back to client profile
                 if (type === 'won' || type === 'lost' || type === 'ghost') {
