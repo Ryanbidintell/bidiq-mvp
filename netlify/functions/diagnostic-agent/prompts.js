@@ -209,9 +209,82 @@ Folder: [Drive URL]
 \`\`\``;
 }
 
+/**
+ * Transcript extraction prompt — reads a post-call Granola transcript
+ * and extracts structured fields that map to specific cells in the
+ * Prospects tab of the diagnostic tracker spreadsheet.
+ */
+function buildTranscriptExtractionPrompt({
+  companyName,
+  prospectName,
+  companyBrief,
+  transcript,
+}) {
+  return `You are processing a call transcript from a 30-minute diagnostic call BidIntell ran with a construction subcontractor prospect. Your job is to extract structured information that maps to specific cells in a diagnostic tracker spreadsheet.
+
+PROSPECT: ${prospectName} at ${companyName}
+
+PRE-CALL COMPANY BRIEF (for context):
+${companyBrief}
+
+CALL TRANSCRIPT:
+${transcript}
+
+The call follows a 5-question structure:
+Q1 — Last 5 wins (which GC, scope, why won)
+Q2 — Last 5 losses (same format)
+Q3 — Bids they regret chasing
+Q4 — Decision process when a bid invite lands
+Q5 — The "wish" — what they'd want to see about a bid invite that they can't today
+
+Extract the following fields. For each field, return both a value AND a confidence score 0-1. Use the field IDs exactly as shown below.
+
+CONFIDENCE GUIDANCE:
+- 0.9+ : prospect stated it explicitly
+- 0.7-0.9 : implied clearly from what they said
+- 0.5-0.7 : reasonable inference from context
+- <0.5 : guess — return value but flag low confidence
+
+For any field where the prospect didn't address it, set value to "" (empty string) and confidence to 0.
+
+OUTPUT FORMAT: Return ONLY valid JSON. No prose, no code fences, no commentary. The JSON must have this exact structure:
+
+{
+  "duration_min": { "value": <integer or empty string>, "confidence": <0-1> },
+  "win_count": { "value": "<count or descriptive like '5-7'>", "confidence": <0-1> },
+  "gcs_they_win_with": { "value": "<comma-separated GC names>", "confidence": <0-1> },
+  "win_attribution": { "value": "<why they think they win — 1-2 sentences>", "confidence": <0-1> },
+  "win_concentration": { "value": "<how concentrated wins are with top GCs, e.g. '70% from top 3 GCs'>", "confidence": <0-1> },
+  "win_self_awareness": { "value": "<their meta-take: do they understand WHY they win? 1 sentence>", "confidence": <0-1> },
+  "loss_count": { "value": "<count or descriptive>", "confidence": <0-1> },
+  "gcs_they_lose_to": { "value": "<comma-separated GC names where they lose>", "confidence": <0-1> },
+  "loss_pattern": { "value": "<recurring reason for losses — 1-2 sentences>", "confidence": <0-1> },
+  "loss_self_awareness": { "value": "<their meta-take: do they understand WHY they lose? 1 sentence>", "confidence": <0-1> },
+  "regret_stories": { "value": "<specific bids they regret chasing — 2-3 sentences capturing the stories>", "confidence": <0-1> },
+  "common_regret_pattern": { "value": "<recurring pattern in their regrets, e.g. 'bidding GCs in trouble', 'chasing scope they don't actually do'>", "confidence": <0-1> },
+  "hours_wasted": { "value": "<number or descriptive estimate of hours/days wasted on regretted bids>", "confidence": <0-1> },
+  "verbatim_emotional_quote": { "value": "<their most emotionally loaded direct quote, in quotation marks>", "confidence": <0-1> },
+  "decision_maker": { "value": "<who actually decides bid/no-bid in their company>", "confidence": <0-1> },
+  "decision_time_spent": { "value": "<typical time spent on bid/no-bid decision, e.g. '5 min', '1 hour', 'depends'>", "confidence": <0-1> },
+  "tools_used_today": { "value": "<comma-separated tools they use to evaluate bids: spreadsheet, BuildingConnected, Procore, plan rooms, etc.>", "confidence": <0-1> },
+  "has_real_process": { "value": "<Yes / No / Sort of — and 1 sentence why>", "confidence": <0-1> },
+  "wish_verbatim": { "value": "<their direct answer to Q5, in their own words>", "confidence": <0-1> },
+  "wish_category": { "value": "<one of: GC reputation, scope fit, win probability, competitive read, profitability signal, other>", "confidence": <0-1> },
+  "quote_of_call": { "value": "<the single most quotable line from the call — short, vivid, in quotation marks>", "confidence": <0-1> },
+  "fit_rating": { "value": "<Strong ICP / Mid / Weak — based on what came out in the call, not just pre-call brief>", "confidence": <0-1> },
+  "energy_rating": { "value": "<Engaged / Neutral / Low — how present and energized they were>", "confidence": <0-1> },
+  "notes_next": { "value": "<1-2 sentence note for Ryan: what to bring up next time, what to follow up on>", "confidence": <0-1> }
+}
+
+${CONFIDENTLY_BORING_VOICE_RULES}
+
+Begin extraction now. Return JSON only.`;
+}
+
 module.exports = {
   buildResearchPrompt,
   buildScriptTailoringPrompt,
   buildFounderEmailPrompt,
+  buildTranscriptExtractionPrompt,
   CONFIDENTLY_BORING_VOICE_RULES,
 };

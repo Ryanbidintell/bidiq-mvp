@@ -9,6 +9,12 @@
 [functions."inbound-email-background"]
   timeout = 900
 
+# Hourly poll of prospect folders for new Granola transcripts → auto-fill
+# Prospects tab post-call columns. Background function (15-min ceiling) so
+# multiple folders can be processed without hitting the sync 60s cap.
+[functions."process-transcripts-background"]
+  schedule = "0 * * * *"
+
 ###############################################################################
 # ALL SCHEDULED EMAIL FUNCTIONS DISABLED 2026-05-15
 # Ryan: "shut off all emails" (after outcome-reminder nudged him today).
