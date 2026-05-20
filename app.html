@@ -2260,6 +2260,30 @@
                         </div>
                     </div>
 
+                    <!-- Follow-Up Sequences -->
+                    <div class="settings-card" id="followupSequencesCard">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">Follow-Up Sequences</div>
+                            <div class="settings-card-description">Customize how BidIntell follows up with GCs after you submit a bid. Each touch uses a Cialdini persuasion principle.</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div id="followupTemplatesNudge" style="display:none; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"></div>
+
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">System templates</div>
+                            <div id="followupSystemTemplatesList" style="display: grid; gap: 10px; margin-bottom: 24px;">
+                                <div style="color: var(--text-muted); font-size: 13px;">Loading...</div>
+                            </div>
+
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                                <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Your templates</div>
+                                <button class="btn btn-secondary" id="followupCreateBtn" onclick="openFollowupTemplateEditor()" style="font-size: 12px; padding: 6px 12px;">+ Create new</button>
+                            </div>
+                            <div id="followupUserTemplatesList" style="display: grid; gap: 10px;">
+                                <div style="color: var(--text-muted); font-size: 13px; padding: 12px; background: var(--bg-input); border-radius: var(--radius);">No custom templates yet. Clone a system template above or create a new one.</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <button class="btn btn-primary" onclick="saveSettings()" style="width: 100%; padding: 14px; font-size: 15px;">💾 Save All Settings</button>
                 </div>
             </div>
@@ -2592,6 +2616,47 @@
                 <button class="btn btn-secondary" onclick="closeModal('overrideModal')">Cancel</button>
                 <button class="btn btn-danger" id="overrideClearBtn" onclick="clearOverride()" style="display:none;">Clear Override</button>
                 <button class="btn btn-primary" onclick="saveOverride()">Save Override</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Follow-Up Template Editor Modal -->
+    <div class="modal-overlay" id="followupTemplateModal">
+        <div class="modal" style="max-width:720px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="followupModalTitle">Edit Follow-Up Template</h3>
+                <button class="modal-close" onclick="closeModal('followupTemplateModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="followupTemplateId" value="">
+                <div class="form-group">
+                    <label class="form-label">Template name</label>
+                    <input type="text" class="form-input" id="followupTemplateName" maxlength="60" placeholder="e.g., Healthcare GCs — slower cadence">
+                    <div class="form-hint">Max 60 characters</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description <span style="color:var(--text-muted);font-weight:400;">(Optional)</span></label>
+                    <textarea class="form-input" id="followupTemplateDescription" rows="2" placeholder="When to use this template" style="resize:vertical;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" id="followupUseBusinessDays" checked style="width:16px;height:16px;cursor:pointer;">
+                        <span style="font-size:13px;color:var(--text-secondary);">Count business days only (skip weekends)</span>
+                    </label>
+                </div>
+
+                <div style="margin-top:20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <div style="font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Touches</div>
+                    <button type="button" class="btn btn-secondary" id="followupAddStepBtn" onclick="addFollowupStepRow()" style="font-size:12px;padding:6px 12px;">+ Add touch</button>
+                </div>
+                <div id="followupStepsContainer" style="display:grid;gap:10px;">
+                    <!-- Step rows injected by JS -->
+                </div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:10px;">Max 6 touches. Day offsets are measured from when you mark the bid as Submitted.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('followupTemplateModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveFollowupTemplate()">Save template</button>
             </div>
         </div>
     </div>
@@ -16635,6 +16700,9 @@ Respond now:`;
             }
 
             render('');
+
+            // Load follow-up sequence templates (system + user)
+            loadFollowupTemplates().catch(err => console.warn('loadFollowupTemplates non-fatal:', err));
         }
 
         async function addSettingsProductLine() {
@@ -16709,6 +16777,452 @@ Respond now:`;
                 updateWeightTotal();
             });
         });
+
+        // ============================================
+        // FOLLOW-UP SEQUENCE TEMPLATES (Week 2 of follow-up automation)
+        // ============================================
+        // Schema lives in supabase/migrations/20260520_followup_automation.sql.
+        // System templates have is_system_template=true, user_id=NULL — read-only,
+        // visible to everyone via RLS. User templates are user_id-owned.
+        // Per-tier caps (Solo = 1 user template, unless FOUNDING) are server-side
+        // and surface as soft UI hints here. See BidIntell_FollowUp_Automation_Build_Spec_v1.md §11.
+
+        const PRINCIPLE_LABELS = {
+            reciprocity: 'Reciprocity',
+            commitment: 'Commitment',
+            social_proof: 'Social Proof',
+            liking: 'Liking',
+            authority: 'Authority',
+            scarcity: 'Scarcity',
+            unity: 'Unity',
+        };
+
+        const PRINCIPLE_ORDER = ['reciprocity','commitment','social_proof','liking','authority','scarcity','unity'];
+
+        let _followupTemplatesCache = null; // { systemTemplates, userTemplates, stepsByTemplate }
+
+        async function loadFollowupTemplates() {
+            if (!supabaseClient || !currentUser) return;
+            const systemListEl = document.getElementById('followupSystemTemplatesList');
+            const userListEl   = document.getElementById('followupUserTemplatesList');
+            if (!systemListEl || !userListEl) return;
+
+            try {
+                const { data: templates, error: tErr } = await supabaseClient
+                    .from('follow_up_sequence_templates')
+                    .select('id, user_id, name, description, is_default, is_system_template, use_business_days')
+                    .order('is_system_template', { ascending: false })
+                    .order('name', { ascending: true });
+                if (tErr) throw tErr;
+
+                const { data: steps, error: sErr } = await supabaseClient
+                    .from('follow_up_sequence_steps')
+                    .select('id, template_id, step_number, days_offset, primary_principle, secondary_principle, custom_instruction, word_count_target')
+                    .order('step_number', { ascending: true });
+                if (sErr) throw sErr;
+
+                const stepsByTemplate = {};
+                (steps || []).forEach(s => {
+                    if (!stepsByTemplate[s.template_id]) stepsByTemplate[s.template_id] = [];
+                    stepsByTemplate[s.template_id].push(s);
+                });
+
+                const systemTemplates = (templates || []).filter(t => t.is_system_template);
+                const userTemplates = (templates || []).filter(t => !t.is_system_template);
+
+                _followupTemplatesCache = { systemTemplates, userTemplates, stepsByTemplate };
+
+                renderFollowupSystemTemplates(systemTemplates, stepsByTemplate);
+                renderFollowupUserTemplates(userTemplates, stepsByTemplate);
+            } catch (err) {
+                console.error('loadFollowupTemplates failed:', err);
+                systemListEl.innerHTML = `<div style="color: var(--text-muted); font-size: 13px;">Could not load templates: ${escapeHtml(err.message || 'unknown error')}</div>`;
+            }
+        }
+
+        function renderFollowupTemplateCard(template, steps, mode) {
+            const stepSummary = (steps || [])
+                .map(s => `T${s.step_number} · Day ${s.days_offset} · ${PRINCIPLE_LABELS[s.primary_principle] || s.primary_principle}`)
+                .join('  →  ') || '(no touches configured)';
+
+            const defaultBadge = template.is_default
+                ? `<span style="background: rgba(34,197,94,0.15); color: #22c55e; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px; margin-left: 8px;">DEFAULT</span>`
+                : '';
+            const systemBadge = template.is_system_template
+                ? `<span style="background: rgba(79,70,229,0.15); color: var(--brand-primary); font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px; margin-left: 8px;">SYSTEM</span>`
+                : '';
+
+            let actions = '';
+            if (mode === 'system') {
+                actions = `<button class="btn btn-secondary" onclick="cloneFollowupSystemTemplate('${template.id}')" style="font-size: 12px; padding: 6px 12px;">Clone</button>`;
+            } else {
+                const defaultBtn = template.is_default
+                    ? ''
+                    : `<button class="btn btn-secondary" onclick="setDefaultFollowupTemplate('${template.id}')" style="font-size: 12px; padding: 6px 12px;">Set default</button>`;
+                actions = `
+                    ${defaultBtn}
+                    <button class="btn btn-secondary" onclick="openFollowupTemplateEditor('${template.id}')" style="font-size: 12px; padding: 6px 12px;">Edit</button>
+                    <button class="btn btn-secondary" onclick="deleteFollowupTemplate('${template.id}')" style="font-size: 12px; padding: 6px 12px; color: var(--danger);">Delete</button>
+                `;
+            }
+
+            return `
+                <div style="padding: 14px 16px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius);">
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 600; font-size: 14px; color: var(--text-primary); display: flex; align-items: center;">
+                                ${escapeHtml(template.name)}${systemBadge}${defaultBadge}
+                            </div>
+                            ${template.description ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${escapeHtml(template.description)}</div>` : ''}
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; font-family: var(--font-mono, ui-monospace, monospace);">${escapeHtml(stepSummary)}</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">${(steps || []).length} touch${(steps || []).length === 1 ? '' : 'es'} · ${template.use_business_days ? 'Business days' : 'Calendar days'}</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;">${actions}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderFollowupSystemTemplates(templates, stepsByTemplate) {
+            const el = document.getElementById('followupSystemTemplatesList');
+            if (!el) return;
+            if (!templates || templates.length === 0) {
+                el.innerHTML = `<div style="color: var(--text-muted); font-size: 13px;">No system templates found.</div>`;
+                return;
+            }
+            el.innerHTML = templates.map(t => renderFollowupTemplateCard(t, stepsByTemplate[t.id] || [], 'system')).join('');
+        }
+
+        function renderFollowupUserTemplates(templates, stepsByTemplate) {
+            const el = document.getElementById('followupUserTemplatesList');
+            if (!el) return;
+            if (!templates || templates.length === 0) {
+                el.innerHTML = `<div style="color: var(--text-muted); font-size: 13px; padding: 12px; background: var(--bg-input); border-radius: var(--radius);">No custom templates yet. Clone a system template above or create a new one.</div>`;
+                return;
+            }
+            el.innerHTML = templates.map(t => renderFollowupTemplateCard(t, stepsByTemplate[t.id] || [], 'user')).join('');
+        }
+
+        function buildPrincipleOptions(selected, allowEmpty) {
+            const opts = [];
+            if (allowEmpty) opts.push(`<option value="">— none —</option>`);
+            PRINCIPLE_ORDER.forEach(key => {
+                opts.push(`<option value="${key}" ${selected === key ? 'selected' : ''}>${PRINCIPLE_LABELS[key]}</option>`);
+            });
+            return opts.join('');
+        }
+
+        function renderFollowupStepRow(step, idx) {
+            // step may be null when adding a fresh row
+            const days = step ? step.days_offset : 5;
+            const primary = step ? step.primary_principle : 'reciprocity';
+            const secondary = step ? (step.secondary_principle || '') : '';
+            const custom = step ? (step.custom_instruction || '') : '';
+            const wordCount = step ? (step.word_count_target ?? 70) : 70;
+
+            return `
+                <div class="followup-step-row" style="padding: 12px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Touch <span class="followup-step-num">${idx + 1}</span></div>
+                        <button type="button" class="btn btn-secondary" onclick="removeFollowupStepRow(this)" style="font-size: 11px; padding: 4px 10px; color: var(--danger);">Remove</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 90px 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <div>
+                            <label class="form-label" style="font-size: 11px;">Day</label>
+                            <input type="number" class="form-input followup-step-days" min="1" max="365" value="${days}" style="padding: 6px 10px; font-size: 13px;">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 11px;">Primary principle</label>
+                            <select class="form-input followup-step-primary" style="padding: 6px 10px; font-size: 13px;">
+                                ${buildPrincipleOptions(primary, false)}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 11px;">Secondary <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                            <select class="form-input followup-step-secondary" style="padding: 6px 10px; font-size: 13px;">
+                                ${buildPrincipleOptions(secondary, true)}
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 120px; gap: 10px;">
+                        <div>
+                            <label class="form-label" style="font-size: 11px;">Custom instruction <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                            <textarea class="form-input followup-step-custom" rows="2" placeholder="Override the AI draft prompt for this touch" style="padding: 6px 10px; font-size: 13px; resize: vertical;">${escapeHtml(custom)}</textarea>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 11px;">Target words</label>
+                            <input type="number" class="form-input followup-step-words" min="20" max="300" value="${wordCount}" style="padding: 6px 10px; font-size: 13px;">
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function refreshFollowupStepNumbers() {
+            const container = document.getElementById('followupStepsContainer');
+            if (!container) return;
+            const rows = container.querySelectorAll('.followup-step-row');
+            rows.forEach((row, idx) => {
+                const numEl = row.querySelector('.followup-step-num');
+                if (numEl) numEl.textContent = idx + 1;
+            });
+            const addBtn = document.getElementById('followupAddStepBtn');
+            if (addBtn) addBtn.disabled = rows.length >= 6;
+        }
+
+        function addFollowupStepRow(step) {
+            const container = document.getElementById('followupStepsContainer');
+            if (!container) return;
+            const current = container.querySelectorAll('.followup-step-row').length;
+            if (current >= 6) {
+                alert('Maximum 6 touches per template.');
+                return;
+            }
+            container.insertAdjacentHTML('beforeend', renderFollowupStepRow(step || null, current));
+            refreshFollowupStepNumbers();
+        }
+
+        function removeFollowupStepRow(button) {
+            const row = button.closest('.followup-step-row');
+            const container = document.getElementById('followupStepsContainer');
+            if (!row || !container) return;
+            if (container.querySelectorAll('.followup-step-row').length <= 1) {
+                alert('A template must have at least one touch.');
+                return;
+            }
+            row.remove();
+            refreshFollowupStepNumbers();
+        }
+
+        function openFollowupTemplateEditor(templateId) {
+            const cache = _followupTemplatesCache;
+            const container = document.getElementById('followupStepsContainer');
+            const titleEl = document.getElementById('followupModalTitle');
+            const idEl = document.getElementById('followupTemplateId');
+            const nameEl = document.getElementById('followupTemplateName');
+            const descEl = document.getElementById('followupTemplateDescription');
+            const businessEl = document.getElementById('followupUseBusinessDays');
+            if (!container || !titleEl || !idEl || !nameEl || !descEl || !businessEl) return;
+
+            container.innerHTML = '';
+
+            if (templateId && cache) {
+                // Edit existing user template
+                const template = (cache.userTemplates || []).find(t => t.id === templateId);
+                if (!template) {
+                    alert('Template not found.');
+                    return;
+                }
+                titleEl.textContent = 'Edit Follow-Up Template';
+                idEl.value = template.id;
+                nameEl.value = template.name || '';
+                descEl.value = template.description || '';
+                businessEl.checked = template.use_business_days !== false;
+                const steps = (cache.stepsByTemplate[template.id] || []).slice().sort((a,b) => a.step_number - b.step_number);
+                if (steps.length === 0) {
+                    addFollowupStepRow(null);
+                } else {
+                    steps.forEach(s => addFollowupStepRow(s));
+                }
+            } else {
+                // New template
+                titleEl.textContent = 'New Follow-Up Template';
+                idEl.value = '';
+                nameEl.value = '';
+                descEl.value = '';
+                businessEl.checked = true;
+                // Seed with a sensible default first touch
+                addFollowupStepRow({ days_offset: 5, primary_principle: 'reciprocity', secondary_principle: '', custom_instruction: '', word_count_target: 70 });
+            }
+
+            openModal('followupTemplateModal');
+        }
+
+        async function cloneFollowupSystemTemplate(systemTemplateId) {
+            if (!supabaseClient || !currentUser) return;
+            const cache = _followupTemplatesCache;
+            if (!cache) {
+                alert('Templates are still loading — try again in a moment.');
+                return;
+            }
+            const sourceTemplate = (cache.systemTemplates || []).find(t => t.id === systemTemplateId);
+            if (!sourceTemplate) {
+                alert('Source template not found.');
+                return;
+            }
+            const sourceSteps = (cache.stepsByTemplate[systemTemplateId] || []).slice().sort((a,b) => a.step_number - b.step_number);
+
+            const newName = `${sourceTemplate.name} (Copy)`;
+            try {
+                const { data: newTemplate, error: tErr } = await supabaseClient
+                    .from('follow_up_sequence_templates')
+                    .insert({
+                        user_id: currentUser.id,
+                        name: newName.substring(0, 60),
+                        description: sourceTemplate.description,
+                        is_default: false,
+                        is_system_template: false,
+                        use_business_days: sourceTemplate.use_business_days,
+                    })
+                    .select()
+                    .single();
+                if (tErr) throw tErr;
+
+                if (sourceSteps.length > 0) {
+                    const stepRows = sourceSteps.map(s => ({
+                        template_id: newTemplate.id,
+                        step_number: s.step_number,
+                        days_offset: s.days_offset,
+                        primary_principle: s.primary_principle,
+                        secondary_principle: s.secondary_principle,
+                        custom_instruction: s.custom_instruction,
+                        word_count_target: s.word_count_target,
+                    }));
+                    const { error: sErr } = await supabaseClient
+                        .from('follow_up_sequence_steps')
+                        .insert(stepRows);
+                    if (sErr) throw sErr;
+                }
+
+                await loadFollowupTemplates();
+                openFollowupTemplateEditor(newTemplate.id);
+            } catch (err) {
+                console.error('cloneFollowupSystemTemplate failed:', err);
+                alert(`Could not clone template: ${err.message || 'unknown error'}`);
+            }
+        }
+
+        async function saveFollowupTemplate() {
+            if (!supabaseClient || !currentUser) return;
+            const idEl = document.getElementById('followupTemplateId');
+            const nameEl = document.getElementById('followupTemplateName');
+            const descEl = document.getElementById('followupTemplateDescription');
+            const businessEl = document.getElementById('followupUseBusinessDays');
+            const container = document.getElementById('followupStepsContainer');
+            if (!idEl || !nameEl || !container) return;
+
+            const name = (nameEl.value || '').trim();
+            if (!name) { alert('Template name is required.'); return; }
+            if (name.length > 60) { alert('Template name must be 60 characters or fewer.'); return; }
+
+            const rows = container.querySelectorAll('.followup-step-row');
+            if (rows.length === 0) { alert('Add at least one touch.'); return; }
+            if (rows.length > 6) { alert('Maximum 6 touches per template.'); return; }
+
+            const steps = [];
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const days = parseInt(row.querySelector('.followup-step-days').value, 10);
+                const primary = row.querySelector('.followup-step-primary').value;
+                const secondaryRaw = row.querySelector('.followup-step-secondary').value;
+                const secondary = secondaryRaw || null;
+                const custom = (row.querySelector('.followup-step-custom').value || '').trim() || null;
+                const words = parseInt(row.querySelector('.followup-step-words').value, 10);
+
+                if (!Number.isFinite(days) || days < 1) { alert(`Touch ${i + 1}: Day offset must be at least 1.`); return; }
+                if (!Number.isFinite(words) || words < 20 || words > 300) { alert(`Touch ${i + 1}: Word count must be between 20 and 300.`); return; }
+                if (!primary) { alert(`Touch ${i + 1}: Primary principle is required.`); return; }
+
+                steps.push({
+                    step_number: i + 1,
+                    days_offset: days,
+                    primary_principle: primary,
+                    secondary_principle: secondary,
+                    custom_instruction: custom,
+                    word_count_target: words,
+                });
+            }
+
+            const templateId = idEl.value;
+            const templatePayload = {
+                name,
+                description: (descEl.value || '').trim() || null,
+                use_business_days: !!businessEl.checked,
+                updated_at: new Date().toISOString(),
+            };
+
+            try {
+                let resolvedTemplateId = templateId;
+                if (templateId) {
+                    const { error: uErr } = await supabaseClient
+                        .from('follow_up_sequence_templates')
+                        .update(templatePayload)
+                        .eq('id', templateId);
+                    if (uErr) throw uErr;
+                    // Replace step rows
+                    const { error: dErr } = await supabaseClient
+                        .from('follow_up_sequence_steps')
+                        .delete()
+                        .eq('template_id', templateId);
+                    if (dErr) throw dErr;
+                } else {
+                    const { data: newTemplate, error: iErr } = await supabaseClient
+                        .from('follow_up_sequence_templates')
+                        .insert({
+                            ...templatePayload,
+                            user_id: currentUser.id,
+                            is_default: false,
+                            is_system_template: false,
+                        })
+                        .select()
+                        .single();
+                    if (iErr) throw iErr;
+                    resolvedTemplateId = newTemplate.id;
+                }
+
+                const stepRows = steps.map(s => ({ ...s, template_id: resolvedTemplateId }));
+                const { error: sErr } = await supabaseClient
+                    .from('follow_up_sequence_steps')
+                    .insert(stepRows);
+                if (sErr) throw sErr;
+
+                closeModal('followupTemplateModal');
+                await loadFollowupTemplates();
+            } catch (err) {
+                console.error('saveFollowupTemplate failed:', err);
+                alert(`Could not save template: ${err.message || 'unknown error'}`);
+            }
+        }
+
+        async function deleteFollowupTemplate(templateId) {
+            if (!supabaseClient || !currentUser) return;
+            if (!confirm('Delete this template? This cannot be undone. Any active follow-up schedules using this template will keep running normally.')) return;
+            try {
+                const { error } = await supabaseClient
+                    .from('follow_up_sequence_templates')
+                    .delete()
+                    .eq('id', templateId);
+                if (error) throw error;
+                await loadFollowupTemplates();
+            } catch (err) {
+                console.error('deleteFollowupTemplate failed:', err);
+                alert(`Could not delete template: ${err.message || 'unknown error'}`);
+            }
+        }
+
+        async function setDefaultFollowupTemplate(templateId) {
+            if (!supabaseClient || !currentUser) return;
+            try {
+                // Clear any existing default first (unique-default index requires this)
+                const { error: clearErr } = await supabaseClient
+                    .from('follow_up_sequence_templates')
+                    .update({ is_default: false, updated_at: new Date().toISOString() })
+                    .eq('user_id', currentUser.id)
+                    .eq('is_default', true);
+                if (clearErr) throw clearErr;
+
+                const { error: setErr } = await supabaseClient
+                    .from('follow_up_sequence_templates')
+                    .update({ is_default: true, updated_at: new Date().toISOString() })
+                    .eq('id', templateId);
+                if (setErr) throw setErr;
+
+                await loadFollowupTemplates();
+            } catch (err) {
+                console.error('setDefaultFollowupTemplate failed:', err);
+                alert(`Could not set default: ${err.message || 'unknown error'}`);
+            }
+        }
 
         // ============================================
         // BUILDINGCONNECTED OAUTH INTEGRATION
