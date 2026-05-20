@@ -2260,8 +2260,8 @@
                         </div>
                     </div>
 
-                    <!-- Follow-Up Sequences -->
-                    <div class="settings-card" id="followupSequencesCard">
+                    <!-- Follow-Up Sequences (gated to admins until full feature ships — see loadFollowupTemplates) -->
+                    <div class="settings-card" id="followupSequencesCard" style="display:none;">
                         <div class="settings-card-header">
                             <div class="settings-card-title">Follow-Up Sequences</div>
                             <div class="settings-card-description">Customize how BidIntell follows up with GCs after you submit a bid. Each touch uses a Cialdini persuasion principle.</div>
@@ -16803,6 +16803,18 @@ Respond now:`;
 
         async function loadFollowupTemplates() {
             if (!supabaseClient || !currentUser) return;
+
+            // FEATURE FLAG: hide from all users until the full follow-up automation
+            // ships (Weeks 3-7: Submitted flow, OAuth, drafting, sending). Admins
+            // (ryan@fsikc.com / ryan@bidintell.ai per isAdmin()) see the UI for
+            // testing. Until then the card stays display:none for everyone else.
+            const card = document.getElementById('followupSequencesCard');
+            if (!isAdmin()) {
+                if (card) card.style.display = 'none';
+                return;
+            }
+            if (card) card.style.display = '';
+
             const systemListEl = document.getElementById('followupSystemTemplatesList');
             const userListEl   = document.getElementById('followupUserTemplatesList');
             if (!systemListEl || !userListEl) return;
