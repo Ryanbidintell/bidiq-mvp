@@ -19,7 +19,7 @@
 //   3. Trigger a redeploy so diagnostic-prep picks up the new secret
 //   4. Test with a real booking — should hit diagnostic-prep within seconds
 
-const WEBHOOK_URL = 'https://bidintell.ai/.netlify/functions/diagnostic-prep';
+const WEBHOOK_URL = 'https://bidintell.ai/.netlify/functions/diagnostic-prep-background';
 const CALENDLY_API = 'https://api.calendly.com';
 
 async function calendlyFetch(path, token, options = {}) {
