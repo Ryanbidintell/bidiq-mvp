@@ -1905,14 +1905,16 @@
                                     <input type="text" id="goodKeywordInput" placeholder='e.g. "design-assist, negotiated, owner-specified"' onkeypress="if(event.key==='Enter'){event.preventDefault();addGoodKeyword();}">
                                     <button class="btn btn-sm btn-secondary" onclick="addGoodKeyword()">Add</button>
                                 </div>
+                                <div id="favorableTermSuggestions" style="display:none;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);"></div>
                             </div>
                             <div class="keywords-section bad">
                                 <div class="keywords-section-header"><h4>Risk Terms (penalty, feeds Contract Terms)</h4></div>
                                 <div class="keywords-list" id="badKeywordsList"></div>
                                 <div class="keywords-input-row">
-                                    <input type="text" id="badKeywordInput" placeholder='e.g. "no bond waiver, open shop only"' onkeypress="if(event.key==='Enter'){event.preventDefault();addBadKeyword();}">
+                                    <input type="text" id="badKeywordInput" placeholder='e.g. "liquidated damages, pay-if-paid"' onkeypress="if(event.key==='Enter'){event.preventDefault();addBadKeyword();}">
                                     <button class="btn btn-sm btn-secondary" onclick="addBadKeyword()">Add</button>
                                 </div>
+                                <div id="riskTermSuggestions" style="display:none;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);"></div>
                             </div>
                         </div>
                     </div>
@@ -5314,6 +5316,14 @@ ${fullText.substring(0, 40000)}`;
                     btn.classList.remove('btn-primary');
                     btn.classList.add('btn-success');
                     btn.dataset.saved = 'true';
+
+                    // Relabel Re-analyze → New Analysis so intent is clear post-save
+                    const reanalyzeBtn = document.querySelector('#analysisResult button[onclick="resetAnalysis()"]');
+                    if (reanalyzeBtn) {
+                        reanalyzeBtn.textContent = 'New Analysis';
+                        reanalyzeBtn.classList.remove('btn-secondary');
+                        reanalyzeBtn.classList.add('btn-primary');
+                    }
 
                     console.log('📊 Dashboard refreshed with new project');
                 } else {
@@ -8723,7 +8733,40 @@ Rules:
         //   2. Singular form when keyword already ends in s ("roller shades" → "roller shade")
         //   3. Each significant word (5+ chars) from a multi-word keyword, also de-pluralized
         //      ("roller shades" → also matches "shade" or "roller" standing alone)
+        //   4. Hyphen ↔ space variants ("pay-if-paid" also matches "pay if paid")
+        //   5. Known synonyms/abbreviations via TERM_VARIATIONS lookup
         // Uses 'i' flag only — never 'g' — to avoid lastIndex drift across pages.
+
+        // Canonical variations for contract terms and common trade terms.
+        // Keys lowercase. Each value is an array of additional forms to also search.
+        const TERM_VARIATIONS = {
+            'liquidated damages':          ['liquidated damage', 'ld clause', 'l.d.'],
+            'pay-if-paid':                 ['pay if paid', 'pay when paid', 'pay-when-paid', 'conditional payment'],
+            'pay-when-paid':               ['pay when paid', 'pay if paid', 'pay-if-paid', 'conditional payment'],
+            'no damages for delay':        ['no-damage-for-delay', 'no damage for delay', 'delay damages excluded'],
+            'waiver of liens':             ['lien waiver', 'waiver of lien rights', 'unconditional lien waiver'],
+            'incorporated by reference':   ['incorporation by reference', 'prime contract incorporated'],
+            'flow-down':                   ['flow down', 'flowdown', 'incorporated by reference'],
+            'consequential damages':       ['consequential damage', 'indirect damages', 'special damages'],
+            'termination for convenience': ['terminate for convenience', 'termination without cause'],
+            'retainage':                   ['retention', 'retained funds'],
+            'back charge':                 ['back-charge', 'backcharge'],
+            'unlimited indemnification':   ['broad form indemnification', 'broad-form indemnification'],
+            'design-assist':               ['design assist', 'design assistance'],
+            'gmp':                         ['guaranteed maximum price', 'guaranteed max price'],
+            'lump sum':                    ['lump-sum', 'stipulated sum', 'fixed price contract'],
+            'owner-specified':             ['owner specified', 'owner-selected', 'owner selected'],
+            'cost-plus':                   ['cost plus', 'cost plus fee', 'time and materials'],
+            'fast-track':                  ['fast track', 'accelerated schedule'],
+            'sole source':                 ['sole-source', 'single source', 'single-source'],
+            // Trade term variations — only genuinely different phrasings, not plural/singular (s? handles that)
+            'roller shades':               ['solar shades', 'shade system'],
+            'window shades':               ['interior shades', 'solar shades'],
+            'demountable partitions':      ['relocatable partitions', 'movable walls'],
+            'access flooring':             ['raised access floor', 'raised flooring'],
+            'firestopping':                ['fire-stopping', 'firestop'],
+        };
+
         function searchKeywords(pages, keywords) {
             const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -8745,6 +8788,19 @@ Rules:
                         const stem = w.endsWith('s') ? w.slice(0, -1) : w;
                         patterns.push(new RegExp('\\b' + escape(stem) + 's?\\b', 'i'));
                     });
+                }
+
+                // Hyphen ↔ space normalization (covers "pay-if-paid" ↔ "pay if paid" etc.)
+                if (kw.includes('-')) {
+                    patterns.push(new RegExp('\\b' + escape(kw.replace(/-/g, ' ')) + 's?\\b', 'i'));
+                } else if (kw.includes(' ')) {
+                    patterns.push(new RegExp('\\b' + escape(kw.replace(/\s+/g, '-')) + 's?\\b', 'i'));
+                }
+
+                // Known synonyms / abbreviations
+                const variations = TERM_VARIATIONS[kw.toLowerCase()] || [];
+                for (const v of variations) {
+                    patterns.push(new RegExp('\\b' + escape(v) + 's?\\b', 'i'));
                 }
 
                 return patterns;
@@ -11305,6 +11361,7 @@ IMPORTANT RULES:
             if (title === 'Contract Terms' && comp.details?.length > 0) {
                 const good = comp.details.filter(d => d.type === 'good');
                 const bad = comp.details.filter(d => d.type === 'bad');
+                const warnings = comp.details.filter(d => d.type === 'warning');
 
                 // Helper function to format page locations with filename support
                 const formatLocations = (item) => {
@@ -11332,7 +11389,7 @@ IMPORTANT RULES:
 
                 details = '<div class="score-component-details">';
                 if (good.length) {
-                    details += '<div style="margin-bottom:6px;"><strong style="color:var(--success)">✓ Good terms found:</strong></div>';
+                    details += '<div style="margin-bottom:6px;"><strong style="color:var(--success)">✓ Favorable terms found:</strong></div>';
                     details += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;">';
                     details += good.map(d => {
                         const loc = formatLocations(d);
@@ -11349,10 +11406,13 @@ IMPORTANT RULES:
                     }).join('');
                     details += '</div>';
                 }
-                if (!comp.hasContract) details += '<p style="margin-top:10px;font-size:11px;color:var(--text-muted);">ℹ️ No contract language detected - risk terms not penalized</p>';
+                if (!good.length && !bad.length && warnings.length) {
+                    details += `<p style="color:var(--warning);font-size:12px;">None of your contract terms were found in this document. Check that your terms match the exact phrasing used in the spec — go to Keywords tab to review.</p>`;
+                }
+                if (!comp.hasContract) details += '<p style="margin-top:10px;font-size:11px;color:var(--text-muted);">ℹ️ No contract language detected — risk terms not penalized</p>';
                 details += '</div>';
             } else if (title === 'Contract Terms' && (!comp.details || comp.details.length === 0)) {
-                details = `<div class="score-component-details" style="color:var(--text-muted);">No contract terms found. Add favorable and risk terms in the Keywords tab to track the contract language that matters to you.</div>`;
+                details = `<div class="score-component-details" style="color:var(--text-muted);">No contract terms configured. Go to the <span class="link" onclick="switchTab('keywords')">Keywords tab</span> and add favorable and risk terms — use the quick-add chips to get started in seconds.</div>`;
             }
             
             // GC details
@@ -16525,8 +16585,75 @@ Respond now:`;
             container.appendChild(chips);
         }
 
+        const FAVORABLE_TERM_LIBRARY = [
+            'design-assist', 'negotiated', 'GMP', 'lump sum', 'owner-specified',
+            'invited bidder', 'pre-qualified', 'fast-track', 'sole source', 'cost-plus',
+            'pre-bid meeting', 'bid alternate'
+        ];
+
+        const RISK_TERM_LIBRARY = [
+            'liquidated damages', 'pay-if-paid', 'pay-when-paid', 'no damages for delay',
+            'unlimited indemnification', 'back charge', 'waiver of liens',
+            'incorporated by reference', 'consequential damages', 'retainage',
+            'termination for convenience', 'flow-down'
+        ];
+
         async function renderFavorableTermSuggestions() {
-            // Removed: hardcoded favorable terms list replaced by manual entry only
+            const container = document.getElementById('favorableTermSuggestions');
+            if (!container) return;
+            const kw = await getKeywords();
+            const existing = new Set((kw.good || []).map(k => k.toLowerCase()));
+            const suggestions = FAVORABLE_TERM_LIBRARY.filter(t => !existing.has(t.toLowerCase()));
+            if (suggestions.length === 0) { container.style.display = 'none'; return; }
+            container.style.display = 'block';
+            container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Common favorable terms — click to add:</div>';
+            const chips = document.createElement('div');
+            chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+            suggestions.forEach(term => {
+                const chip = document.createElement('span');
+                chip.textContent = term;
+                chip.style.cssText = 'cursor:pointer;padding:4px 10px;border-radius:20px;font-size:12px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);color:var(--success);transition:all 0.15s;';
+                chip.onmouseenter = () => { chip.style.background = 'rgba(34,197,94,0.2)'; chip.style.borderColor = 'var(--success)'; };
+                chip.onmouseleave = () => { chip.style.background = 'rgba(34,197,94,0.08)'; chip.style.borderColor = 'rgba(34,197,94,0.3)'; };
+                chip.onclick = async () => {
+                    chip.remove();
+                    const kwData = await getKeywords();
+                    if (!kwData.good.includes(term)) kwData.good.push(term);
+                    await saveKeywordsStorage(kwData);
+                    await loadKeywords();
+                };
+                chips.appendChild(chip);
+            });
+            container.appendChild(chips);
+        }
+
+        async function renderRiskTermSuggestions() {
+            const container = document.getElementById('riskTermSuggestions');
+            if (!container) return;
+            const kw = await getKeywords();
+            const existing = new Set((kw.bad || []).map(k => k.toLowerCase()));
+            const suggestions = RISK_TERM_LIBRARY.filter(t => !existing.has(t.toLowerCase()));
+            if (suggestions.length === 0) { container.style.display = 'none'; return; }
+            container.style.display = 'block';
+            container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;">Common risk terms — click to add:</div>';
+            const chips = document.createElement('div');
+            chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+            suggestions.forEach(term => {
+                const chip = document.createElement('span');
+                chip.textContent = term;
+                chip.style.cssText = 'cursor:pointer;padding:4px 10px;border-radius:20px;font-size:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:var(--danger);transition:all 0.15s;';
+                chip.onmouseenter = () => { chip.style.background = 'rgba(239,68,68,0.2)'; chip.style.borderColor = 'var(--danger)'; };
+                chip.onmouseleave = () => { chip.style.background = 'rgba(239,68,68,0.08)'; chip.style.borderColor = 'rgba(239,68,68,0.3)'; };
+                chip.onclick = async () => {
+                    chip.remove();
+                    const kwData = await getKeywords();
+                    if (!kwData.bad.includes(term)) kwData.bad.push(term);
+                    await saveKeywordsStorage(kwData);
+                    await loadKeywords();
+                };
+                chips.appendChild(chip);
+            });
+            container.appendChild(chips);
         }
 
         // Keywords - FIXED
@@ -16539,6 +16666,7 @@ Respond now:`;
             if (kwNudge) kwNudge.style.display = ((kw.scope || []).length === 0 && kw.good.length === 0) ? 'block' : 'none';
             await renderKeywordSuggestions();
             await renderFavorableTermSuggestions();
+            await renderRiskTermSuggestions();
         }
 
         // Add scope keyword(s) - supports comma-separated input
@@ -19081,7 +19209,7 @@ Respond now:`;
             });
 
             const canvas = document.createElement('canvas');
-            canvas.style.height = '280px';
+            canvas.style.height = '200px';
             el.innerHTML = '';
             el.appendChild(canvas);
 
@@ -19092,8 +19220,8 @@ Respond now:`;
                         data: points,
                         pointBackgroundColor: points.map(d => d.bgColor),
                         pointBorderColor: points.map(d => d.borderColor),
-                        pointRadius: 7,
-                        pointHoverRadius: 10,
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
                         pointBorderWidth: 1.5
                     }]
                 },
