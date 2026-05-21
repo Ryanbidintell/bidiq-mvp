@@ -34,3 +34,5 @@ Thumbs.db
 *secrets*.txt
 OLD/
 .claude/
+.gstack/
+.gstack-design-audit-*/
