@@ -132,6 +132,11 @@
   status = 200
 
 [[redirects]]
+  from = "/how-to-decide-which-bids-to-chase"
+  to = "/how-to-decide-which-bids-to-chase.html"
+  status = 200
+
+[[redirects]]
   from = "/takeoff"
   to = "/takeoff/"
   status = 301
