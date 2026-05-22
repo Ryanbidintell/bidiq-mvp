@@ -36,3 +36,8 @@ OLD/
 .claude/
 .gstack/
 .gstack-design-audit-*/
+
+# Local business docs — not repo material (large PDFs, legal, sample drawings)
+BidIntell.ai/
+BidIntell_*.pdf
+BidIntell_*.docx

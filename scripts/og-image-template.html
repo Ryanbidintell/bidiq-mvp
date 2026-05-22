@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  width: 1200px;
+  height: 630px;
+  background: #0B0F14;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Subtle radial glow top-left */
+.glow {
+  position: absolute;
+  top: -120px;
+  left: -80px;
+  width: 600px;
+  height: 500px;
+  background: radial-gradient(ellipse, rgba(242,101,34,0.12), transparent 65%);
+  pointer-events: none;
+}
+
+/* Grid dot pattern */
+.dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  width: 1100px;
+  display: flex;
+  align-items: center;
+  gap: 80px;
+}
+
+/* LEFT: text content */
+.left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.logo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 36px;
+}
+
+.logo-mark {
+  width: 40px;
+  height: 40px;
+  background: #F26522;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.04em;
+  font-family: 'Courier New', monospace;
+}
+
+.logo-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #F8FAFC;
+  letter-spacing: -0.03em;
+}
+
+.headline {
+  font-size: 52px;
+  font-weight: 800;
+  color: #F8FAFC;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  margin-bottom: 22px;
+}
+
+.headline span {
+  color: #F26522;
+}
+
+.subline {
+  font-size: 20px;
+  color: #94A3B8;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  max-width: 480px;
+  margin-bottom: 36px;
+}
+
+.pills {
+  display: flex;
+  gap: 12px;
+}
+
+.pill {
+  padding: 7px 16px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 100px;
+  font-size: 13px;
+  color: #CBD5E1;
+  letter-spacing: 0;
+  background: rgba(255,255,255,0.04);
+}
+
+/* RIGHT: score card */
+.score-card {
+  width: 260px;
+  flex-shrink: 0;
+  background: #141A23;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.score-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #5A6A7E;
+  font-family: 'Courier New', monospace;
+}
+
+.score-ring {
+  width: 120px;
+  height: 120px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.score-ring svg {
+  position: absolute;
+  top: 0; left: 0;
+  transform: rotate(-90deg);
+}
+
+.score-ring .track {
+  fill: none;
+  stroke: rgba(255,255,255,0.06);
+  stroke-width: 6;
+}
+
+.score-ring .fill {
+  fill: none;
+  stroke: #22C55E;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 326;
+  stroke-dashoffset: 65; /* ~80% filled for score 82 */
+}
+
+.score-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  z-index: 1;
+}
+
+.score-number {
+  font-size: 38px;
+  font-weight: 800;
+  color: #F8FAFC;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  font-family: 'Courier New', monospace;
+}
+
+.score-verdict {
+  font-size: 11px;
+  font-weight: 700;
+  color: #22C55E;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-family: 'Courier New', monospace;
+}
+
+.score-bars {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bar-name {
+  font-size: 11px;
+  color: #5A6A7E;
+  width: 68px;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.bar-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: #F26522;
+}
+
+.bar-fill.green { background: #22C55E; }
+.bar-fill.yellow { background: #F59E0B; }
+
+.domain {
+  position: absolute;
+  bottom: 28px;
+  right: 48px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #384254;
+  letter-spacing: 0.02em;
+  font-family: 'Courier New', monospace;
+}
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="dots"></div>
+
+  <div class="card">
+    <div class="left">
+      <div class="logo-row">
+        <div class="logo-mark">BI</div>
+        <span class="logo-name">BidIntell</span>
+      </div>
+
+      <h1 class="headline">Score every bid<br><span>before you estimate.</span></h1>
+
+      <p class="subline">Upload the invite, get a GO / REVIEW / PASS score in under 2 minutes. No gut feel required.</p>
+
+      <div class="pills">
+        <span class="pill">Trade match</span>
+        <span class="pill">Contract risk</span>
+        <span class="pill">Win history</span>
+      </div>
+    </div>
+
+    <div class="score-card">
+      <span class="score-label">BidIndex Score</span>
+
+      <div class="score-ring">
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle class="track" cx="60" cy="60" r="52"/>
+          <circle class="fill" cx="60" cy="60" r="52"/>
+        </svg>
+        <div class="score-inner">
+          <span class="score-number">82</span>
+          <span class="score-verdict">GO</span>
+        </div>
+      </div>
+
+      <div class="score-bars">
+        <div class="bar-row">
+          <span class="bar-name">Location</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:90%"></div></div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-name">Contract</span>
+          <div class="bar-track"><div class="bar-fill" style="width:72%"></div></div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-name">Client</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:85%"></div></div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-name">Trade</span>
+          <div class="bar-track"><div class="bar-fill green" style="width:95%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <span class="domain">bidintell.ai</span>
+</body>
+</html>

@@ -15,6 +15,15 @@
 [functions."process-transcripts-background"]
   schedule = "0 * * * *"
 
+# Follow-up automation scheduled functions (Weeks 6 & 8)
+# DISABLED until Week 10 soft launch — enable only after Ryan's approval.
+# generate-followup-drafts: daily 6am Central = 11:00 UTC (12:00 CDT)
+# prompt-ghost-outcome:     daily 7am Central = 12:00 UTC (13:00 CDT)
+# [functions."generate-followup-drafts"]
+#   schedule = "0 11 * * *"
+# [functions."prompt-ghost-outcome"]
+#   schedule = "0 12 * * *"
+
 ###############################################################################
 # ALL SCHEDULED EMAIL FUNCTIONS DISABLED 2026-05-15
 # Ryan: "shut off all emails" (after outcome-reminder nudged him today).

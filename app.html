@@ -1311,6 +1311,10 @@
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                     Projects
                 </div>
+                <div class="nav-item" id="followupsNavItem" data-tab="followups" style="display:none;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    Follow-Ups
+                </div>
                 <div class="nav-item" data-tab="analytics">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                     Analytics
@@ -1552,6 +1556,43 @@
                     <div class="card">
                         <div class="card-header"><h3 class="card-title">All Projects <span id="projectCount" style="color: var(--text-muted); font-size: 14px;"></span></h3><button class="btn btn-secondary btn-sm" onclick="exportProjectsCSV()">📥 Export CSV</button></div>
                         <div class="card-body" style="padding: 0;" id="projectsList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Follow-Ups Tab (admin-gated until Week 10 soft launch) -->
+            <div class="tab-content" id="tab-followups">
+                <header class="page-header">
+                    <h2 class="page-title">Follow-Ups</h2>
+                    <p class="page-subtitle">Review and send AI-drafted follow-ups for submitted bids</p>
+                </header>
+                <div class="page-content">
+                    <!-- Sub-tabs -->
+                    <div style="display: flex; gap: 4px; margin-bottom: 24px; background: var(--bg-secondary); border-radius: var(--radius); padding: 4px;">
+                        <button class="followups-subtab active" data-subtab="needs-review" onclick="switchFollowupsSubtab('needs-review')" style="flex:1; padding: 8px 12px; border: none; border-radius: calc(var(--radius) - 2px); background: var(--bg-primary); font-size: 13px; font-weight: 600; color: var(--text-primary); cursor: pointer; transition: all 0.15s;">Needs Review</button>
+                        <button class="followups-subtab" data-subtab="scheduled" onclick="switchFollowupsSubtab('scheduled')" style="flex:1; padding: 8px 12px; border: none; border-radius: calc(var(--radius) - 2px); background: transparent; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.15s;">Scheduled</button>
+                        <button class="followups-subtab" data-subtab="history" onclick="switchFollowupsSubtab('history')" style="flex:1; padding: 8px 12px; border: none; border-radius: calc(var(--radius) - 2px); background: transparent; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.15s;">History</button>
+                    </div>
+
+                    <!-- Needs Review sub-tab -->
+                    <div id="followups-subtab-needs-review">
+                        <div id="followupsNeedsReviewList">
+                            <div style="color: var(--text-muted); font-size: 14px; padding: 32px; text-align: center; background: var(--bg-secondary); border-radius: var(--radius);">Loading...</div>
+                        </div>
+                    </div>
+
+                    <!-- Scheduled sub-tab -->
+                    <div id="followups-subtab-scheduled" style="display:none;">
+                        <div id="followupsScheduledList">
+                            <div style="color: var(--text-muted); font-size: 14px; padding: 32px; text-align: center; background: var(--bg-secondary); border-radius: var(--radius);">Loading...</div>
+                        </div>
+                    </div>
+
+                    <!-- History sub-tab -->
+                    <div id="followups-subtab-history" style="display:none;">
+                        <div id="followupsHistoryList">
+                            <div style="color: var(--text-muted); font-size: 14px; padding: 32px; text-align: center; background: var(--bg-secondary); border-radius: var(--radius);">Loading...</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2641,6 +2682,96 @@
                 <button class="btn btn-secondary" onclick="closeModal('overrideModal')">Cancel</button>
                 <button class="btn btn-danger" id="overrideClearBtn" onclick="clearOverride()" style="display:none;">Clear Override</button>
                 <button class="btn btn-primary" onclick="saveOverride()">Save Override</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approval Modal (Week 7) — review & send a follow-up touch -->
+    <div class="modal-overlay" id="approvalModal">
+        <div class="modal" style="max-width:640px;">
+            <div class="modal-header">
+                <div>
+                    <h3 class="modal-title" id="approvalModalTitle">Review Follow-Up</h3>
+                    <div id="approvalModalMeta" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;"></div>
+                </div>
+                <button class="modal-close" onclick="closeModal('approvalModal')">×</button>
+            </div>
+            <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
+                <!-- Principle banner -->
+                <div id="approvalPrincipleBanner" style="padding: 10px 14px; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.18); border-radius: var(--radius); font-size: 13px; color: var(--text-secondary); line-height: 1.5;"></div>
+
+                <!-- Subject line -->
+                <div>
+                    <label class="form-label">Subject</label>
+                    <input type="text" class="form-input" id="approvalSubject" style="font-size: 14px;">
+                </div>
+
+                <!-- Email body -->
+                <div>
+                    <label class="form-label">Email Body</label>
+                    <textarea class="form-input" id="approvalBody" rows="12" style="font-size: 13px; resize: vertical; font-family: var(--font-mono, ui-monospace, monospace); line-height: 1.6;"></textarea>
+                    <div id="approvalWordCount" style="font-size: 11px; color: var(--text-muted); margin-top: 4px; text-align: right;"></div>
+                </div>
+
+                <!-- Pre-send: has GC responded? (Week 8) -->
+                <div style="padding: 12px 14px; background: var(--bg-secondary); border-radius: var(--radius);">
+                    <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px;">Has the GC responded since last contact?</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--text-secondary);">
+                            <input type="radio" name="gcResponse" value="no" checked style="cursor:pointer;"> No, still waiting — send this
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--text-secondary);">
+                            <input type="radio" name="gcResponse" value="won" style="cursor:pointer;"> Yes, we won
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--text-secondary);">
+                            <input type="radio" name="gcResponse" value="lost" style="cursor:pointer;"> Yes, we lost
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--text-secondary);">
+                            <input type="radio" name="gcResponse" value="pending" style="cursor:pointer;"> Yes, but no decision yet — send this
+                        </label>
+                    </div>
+                </div>
+
+                <input type="hidden" id="approvalTouchId">
+                <input type="hidden" id="approvalProjectId">
+            </div>
+            <div class="modal-footer" style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-primary" id="approvalSendBtn" onclick="approvalSend()" style="flex:1;">Send</button>
+                <button class="btn btn-secondary" onclick="approvalSaveDraft()" style="font-size: 13px;">Save Draft</button>
+                <button class="btn btn-secondary" onclick="approvalSkipTouch()" style="font-size: 13px; color: var(--text-muted);">Skip Touch</button>
+                <button class="btn btn-secondary" onclick="approvalCancelAll()" style="font-size: 13px; color: var(--danger);">Cancel All</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Follow-Up Onboarding Modal (Week 9) — shown once to existing users on soft launch -->
+    <div class="modal-overlay" id="followupOnboardingModal">
+        <div class="modal" style="max-width:520px;">
+            <div class="modal-header">
+                <h3 class="modal-title">New: BidIntell now handles your bid follow-ups.</h3>
+                <button class="modal-close" onclick="dismissFollowupOnboarding()">×</button>
+            </div>
+            <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
+                <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin: 0;">After you submit a bid, BidIntell drafts follow-up emails using proven persuasion psychology — and sends them from your own email so they look authentic.</p>
+                <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin: 0;">You approve every send. Every touch helps you stay top-of-mind and prompts you to log the outcome, so your BidIndex Score gets smarter.</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius); text-align: center;">
+                        <div style="font-size: 22px; margin-bottom: 6px;">📬</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">AI drafts the email</div>
+                    </div>
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius); text-align: center;">
+                        <div style="font-size: 22px; margin-bottom: 6px;">✅</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">You approve every send</div>
+                    </div>
+                    <div style="padding: 12px; background: var(--bg-secondary); border-radius: var(--radius); text-align: center;">
+                        <div style="font-size: 22px; margin-bottom: 6px;">📈</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">Outcomes improve your score</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex;gap:10px;">
+                <button class="btn btn-primary" onclick="goConnectEmailFromOnboarding()" style="flex:1;">Connect my email</button>
+                <button class="btn btn-secondary" onclick="dismissFollowupOnboarding()">Maybe later</button>
             </div>
         </div>
     </div>
@@ -5578,6 +5709,8 @@ ${fullText.substring(0, 40000)}`;
             } else if (id === 'settings') {
                 dataCache.settings = null; // Force fresh read so post-onboarding data appears
                 await loadSettings();
+            } else if (id === 'followups') {
+                await loadFollowupsTab();
             }
         }
         document.querySelectorAll('.nav-item[data-tab]').forEach(i => i.addEventListener('click', async () => await switchTab(i.dataset.tab)));
@@ -17871,13 +18004,21 @@ Respond now:`;
                     : '';
                 body.innerHTML = `
                     <div style="padding: 16px; background: var(--bg-input); border-radius: var(--radius);">
-                        <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px;">Connect your Gmail account so BidIntell can send follow-ups from <em>your</em> email address. You'll review and approve every single send — nothing leaves your inbox without your click.</div>
-                        <button class="btn btn-primary" onclick="connectGmail()" style="font-size: 14px; padding: 10px 16px;">
-                            <span style="display:inline-flex;align-items:center;gap:8px;">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.11 2.58-2.36 3.39v2.8h3.81C22.18 18.66 24 15.77 24 12.27z"/><path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.81-2.8c-1.05.7-2.4 1.13-4.12 1.13-3.17 0-5.86-2.14-6.83-5.02H1.27v3.15C3.24 21.45 7.31 24 12 24z"/><path d="M5.17 14.4c-.25-.7-.39-1.45-.39-2.4s.14-1.7.39-2.4V6.45H1.27C.46 8.04 0 9.94 0 12s.46 3.96 1.27 5.55l3.9-3.15z"/><path d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.39-3.39C17.95 1.19 15.24 0 12 0 7.31 0 3.24 2.55 1.27 6.45l3.9 3.15C6.14 6.89 8.83 4.75 12 4.75z"/></svg>
-                                Connect Gmail
-                            </span>
-                        </button>
+                        <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px;">Connect your email so BidIntell can send follow-ups from <em>your</em> address. You'll review and approve every send — nothing leaves your inbox without your click.</div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-primary" onclick="connectGmail()" style="font-size: 14px; padding: 10px 16px;">
+                                <span style="display:inline-flex;align-items:center;gap:8px;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.28 1.4-1.11 2.58-2.36 3.39v2.8h3.81C22.18 18.66 24 15.77 24 12.27z"/><path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.81-2.8c-1.05.7-2.4 1.13-4.12 1.13-3.17 0-5.86-2.14-6.83-5.02H1.27v3.15C3.24 21.45 7.31 24 12 24z"/><path d="M5.17 14.4c-.25-.7-.39-1.45-.39-2.4s.14-1.7.39-2.4V6.45H1.27C.46 8.04 0 9.94 0 12s.46 3.96 1.27 5.55l3.9-3.15z"/><path d="M12 4.75c1.77 0 3.36.61 4.61 1.81l3.39-3.39C17.95 1.19 15.24 0 12 0 7.31 0 3.24 2.55 1.27 6.45l3.9 3.15C6.14 6.89 8.83 4.75 12 4.75z"/></svg>
+                                    Connect Gmail
+                                </span>
+                            </button>
+                            <button class="btn btn-secondary" onclick="connectMicrosoft()" style="font-size: 14px; padding: 10px 16px;">
+                                <span style="display:inline-flex;align-items:center;gap:8px;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="10" height="10" fill="#F25022"/><rect x="13" y="1" width="10" height="10" fill="#7FBA00"/><rect x="1" y="13" width="10" height="10" fill="#00A4EF"/><rect x="13" y="13" width="10" height="10" fill="#FFB900"/></svg>
+                                    Connect Microsoft 365
+                                </span>
+                            </button>
+                        </div>
                         ${reconnectNote}
                     </div>
                 `;
@@ -17985,6 +18126,25 @@ Respond now:`;
             }
         }
 
+        async function connectMicrosoft() {
+            if (!supabaseClient || !currentUser) {
+                alert('Please sign in first.');
+                return;
+            }
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session?.access_token) {
+                    alert('Could not get your auth token — try refreshing the page.');
+                    return;
+                }
+                const url = `/.netlify/functions/microsoft-oauth-start?user_token=${encodeURIComponent(session.access_token)}`;
+                window.location.href = url;
+            } catch (err) {
+                console.error('connectMicrosoft failed:', err);
+                alert('Could not start the Microsoft 365 connection flow. See console for details.');
+            }
+        }
+
         // Handle OAuth callback query params (?gmail_connected=true or ?gmail_error=...)
         // Surface a toast-style banner so the user knows what happened.
         function checkGmailOAuthRedirect() {
@@ -18015,6 +18175,425 @@ Respond now:`;
                 };
                 alert(messages[errorCode] || `Gmail connection failed: ${errorCode}`);
             }
+        }
+
+        function checkMicrosoftOAuthRedirect() {
+            const params = new URLSearchParams(window.location.search);
+            const connected = params.get('ms_connected');
+            const errorCode = params.get('ms_error');
+            if (!connected && !errorCode) return;
+            const url = new URL(window.location);
+            url.searchParams.delete('ms_connected');
+            url.searchParams.delete('ms_error');
+            window.history.replaceState({}, '', url);
+
+            if (connected) {
+                alert('Microsoft 365 connected successfully. BidIntell can now draft follow-ups from your email.');
+            } else if (errorCode) {
+                const messages = {
+                    denied: 'Microsoft 365 connection was cancelled. You can try again any time from Settings.',
+                    not_configured: 'Microsoft 365 integration is not configured yet. Contact support.',
+                    missing_token: 'Authentication token missing — try again from Settings.',
+                    auth_failed: 'Could not verify your session. Please sign in again.',
+                    state_invalid: 'The connection link expired or was tampered with. Try connecting again.',
+                    token_exchange: 'Microsoft did not return tokens. Try connecting again.',
+                    token_incomplete: 'Microsoft did not return a refresh token. Try connecting again.',
+                    email_unavailable: 'Could not read your email address from Microsoft. Try connecting again.',
+                    encryption_failed: 'Server encryption error. Contact support.',
+                    db_save: 'Could not save the connection. Try again or contact support.',
+                };
+                alert(messages[errorCode] || `Microsoft 365 connection failed: ${errorCode}`);
+            }
+        }
+
+        // ============================================
+        // FOLLOW-UPS TAB (Weeks 7-9 of follow-up automation)
+        // ============================================
+
+        function switchFollowupsSubtab(name) {
+            document.querySelectorAll('.followups-subtab').forEach(btn => {
+                const isActive = btn.dataset.subtab === name;
+                btn.classList.toggle('active', isActive);
+                btn.style.background = isActive ? 'var(--bg-primary)' : 'transparent';
+                btn.style.color = isActive ? 'var(--text-primary)' : 'var(--text-muted)';
+            });
+            document.querySelectorAll('[id^="followups-subtab-"]').forEach(el => {
+                el.style.display = el.id === `followups-subtab-${name}` ? '' : 'none';
+            });
+        }
+
+        async function loadFollowupsTab() {
+            if (!supabaseClient || !currentUser) return;
+            await Promise.all([
+                loadFollowupsNeedsReview(),
+                loadFollowupsScheduled(),
+                loadFollowupsHistory(),
+            ]);
+        }
+
+        async function loadFollowupsNeedsReview() {
+            const container = document.getElementById('followupsNeedsReviewList');
+            if (!container) return;
+            try {
+                const { data, error } = await supabaseClient
+                    .from('follow_up_touches')
+                    .select(`
+                        id, touch_number, scheduled_at, primary_principle, recipient_email, recipient_name,
+                        draft_subject, draft_body, draft_reasoning, user_id, schedule_id,
+                        schedule:follow_up_schedules(gc_name, project:projects(id, name))
+                    `)
+                    .eq('user_id', currentUser.id)
+                    .eq('status', 'awaiting_approval')
+                    .order('scheduled_at', { ascending: true });
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `<div style="padding: 48px 24px; text-align: center; background: var(--bg-secondary); border-radius: var(--radius);">
+                        <div style="font-size: 32px; margin-bottom: 12px;">📭</div>
+                        <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">No follow-ups need review</div>
+                        <div style="font-size: 13px; color: var(--text-muted); line-height: 1.5; max-width: 340px; margin: 0 auto;">When a touch is due, BidIntell will draft it and surface it here for your approval before anything sends.</div>
+                    </div>`;
+                    return;
+                }
+
+                container.innerHTML = data.map(t => {
+                    const project = t.schedule?.project;
+                    const gcName = t.schedule?.gc_name || t.recipient_name || t.recipient_email;
+                    const principleLabel = t.primary_principle
+                        ? t.primary_principle.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+                        : '';
+                    const dateStr = t.scheduled_at
+                        ? new Date(t.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                        : '';
+                    return `<div style="padding: 16px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius); cursor: pointer; transition: border-color 0.15s;" onclick="openApprovalModal('${escapeHtml(t.id)}')" onmouseenter="this.style.borderColor='var(--brand-primary)'" onmouseleave="this.style.borderColor='var(--border-color)'">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">${escapeHtml(project?.name || '—')}</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">Touch ${t.touch_number} · ${escapeHtml(gcName)} · ${escapeHtml(principleLabel)}</div>
+                                ${t.draft_subject ? `<div style="font-size: 13px; color: var(--text-secondary); margin-top: 6px; font-style: italic;">"${escapeHtml(t.draft_subject)}"</div>` : ''}
+                            </div>
+                            <div style="flex-shrink: 0; text-align: right;">
+                                <div style="display: inline-block; padding: 3px 10px; background: rgba(242,101,34,0.12); color: var(--brand-primary); border-radius: 99px; font-size: 11px; font-weight: 600; margin-bottom: 4px;">Needs review</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(dateStr)}</div>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                container.innerHTML = `<div style="color: var(--danger); font-size: 13px; padding: 16px;">Could not load follow-ups: ${escapeHtml(err.message)}</div>`;
+            }
+        }
+
+        async function loadFollowupsScheduled() {
+            const container = document.getElementById('followupsScheduledList');
+            if (!container) return;
+            try {
+                const { data, error } = await supabaseClient
+                    .from('follow_up_touches')
+                    .select(`
+                        id, touch_number, scheduled_at, primary_principle,
+                        schedule:follow_up_schedules(gc_name, project:projects(name))
+                    `)
+                    .eq('user_id', currentUser.id)
+                    .eq('status', 'pending')
+                    .order('scheduled_at', { ascending: true });
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `<div style="padding: 48px 24px; text-align: center; background: var(--bg-secondary); border-radius: var(--radius);">
+                        <div style="font-size: 32px; margin-bottom: 12px;">📅</div>
+                        <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">No upcoming follow-ups</div>
+                        <div style="font-size: 13px; color: var(--text-muted);">Mark a bid as Submitted in Projects to activate a sequence.</div>
+                    </div>`;
+                    return;
+                }
+
+                container.innerHTML = data.map(t => {
+                    const project = t.schedule?.project;
+                    const gcName = t.schedule?.gc_name || '—';
+                    const principleLabel = t.primary_principle
+                        ? t.primary_principle.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+                        : '';
+                    const dateStr = t.scheduled_at
+                        ? new Date(t.scheduled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                        : '—';
+                    return `<div style="padding: 14px 16px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div>
+                            <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${escapeHtml(project?.name || '—')}</div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Touch ${t.touch_number} · ${escapeHtml(gcName)} · ${escapeHtml(principleLabel)}</div>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-muted); flex-shrink: 0;">${escapeHtml(dateStr)}</div>
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                container.innerHTML = `<div style="color: var(--danger); font-size: 13px; padding: 16px;">Could not load scheduled touches: ${escapeHtml(err.message)}</div>`;
+            }
+        }
+
+        async function loadFollowupsHistory() {
+            const container = document.getElementById('followupsHistoryList');
+            if (!container) return;
+            try {
+                const { data, error } = await supabaseClient
+                    .from('follow_up_touches')
+                    .select(`
+                        id, touch_number, sent_at, status, primary_principle,
+                        draft_subject, user_edited_subject, draft_body, user_edited_body,
+                        schedule:follow_up_schedules(gc_name, project:projects(name))
+                    `)
+                    .eq('user_id', currentUser.id)
+                    .in('status', ['sent', 'skipped', 'cancelled'])
+                    .order('sent_at', { ascending: false })
+                    .limit(100);
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `<div style="padding: 48px 24px; text-align: center; background: var(--bg-secondary); border-radius: var(--radius);">
+                        <div style="font-size: 32px; margin-bottom: 12px;">📂</div>
+                        <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">No history yet</div>
+                        <div style="font-size: 13px; color: var(--text-muted);">Sent and skipped touches will appear here.</div>
+                    </div>`;
+                    return;
+                }
+
+                container.innerHTML = data.map(t => {
+                    const project = t.schedule?.project;
+                    const gcName = t.schedule?.gc_name || '—';
+                    const subject = t.user_edited_subject || t.draft_subject || '(no subject)';
+                    const body = t.user_edited_body || t.draft_body || '';
+                    const dateStr = t.sent_at
+                        ? new Date(t.sent_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                        : '—';
+                    const statusBadge = t.status === 'sent'
+                        ? `<span style="display:inline-block;padding:2px 8px;background:rgba(34,197,94,0.12);color:#22c55e;border-radius:99px;font-size:11px;font-weight:600;">Sent</span>`
+                        : `<span style="display:inline-block;padding:2px 8px;background:var(--bg-secondary);color:var(--text-muted);border-radius:99px;font-size:11px;font-weight:600;">${escapeHtml(t.status.charAt(0).toUpperCase() + t.status.slice(1))}</span>`;
+                    return `<details style="padding: 14px 16px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius);">
+                        <summary style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; list-style: none;">
+                            <div>
+                                <div style="font-size: 14px; font-weight: 600; color: var(--text-primary);">${escapeHtml(project?.name || '—')} · Touch ${t.touch_number}</div>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${escapeHtml(gcName)} · "${escapeHtml(subject)}"</div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">${statusBadge}<span style="font-size:11px;color:var(--text-muted);">${escapeHtml(dateStr)}</span></div>
+                        </summary>
+                        ${body ? `<div style="margin-top: 12px; padding: 12px; background: var(--bg-primary); border-radius: var(--radius); font-size: 13px; color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; font-family: var(--font-mono, ui-monospace, monospace);">${escapeHtml(body)}</div>` : ''}
+                    </details>`;
+                }).join('');
+            } catch (err) {
+                container.innerHTML = `<div style="color: var(--danger); font-size: 13px; padding: 16px;">Could not load history: ${escapeHtml(err.message)}</div>`;
+            }
+        }
+
+        // ── Approval Modal (Week 7) ─────────────────────────────────────────────
+
+        let _approvalTouchData = null;
+
+        const APPROVAL_PRINCIPLE_LABELS = {
+            reciprocity: 'Reciprocity — give something useful before asking for anything',
+            commitment: 'Commitment & Consistency — ask for a 5-second yes/no reply',
+            social_proof: 'Social Proof — reference a real, similar past project',
+            liking: 'Liking & Rapport — one genuine specific observation about this GC',
+            authority: 'Authority — show you actually read the scope',
+            scarcity: 'Scarcity — cite a real constraint (crew, material, window)',
+            unity: 'Unity — emphasize shared market, history, or community',
+        };
+
+        async function openApprovalModal(touchId) {
+            if (!supabaseClient || !currentUser) return;
+            try {
+                const { data: touch, error } = await supabaseClient
+                    .from('follow_up_touches')
+                    .select(`
+                        id, touch_number, scheduled_at, primary_principle, secondary_principle,
+                        draft_subject, draft_body, draft_reasoning, recipient_email, recipient_name,
+                        schedule:follow_up_schedules(gc_name, total_touches, project:projects(id, name))
+                    `)
+                    .eq('id', touchId)
+                    .eq('user_id', currentUser.id)
+                    .maybeSingle();
+                if (error) throw error;
+                if (!touch) { alert('Touch not found.'); return; }
+
+                _approvalTouchData = touch;
+
+                const project = touch.schedule?.project;
+                const gcName = touch.schedule?.gc_name || touch.recipient_name || touch.recipient_email;
+                const totalTouches = touch.schedule?.total_touches || '?';
+                const principleLabel = APPROVAL_PRINCIPLE_LABELS[touch.primary_principle] || touch.primary_principle;
+
+                document.getElementById('approvalModalTitle').textContent = `Touch ${touch.touch_number} of ${totalTouches} — ${project?.name || 'Bid'}`;
+                document.getElementById('approvalModalMeta').textContent = `To: ${gcName}`;
+                document.getElementById('approvalPrincipleBanner').textContent = `This touch applies: ${principleLabel}`;
+                if (touch.draft_reasoning) {
+                    document.getElementById('approvalPrincipleBanner').textContent += ` — ${touch.draft_reasoning}`;
+                }
+                document.getElementById('approvalSubject').value = touch.draft_subject || '';
+                document.getElementById('approvalBody').value = touch.draft_body || '';
+                document.getElementById('approvalTouchId').value = touch.id;
+                document.getElementById('approvalProjectId').value = project?.id || '';
+
+                // Reset GC response selection
+                document.querySelectorAll('input[name="gcResponse"]').forEach(r => r.checked = r.value === 'no');
+
+                updateApprovalWordCount();
+                document.getElementById('approvalBody').addEventListener('input', updateApprovalWordCount);
+
+                openModal('approvalModal');
+            } catch (err) {
+                console.error('openApprovalModal failed:', err);
+                alert(`Could not load touch: ${err.message}`);
+            }
+        }
+
+        function updateApprovalWordCount() {
+            const body = document.getElementById('approvalBody')?.value || '';
+            const words = body.trim().split(/\s+/).filter(Boolean).length;
+            const el = document.getElementById('approvalWordCount');
+            if (el) el.textContent = `${words} words`;
+        }
+
+        async function approvalSend() {
+            const touchId = document.getElementById('approvalTouchId')?.value;
+            const projectId = document.getElementById('approvalProjectId')?.value;
+            if (!touchId) return;
+
+            // Check if GC already responded
+            const gcResponse = document.querySelector('input[name="gcResponse"]:checked')?.value || 'no';
+            if (gcResponse === 'won' || gcResponse === 'lost') {
+                closeModal('approvalModal');
+                // Open outcome modal for the project
+                const outcome = gcResponse === 'won' ? 'Won' : 'Lost';
+                if (projectId && typeof openLogBidModal === 'function') {
+                    // Surface the project's log-bid modal pre-filled with the outcome
+                    alert(`Great — log the ${outcome} outcome on this project to close the loop.`);
+                }
+                return;
+            }
+
+            const finalSubject = document.getElementById('approvalSubject')?.value?.trim() || '';
+            const finalBody    = document.getElementById('approvalBody')?.value?.trim() || '';
+
+            if (!finalSubject || !finalBody) {
+                alert('Subject and body are required before sending.');
+                return;
+            }
+
+            const btn = document.getElementById('approvalSendBtn');
+            const origText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session?.access_token) throw new Error('Session expired — refresh and try again.');
+
+                const res = await fetch('/.netlify/functions/send-followup-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_token: session.access_token,
+                        touchId,
+                        finalSubject,
+                        finalBody,
+                    }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || `Send failed (${res.status})`);
+
+                closeModal('approvalModal');
+                await loadFollowupsNeedsReview();
+                alert('Sent.');
+            } catch (err) {
+                console.error('approvalSend failed:', err);
+                alert(`Could not send: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = origText;
+            }
+        }
+
+        async function approvalSaveDraft() {
+            const touchId = document.getElementById('approvalTouchId')?.value;
+            if (!touchId) return;
+            const subject = document.getElementById('approvalSubject')?.value?.trim() || '';
+            const body    = document.getElementById('approvalBody')?.value?.trim() || '';
+            try {
+                const { error } = await supabaseClient
+                    .from('follow_up_touches')
+                    .update({ user_edited_subject: subject || null, user_edited_body: body || null })
+                    .eq('id', touchId)
+                    .eq('user_id', currentUser.id);
+                if (error) throw error;
+                closeModal('approvalModal');
+            } catch (err) {
+                alert(`Could not save: ${err.message}`);
+            }
+        }
+
+        async function approvalSkipTouch() {
+            const touchId = document.getElementById('approvalTouchId')?.value;
+            if (!touchId) return;
+            if (!confirm('Skip this touch? It will not be sent.')) return;
+            try {
+                const { error } = await supabaseClient
+                    .from('follow_up_touches')
+                    .update({ status: 'skipped' })
+                    .eq('id', touchId)
+                    .eq('user_id', currentUser.id);
+                if (error) throw error;
+                closeModal('approvalModal');
+                await loadFollowupsNeedsReview();
+            } catch (err) {
+                alert(`Could not skip: ${err.message}`);
+            }
+        }
+
+        async function approvalCancelAll() {
+            const touchId = document.getElementById('approvalTouchId')?.value;
+            if (!touchId || !_approvalTouchData) return;
+            const scheduleId = _approvalTouchData.schedule_id;
+            if (!confirm('Cancel all remaining follow-ups for this bid?')) return;
+            try {
+                // Cancel all pending/awaiting touches on this schedule
+                await supabaseClient
+                    .from('follow_up_touches')
+                    .update({ status: 'cancelled' })
+                    .eq('schedule_id', scheduleId)
+                    .eq('user_id', currentUser.id)
+                    .in('status', ['pending', 'awaiting_approval']);
+
+                await supabaseClient
+                    .from('follow_up_schedules')
+                    .update({ status: 'cancelled', cancelled_reason: 'user_cancelled' })
+                    .eq('id', scheduleId)
+                    .eq('user_id', currentUser.id);
+
+                closeModal('approvalModal');
+                await loadFollowupsTab();
+            } catch (err) {
+                alert(`Could not cancel: ${err.message}`);
+            }
+        }
+
+        // ── Follow-Up Onboarding Modal (Week 9) ──────────────────────────────────
+        // Shown once to existing users when the feature soft-launches.
+        // Keyed by user ID in localStorage so it only fires once per account.
+
+        function maybeShowFollowupOnboarding() {
+            if (!isAdmin()) return; // Only show to admins until full launch
+            const key = `followup_onboarding_seen_${currentUser?.id}`;
+            if (localStorage.getItem(key)) return;
+            openModal('followupOnboardingModal');
+        }
+
+        function dismissFollowupOnboarding() {
+            const key = `followup_onboarding_seen_${currentUser?.id}`;
+            if (key) localStorage.setItem(key, '1');
+            closeModal('followupOnboardingModal');
+        }
+
+        function goConnectEmailFromOnboarding() {
+            dismissFollowupOnboarding();
+            switchTab('settings');
         }
 
         // ============================================
@@ -19773,19 +20352,27 @@ Respond now:`;
 
                 // Handle Gmail OAuth return params (gmail_connected, gmail_error)
                 checkGmailOAuthRedirect();
+                // Handle Microsoft OAuth return params (ms_connected, ms_error)
+                checkMicrosoftOAuthRedirect();
 
                 // Show admin tabs for founders only
                 if (isAdmin()) {
                     document.getElementById('adminOperationsNavItem').style.display = 'flex';
                     document.getElementById('adminMetricsNavItem').style.display = 'flex';
+                    // Follow-Ups tab: admin-only until Week 10 soft launch
+                    document.getElementById('followupsNavItem').style.display = 'flex';
                 } else {
                     document.getElementById('adminOperationsNavItem').style.display = 'none';
                     document.getElementById('adminMetricsNavItem').style.display = 'none';
+                    document.getElementById('followupsNavItem').style.display = 'none';
                 }
 
                 // Show Team tab for all users (content adapts based on org status)
                 document.getElementById('teamNavItem').style.display = 'flex';
                 if (dataCache.settings?.org_id) loadTeamTab();
+
+                // Follow-up onboarding (Week 9): show once to admins on soft launch
+                maybeShowFollowupOnboarding();
             } catch (error) {
                 console.error('❌ loadAll() error:', error);
                 throw error;
