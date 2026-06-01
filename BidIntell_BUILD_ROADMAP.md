@@ -1,6 +1,6 @@
 # BidIntell — Build Roadmap
 
-**Last Updated:** May 29, 2026
+**Last Updated:** June 1, 2026
 **Owner:** Ryan Elder
 **Status:** ACTIVE — single source of truth for what to build and in what order
 
@@ -20,7 +20,7 @@ This is the current to-do list. Build top to bottom. Do not start NEXT-tier work
 
 | # | Item | Status | Notes |
 |---|------|--------|-------|
-| 1 | **Instant AI feedback loop** | Decided, not started | Highest leverage. Instant outcome analysis (score-vs-outcome reconciliation, running client tally, margin/building-type line) + visible threshold progress meter (3/20/50/10). Claude Code prompt already written (`BidIntell_Claude_Code_Prompt_OutcomeFeedbackLoop.md`). No new tables — read-and-display on existing save flow. Directly serves the north star. |
+| 1 | **Instant AI feedback loop** | ✅ SHIPPED June 1 (commit `6d766f1`) | Module 1: score reconciliation, client tally, margin by building type, ghost-rate flag. Module 2: threshold progress meter (CP at 3, Twin Finder at 20, override cal at 50) with celebration state. Background reload. No new schema. |
 | 2 | **Follow-up automation system** | ✅ Weeks 1-9 BUILT (May 22) — **blocked on Ryan OAuth/Azure setup** | Schema, sequence templates UI, schedule activation, Google OAuth, Microsoft OAuth, AI draft generation, approval & send UI (Gmail + Microsoft Graph), ghost outcome prompts, onboarding modal — all built and admin-gated. All user-visible UI hidden behind `isAdmin()`. Scheduled functions commented out in netlify.toml. Unblocked when Ryan: (1) sets up Google Cloud Console + Gmail API + 4 Netlify vars, (2) registers Azure app + 3 Netlify vars, (3) approves Week 10 soft launch to remove admin gates + uncomment scheduled functions. |
 | 3 | **alert.js monitoring system** | Not built — prompt ready | Heartbeat check + 4 insertion points: logging anomaly, Stripe `user_revenue` write failure, magic-link send failure, analyze.js scoring failure. Single `alert.js` function `{severity, source, message, context}`. Dedupe window (1/hr per source+message) + severity gate. ~1 day build. Protects the north star (silent logging failure is invisible otherwise). |
 | 4 | **Diagnostic agent** | ✅ DONE | Primary acquisition funnel per GTM plan. Score a prospect's live bid, deliver as finished artifact, no signup. Feeds top of funnel. |
