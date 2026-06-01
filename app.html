@@ -2597,8 +2597,9 @@
                 <input type="hidden" id="outcomeProjectId">
                 <div id="outcomeSubmissionsContainer"></div>
                 <div id="outcomeFields"></div>
+                <div id="instantInsightsPanel" style="display:none;"></div>
             </div>
-            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('outcomeModal')">Cancel</button><button class="btn btn-primary" onclick="saveOutcome()">Save Outcomes</button></div>
+            <div class="modal-footer" id="outcomeModalFooter"><button class="btn btn-secondary" onclick="closeModal('outcomeModal')">Cancel</button><button class="btn btn-primary" onclick="saveOutcome()">Save Outcomes</button></div>
         </div>
     </div>
 
@@ -15591,6 +15592,16 @@ Respond now:`;
             document.getElementById('outcomeFields').innerHTML = '';
             submissionOutcomeSelections = {};
 
+            // Reset insights panel from any previous save
+            const panel = document.getElementById('instantInsightsPanel');
+            panel.style.display = 'none';
+            panel.innerHTML = '';
+            document.getElementById('outcomeSubmissionsContainer').style.display = '';
+            document.getElementById('outcomeFields').style.display = '';
+            document.getElementById('outcomeModalFooter').innerHTML =
+                '<button class="btn btn-secondary" onclick="closeModal(\'outcomeModal\')">Cancel</button>' +
+                '<button class="btn btn-primary" onclick="saveOutcome()">Save Outcomes</button>';
+
             const project = allProjectsCache.find(p => p.id === id);
             const submissions = project?.outcomeData?.bid_submissions || [];
             const pending = submissions.filter(s => !s.outcome || s.outcome === 'pending');
@@ -16035,13 +16046,18 @@ Respond now:`;
 
                 try { supabaseClient.from('admin_events').insert({ event_type: 'outcome_recorded', user_id: currentUser.id, event_data: { outcome: projectOutcome, project_id: id } }); } catch(e) {}
 
-                closeModal('outcomeModal');
                 submissionOutcomeSelections = {};
                 dataCache.projects = null;
-                await loadProjects();
-                await loadDashboard();
-                const reportTab = document.getElementById('tab-report');
-                if (reportTab && reportTab.classList.contains('active')) await viewReport(id);
+                const _gcForInsights = pendingSubmissions[0]?.gc_name || null;
+                const _insightsShown = await showInstantInsightsPanel(id, projectOutcome, _gcForInsights);
+                if (!_insightsShown) closeModal('outcomeModal');
+                // Reload in background regardless of whether insights are showing
+                Promise.resolve().then(async () => {
+                    await loadProjects();
+                    await loadDashboard();
+                    const reportTab = document.getElementById('tab-report');
+                    if (reportTab && reportTab.classList.contains('active')) await viewReport(id);
+                });
                 gtag('event', 'outcome_recorded', { outcome: projectOutcome });
                 console.log('✅ Submission outcomes saved, project outcome:', projectOutcome);
             } catch (error) {
@@ -16277,18 +16293,19 @@ Respond now:`;
                     console.warn('Event logging failed:', e);
                 }
 
-                closeModal('outcomeModal');
-
-                // Force cache clear and reload
                 dataCache.projects = null;
-                await loadProjects();
-                await loadDashboard();
-
-                // If we're on the report page, reload it
-                const reportTab = document.getElementById('tab-report');
-                if (reportTab && reportTab.classList.contains('active')) {
-                    await viewReport(id);
-                }
+                const _legacyClientName = outcomeGCName || allProjectsCache.find(x => x.id === id)?.gcs?.[0]?.name || null;
+                const _legacyInsightsShown = await showInstantInsightsPanel(id, type, _legacyClientName);
+                if (!_legacyInsightsShown) closeModal('outcomeModal');
+                // Reload in background regardless of whether insights are showing
+                Promise.resolve().then(async () => {
+                    await loadProjects();
+                    await loadDashboard();
+                    const reportTab = document.getElementById('tab-report');
+                    if (reportTab && reportTab.classList.contains('active')) {
+                        await viewReport(id);
+                    }
+                });
 
                 gtag('event', 'outcome_recorded', { outcome: type });
                 console.log('✅ Outcome saved and UI refreshed');
@@ -16297,6 +16314,178 @@ Respond now:`;
                 alert('Failed to save outcome: ' + error.message);
             }
         }
+
+        // ─── Instant Outcome Feedback Loop ────────────────────────────────────────
+
+        function _sameClient(project, client) {
+            const cName = (client.name || '').toLowerCase();
+            return (project.gcs || []).some(g => (g.name || '').toLowerCase() === cName);
+        }
+
+        function _computeInstantInsights(project, outcomeType, client, allProjects, projectId) {
+            const insights = [];
+            const RESOLVED = ['won', 'lost', 'ghost'];
+
+            // 1. Score-vs-outcome reconciliation (skip for declined / no_bid)
+            const finalScore = project.scores?.final || project.scores?.bidindex_score;
+            if (finalScore != null && RESOLVED.includes(outcomeType)) {
+                const high = finalScore >= 65;
+                if (outcomeType === 'won') {
+                    const wonSub = (project.outcomeData?.bid_submissions || []).find(s => s.outcome === 'won');
+                    const margin = wonSub?.margin || project.outcomeData?.margin;
+                    const marginText = margin ? ` at ${margin}% margin` : '';
+                    insights.push({ text: high
+                        ? `You scored this ${finalScore} and won${marginText}. Your read on this one was right.`
+                        : `You scored this ${finalScore} and won${marginText} — worth noting what you saw that the score didn't.`
+                    });
+                } else if ((outcomeType === 'lost' || outcomeType === 'ghost') && high && client) {
+                    const priorHighNonWin = allProjects.filter(p =>
+                        p.id !== projectId &&
+                        _sameClient(p, client) &&
+                        ['lost', 'ghost'].includes(p.outcome) &&
+                        (p.scores?.final || p.scores?.bidindex_score || 0) >= 65
+                    ).length;
+                    insights.push({ text: priorHighNonWin >= 1
+                        ? `You scored this ${finalScore} and it didn't convert — that's ${priorHighNonWin + 1} times now a high score from this client hasn't panned out.`
+                        : `You scored this ${finalScore} and it didn't convert. One data point — keep logging to see the pattern.`
+                    });
+                }
+            }
+
+            // 2. Running client tally — computed from projects (more reliable than client counters)
+            if (client) {
+                const clientProjects = allProjects.filter(p => p.id !== projectId && _sameClient(p, client));
+                let bids = clientProjects.length + 1; // +1 for current save
+                let wins = clientProjects.filter(p => p.outcome === 'won').length + (outcomeType === 'won' ? 1 : 0);
+                let ghosts = clientProjects.filter(p => p.outcome === 'ghost').length + (outcomeType === 'ghost' ? 1 : 0);
+                if (bids > 0) {
+                    let tally = `That's ${client.name}: ${bids} bid${bids !== 1 ? 's' : ''}, ${wins} win${wins !== 1 ? 's' : ''}`;
+                    if (ghosts > 0) tally += `, ${ghosts} ghost${ghosts !== 1 ? 's' : ''}`;
+                    insights.push({ text: tally + ' logged.' });
+                }
+            }
+
+            // 3. Margin by building type (only if ≥2 won outcomes across ≥2 types)
+            const wonProjects = allProjects.filter(p => p.outcome === 'won');
+            const byType = {};
+            for (const p of wonProjects) {
+                const bt = p.extracted?.building_type || p.buildingType?.type || null;
+                if (!bt) continue;
+                const wonSub = (p.outcomeData?.bid_submissions || []).find(s => s.outcome === 'won');
+                const margin = parseFloat(wonSub?.margin || p.outcomeData?.margin);
+                if (!isNaN(margin) && margin > 0) {
+                    if (!byType[bt]) byType[bt] = [];
+                    byType[bt].push(margin);
+                }
+            }
+            const typeKeys = Object.keys(byType);
+            if (typeKeys.length >= 2) {
+                const sorted = typeKeys.sort((a, b) => {
+                    const avg = arr => arr.reduce((s, v) => s + v, 0) / arr.length;
+                    return avg(byType[b]) - avg(byType[a]);
+                });
+                const topType = sorted[0];
+                const botType = sorted[sorted.length - 1];
+                if (topType !== botType) {
+                    const avg = arr => Math.round(arr.reduce((s, v) => s + v, 0) / arr.length * 10) / 10;
+                    insights.push({ text: `Your logged ${topType} projects average ${avg(byType[topType])}% won margin vs. ${avg(byType[botType])}% on ${botType}.` });
+                }
+            }
+
+            // 4. Ghost-rate flag — only when ghost count ≥3 and rate ≥50%
+            if (outcomeType === 'ghost' && client) {
+                const clientAll = allProjects.filter(p => p.id !== projectId && _sameClient(p, client));
+                const totalBids = clientAll.length + 1;
+                const ghostCount = clientAll.filter(p => p.outcome === 'ghost').length + 1;
+                if (ghostCount >= 3 && totalBids >= 3 && (ghostCount / totalBids) >= 0.5) {
+                    insights.push({ text: `That's ${ghostCount} ghosts from ${client.name} across ${totalBids} bids. Worth weighing before you spend estimating time there again.` });
+                }
+            }
+
+            return insights;
+        }
+
+        function _buildProgressItems(allProjects, client, outcomeType, projectId) {
+            const RESOLVED = ['won', 'lost', 'ghost'];
+            const isResolved = RESOLVED.includes(outcomeType);
+            const resolvedCached = allProjects.filter(p => p.id !== projectId && RESOLVED.includes(p.outcome));
+            const totalResolved = resolvedCached.length + (isResolved ? 1 : 0);
+            const items = [];
+
+            // Per-client Competitive Pressure (threshold: 3)
+            if (client && isResolved) {
+                const clientPrior = resolvedCached.filter(p => _sameClient(p, client)).length;
+                const clientNow = clientPrior + 1;
+                if (clientNow === 3) {
+                    items.push({ celebration: true, text: `That outcome just unlocked your Competitive Pressure read for ${client.name} — it's active on your next bid for them.` });
+                } else if (clientNow < 3) {
+                    const rem = 3 - clientNow;
+                    items.push({ label: `${rem} more outcome${rem !== 1 ? 's' : ''} with ${client.name} unlocks your Competitive Pressure read`, pct: Math.round((clientNow / 3) * 100) });
+                }
+            }
+
+            // Total-outcome unlocks — show only the next one
+            if (totalResolved === 20) {
+                items.push({ celebration: true, text: 'You just hit 20 outcomes — Project Twin Finder is now active.' });
+            } else if (totalResolved < 20) {
+                const rem = 20 - totalResolved;
+                items.push({ label: `${rem} more outcome${rem !== 1 ? 's' : ''} unlocks Project Twin Finder`, pct: Math.round((totalResolved / 20) * 100) });
+            } else if (totalResolved === 50) {
+                items.push({ celebration: true, text: 'You just hit 50 outcomes — override calibration is now active.' });
+            } else if (totalResolved < 50) {
+                const rem = 50 - totalResolved;
+                items.push({ label: `${rem} more outcome${rem !== 1 ? 's' : ''} unlocks override calibration`, pct: Math.round((totalResolved / 50) * 100) });
+            }
+
+            return items.slice(0, 2);
+        }
+
+        async function showInstantInsightsPanel(projectId, outcomeType, gcName) {
+            if (!['won', 'lost', 'ghost'].includes(outcomeType)) return false;
+            const project = allProjectsCache.find(p => p.id === projectId);
+            if (!project) return false;
+
+            const allClients = await getClients();
+            const client = gcName
+                ? allClients.find(c => (c.name || '').toLowerCase() === (gcName || '').toLowerCase())
+                : null;
+
+            const insights = _computeInstantInsights(project, outcomeType, client, allProjectsCache, projectId);
+            const progressItems = _buildProgressItems(allProjectsCache, client, outcomeType, projectId);
+
+            if (insights.length === 0 && progressItems.length === 0) return false;
+
+            const insightRows = insights.map(i =>
+                `<li style="font-size:14px;color:var(--text-primary);padding:10px 0;border-bottom:1px solid var(--border-color);line-height:1.6;">${i.text}</li>`
+            ).join('');
+
+            const progressRows = progressItems.map(item => item.celebration
+                ? `<div style="font-size:13px;color:#F26522;padding:10px 12px;background:rgba(242,101,34,0.08);border-radius:6px;margin-bottom:10px;">${item.text}</div>`
+                : `<div style="margin-bottom:14px;">
+                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">${item.label}</div>
+                    <div style="height:4px;background:var(--bg-secondary);border-radius:2px;overflow:hidden;">
+                        <div style="height:100%;width:${item.pct}%;background:#F26522;border-radius:2px;"></div>
+                    </div>
+                  </div>`
+            ).join('');
+
+            const panel = document.getElementById('instantInsightsPanel');
+            panel.innerHTML =
+                `<div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:14px;">Logged. Here's what that tells us:</div>` +
+                (insightRows ? `<ul style="list-style:none;padding:0;margin:0 0 18px 0;">${insightRows}</ul>` : '') +
+                (progressRows ? `<div style="margin-top:${insightRows ? '4px' : '0'}">${progressRows}</div>` : '');
+
+            // Swap modal content
+            document.getElementById('outcomeSubmissionsContainer').style.display = 'none';
+            document.getElementById('outcomeFields').style.display = 'none';
+            panel.style.display = 'block';
+            document.getElementById('outcomeModalFooter').innerHTML =
+                `<button class="btn btn-primary" onclick="closeModal('outcomeModal')">Close</button>`;
+
+            return true;
+        }
+
+        // ─── End Instant Outcome Feedback Loop ────────────────────────────────────
 
         async function deleteProjectUI(id) {
             if (!confirm('Delete this project?')) return;
