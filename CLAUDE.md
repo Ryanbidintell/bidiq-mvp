@@ -119,7 +119,8 @@ git commit -m "Before [change description]"
 - `demo.html` - Schedule a Demo intake form → Pipedrive Lead via pipedrive-lead.js
 - `index.html` - Landing page (separate from app.html)
 - `roi-calculator.html` - Standalone ROI calculator lead magnet page at /roi-calculator
-- `BidIntell_Product_Bible_v2_0.md` - Product roadmap and requirements (v2.0 is current — NOT v1.9)
+- `BidIntell_Product_Bible_v2_1.md` - Product strategy and phases (v2.1 is current — NOT v2.0 or v1.9)
+- `BidIntell_BUILD_ROADMAP.md` - Operational build list: NOW / NEXT / NOT-YET with live status per item. **Check this before every build session.**
 - `apollo-sequences.md` - Apollo cold outreach sequences + upload instructions (3-email specialty subs sequence)
 - `DATA_SAFETY_PROTOCOL.md` - Data handling rules
 - `KNOWN_BUGS.md` - Active bug list
