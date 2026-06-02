@@ -636,6 +636,41 @@ ${renderContractRiskChips(p.contractRisks)}
 - **Migration 009** (`009_outcome_nudge.sql`): adds `outcome_nudge_count` (int default 0), `last_nudge_sent_at` (timestamptz) to projects; `outcome_reminder_days` (int default 21) to user_settings. ✅ Applied.
 - **Migration 010** (`010_fix_outcome_constraints`): rewrites `validate_outcome_data()` to handle bid_submissions format; adds `gc_lost` + `no_bid` to outcome check constraint. ✅ Applied.
 
+### Alert / Monitoring System (June 2, 2026)
+
+**File:** `netlify/functions/alert.js`. The way to surface silent failures.
+
+**Use it in any function's catch block:**
+```javascript
+const { sendAlert } = require('./alert');
+// ...
+} catch (error) {
+    await sendAlert({
+        source: 'my-function',
+        severity: 'error',          // info | warning | error | critical
+        title: 'What broke',
+        detail: error.message,
+        dedupeKey: 'my-function-fail',   // throttle key
+        context: { stack: error.stack }
+    });
+    // ... existing return/handling
+}
+```
+
+**Behavior:**
+- ALWAYS logs to `admin_events` (`event_type='system_alert'`) — durable record even when no email goes out.
+- Emails ryan@bidintell.ai (Postmark) only for severity ≥ `error` AND only if that `dedupeKey` hasn't emailed within the throttle window (6h default). `warning`/`info` log only, no email.
+- **Never throws** — safe to call in any catch; it won't break the caller.
+- Config (optional Netlify env): `ALERT_EMAIL_MIN_SEVERITY` (default `error`), `ALERT_THROTTLE_MINUTES` (default 360).
+- Already wired into: stripe-webhook, inbound-email, process-transcripts, analyze, notify.
+- This is failure-only + throttled by design — it respects the 2026-05-15 "shut off all emails" decision. Silent when healthy.
+
+**Lesson — silent failures hide in two layers:**
+1. **Runtime:** functions `console.error` and return 500 where nobody looks → use `sendAlert` in catch blocks.
+2. **Load-time:** a syntax error means the function never even runs (Postmark/Stripe just see 502s). `inbound-email-background.js` shipped broken in `ec1de0d` and the core flow was dead for ~weeks. The Netlify build only syntax-checked app.html, not functions.
+
+**Fix:** `scripts/check-app-syntax.js` now runs `node --check` on EVERY `netlify/functions/*.js` (not just app.html). A syntax error in any function fails the build. Run it anytime: `node scripts/check-app-syntax.js`. Test the alert system: `node scripts/test-alert.js` (25 assertions, fully mocked).
+
 ---
 
 ## 🚫 ABSOLUTE PROHIBITIONS
