@@ -798,9 +798,6 @@ exports.handler = async (event) => {
                 MessageStream: 'outbound'
             })
         });
-                MessageStream: 'outbound'
-            })
-        });
         const replyBody = await replyRes.json().catch(() => ({}));
         replyStatus = { ok: replyRes.ok, status: replyRes.status, message: replyBody.Message || replyBody.ErrorCode || null };
     } catch (e) {
