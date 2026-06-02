@@ -927,12 +927,21 @@
             const btn = document.getElementById('sendCouponBtn');
             btn.disabled = true; btn.textContent = 'Sending...'; btn.style.opacity = '0.5';
             while (log.firstChild) log.removeChild(log.firstChild);
+            // founding_coupon is an admin-only emailType — notify.js requires a valid
+            // admin JWT (since ec1de0d). Without this header every send returns 401.
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            const token = session?.access_token;
+            if (!token) {
+                appendLogEntry(log, '❌ Not authenticated — reload and sign in.', true);
+                btn.disabled = false; btn.textContent = 'Send FOUNDING30 Emails'; btn.style.opacity = '1';
+                return;
+            }
             let sent = 0, failed = 0;
             for (const user of emailUserData) {
                 try {
                     const res = await fetch('/.netlify/functions/notify', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                         body: JSON.stringify({
                             emailType: 'founding_coupon',
                             fullName: user.user_name || user.company_name || 'there',
@@ -966,12 +975,21 @@
             const btn = document.getElementById('sendAllBtn');
             btn.disabled = true; btn.textContent = 'Sending...'; btn.style.opacity = '0.5';
             log.innerHTML = '';
+            // beta_to_paid_warning is an admin-only emailType — notify.js requires a
+            // valid admin JWT (since ec1de0d). Without this header every send 401s.
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            const token = session?.access_token;
+            if (!token) {
+                log.innerHTML += '<div style="color:red">❌ Not authenticated — reload and sign in.</div>';
+                btn.disabled = false; btn.textContent = 'Send All Warning Emails'; btn.style.opacity = '1';
+                return;
+            }
             let sent = 0, failed = 0;
             for (const user of emailUserData) {
                 try {
                     const res = await fetch('/.netlify/functions/notify', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                         body: JSON.stringify({
                             emailType: 'beta_to_paid_warning',
                             fullName: user.user_name || user.company_name || 'there',
