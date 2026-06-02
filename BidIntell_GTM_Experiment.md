@@ -83,5 +83,41 @@ One beta user said "I'd use it if it connected to BuildingConnected." That's eit
 2 weeks. Report the pull count. That number is the company's pulse.
 
 ---
+---
 
-*References worth 20 min each: Paul Graham, "Do Things That Don't Scale" (paulgraham.com/ds.html) · Gustaf Alströmer, "How to Talk to Users" (YC).*
+# Five Startup Truths — Desk Reference
+
+*For: domain-insider solo founder, 0 customers, "everyone likes it but won't use it."*
+*Pin this where you'll see it during the ten calls.*
+
+### 1. The only thing that matters right now is making something people want.
+Not the moat. Not the Bible. Not the roadmap. Everything you've built is downstream of a small group who *desperately* want this, and you don't have that group yet. "Too busy to use it" is the exact sound of pre-PMF. That's the normal starting line, not a death sentence. Get a handful of people who'd be upset if it vanished, then worry about everything else.
+
+### 2. You're selling a vitamin. Find the painkiller hiding inside it.
+People make time for hair-on-fire problems, not "nice to have." Find the most painful, specific moment: the sub who chased a job they should've passed and ate a six-figure loss, or passed one they'd have won. Build the pitch around *that scar*, not "score your bids." Painkillers get adopted even by busy people. Vitamins don't.
+
+### 3. Charge money before you build anything else.
+"I'd use it if it connected to BuildingConnected" is free to say. Make them commit: *"If I build that, will you pay $49/month starting today?"* One yes-with-a-card beats fifty "I'd use it if." Money is the only user research that doesn't lie. Sell it before you build it, not after.
+
+### 4. Pick a beachhead so small you can know everyone in it.
+The dream-150 is too wide. Dominate a niche, then expand (Geoffrey Moore, *Crossing the Chasm*). You already live in one: one trade (your own), one metro, the subs you can name. Be the obvious tool for finishes subs in your region before you're anything to anyone else. Narrow is your advantage, not a limitation.
+
+### 5. Founder-led sales is not a phase you skip.
+No marketer, no funnel, no LinkedIn automation finds product/market fit for you. You do it by hand to the first ~20, period. Your unfair edge: most founders doing this are outsiders faking domain credibility. **You ARE the customer.** You walk in as a peer, not a vendor. YC can't manufacture that. Use it.
+
+---
+
+## Read These (in this order)
+
+1. **The Mom Test — Rob Fitzpatrick** (~3 hrs). The one to read *before* your ten calls. Teaches you to talk to users so politeness can't lie to you. "Everyone likes the idea" is the exact lie this book inoculates against. Highest leverage on the list.
+2. **"Do Things That Don't Scale" — Paul Graham** — paulgraham.com/ds.html. Validates the hand-scoring plan. The Stripe "Collison installation" story is your move: when someone shows faint interest, set it up for them on the spot, don't wait.
+3. **"How to Talk to Users" — Gustaf Alströmer (YC)** (20 min). You don't need sales skills. You need to watch people and listen for what they do.
+4. **"Vertical AI Agents Could Be 10X Bigger Than SaaS" — YC Lightcone** (40 min). Your exact category. Where vertical-AI wedges beat horizontal incumbents. Strategy map and morale boost.
+
+---
+
+## Morale, with receipts
+
+**Procore** is a multi-billion-dollar construction-SaaS company. Tooey Courtemanche spent *years* selling it hand-to-hand to an industry everyone said would never adopt software. Construction is slow to adopt and brutally sticky once you're in. That's the shape of your market. The graveyard is real, but so is the prize, and every winner started exactly where you are: one customer at a time, in the field, as an insider.
+
+> The pulse is the pull count. Ship reports by hand, watch what they do, get to 3 of 10. Everything else is downstream of that.
