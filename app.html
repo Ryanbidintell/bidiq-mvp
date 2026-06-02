@@ -8416,6 +8416,63 @@ Rules:
             '33 82 00': ['communication cable', 'fiber optic', 'utility communications'],
         };
 
+        // ── Where-to-look map: CSI division → standard drawing/sheet locations ──
+        // Drives PAGE TARGETING (which sheets the analyzer reads), NOT scoring.
+        // Encodes where each trade's scope normally lives in a standard document set
+        // (e.g. a roofer → roof plans, exterior elevations, wall sections; a flooring
+        // sub → finish schedule, interior plans, RCP). Matched against sheet_index titles.
+        const CSI_DIVISION_SHEETS = {
+            '02': ['demolition plan', 'abatement plan', 'hazardous material'],
+            '03': ['foundation plan', 'structural', 'concrete detail', 'slab plan', 'footing detail', 'structural notes'],
+            '04': ['exterior elevation', 'wall section', 'masonry detail', 'building section', 'masonry plan'],
+            '05': ['structural', 'framing plan', 'steel detail', 'connection detail', 'structural notes'],
+            '06': ['millwork', 'casework elevation', 'interior elevation', 'wall section', 'rough carpentry'],
+            '07': ['roof plan', 'roofing plan', 'exterior elevation', 'wall section', 'building section', 'roof detail', 'parapet detail', 'flashing detail', 'waterproofing detail', 'insulation detail'],
+            '08': ['exterior elevation', 'door schedule', 'window schedule', 'storefront elevation', 'curtain wall elevation', 'glazing schedule', 'hardware schedule', 'door detail'],
+            '09': ['finish schedule', 'finish legend', 'finish plan', 'room finish schedule', 'floor finish schedule', 'reflected ceiling plan', 'rcp', 'interior elevation', 'partition plan'],
+            '10': ['floor plan', 'interior elevation', 'signage plan', 'sign schedule', 'enlarged plan'],
+            '11': ['equipment plan', 'equipment schedule', 'kitchen plan', 'enlarged plan'],
+            '12': ['furniture plan', 'ff&e plan', 'finish schedule', 'interior elevation', 'window treatment schedule'],
+            '13': ['enlarged plan', 'special construction', 'equipment detail'],
+            '14': ['elevator plan', 'elevator detail', 'hoistway section', 'conveying'],
+            '21': ['fire protection plan', 'sprinkler plan', 'life safety plan'],
+            '22': ['plumbing plan', 'plumbing riser', 'plumbing schedule'],
+            '23': ['mechanical plan', 'hvac plan', 'mechanical schedule', 'ductwork plan'],
+            '26': ['electrical plan', 'power plan', 'lighting plan', 'panel schedule', 'one line'],
+            '27': ['low voltage plan', 'data plan', 'technology plan', 'communications plan'],
+            '28': ['fire alarm plan', 'security plan', 'access control plan'],
+            '31': ['grading plan', 'site plan', 'earthwork', 'geotechnical'],
+            '32': ['site plan', 'paving plan', 'landscape plan', 'planting plan', 'hardscape plan', 'site detail'],
+            '33': ['utility plan', 'site utility plan', 'civil']
+        };
+
+        // Sheet/location phrases: these say WHERE a trade appears in the docs, not that
+        // its scope is actually present. Excluded from SCORING — a "finish schedule"
+        // existing doesn't mean resilient flooring (09 65 00) is in scope vs ceramic
+        // tile (09 30 00). (Still used for page targeting via the maps above.)
+        const CSI_SHEET_LOCATION_TERMS = new Set([
+            'finish schedule', 'finish legend', 'finish plan', 'floor finish schedule', 'room finish schedule',
+            'flooring plan', 'floor plan', 'color schedule', 'reflected ceiling plan', 'reflected ceiling', 'rcp',
+            'interior elevation', 'exterior elevation', 'architectural plan', 'partition plan', 'partition schedule',
+            'ceiling plan', 'framing plan', 'sign schedule', 'sign plan', 'signage plan', 'door schedule', 'window schedule',
+            'sprinkler plan', 'plumbing plan', 'mechanical plan', 'hvac plan', 'electrical plan', 'power plan', 'lighting plan',
+            'panel schedule', 'grading plan', 'site plan', 'landscape plan', 'planting plan', 'utility plan', 'foundation plan',
+            'roof plan', 'roofing plan', 'wall section', 'building section', 'enlarged plan', 'equipment plan', 'equipment schedule',
+            'furniture plan', 'ff&e plan', 'elevator plan', 'demolition plan', 'drainage plan', 'irrigation plan', 'fencing plan',
+            'architectural plan', 'kitchen plan', 'site detail'
+        ]);
+
+        // Specific scope terms for a section (the material/product/system terms that
+        // prove the trade is in scope) — its keyword list minus location/sheet phrases.
+        // This is what section SCORING matches on.
+        function sectionScopeTerms(sectionCode) {
+            const digits = String(sectionCode).replace(/[^0-9]/g, '');
+            const norm = digits.length === 6
+                ? `${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 6)}`
+                : String(sectionCode).trim();
+            return (CSI_SECTION_KEYWORDS[norm] || []).filter(t => !CSI_SHEET_LOCATION_TERMS.has(t.toLowerCase()));
+        }
+
         function selectTargetPages(allPages, docMap, userCSISections) {
             const totalPages = allPages.length;
             const targeted = new Set();
@@ -8445,35 +8502,45 @@ Rules:
             const hasDiv = (div) => sections.some(s => s.startsWith(div + ' '));
 
             // ── Sheet index matching (drawing sets) ──────────────────────────
-            // For each sheet in the index, check if any of the user's CSI sections
-            // have a keyword matching the sheet title.
+            // Build the "where to look" term set for this user: section-specific
+            // keywords PLUS the division-level standard sheet locations. This is what
+            // routes a roofer to roof plans / exterior elevations / wall sections, and
+            // a flooring sub to finish schedules / interior plans — based on the CSI
+            // sections they configured.
+            const userDivs = [...new Set(sections.map(s => s.substring(0, 2)))];
+            const sheetTargetTerms = new Set();
+            for (const sectionCode of sections) {
+                (CSI_SECTION_KEYWORDS[sectionCode] || []).forEach(k => sheetTargetTerms.add(k.toLowerCase()));
+            }
+            for (const div of userDivs) {
+                (CSI_DIVISION_SHEETS[div] || []).forEach(k => sheetTargetTerms.add(k.toLowerCase()));
+            }
+            const sheetTargetList = [...sheetTargetTerms];
+
             (docMap.sheet_index || []).forEach(entry => {
                 const title = (entry.title || '').toLowerCase();
-                for (const sectionCode of sections) {
-                    const keywords = CSI_SECTION_KEYWORDS[sectionCode] || [];
-                    if (keywords.some(kw => title.includes(kw.toLowerCase()))) {
-                        // Include this page + 1 following page (schedules often span 2 pages)
-                        const idx = (entry.page || 0) - 1;
-                        if (idx >= 0 && idx < totalPages) {
-                            targeted.add(idx);
-                            if (idx + 1 < totalPages) targeted.add(idx + 1);
-                        }
-                        break;
+                if (sheetTargetList.some(kw => title.includes(kw))) {
+                    // Include this page + 1 following page (schedules often span 2 pages)
+                    const idx = (entry.page || 0) - 1;
+                    if (idx >= 0 && idx < totalPages) {
+                        targeted.add(idx);
+                        if (idx + 1 < totalPages) targeted.add(idx + 1);
                     }
                 }
             });
 
-            // ── Explicit page arrays from Pass 1 — conditional on trade profile ──
-            // Only add interior-finish schedule pages for trades that need them.
-            // A concrete sub or irrigation sub should not get finish schedule pages.
+            // ── Explicit page arrays from Pass 1 ──────────────────────────────
+            // ALWAYS pull the finish schedule + legend — they're the single densest
+            // source for finishes/flooring scope and cheap insurance even when spec
+            // section codes never appear in the drawings.
+            addPageNums(docMap.finish_schedule_pages);
+            addPageNums(docMap.finish_legend_pages);
+
+            // The rest stay trade-gated (a concrete or irrigation sub doesn't need these).
             const isInteriorFinish = hasDiv('09') || hasDiv('10') || hasDiv('12');
             const isFurnishings = hasDiv('12');
             const isInteriorDesign = hasDiv('06') || hasDiv('09') || hasDiv('10') || hasDiv('12');
-            if (isInteriorFinish) {
-                addPageNums(docMap.finish_schedule_pages);
-                addPageNums(docMap.finish_legend_pages);
-                addPageNums(docMap.product_schedule_pages);
-            }
+            if (isInteriorFinish) addPageNums(docMap.product_schedule_pages);
             if (isFurnishings) addPageNums(docMap.furniture_plan_pages);
             if (isInteriorDesign) addPageNums(docMap.interior_elevation_pages);
 
@@ -10241,15 +10308,23 @@ IMPORTANT RULES:
                 const tradeDetection = detectTradesMultiSignal(allPages, settings.trades, foundCSIDivisions);
                 const tradesFound = tradeDetection.matches.map(m => m.division);
 
-                // Section-level detection (when user has configured preferred_csi_sections)
+                // Section-level detection (when user has configured preferred_csi_sections).
+                // A section counts as "found" if EITHER:
+                //   (a) its CSI code appears in the text (any format/subsection variation), OR
+                //   (b) a SECTION-SPECIFIC scope term appears (material/product/system terms;
+                //       generic sheet/location phrases are excluded so 09 65 00 resilient
+                //       flooring does not match a 09 30 00 ceramic-tile job).
                 const foundSections = [];
                 if (settings.preferred_csi_sections && settings.preferred_csi_sections.length > 0) {
                     const allText = allPages.map(p => p.text).join(' ');
+                    const allTextLower = allText.toLowerCase();
                     for (const secCode of settings.preferred_csi_sections) {
-                        const pattern = buildSectionRegex(secCode);
-                        if (pattern.test(allText)) foundSections.push(secCode);
+                        const codeHit = buildSectionRegex(secCode).test(allText);
+                        const scopeTerms = sectionScopeTerms(secCode);
+                        const termHit = scopeTerms.some(t => allTextLower.includes(t.toLowerCase()));
+                        if (codeHit || termHit) foundSections.push(secCode);
                     }
-                    console.log('📐 Section-level detection:', { checked: settings.preferred_csi_sections.length, found: foundSections });
+                    console.log('📐 Section-level detection (code + scope terms):', { checked: settings.preferred_csi_sections.length, found: foundSections });
                 }
 
                 console.log('📊 Trade Detection Results:', {
