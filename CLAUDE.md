@@ -451,6 +451,14 @@ const additionalRevenue = additionalWins * avgProjectSize;
 
 **Lesson:** When a container that will be dynamically replaced has a layout class, remove it in the render function — don't rely on the HTML being clean.
 
+**UPDATE (Jun 2, 2026) — scope-vs-sheet split + trade-aware targeting:**
+The "exact 6-digit code" detection above was too strict — bid text rarely prints the literal code, so `foundSections` fell back to broad scope keywords → the SAME false positive (flooring sub GO on a tile job). Fixed by separating two intents:
+- **`sectionScopeTerms(code)`** = `CSI_SECTION_KEYWORDS[code]` minus `CSI_SHEET_LOCATION_TERMS` → the material/product terms that prove scope (lvt, vct, epdm). `foundSections` now matches **code (any variation) OR a scope term**, so `09 65 00` fires on real flooring work and stays quiet on `09 30 00` tile.
+- **`CSI_DIVISION_SHEETS`** (new) = division → the drawing sheets where that trade lives (07→roof plans/exterior elevations/wall sections; 09→finish schedule/RCP/interior). `selectTargetPages()` routes to those sheets via the sheet index. Finish schedule + legend are now ALWAYS pulled.
+- **Edge function parity:** `supabase/functions/inbound-email/index.ts` `scoreTrade()` uses the same logic via `csi-scope.ts`, which is GENERATED from app.html's lexicon by `scripts/gen-csi-scope.js` (single source of truth — regenerate + `supabase functions deploy inbound-email` when the lexicon changes). Deployed v15.
+- **Tests:** `node scripts/test-csi-scope.js` (9 assertions). Known limitation: bare "tile" substring-matches "vinyl composition tile" (rare, low-impact direction).
+- **Verify on a real bid** — this is the live scoring engine and has no automated end-to-end test.
+
 ### user_keywords Is Single-Row (Mar 2026)
 
 **Pattern:** `user_keywords` table has ONE row per user with `good_keywords TEXT[]` and `bad_keywords TEXT[]` array columns. NOT multiple rows.
