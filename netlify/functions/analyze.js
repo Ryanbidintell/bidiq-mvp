@@ -2,6 +2,7 @@
 // Deploys to Netlify as /.netlify/functions/analyze
 
 const { createClient } = require('@supabase/supabase-js');
+const { sendAlert } = require('./alert');
 
 const CLAUDE_API_KEY  = process.env.CLAUDE_API_KEY;
 const OPENAI_API_KEY  = process.env.OPENAI_API_KEY;
@@ -127,6 +128,16 @@ exports.handler = async function(event, context) {
 
     } catch (error) {
         console.error('API proxy error:', error);
+        // Core scoring failure (e.g. "All AI providers unavailable") — a user
+        // just got a 500 instead of a bid score. Alert (throttled).
+        await sendAlert({
+            source: 'analyze',
+            severity: 'error',
+            title: 'AI scoring request failed',
+            detail: error.message,
+            dedupeKey: 'analyze-fail',
+            context: { stack: error.stack }
+        });
         return { statusCode: 500, headers, body: JSON.stringify({ error: error.message || 'Internal server error', success: false }) };
     }
 };

@@ -2,6 +2,7 @@
 // Deploys to Netlify as /.netlify/functions/notify
 
 const { createClient } = require('@supabase/supabase-js');
+const { sendAlert } = require('./alert');
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -497,6 +498,15 @@ exports.handler = async function(event, context) {
 
     } catch (error) {
         console.error('Notification error:', error);
+        // Covers magic-link send failures = a user can't log in. Alert (throttled).
+        await sendAlert({
+            source: 'notify',
+            severity: 'error',
+            title: 'Notification/email send failed (incl. magic-link login)',
+            detail: error.message,
+            dedupeKey: 'notify-fail',
+            context: { stack: error.stack }
+        });
         return {
             statusCode: 500,
             headers,
