@@ -873,7 +873,7 @@ async function processEmail(payload: Record<string, unknown>) {
     const projectName = (extracted.project_name as string) || Subject || 'New Bid';
     const gcName      = (extracted.gc_name as string) || 'Unknown GC';
     const replySubject = `BidIndex Score: ${finalScore}/100 — ${projectName} (${gcName})`;
-    const topRisk = contractRisks?.risks_found?.[0];
+    const topRisk = contractRisks?.risksDetected?.[0];
 
     const topMergeSuggestion = mergeSuggestions[0];
     const mergeNote = topMergeSuggestion
@@ -898,7 +898,7 @@ async function processEmail(payload: Record<string, unknown>) {
             ? `Contract Risks:   ${contractRisks.risksDetected.length} clause(s) detected — see full report`
             : null,
         ``,
-        topRisk ? `⚠️  ${topRisk.clause_type || 'Contract risk flag'}` : null,
+        topRisk ? `⚠️  ${topRisk.type || 'Contract risk flag'}` : null,
         extracted.bond_required === true ? `⚠️  Bond required` : null,
         skippedFiles.length > 0
             ? `⚠️  ${skippedFiles.join(', ')} was too large and skipped. Score based on email content only — upload manually for full contract analysis.`
