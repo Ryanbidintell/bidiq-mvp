@@ -15,6 +15,7 @@ const {
   listProspectFolders,
   processFolder,
 } = require('./diagnostic-agent/lib-transcript-processor');
+const { sendAlert } = require('./alert');
 
 exports.handler = async (event) => {
   // GET → manual trigger (visit URL to kick off a run on demand)
@@ -28,6 +29,14 @@ exports.handler = async (event) => {
     ({ drive, sheets } = getGoogleClients());
   } catch (err) {
     console.error('Google auth failed:', err);
+    await sendAlert({
+      source: 'process-transcripts',
+      severity: 'error',
+      title: 'Transcript processor: Google auth failed',
+      detail: err.message,
+      dedupeKey: 'transcripts-auth-fail',
+      context: { stack: err.stack }
+    });
     return { statusCode: 500, body: JSON.stringify({ error: 'auth failed', message: err.message }) };
   }
 
@@ -36,6 +45,14 @@ exports.handler = async (event) => {
     folders = await listProspectFolders(drive);
   } catch (err) {
     console.error('Failed to list prospect folders:', err);
+    await sendAlert({
+      source: 'process-transcripts',
+      severity: 'error',
+      title: 'Transcript processor: failed to list prospect folders',
+      detail: err.message,
+      dedupeKey: 'transcripts-list-fail',
+      context: { stack: err.stack }
+    });
     return { statusCode: 500, body: JSON.stringify({ error: 'list folders failed', message: err.message }) };
   }
 
@@ -65,6 +82,20 @@ exports.handler = async (event) => {
   };
 
   console.log('Run summary:', summary);
+
+  // Per-folder failures are non-critical (siblings still process), so log them
+  // as a warning — durable record in admin_events, no email noise.
+  if (summary.failed > 0) {
+    await sendAlert({
+      source: 'process-transcripts',
+      severity: 'warning',
+      title: `${summary.failed} of ${summary.total} transcript folder(s) failed`,
+      detail: results.filter(r => r.status === 'failed')
+        .map(r => `${r.folderName}: ${r.error}`).join('; '),
+      dedupeKey: 'transcripts-folder-failures',
+      context: summary
+    });
+  }
 
   return {
     statusCode: 200,

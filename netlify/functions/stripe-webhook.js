@@ -3,6 +3,7 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const { convertToCustomer } = require('./pipedrive-utils');
+const { sendAlert } = require('./alert');
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -428,6 +429,16 @@ exports.handler = async function(event, context) {
 
     } catch (error) {
         console.error('❌ Webhook processing error:', error);
+        // Revenue-critical: a failed webhook can mean a paid signup with no
+        // user_revenue row. Alert immediately (throttled to 1 email / window).
+        await sendAlert({
+            source: 'stripe-webhook',
+            severity: 'critical',
+            title: 'Stripe webhook processing failed',
+            detail: error.message,
+            dedupeKey: 'stripe-webhook-fail',
+            context: { stack: error.stack }
+        });
         return {
             statusCode: 500,
             headers,

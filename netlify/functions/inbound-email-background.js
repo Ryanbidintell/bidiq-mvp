@@ -21,6 +21,7 @@
 'use strict';
 
 const { createClient } = require('@supabase/supabase-js');
+const { sendAlert } = require('./alert');
 
 const SUPABASE_URL        = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -594,6 +595,14 @@ exports.handler = async (event) => {
         if (!projErr && proj) savedProjectId = proj.id;
     } catch (e) {
         console.error('Project save failed:', e.message);
+        await sendAlert({
+            source: 'inbound-email',
+            severity: 'error',
+            title: 'Inbound email: project save failed',
+            detail: e.message,
+            dedupeKey: 'inbound-project-save-fail',
+            context: { alias, user_id: userId }
+        });
     }
 
     // 11. Send reply email
@@ -802,6 +811,20 @@ exports.handler = async (event) => {
         replyStatus = { ok: replyRes.ok, status: replyRes.status, message: replyBody.Message || replyBody.ErrorCode || null };
     } catch (e) {
         replyStatus = { ok: false, error: e.message };
+    }
+
+    // If the user never got their scored reply, that's a user-visible failure.
+    if (!replyStatus || replyStatus.ok !== true) {
+        await sendAlert({
+            source: 'inbound-email',
+            severity: 'error',
+            title: 'Inbound email: reply send failed',
+            detail: (replyStatus && (replyStatus.error || replyStatus.message))
+                ? String(replyStatus.error || replyStatus.message)
+                : 'Postmark reply did not return ok',
+            dedupeKey: 'inbound-reply-fail',
+            context: { alias, user_id: userId, gc_name: gcName, reply_status: replyStatus }
+        });
     }
 
     // 12. Log admin event
