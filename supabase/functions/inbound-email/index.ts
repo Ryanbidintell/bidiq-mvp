@@ -22,6 +22,10 @@
 //   SUPABASE_URL               (auto-available)
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+// Section -> specific scope terms, generated from app.html's CSI_SECTION_KEYWORDS
+// by scripts/gen-csi-scope.js (single source of truth). Regenerate + redeploy when
+// the app.html lexicon changes. Keeps email-forward scoring in step with the app.
+import { CSI_SECTION_SCOPE } from './csi-scope.ts';
 
 const SUPABASE_URL         = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -418,16 +422,42 @@ function scoreGC(gcName: string | null, settings: Settings, clients: Client[]) {
     return { score: Math.max(0, Math.min(100, score)), weight, reason: `${gcName}: ${match.rating || 3}★ rating` };
 }
 
+// Match a CSI section code in any format/subsection variation (mirror of
+// app.html buildSectionRegex). "XX XX 00" parent matches any subsection.
+function sectionCodeRegex(code: string): RegExp {
+    const d = String(code).replace(/[\s\-.]/g, '');
+    const d1 = d.slice(0, 2), d2 = d.slice(2, 4), d3 = d.slice(4, 6);
+    return d3 === '00'
+        ? new RegExp(`${d1}[-\\s.]*${d2}[-\\s.]*\\d{2}`, 'i')
+        : new RegExp(`${d1}[-\\s.]*${d2}[-\\s.]*${d3}`, 'i');
+}
+function normalizeSectionCode(code: string): string {
+    const d = String(code).replace(/[^0-9]/g, '');
+    return d.length === 6 ? `${d.slice(0, 2)} ${d.slice(2, 4)} ${d.slice(4, 6)}` : String(code).trim();
+}
+
 function scoreTrade(scopeText: string, settings: Settings) {
     const weight = settings.weights.trade;
-    const detectedDivs = detectDivisionsFromText(scopeText);
+    const lower = scopeText.toLowerCase();
 
+    // Section-level (preferred): a configured section counts as found if its literal
+    // code appears OR a SECTION-SPECIFIC scope term appears — NOT the broad division.
+    // This is what stops a resilient-flooring sub (09 65 00) matching a ceramic-tile
+    // job (09 30 00). Mirrors app.html sectionScopeTerms() / foundSections.
     if (settings.preferred_csi_sections?.length > 0) {
-        const userDivs = [...new Set(settings.preferred_csi_sections.map(s => s.slice(0, 2).trim()))];
-        const foundDivs = userDivs.filter(d => detectedDivs.includes(d));
-        const score = foundDivs.length === 0 ? 0 : Math.min(65 + (foundDivs.length - 1) * 5, 100);
-        return { score, weight, reason: foundDivs.length === 0 ? 'No matching trades found' : `${foundDivs.length}/${userDivs.length} trade divisions matched` };
+        const sections = settings.preferred_csi_sections;
+        const found = sections.filter(code => {
+            const codeHit = sectionCodeRegex(code).test(scopeText);
+            const terms = CSI_SECTION_SCOPE[normalizeSectionCode(code)] || [];
+            return codeHit || terms.some(t => lower.includes(t.toLowerCase()));
+        });
+        if (found.length === 0) return { score: 0, weight, reason: 'None of your spec sections found in scope' };
+        const score = Math.min(65 + (found.length - 1) * 5, 100);
+        return { score, weight, reason: `${found.length}/${sections.length} spec section${sections.length !== 1 ? 's' : ''} found` };
     }
+
+    // Fallback: division-level (legacy — only when no preferred sections configured).
+    const detectedDivs = detectDivisionsFromText(scopeText);
     if (!settings.trades?.length) return { score: 50, weight, reason: 'No trades configured' };
     const found = settings.trades.filter(t => detectedDivs.includes(t));
     const score = found.length === 0 ? 0 : Math.min(65 + (found.length - 1) * 5, 100);
