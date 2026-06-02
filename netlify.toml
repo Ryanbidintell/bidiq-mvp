@@ -6,8 +6,9 @@
 [functions."bc-sync"]
   timeout = 26
 
-[functions."inbound-email-background"]
-  timeout = 900
+# NOTE: inbound email is handled by the Supabase edge function `inbound-email`
+# (SendGrid Inbound Parse → MX bids.bidintell.ai → mx.sendgrid.net). The old
+# netlify/functions/inbound-email-background.js was decommissioned 2026-06-02.
 
 # Hourly poll of prospect folders for new Granola transcripts → auto-fill
 # Prospects tab post-call columns. Background function (15-min ceiling) so
@@ -29,8 +30,8 @@
 # Ryan: "shut off all emails" (after outcome-reminder nudged him today).
 # Re-enable individually only after Ryan's explicit approval per function.
 # User-action-triggered email paths (invite, stripe-webhook, prospect-reply,
-# prospect-unsubscribe, inbound-email-background, notify) are NOT touched —
-# they only fire on user actions and are required for product flow.
+# prospect-unsubscribe, notify) are NOT touched — they only fire on user
+# actions and are required for product flow. (Inbound email is on Supabase.)
 ###############################################################################
 
 # [functions."weekly-outcome-nudge"]

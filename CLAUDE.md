@@ -137,7 +137,7 @@ git commit -m "Before [change description]"
 ### Backend (netlify/functions/):
 - `analyze.js` - AI API calls (Claude/OpenAI), tracks usage via api_usage table
 - `notify.js` - Email notifications via Postmark; also logs `roi_lead` events to admin_events
-- `inbound-email-background.js` - Postmark inbound webhook → score bid → reply with branded HTML report
+- `supabase/functions/inbound-email/index.ts` - **LIVE inbound handler** (SendGrid Inbound Parse → score bid → reply via Resend). Replaced the old Netlify `inbound-email-background.js` (deleted 2026-06-02).
 - `stripe-webhook.js` - Stripe subscription webhooks (writes to user_revenue)
 - `stripe-create-checkout.js` - Creates Stripe checkout session
 - `stripe-create-portal.js` - Opens Stripe billing portal
@@ -488,12 +488,24 @@ const additionalRevenue = additionalWins * avgProjectSize;
 **Current users** rendered by `renderCurrentUsers(users, projects)` — joins project count per user
 **Known issue:** admin.html uses anon key → RLS may limit user_settings to only admin's own row. If users list shows only 1 row, need to add admin-bypass RLS policy.
 
-### Inbound Email Forwarding — Architecture & Known Limits (Mar 2026)
+### Inbound Email Forwarding — Architecture (UPDATED 2026-06-02)
 
+> ⚠️ **THIS MOVED. The live inbound handler is the Supabase edge function, NOT Netlify.**
+> - **Live function:** `supabase/functions/inbound-email/index.ts` (Supabase Edge Function, verify_jwt=false, ACTIVE).
+> - **Inbound provider:** **SendGrid Inbound Parse** → webhook `https://szifhqmrddmdkgschkkw.supabase.co/functions/v1/inbound-email`.
+> - **MX record (current):** `bids.bidintell.ai → mx.sendgrid.net priority 10`.
+> - **Reply email:** sent via **Resend**.
+> - **Why moved:** Supabase edge functions have no 6MB payload cap (the limit below was killing big PDFs); handles attachments up to ~25MB.
+> - The old `netlify/functions/inbound-email-background.js` was **decommissioned 2026-06-02** (deleted). Any Postmark inbound webhook still pointing at this is stale config — email routes via MX to SendGrid, not Postmark.
+> - **Monitoring:** the edge function posts failures to `/.netlify/functions/alert` (`source: inbound-email-edge`).
+>
+> The notes below are historical (the original Netlify+Postmark design) — kept for the bug-fix lessons, but the architecture lines are superseded by the box above.
+
+**Original Netlify design (historical):**
 **Function:** `netlify/functions/inbound-email-background.js` (Netlify background function, 900s timeout)
 **Postmark webhook:** `https://bidintell.ai/.netlify/functions/inbound-email-background`
 **User alias format:** `{slug}@bids.bidintell.ai` (e.g. `facility-systems-inc@bids.bidintell.ai`)
-**MX record:** `bids → inbound.postmarkapp.com priority 10` ✅
+**MX record (historical):** `bids → inbound.postmarkapp.com priority 10`
 
 **CRITICAL LIMITATION — PDF via email doesn't work:**
 - 7MB PDF → ~9.3MB base64 in JSON payload → exceeds Netlify's 6MB function payload limit → Postmark timeout
@@ -667,7 +679,9 @@ const { sendAlert } = require('./alert');
 
 **Lesson — silent failures hide in two layers:**
 1. **Runtime:** functions `console.error` and return 500 where nobody looks → use `sendAlert` in catch blocks.
-2. **Load-time:** a syntax error means the function never even runs (Postmark/Stripe just see 502s). `inbound-email-background.js` shipped broken in `ec1de0d` and the core flow was dead for ~weeks. The Netlify build only syntax-checked app.html, not functions.
+2. **Load-time:** a syntax error means the function never even runs. `inbound-email-background.js` shipped broken in `ec1de0d` and the Netlify build only syntax-checked app.html, not functions — so it deployed broken. (It turned out that file was already **orphaned** — live inbound had moved to the Supabase edge function — so production wasn't affected. But a syntax error in a *live* function would have been invisible the same way.)
+
+**Lesson — verify which copy is live before "fixing" it.** Two divergent implementations existed (Netlify + Supabase edge) and the top-level docs pointed at the wrong (dead) one, which led to a wrong "core flow is down" diagnosis. Confirm the actual route (webhook URL / MX record / deployed function) before diagnosing or editing.
 
 **Fix:** `scripts/check-app-syntax.js` now runs `node --check` on EVERY `netlify/functions/*.js` (not just app.html). A syntax error in any function fails the build. Run it anytime: `node scripts/check-app-syntax.js`. Test the alert system: `node scripts/test-alert.js` (25 assertions, fully mocked).
 

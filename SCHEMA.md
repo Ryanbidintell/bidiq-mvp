@@ -475,7 +475,7 @@ ON oauth_connections FOR ALL USING (user_id = auth.uid());
 - `outcome_recorded` — User recorded a win/loss/ghost outcome
 - `roi_lead` — ROI calculator lead (written by notify.js)
 - `cancellation` / `subscription_created` / `welcome_email_step_1` / `trial_ending_email` — Stripe lifecycle (stripe-webhook.js)
-- `email_forward_received` — Inbound email processed (inbound-email-background.js)
+- `email_forward_received` — Inbound email processed (Supabase edge function `inbound-email`; the old Netlify `inbound-email-background.js` was decommissioned 2026-06-02)
 - `system_alert` — **Monitoring alert from `alert.js`.** `event_data`: `{ severity (info|warning|error|critical), source, title, detail, context, dedupe_key, emailed (bool), throttled (bool), ts }`. Always written on any alert (durable record even when email is throttled/skipped). Query the admin dashboard for recent failures with `event_type = 'system_alert'`.
 - (others may exist — this table is append-only, no migration needed for new events)
 
