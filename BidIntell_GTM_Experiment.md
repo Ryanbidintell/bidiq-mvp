@@ -129,3 +129,73 @@ No marketer, no funnel, no LinkedIn automation finds product/market fit for you.
 **Procore** is a multi-billion-dollar construction-SaaS company. Tooey Courtemanche spent *years* selling it hand-to-hand to an industry everyone said would never adopt software. Construction is slow to adopt and brutally sticky once you're in. That's the shape of your market. The graveyard is real, but so is the prize, and every winner started exactly where you are: one customer at a time, in the field, as an insider.
 
 > The pulse is the pull count. Ship reports by hand, watch what they do, get to 3 of 10. Everything else is downstream of that.
+
+---
+---
+
+# BidIntell — User Conversation Agenda (The Mom Test)
+
+*For diagnostic calls with cold-ish prospects off the Dream 150 list — acquiring the first users, not checking in on beta users who aren't logging outcomes.*
+
+**The three rules:** Talk about their life, not your idea. Ask about specifics in the past, not generics or opinions about the future. Talk less, listen more.
+
+---
+
+## Before the call (90 seconds)
+- One line on what they do: trade, revenue band, role (owner vs. lead estimator).
+- One thing you actually want to learn — not "do they like it," but a real fact about their bidding behavior you don't know yet.
+- Decide your one "scary question" — the one whose honest answer could prove you wrong.
+
+## 1. Open with context, not a pitch (~2 min)
+Anchor in your shared estimating background. Do **not** describe BidIntell yet. The moment you pitch, they start being polite, and polite kills truth.
+
+> "You know I spent years estimating Div 10/12 at FSI. I'm digging into how shops actually decide which bids to chase. Can I ask you about yours?"
+
+## 2. Their world, in the past tense (~8 min)
+These pull **facts about what already happened**, not opinions about your idea. Ask one, shut up, follow the thread.
+
+- "Walk me through the last bid invite that landed on your desk. What did you do with it first?"
+- "How many invites came in last month? How many did you actually estimate?"
+- "Tell me about the last bid you put real hours into and lost. What happened?"
+- "Last time you weren't sure a job was worth chasing — how'd you decide? Who decided?"
+
+**Listen for:** gut-feel filtering, one senior person as the bottleneck, specific GCs who only shop their number, sunk-cost language.
+
+## 3. Dig where it hurts (~5 min)
+Quantify the pain with their own numbers, not yours.
+
+- "When that estimator time gets wasted — what does that actually cost you in a month?"
+- "Have you ever tried to fix this? What did you try?" *(The Mom Test gold question — reveals whether the pain is real enough to act on.)*
+- "What happens right now if you guess wrong on a go/no-go?"
+
+**If they've already tried something** (a spreadsheet, a rule of thumb, telling the team "stop bidding for X"): that's a real problem with budget behind it. **If they've never tried anything:** the pain may not be sharp enough — note it, don't argue it.
+
+## 4. The diagnostic offer — your commitment test (~3 min)
+This is where this agenda diverges from a "show the demo" script. Don't demo. **Ask for a real bid.** That's a Mom Test commitment ask: real currency is time and access, not compliments.
+
+> "Send me one real bid invite — even one you already decided on. I'll score it and send back a one-pager. No signup, nothing to install. Want to see what it pulls out of yours?"
+
+- A **yes + they actually send the file** = a genuine signal.
+- A "sure, sounds cool" with no file = a compliment, not commitment. Log it as a soft pass.
+
+## 5. Close with next steps, not a thank-you (~2 min)
+End every conversation by advancing it to a concrete commitment:
+- **Time:** book the follow-up to walk the scored one-pager together.
+- **Intro:** "Who else runs a tight estimating shop I should talk to?"
+- **The buy signal to fish for:** anything specific and named — e.g., "I'd use this if it synced with BuildingConnected." Write the exact words down.
+
+## Anti-patterns — kill these on sight
+- **Fishing for compliments:** "Does that sound useful?" → replace with "When did you last face that?"
+- **Pitching, then asking if they'd buy:** future hypotheticals are worthless. Ask what they do today.
+- **Accepting "I'd definitely pay for that":** opinions about the future are lies, not on purpose. Only the sent bid file counts.
+- **Talking more than them:** if you're explaining the product for more than 60 seconds in section 4, you've lost the conversation.
+
+## After every call — capture the truth (3 min)
+- Exact phrases they used (their language is your future copy).
+- The hardest fact you learned, especially anything that contradicts your thesis.
+- Commitment level: **sent a bid / agreed to / just complimented.**
+- Next action + date.
+
+---
+
+*Note: the diagnostic-offer ask in section 4 is the same "pull" test as the hand-scoring experiment above. A prospect who sends a real bid file is a Pull = Y. A compliment with no file is Pull = N. Same signal, captured in a live conversation.*
