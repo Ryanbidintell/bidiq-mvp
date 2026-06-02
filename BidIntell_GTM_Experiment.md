@@ -60,6 +60,14 @@ Only these count as a YES:
 
 (Track "where they get bid invites" on every one — it answers the BuildingConnected question below with data instead of one guy's opinion.)
 
+**Marking the Pull column — this is the whole experiment, so be honest here.**
+"Pull" = did *they* reach toward *you* after seeing the report, instead of you pushing on them. Direction is everything: push is you wanting it, pull is them wanting it. Only pull builds a company.
+
+- **Y** — after you hand them the report, on their own they: ask you to score their **next** bid, **change a bid decision** because of it, ask **"how do I get this / what's it cost?"**, or **refer someone**.
+- **N** — "cool, thanks" and silence, "I'll check it out later" (and doesn't), or any next step where *you* have to chase *them*.
+
+A call that "went well" — he nodded, said it's slick, thanked you, never followed up — is an **N**. If you're the one dragging it forward, it's a no. Don't round politeness up to a yes; that's the exact "everybody likes it" trap this experiment exists to break.
+
 ## Kill / Go thresholds
 
 - **3+ pulls out of 10 → GO.** Demand is real. Next job is NOT more features — it's killing activation friction so the first report takes 60 seconds with zero setup. Then turn the hand-scored subs into paying users.
