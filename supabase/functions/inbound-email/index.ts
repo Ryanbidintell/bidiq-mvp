@@ -38,6 +38,31 @@ function getSupabase() {
     });
 }
 
+// ── Alert helper ──────────────────────────────────────────────────────────────
+// Reports failures to the alert.js monitoring endpoint (Netlify), which logs to
+// admin_events and emails ryan@bidintell.ai (throttled). Fire-and-forget; never
+// throws — alerting must not break inbound processing. This is the live inbound
+// path, so its failures are otherwise invisible (only a console.error).
+const ALERT_ENDPOINT = 'https://bidintell.ai/.netlify/functions/alert';
+async function alertEdge(title: string, detail: string, context?: Record<string, unknown>) {
+    try {
+        await fetch(ALERT_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                source: 'inbound-email-edge',
+                severity: 'error',
+                title,
+                detail,
+                dedupeKey: 'inbound-edge-fail',
+                context,
+            }),
+        });
+    } catch (e) {
+        console.error('alertEdge failed:', (e as Error).message);
+    }
+}
+
 // ── Base64 helper (chunk to avoid stack overflow on large files) ─────────────
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -973,6 +998,17 @@ Deno.serve(async (req) => {
     }
 
     // Return 200 to SendGrid immediately, process async in background
-    EdgeRuntime.waitUntil(processEmail(payload).catch(e => console.error('processEmail error:', e)));
+    EdgeRuntime.waitUntil(
+        processEmail(payload).catch((e) => {
+            console.error('processEmail error:', e);
+            // The whole inbound flow runs here — a throw means a user emailed a bid
+            // and got no scored reply. Alert (throttled) so it isn't silent.
+            return alertEdge(
+                'Inbound email processing failed',
+                (e as Error)?.message || String(e),
+                { stack: (e as Error)?.stack }
+            );
+        })
+    );
     return new Response('ok', { status: 200 });
 });
