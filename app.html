@@ -11283,6 +11283,7 @@ IMPORTANT RULES:
                     <button class="btn btn-primary" id="saveProjectBtn" onclick="saveProjectManually()" style="flex:1;">Save to Projects</button>
                     <button class="btn btn-secondary" onclick="showOutcomeFromReport()">+ Add Outcome</button>
                     <button class="btn btn-secondary" onclick="resetAnalysis()">Re-analyze</button>
+                    ${isAdmin() ? `<button class="btn btn-secondary" onclick="exportOnePager(currentAnalysis)" style="padding:0 12px;" title="Export client one-pager (admin only)">📄 One-Pager</button>` : ''}
                     <button class="btn btn-secondary" onclick="printReport()" style="padding:0 12px;" title="Print report">🖨</button>
                 </div>
             `;
@@ -11301,6 +11302,171 @@ IMPORTANT RULES:
                         insights.innerHTML += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);">Want a deeper take? <span style="color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline;" onclick="toggleAIChat()">Chat with your AI Advisor →</span></div>`;
                     }
                 }, 800);
+            }
+        }
+
+        // ── Client one-pager export (admin only) ────────────────────────────────
+        // Handout report for the GTM hand-scoring motion: score a prospect's bid,
+        // export a one-page branded PDF, hand it over. Renders the approved
+        // one-pager template from the current analysis. Hard rule: NO project
+        // value and NO bid date (not reliably tracked — see memory).
+        function exportOnePager(a) {
+            try {
+                a = a || currentAnalysis;
+                if (!a || !a.scores) { alert('Score a bid first, then export the one-pager.'); return; }
+
+                const company = prompt('Prepared for — company name:', '');
+                if (company === null) return; // cancelled
+                const contact = (prompt('Contact name (optional):', '') || '').trim();
+
+                const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                const sc = a.scores || {};
+                const comp = sc.components || {};
+                const ex = a.extracted || {};
+                const cr = a.contractRisks || a.contract_risks || null;
+
+                const recRaw = String(sc.recommendation || '').toUpperCase();
+                const recClass = recRaw.includes('GO') ? 'go' : recRaw.includes('PASS') ? 'pass' : 'review';
+                const recLabel = recClass === 'go' ? 'GO' : recClass === 'pass' ? 'PASS' : 'Review Carefully';
+                const recColor = recClass === 'go' ? '#16a34a' : recClass === 'pass' ? '#dc2626' : '#d97706';
+                const bandBg   = recClass === 'go' ? '#ecfdf3' : recClass === 'pass' ? '#fef2f2' : '#fff7ec';
+                const bandLine = recClass === 'go' ? '#a7e3bf' : recClass === 'pass' ? '#f5b5b5' : '#f3d39a';
+
+                const project = ex.project_name || 'Bid Opportunity';
+                const gc = ex.gc_name || (a.gcs && a.gcs[0] && a.gcs[0].name) || '';
+                const loc = [ex.project_city || ex.city, ex.project_state || ex.state].filter(Boolean).join(', ');
+                const today = new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+
+                const barClass = v => v >= 80 ? 'b-go' : v >= 60 ? 'b-review' : 'b-pass';
+                const rowHtml = (label, c) => {
+                    const s = Math.round((c && c.score) || 0);
+                    return `<div class="row"><div><div class="lab">${esc(label)}</div><div class="why">${esc((c && c.reason) || '')}</div></div><div class="bar ${barClass(s)}"><span style="width:${Math.max(4,Math.min(100,s))}%"></span></div><div class="val">${s}</div></div>`;
+                };
+
+                const RL = {pay_if_paid:'Pay-if-Paid', pay_when_paid:'Pay-When-Paid', no_damage_for_delay:'No Damages for Delay', no_damages_delay:'No Damages for Delay', indemnification:'Broad Form Indemnification', liquidated_damages:'Liquidated Damages Flow-Down', consequential_waiver:'Consequential Damages Waiver', consequential_damages_waiver:'Consequential Damages Waiver', jury_waiver:'Jury Trial Waiver', jury_trial_waiver:'Jury Trial Waiver', termination_convenience:'Termination for Convenience', flow_down:'Flow-Down by Reference', change_order_restrictions:'Change Order Notice Restrictions', retainage:'Retainage Terms', high_retainage:'High Retainage'};
+                const sevRank = { high:0, medium:1, low:2 };
+                const sevLabel = { high:'High risk', medium:'Medium risk', low:'Low risk' };
+                const sevFlag = { high:'high', medium:'med', low:'med' };
+                const risks = (cr && Array.isArray(cr.risksDetected)) ? cr.risksDetected.slice() : [];
+                risks.sort((x,y) => (sevRank[x.severity] ?? 1) - (sevRank[y.severity] ?? 1));
+
+                let findings = '';
+                risks.slice(0,3).forEach(r => {
+                    const t = (r.type || r.clause_type || 'risk');
+                    const label = RL[t] || String(t).replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+                    const sev = r.severity || 'medium';
+                    const pe = r.plainEnglish || r.plain_english || r.classification || '';
+                    findings += `<li><span class="t">${esc(label)}</span> <span class="flag ${sevFlag[sev]||'med'}">${sevLabel[sev]||'Risk'}</span><br>${esc(pe)}</li>`;
+                });
+                const tr = comp.trade || {};
+                if ((tr.score || 0) >= 65) {
+                    findings += `<li><span class="t">Scope is genuinely yours</span> <span class="flag ok">Good</span><br>${esc(tr.reason || 'Your trade/scope was found in this bid — not a mislabeled job.')}</li>`;
+                }
+                if (!findings) findings = `<li><span class="t">No major contract risks detected</span> <span class="flag ok">Good</span><br>Scope and terms look clean on the documents provided.</li>`;
+
+                const verdict = recClass === 'go'
+                    ? `<strong>Strong fit — chase it.</strong> This scores like a job you win on location, scope, and terms.`
+                    : recClass === 'pass'
+                    ? `<strong>Likely a pass.</strong> The fit isn't there on this one — better to spend estimating hours on a bid you can win.`
+                    : `<strong>Worth chasing, but not blind.</strong> Solid in places, with a few items to clear before you commit estimating time.`;
+                const bottom = recClass === 'go'
+                    ? `Chase it. Strong alignment across the board — get your number in.`
+                    : recClass === 'pass'
+                    ? `Lean pass. Unless something off-document changes the picture, this isn't the best use of your estimating hours.`
+                    : `Chase it with eyes open. Clear the flagged items first — that's the difference between a good job and a job that owns you.`;
+
+                const preparedContact = contact ? `<div class="pf-contact">Attn: ${esc(contact)}</div>` : '';
+                const metaLine = [gc ? 'GC: ' + esc(gc) : '', esc(loc)].filter(Boolean).join(' &nbsp;·&nbsp; ');
+
+                const doc = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BidIntell Report — ${esc(project)}</title>
+<style>
+:root{--ink:#0B0F14;--body:#2b333d;--muted:#6b7785;--line:#e4e8ec;--accent:#F26522;--go:#16a34a;--review:#d97706;--pass:#dc2626;--panel:#f7f8fa;}
+*{box-sizing:border-box;} html,body{margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--body);background:#eceff2;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.page{width:8.5in;min-height:11in;margin:24px auto;background:#fff;padding:.6in .65in .5in;box-shadow:0 4px 24px rgba(0,0,0,.12);}
+@page{size:letter;margin:.5in;}
+@media print{body{background:#fff;}.page{box-shadow:none;margin:0;width:auto;min-height:auto;padding:0;}.noprint{display:none!important;}}
+.noprint{position:fixed;top:14px;right:18px;}
+.noprint button{background:var(--accent);color:#fff;border:none;font-weight:700;font-size:13px;padding:9px 16px;border-radius:7px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.mast{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--ink);padding-bottom:10px;}
+.brand{display:flex;align-items:center;gap:9px;}
+.brand .mark{background:var(--accent);color:#fff;font-weight:800;font-size:13px;width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;letter-spacing:-.5px;}
+.brand .wm{font-weight:800;font-size:18px;color:var(--ink);letter-spacing:-.3px;}
+.prepared{text-align:right;}
+.prepared .pf-lab{font-size:9.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);font-weight:800;}
+.prepared .pf-co{font-size:16px;font-weight:800;color:var(--ink);line-height:1.2;margin-top:1px;}
+.prepared .pf-contact{font-size:12px;color:var(--body);font-weight:600;margin-top:1px;}
+.prepared .pf-date{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700;margin-top:3px;}
+.verdict{margin:16px 0 4px;border-radius:10px;overflow:hidden;border:1px solid ${bandLine};}
+.vtop{display:flex;align-items:center;gap:20px;padding:16px 20px;background:${bandBg};border-bottom:1px solid ${bandLine};}
+.score-badge{flex:0 0 auto;text-align:center;}
+.score-badge .num{font-size:46px;font-weight:800;color:var(--ink);line-height:1;}
+.score-badge .den{font-size:13px;color:var(--muted);font-weight:600;}
+.vmain{flex:1;}
+.rec{display:inline-block;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#fff;background:${recColor};padding:4px 12px;border-radius:5px;}
+.proj{font-size:18px;font-weight:700;color:var(--ink);margin:8px 0 2px;}
+.meta{font-size:12.5px;color:var(--muted);}
+.verdict-line{padding:12px 20px;font-size:14px;color:var(--ink);background:#fff;}
+h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:800;margin:20px 0 10px;}
+.rows{display:flex;flex-direction:column;gap:9px;}
+.row{display:grid;grid-template-columns:140px 1fr 42px;align-items:center;gap:12px;}
+.row .lab{font-size:13px;font-weight:700;color:var(--ink);}
+.row .why{font-size:11.5px;color:var(--muted);margin-top:1px;font-weight:400;}
+.bar{height:8px;border-radius:5px;background:#eef1f4;position:relative;overflow:hidden;}
+.bar>span{position:absolute;left:0;top:0;bottom:0;border-radius:5px;}
+.b-go>span{background:var(--go);}.b-review>span{background:var(--review);}.b-pass>span{background:var(--pass);}
+.row .val{font-size:14px;font-weight:800;color:var(--ink);text-align:right;}
+.find{list-style:none;margin:0;padding:0;}
+.find li{position:relative;padding:9px 0 9px 26px;border-bottom:1px solid var(--line);font-size:13px;color:var(--body);}
+.find li:last-child{border-bottom:none;}
+.find li::before{content:'';position:absolute;left:4px;top:14px;width:8px;height:8px;border-radius:50%;background:var(--accent);}
+.find li .t{font-weight:700;color:var(--ink);}
+.flag{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:1px 6px;border-radius:4px;margin-left:6px;}
+.flag.high{background:#fde8e8;color:var(--pass);}.flag.med{background:#fdf0db;color:var(--review);}.flag.ok{background:#e7f6ec;color:var(--go);}
+.bottom{margin-top:18px;background:var(--panel);border-left:3px solid var(--accent);border-radius:6px;padding:14px 16px;}
+.bottom .lab{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:800;margin-bottom:4px;}
+.bottom p{margin:0;font-size:14px;color:var(--ink);font-weight:600;}
+.foot{margin-top:22px;padding-top:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-end;gap:16px;}
+.foot .hook{font-size:12.5px;color:var(--body);max-width:62%;}.foot .hook b{color:var(--ink);}
+.foot .sig{text-align:right;font-size:11.5px;color:var(--muted);}.foot .sig .name{color:var(--ink);font-weight:700;font-size:13px;}
+.tiny{font-size:10px;color:var(--muted);margin-top:8px;text-align:center;}
+</style></head><body>
+<div class="noprint"><button onclick="window.print()">🖨 Print / Save PDF</button></div>
+<div class="page">
+  <div class="mast">
+    <div class="brand"><div class="mark">BI</div><div class="wm">BidIntell</div></div>
+    <div class="prepared"><div class="pf-lab">Prepared for</div><div class="pf-co">${esc(company || '—')}</div>${preparedContact}<div class="pf-date">Bid Selection Report · ${today}</div></div>
+  </div>
+  <div class="verdict">
+    <div class="vtop">
+      <div class="score-badge"><div class="num">${Math.round(sc.final || 0)}</div><div class="den">BidIndex / 100</div></div>
+      <div class="vmain"><span class="rec">${recLabel}</span><div class="proj">${esc(project)}</div><div class="meta">${metaLine}</div></div>
+    </div>
+    <div class="verdict-line">${verdict}</div>
+  </div>
+  <h3 class="sec">Why this score</h3>
+  <div class="rows">
+    ${rowHtml('Location Fit', comp.location)}
+    ${rowHtml('Trade / Scope Match', comp.trade)}
+    ${rowHtml('Client Relationship', comp.gc)}
+    ${rowHtml('Contract Terms', comp.keywords)}
+  </div>
+  <h3 class="sec">What we found</h3>
+  <ul class="find">${findings}</ul>
+  <div class="bottom"><div class="lab">Bottom line</div><p>${bottom}</p></div>
+  <div class="foot">
+    <div class="hook"><b>This report took 5 minutes.</b> Imagine every bid invite scored like this the second it hits your inbox — so your team only spends estimating hours on the jobs worth winning.</div>
+    <div class="sig"><div class="name">Ryan Elder</div>Founder, BidIntell<br>ryan@bidintell.ai &nbsp;·&nbsp; bidintell.ai</div>
+  </div>
+  <div class="tiny">BidIntell scores bids against your trade, location, client history, and contract risk. Reflects the documents provided; not legal advice.</div>
+</div></body></html>`;
+
+                const w = window.open('', '_blank');
+                if (!w) { alert('Pop-up blocked — allow pop-ups for this site to export the one-pager.'); return; }
+                w.document.open(); w.document.write(doc); w.document.close();
+            } catch (e) {
+                console.error('exportOnePager failed:', e);
+                alert('Could not build the one-pager: ' + (e && e.message));
             }
         }
 
