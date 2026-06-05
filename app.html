@@ -166,9 +166,9 @@
         .capacity-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 6px; }
         .capacity-value { font-weight: 600; display: flex; align-items: center; gap: 6px; }
         .capacity-dot { width: 8px; height: 8px; border-radius: 50%; }
-        .capacity-hungry .capacity-dot { background: var(--danger); }
+        .capacity-aggressive .capacity-dot { background: var(--danger); }
         .capacity-steady .capacity-dot { background: var(--success); }
-        .capacity-maxed .capacity-dot { background: var(--warning); }
+        .capacity-slow .capacity-dot { background: var(--warning); }
         
         /* Main */
         .main { flex: 1; margin-left: 240px; }
@@ -2204,9 +2204,9 @@
                                 <div class="form-group">
                                     <label class="form-label">Current Capacity</label>
                                     <select class="form-select" id="settingCapacity">
-                                        <option value="hungry">Hungry — Need work, more aggressive recommendations</option>
+                                        <option value="aggressive">Hungry — Need work, more aggressive recommendations</option>
                                         <option value="steady" selected>Steady — Normal workload, balanced recommendations</option>
-                                        <option value="maxed">Maxed — At capacity, only recommend the best fits</option>
+                                        <option value="slow">At Capacity — Full, only recommend the best fits</option>
                                     </select>
                                     <div class="form-hint">This affects the recommendation messaging (not the score itself)</div>
                                 </div>
@@ -13052,8 +13052,9 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
 
         async function updateCapacity() {
             const settings = await getSettings();
+            const capacityLabels = { aggressive: 'Hungry', steady: 'Steady', slow: 'At Capacity' };
             document.getElementById('capacityIndicator').className = 'capacity-box capacity-' + settings.capacity;
-            document.getElementById('capacityText').textContent = settings.capacity.charAt(0).toUpperCase() + settings.capacity.slice(1);
+            document.getElementById('capacityText').textContent = capacityLabels[settings.capacity] || (settings.capacity.charAt(0).toUpperCase() + settings.capacity.slice(1));
         }
 
         // Projects
