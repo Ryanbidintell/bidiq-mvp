@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track Bid Outcomes: Build a Win Rate Database | BidIntell</title>
+  <meta name="description" content="How commercial subs track bid outcomes (Won, Lost, Ghosted, Passed, No Bid) to build a win-rate database that sharpens go/no-go decisions over time.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://bidintell.ai/takeoff/track-bid-outcomes/">
+  <link rel="icon" href="/favicon.png">
+
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://bidintell.ai/takeoff/track-bid-outcomes/">
+  <meta property="og:title" content="Track Bid Outcomes: Build a Win Rate Database">
+  <meta property="og:description" content="How commercial subs track bid outcomes (Won, Lost, Ghosted, Passed, No Bid) to build a win-rate database that sharpens go/no-go decisions over time.">
+  <meta property="og:image" content="https://bidintell.ai/og-image.png">
+  <meta property="og:site_name" content="BidIntell">
+  <meta property="og:locale" content="en_US">
+  <meta http-equiv="content-language" content="en-US">
+  <meta property="article:published_time" content="2026-06-05">
+  <meta property="article:section" content="Win Rate">
+
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://bidintell.ai/takeoff/track-bid-outcomes/">
+  <meta property="twitter:title" content="Track Bid Outcomes: Build a Win Rate Database">
+  <meta property="twitter:description" content="How commercial subs track bid outcomes (Won, Lost, Ghosted, Passed, No Bid) to build a win-rate database that sharpens go/no-go decisions over time.">
+  <meta property="twitter:image" content="https://bidintell.ai/og-image.png">
+
+  <link rel="alternate" type="text/markdown" title="LLM-friendly site description" href="/llms.txt">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        "@id": "https://bidintell.ai/takeoff/track-bid-outcomes/#article",
+        "headline": "How to Track Construction Bid Outcomes and Build a Win Rate Database for Your Subcontracting Business",
+        "description": "How commercial subs track bid outcomes (Won, Lost, Ghosted, Passed, No Bid) to build a win-rate database that sharpens go/no-go decisions over time.",
+        "url": "https://bidintell.ai/takeoff/track-bid-outcomes/",
+        "datePublished": "2026-06-05",
+        "dateModified": "2026-06-05",
+        "inLanguage": "en-US",
+        "articleSection": "Win Rate",
+        "author": { "@type": "Organization", "name": "BidIntell", "url": "https://bidintell.ai" },
+        "publisher": {
+          "@type": "Organization",
+          "name": "BidIntell",
+          "url": "https://bidintell.ai",
+          "logo": { "@type": "ImageObject", "url": "https://bidintell.ai/og-image.png" }
+        },
+        "image": "https://bidintell.ai/og-image.png",
+        "mainEntityOfPage": { "@type": "WebPage", "@id": "https://bidintell.ai/takeoff/track-bid-outcomes/" }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bidintell.ai/" },
+          { "@type": "ListItem", "position": 2, "name": "Take-Off", "item": "https://bidintell.ai/takeoff/" },
+          { "@type": "ListItem", "position": 3, "name": "How to Track Construction Bid Outcomes and Build a Win Rate Database for Your Subcontracting Business", "item": "https://bidintell.ai/takeoff/track-bid-outcomes/" }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://bidintell.ai/takeoff/track-bid-outcomes/#faq",
+        "mainEntity": [
+          { "@type": "Question", "name": "What does \"tracking bid outcomes\" mean for a subcontractor?", "acceptedAnswer": { "@type": "Answer", "text": "It means recording the result of every bid you submit or decline using consistent categories — Won, Lost, Ghosted, Passed, or No Bid. The goal is a dataset you can analyze to find patterns in your win rate, client behavior, and project type performance." } },
+          { "@type": "Question", "name": "What's a good win rate for a commercial subcontractor?", "acceptedAnswer": { "@type": "Answer", "text": "Roughly 1 in 5 (about 20 percent) gets cited as a rough commercial benchmark, but it varies widely by trade, market, and bid type. Whether your number is good depends on your average bid cost and which project types you're winning. A higher win rate on the right project types matters more than a strong overall number built on bids that don't fit your business." } },
+          { "@type": "Question", "name": "Why should I track bids I passed on or didn't submit?", "acceptedAnswer": { "@type": "Answer", "text": "Passed and No Bid outcomes show you how your decision-making criteria are actually working. If you're passing on 60 percent of invites and your win rate on submitted bids is strong, that's a healthy filter. If you're passing on bids you later wish you'd chased, that's a calibration problem. Without tracking those outcomes, you can't see the pattern." } },
+          { "@type": "Question", "name": "How long before bid outcome data becomes useful?", "acceptedAnswer": { "@type": "Answer", "text": "Most subs start seeing actionable patterns after three to six months of consistent tracking. Client-level ghost rates and win rates by project type become meaningful once you have 15 to 30 data points per category. The data compounds — starting now is always better than waiting." } },
+          { "@type": "Question", "name": "What's the difference between win rate and bid hit ratio?", "acceptedAnswer": { "@type": "Answer", "text": "Win rate is the percentage of submitted bids you win. Bid hit ratio can refer to the same metric or to the ratio of bids submitted to bids awarded across a broader pipeline. Both are useful, but win rate by category is often the more important number — an overall win rate can hide wide variation across project types and clients." } },
+          { "@type": "Question", "name": "Can I track bid outcomes without dedicated software?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. A well-structured spreadsheet with consistent outcome definitions and weekly updates can work, especially for subs with one or two estimators. The limitation is that a spreadsheet doesn't connect to your bid intake process, doesn't surface patterns automatically, and requires manual discipline to maintain. Dedicated tools reduce the friction and add analysis on top of the raw data." } },
+          { "@type": "Question", "name": "What should I do when a GC never responds to a submitted bid?", "acceptedAnswer": { "@type": "Answer", "text": "Record it as Ghosted, not Lost. Ghosted is a distinct outcome because it reflects client behavior, not just a lost competition. A GC with a high ghost rate over time is a signal — price more defensively, reduce your estimating investment, or deprioritize their invites entirely." } }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XGYJLV0E6G"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XGYJLV0E6G');</script>
+<script type="text/javascript">(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","vtnhbrqro2");</script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+:root {
+  --ink: #0B0F14;
+  --ink-light: #141A23;
+  --ink-mid: #1C2533;
+  --slate: #384254;
+  --slate-light: #5A6A7E;
+  --fog: #94A3B8;
+  --cloud: #CBD5E1;
+  --white: #F8FAFC;
+  --accent: #F26522;
+  --accent-dark: #D4551A;
+  --accent-glow: rgba(242,101,34,0.15);
+  --green: #22C55E;
+  --red: #EF4444;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'Geist Mono', monospace;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body { font-family: var(--font); background: var(--ink); color: var(--cloud); line-height: 1.6; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+a { color: inherit; text-decoration: none; }
+img { max-width: 100%; display: block; }
+.container { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+
+/* NAV */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(11,15,20,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.nav-inner { max-width: 1160px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.25rem; color: var(--white); letter-spacing: -0.02em; }
+.logo-mark { width: 32px; height: 32px; background: var(--accent); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.75rem; font-weight: 700; color: white; letter-spacing: -0.04em; flex-shrink: 0; }
+.nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+.nav-links a { font-size: 0.875rem; font-weight: 500; color: var(--fog); transition: color 0.2s; white-space: nowrap; }
+.nav-links a:hover { color: var(--white); }
+.nav-links a.active { color: var(--white); }
+.nav-cta { display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px; background: var(--accent); color: white !important; border-radius: var(--radius); font-weight: 600; font-size: 0.875rem; transition: background 0.2s, transform 0.15s; }
+.nav-cta:hover { background: var(--accent-dark); transform: translateY(-1px); }
+.mobile-menu-btn { display: none; background: none; border: none; color: var(--fog); cursor: pointer; padding: 8px; }
+
+/* HERO */
+.page-hero { padding: 160px 0 80px; position: relative; overflow: hidden; }
+.page-hero::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 800px; height: 500px; background: radial-gradient(ellipse, var(--accent-glow), transparent 70%); pointer-events: none; opacity: 0.5; }
+.page-hero .container { position: relative; }
+.eyebrow { display: inline-block; font-family: var(--mono); font-size: 0.8rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 18px; }
+.page-hero h1 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; color: var(--white); line-height: 1.15; letter-spacing: -0.03em; margin-bottom: 18px; max-width: 800px; }
+.page-hero .lede { font-size: 1.15rem; color: var(--fog); max-width: 640px; line-height: 1.6; }
+
+/* ARTICLE CARDS */
+.articles-section { padding: 40px 0 120px; }
+.articles-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+.article-card { background: var(--ink-light); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-lg); padding: 32px 28px; display: flex; flex-direction: column; transition: border-color 0.2s, transform 0.15s; }
+.article-card:hover { border-color: rgba(242,101,34,0.35); transform: translateY(-2px); }
+.category-tag { display: inline-block; font-family: var(--mono); font-size: 0.7rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 18px; }
+.article-card h2 { font-size: 1.25rem; font-weight: 700; color: var(--white); line-height: 1.3; letter-spacing: -0.015em; margin-bottom: 14px; }
+.article-card h2 a { color: var(--white); }
+.article-card h2 a:hover { color: var(--accent); }
+.article-card .excerpt { font-size: 0.95rem; color: var(--fog); line-height: 1.6; margin-bottom: 24px; flex-grow: 1; }
+.article-card .card-meta { display: flex; justify-content: space-between; align-items: center; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.825rem; color: var(--slate-light); }
+.article-card .read-more { color: var(--accent); font-weight: 600; }
+.article-card .read-more:hover { color: var(--white); }
+@media (max-width: 960px) { .articles-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .articles-grid { grid-template-columns: 1fr; } }
+
+/* ARTICLE PAGE */
+.article-hero { padding: 140px 0 40px; position: relative; overflow: hidden; }
+.article-hero::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 800px; height: 400px; background: radial-gradient(ellipse, var(--accent-glow), transparent 70%); pointer-events: none; opacity: 0.4; }
+.article-hero .container { position: relative; max-width: 760px; }
+.article-hero .breadcrumb { font-size: 0.85rem; color: var(--slate-light); margin-bottom: 20px; }
+.article-hero .breadcrumb a { color: var(--fog); }
+.article-hero .breadcrumb a:hover { color: var(--white); }
+.article-hero h1 { font-size: clamp(1.875rem, 4vw, 2.75rem); font-weight: 700; color: var(--white); line-height: 1.15; letter-spacing: -0.025em; margin-bottom: 18px; }
+.article-hero .meta-row { font-size: 0.85rem; color: var(--slate-light); display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.article-hero .meta-row span { display: inline-flex; align-items: center; gap: 6px; }
+
+.article-body-wrap { padding: 20px 0 100px; }
+.article-body-wrap .container { max-width: 720px; }
+.article-body { font-size: 1.05rem; line-height: 1.75; color: var(--cloud); }
+.article-body p { margin-bottom: 22px; }
+.article-body h2 { font-size: 1.6rem; font-weight: 700; color: var(--white); margin-top: 48px; margin-bottom: 18px; letter-spacing: -0.02em; line-height: 1.25; }
+.article-body h3 { font-size: 1.25rem; font-weight: 600; color: var(--white); margin-top: 36px; margin-bottom: 14px; letter-spacing: -0.015em; }
+.article-body h4 { font-size: 1.05rem; font-weight: 600; color: var(--white); margin-top: 28px; margin-bottom: 10px; }
+.article-body a { color: var(--accent); border-bottom: 1px solid rgba(242,101,34,0.35); transition: border-color 0.15s; }
+.article-body a:hover { border-color: var(--accent); }
+.article-body strong { color: var(--white); font-weight: 700; }
+.article-body em { color: var(--cloud); font-style: italic; }
+.article-body ul, .article-body ol { margin: 0 0 22px 24px; }
+.article-body li { margin-bottom: 8px; }
+.article-body code { font-family: var(--mono); font-size: 0.92em; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; color: var(--white); }
+.article-body pre { background: var(--ink-light); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius); padding: 20px; margin: 0 0 22px; overflow-x: auto; }
+.article-body pre code { background: transparent; padding: 0; font-size: 0.9rem; line-height: 1.6; color: var(--cloud); }
+.article-body blockquote { border-left: 3px solid var(--accent); padding: 6px 0 6px 22px; margin: 0 0 22px; color: var(--fog); font-style: italic; }
+.article-body blockquote p { margin: 0; }
+.article-body hr { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 40px 0; }
+.article-body .article-table-wrap { overflow-x: auto; margin: 0 0 28px; }
+.article-body .article-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; background: var(--ink-light); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius); overflow: hidden; }
+.article-body .article-table th, .article-body .article-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.article-body .article-table th { background: var(--ink-mid); color: var(--white); font-weight: 600; font-family: var(--mono); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.article-body .article-table td { color: var(--cloud); }
+.article-body .article-table tr:last-child td { border-bottom: none; }
+
+/* CTA STRIP */
+.cta-section { padding: 120px 0; background: var(--ink); border-top: 1px solid rgba(255,255,255,0.07); position: relative; overflow: hidden; text-align: center; }
+.cta-section::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 700px; height: 450px; background: radial-gradient(ellipse, var(--accent-glow), transparent 70%); pointer-events: none; opacity: 0.6; }
+.cta-section .container { position: relative; z-index: 1; }
+.cta-section h2 { font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 700; color: var(--white); letter-spacing: -0.025em; margin-bottom: 14px; }
+.cta-section p { font-size: 1.05rem; color: var(--fog); margin-bottom: 32px; max-width: 520px; margin-left: auto; margin-right: auto; line-height: 1.7; }
+.btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: var(--accent); color: white; border: none; border-radius: var(--radius); font-family: var(--font); font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s; letter-spacing: -0.01em; text-decoration: none; }
+.btn-primary:hover { background: var(--accent-dark); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(242,101,34,0.3); color: white; }
+
+/* FOOTER */
+.footer { padding: 50px 0 60px; background: var(--ink); border-top: 1px solid rgba(255,255,255,0.06); }
+.footer-inner { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
+.footer-left { display: flex; align-items: center; gap: 14px; }
+.footer-copy { font-size: 0.8rem; color: var(--slate-light); }
+.footer-links { display: flex; gap: 24px; list-style: none; flex-wrap: wrap; }
+.footer-links a { font-size: 0.8rem; color: var(--fog); transition: color 0.2s; }
+.footer-links a:hover { color: var(--white); }
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .mobile-menu-btn { display: block; }
+  .footer-inner { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+  <nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="logo-mark">BI</div>
+      BidIntell
+    </a>
+    <ul class="nav-links">
+      <li><a href="/#how">How It Works</a></li>
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/#who">Who It's For</a></li>
+      <li><a href="/#pricing">Pricing</a></li>
+      <li><a href="/takeoff/" style="color: var(--white); font-weight: 600;">Take-Off</a></li>
+      <li><a href="/diagnostic">Diagnostic</a></li>
+      <li><a href="/app?utm_source=website&utm_medium=takeoff&utm_campaign=nav" style="color: var(--cloud);">Sign In</a></li>
+      <li><a href="/demo" class="nav-cta">Schedule a Demo</a></li>
+    </ul>
+    <button class="mobile-menu-btn" aria-label="Menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+    </button>
+  </div>
+</nav>
+
+  <section class="article-hero">
+    <div class="container">
+      <p class="breadcrumb"><a href="/takeoff/">← All Take-Off guides</a></p>
+      <p class="eyebrow">Win Rate</p>
+      <h1>How to Track Construction Bid Outcomes and Build a Win Rate Database for Your Subcontracting Business</h1>
+      <p class="meta-row">
+        <span>10 min read</span>
+        <span>Published June 5, 2026</span>
+      </p>
+    </div>
+  </section>
+
+  <section class="article-body-wrap">
+    <div class="container">
+      <div class="article-body">
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul><li><a href="#why-win-rate-alone-doesnt-tell-you-much">Why Win Rate Alone Doesn't Tell You Much</a></li><li><a href="#the-five-outcome-states-you-need-to-record">The Five Outcome States You Need to Record</a></li><li><a href="#what-data-to-capture-for-each-bid">What Data to Capture for Each Bid</a></li><li><a href="#how-to-structure-the-database">How to Structure the Database</a></li><li><a href="#using-your-win-rate-data-to-make-better-decisions">Using Your Win Rate Data to Make Better Decisions</a></li></ul>
+<p>  - <a href="#win-rate-by-project-type">Win Rate by Project Type</a>   - <a href="#win-rate-by-client">Win Rate by Client</a>   - <a href="#ghost-rate-by-client">Ghost Rate by Client</a>   - <a href="#average-bid-cost-vs-win-rate-by-category">Average Bid Cost vs. Win Rate by Category</a></p>
+<ul><li><a href="#the-compounding-advantage-of-outcome-data">The Compounding Advantage of Outcome Data</a></li><li><a href="#how-bidintell-automates-the-outcome-tracking-loop">How BidIntell Automates the Outcome Tracking Loop</a></li><li><a href="#what-to-do-with-your-outcome-data-right-now">What to Do With Your Outcome Data Right Now</a></li><li><a href="#faqs">FAQs</a></li></ul>
+<hr/>
+<p>Most commercial subs track bids the same way: a spreadsheet someone updates when they remember to, a folder of PDFs named "Final_v3," and a rough sense that the win rate is somewhere around 20 percent. That's not a database. That's a guess.</p>
+<p>If you're a mechanical, electrical, or plumbing sub receiving 20 to 40 bid invites a month, the gap between a real outcome database and a rough guess is worth real money. Win rates on competitively bid commercial work are commonly cited at roughly 1 in 5 — though the real number varies widely by trade, market, and bid type. If you don't know your actual number, you can't improve it — and you can't protect your estimating hours from the bids you were never going to win anyway.</p>
+<p>Here's exactly how to build a bid outcome tracking system that holds up, what data to capture, and how to use it to sharpen your go/no-go decisions over time.</p>
+<hr/>
+<h2 id="why-win-rate-alone-doesnt-tell-you-much">Why Win Rate Alone Doesn't Tell You Much</h2>
+<p>Win rate is a useful headline number. On its own, though, it tells you almost nothing actionable.</p>
+<p>A 22 percent win rate looks fine until you realize you're winning mostly on small tenant improvement jobs while losing every medical or education project you spend 15 hours pricing. Or that one GC accounts for 60 percent of your wins and three others have ghosted you a combined 11 times.</p>
+<p>Outcome tracking isn't about calculating a number. It's about building a pattern. Which project types do you win? Which clients respond versus disappear? Where are you consistently underpriced or overpriced? Which bids cost you 12 hours and came back nothing?</p>
+<p>That pattern is what separates a business that gets sharper every quarter from one that repeats the same mistakes with better software.</p>
+<hr/>
+<h2 id="the-five-outcome-states-you-need-to-record">The Five Outcome States You Need to Record</h2>
+<p>Before you set up any system, agree on consistent definitions. Vague categories produce vague data.</p>
+<p>These five states cover every bid you touch:</p>
+<ul><li><strong>Won</strong> — You were awarded the contract.</li><li><strong>Lost</strong> — You submitted and were not selected.</li><li><strong>Ghosted</strong> — You submitted and received no response, no award notice, no explanation.</li><li><strong>Passed</strong> — You reviewed the bid and made a deliberate decision not to submit.</li><li><strong>No Bid</strong> — You received the invite but never engaged with it.</li></ul>
+<p>Most subs only track Won and Lost. That's a significant gap. Ghosted bids are a signal about client behavior, not just bad luck. Passed bids reflect your decision-making criteria. No Bid volume is often absorbed without anyone realizing the cost.</p>
+<p>Record all five. Every time.</p>
+<hr/>
+<h2 id="what-data-to-capture-for-each-bid">What Data to Capture for Each Bid</h2>
+<p>The minimum useful record for any bid:</p>
+<ul><li><strong>Project name and type</strong> (medical office, school, warehouse, multifamily, etc.)</li><li><strong>General contractor or owner name</strong></li><li><strong>Your trade and scope</strong> (mechanical rough-in, electrical distribution, plumbing fixture package, etc.)</li><li><strong>Estimated project value</strong> and your bid amount if submitted</li><li><strong>Bid date and decision date</strong></li><li><strong>Outcome</strong> (Won, Lost, Ghosted, Passed, No Bid)</li><li><strong>Decline reason if you passed</strong> (capacity, bad contract terms, wrong trade, low margin, client history, etc.)</li><li><strong>Notes on why you think you won or lost</strong>, if you have any feedback</li></ul>
+<p>That last field often stays blank because feedback is rare. That's fine — record what you know. Patterns emerge over time even without perfect data.</p>
+<hr/>
+<h2 id="how-to-structure-the-database">How to Structure the Database</h2>
+<p>A spreadsheet works if you're disciplined about it. One row per bid, columns for each field above, and a consistent naming convention for project types and GC names.</p>
+<p>The practical problems with spreadsheets:</p>
+<ul><li>Manual entry after every bid decision</li><li>No connection to your bid intake process</li><li>No pattern alerts — just stored data</li><li>Only as current as whoever last updated it</li></ul>
+<p>One estimator can manage a spreadsheet. Two or three, and it breaks down fast because no one owns it consistently.</p>
+<p>Whatever format you use, the database only works if recording outcomes becomes a habit, not a project. Build it into your weekly rhythm. Every Friday, update every open bid with its current status.</p>
+<hr/>
+<h2 id="using-your-win-rate-data-to-make-better-decisions">Using Your Win Rate Data to Make Better Decisions</h2>
+<p>Once you have three to six months of clean data, you can start asking useful questions.</p>
+<h3 id="win-rate-by-project-type">Win Rate by Project Type</h3>
+<p>Break your win rate down by project type. If you're a plumbing sub winning 35 percent of healthcare bids but only 12 percent of multifamily, that's a signal worth following. You might be more competitive on healthcare scope, or you might be pricing multifamily too conservatively. Either way, you now have a reason to look harder.</p>
+<h3 id="win-rate-by-client">Win Rate by Client</h3>
+<p>Which GCs do you win with consistently? Which ones use you as a price check and award to someone else every time? Client-level win rate data is some of the most actionable information a sub can have. It tells you where to protect your estimating hours and where to price more aggressively because the relationship is real.</p>
+<h3 id="ghost-rate-by-client">Ghost Rate by Client</h3>
+<p>A GC who awards 70 percent of bids and communicates outcomes is worth more of your time than one who collects eight bids and goes silent. Ghost rate by client is a metric most subs never calculate because they don't track Ghosted as a distinct outcome. Start tracking it. It will change how you prioritize.</p>
+<h3 id="average-bid-cost-vs-win-rate-by-category">Average Bid Cost vs. Win Rate by Category</h3>
+<p>If a bid type takes your estimator 10 to 12 hours and your win rate in that category is 8 percent, you're spending roughly $800 to $1,200 in labor time for every win. That math should inform whether you bid that category at all — or whether you need to sharpen your scope qualification before committing the hours.</p>
+<hr/>
+<h2 id="the-compounding-advantage-of-outcome-data">The Compounding Advantage of Outcome Data</h2>
+<p>Here's what most subs miss: outcome data compounds. The first month of records is barely useful. After six months, patterns start to surface. After a year, you have a real edge — because you're making decisions based on your actual history, not gut feel.</p>
+<p>The challenge is that most subs don't stick with it long enough to see the payoff. The spreadsheet goes stale. The person who owned it leaves. A busy stretch hits and no one updates it for two months.</p>
+<p>That's why the system needs to be as low-friction as possible. The more manual the process, the less likely it survives.</p>
+<hr/>
+<h2 id="how-bidintell-automates-the-outcome-tracking-loop">How BidIntell Automates the Outcome Tracking Loop</h2>
+<p><a href="https://bidintell.ai/">BidIntell</a> is built for exactly this problem. It's a pre-bid intelligence platform for commercial subs that scores every opportunity 0 to 100 before estimating begins, then uses the outcomes you record to sharpen future scores.</p>
+<p>Here's how the loop works. Every bid you analyze gets a BidIndex Score based on your trade and scope, your service area, your relationship history with the client, and the contract terms in the documents. When you record the result — Won, Lost, Ghosted, Passed, or No Bid — the platform stores it against that client and project.</p>
+<p>Those outcomes feed back into the score. Your win, loss, and ghost history with a client drives the client-relationship part of the next score, so the next bid from the same GC is rated against everything you've already recorded about them — not gut feel.</p>
+<p>Log the number of bidders on your outcomes, and after three recorded outcomes with a client, BidIntell activates a Competitive Pressure Score for that client: how crowded their bids tend to run and how often they award versus go quiet, built from your own history with them. The more you log, the sharper every future score gets.</p>
+<p>That's the difference between a spreadsheet and a system that compounds.</p>
+<hr/>
+<h2 id="what-to-do-with-your-outcome-data-right-now">What to Do With Your Outcome Data Right Now</h2>
+<p>If you're starting from scratch, here's a practical sequence:</p>
+<ol><li>Pick a format and set it up today. Spreadsheet or dedicated tool — it matters less than starting.</li><li>Backfill the last 90 days of bids. You probably remember most of them.</li><li>Define your five outcome states and use them consistently from here forward.</li><li>Set a weekly reminder to update open bids.</li><li>After 60 days, pull your win rate by GC and by project type. Look for the two or three patterns that surprise you.</li></ol>
+<p>The goal is to stop making bid decisions based on volume and start making them based on fit. Your estimating hours are finite. Protecting them is the job.</p>
+<p>If you want a system that handles the tracking automatically and builds intelligence on top of it, start at <a href="https://bidintell.ai/">bidintell.ai</a>.</p>
+<hr/>
+<h2 id="faqs">FAQs</h2>
+<p><strong>What does "tracking bid outcomes" mean for a subcontractor?</strong> It means recording the result of every bid you submit or decline using consistent categories — Won, Lost, Ghosted, Passed, or No Bid. The goal is a dataset you can analyze to find patterns in your win rate, client behavior, and project type performance.</p>
+<p><strong>What's a good win rate for a commercial subcontractor?</strong> Roughly 1 in 5 (about 20 percent) gets cited as a rough commercial benchmark, but it varies widely by trade, market, and bid type. Whether your number is good depends on your average bid cost and which project types you're winning. A higher win rate on the right project types matters more than a strong overall number built on bids that don't fit your business.</p>
+<p><strong>Why should I track bids I passed on or didn't submit?</strong> Passed and No Bid outcomes show you how your decision-making criteria are actually working. If you're passing on 60 percent of invites and your win rate on submitted bids is strong, that's a healthy filter. If you're passing on bids you later wish you'd chased, that's a calibration problem. Without tracking those outcomes, you can't see the pattern.</p>
+<p><strong>How long before bid outcome data becomes useful?</strong> Most subs start seeing actionable patterns after three to six months of consistent tracking. Client-level ghost rates and win rates by project type become meaningful once you have 15 to 30 data points per category. The data compounds — starting now is always better than waiting.</p>
+<p><strong>What's the difference between win rate and bid hit ratio?</strong> Win rate is the percentage of submitted bids you win. Bid hit ratio can refer to the same metric or to the ratio of bids submitted to bids awarded across a broader pipeline. Both are useful, but win rate by category is often the more important number — an overall win rate can hide wide variation across project types and clients.</p>
+<p><strong>Can I track bid outcomes without dedicated software?</strong> Yes. A well-structured spreadsheet with consistent outcome definitions and weekly updates can work, especially for subs with one or two estimators. The limitation is that a spreadsheet doesn't connect to your bid intake process, doesn't surface patterns automatically, and requires manual discipline to maintain. Dedicated tools reduce the friction and add analysis on top of the raw data.</p>
+<p><strong>What should I do when a GC never responds to a submitted bid?</strong> Record it as Ghosted, not Lost. Ghosted is a distinct outcome because it reflects client behavior, not just a lost competition. A GC with a high ghost rate over time is a signal — price more defensively, reduce your estimating investment, or deprioritize their invites entirely.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section">
+  <div class="container">
+    <h2>Score your next bid in under 2 minutes.</h2>
+    <p>7-day free trial. No credit card at signup.</p>
+    <a href="/app?utm_source=website&utm_medium=takeoff&utm_campaign=cta&utm_content=bottom" class="btn-primary" onclick="if(typeof gtag==='function')gtag('event','cta_click',{cta_location:'takeoff_bottom',cta_text:'Score Your First Bid Free'})">Score Your First Bid Free</a>
+  </div>
+</section>
+  <footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="logo-mark">BI</div>
+        <span class="footer-copy">© 2026 BidIntell. Built by the industry, for the industry.</span>
+      </div>
+      <ul class="footer-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/takeoff/">Take-Off</a></li>
+        <li><a href="/diagnostic">Diagnostic</a></li>
+        <li><a href="/bid-no-bid-checklist">Checklist</a></li>
+        <li><a href="/legal#privacy">Privacy</a></li>
+        <li><a href="/legal#terms">Terms</a></li>
+        <li><a href="/contact">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

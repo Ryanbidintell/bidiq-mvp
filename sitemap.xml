@@ -44,9 +44,21 @@
     </url>
   <url>
     <loc>https://bidintell.ai/takeoff/</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-06-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://bidintell.ai/takeoff/track-bid-outcomes/</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://bidintell.ai/takeoff/how-to-decide-which-bids-to-chase/</loc>
+    <lastmod>2026-05-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://bidintell.ai/takeoff/bid-qualification/</loc>
