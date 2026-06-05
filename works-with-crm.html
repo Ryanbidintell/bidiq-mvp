@@ -428,6 +428,33 @@ blockquote.callout {
   letter-spacing: -0.01em;
 }
 
+/* ===== STAT CALLOUT + SOURCES ===== */
+.stat-callout {
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 22px 26px;
+  margin: 36px 0;
+}
+.stat-callout .stat-num {
+  font-family: var(--mono);
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.stat-callout p { font-size: 0.95rem; color: var(--cloud); margin: 6px 0 0; line-height: 1.65; }
+.stat-callout a, .page-content p a { color: var(--fog); text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s; }
+.stat-callout a:hover, .page-content p a:hover { color: var(--white); }
+.sources { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06); }
+.sources h2 { font-size: 1.1rem !important; margin: 0 0 14px !important; }
+.sources ol { margin: 0; padding-left: 20px; }
+.sources li { font-size: 0.82rem; color: var(--slate-light); line-height: 1.6; margin-bottom: 8px; }
+.sources a { color: var(--fog); text-decoration: underline; text-underline-offset: 2px; }
+.sources a:hover { color: var(--white); }
+
 /* ===== CTA SECTION ===== */
 .cta-section {
   padding: 56px 48px;
@@ -636,6 +663,11 @@ blockquote.callout {
 
   <p>That intelligence is what experienced estimators carry around in their heads after 20 years in the business. BidIntell captures it systematically, tied to actual bid events and actual outcomes, so it does not walk out the door when someone leaves.</p>
 
+  <div class="stat-callout">
+    <div class="stat-num">88%</div>
+    <p>of construction firms struggle with late payments, and only 12% say they are always paid on time, according to the <a href="https://www.levelset.com/news/construction-cash-flow-payment-report-2022/" target="_blank" rel="noopener">Levelset / Procore 2022 Construction Cash Flow &amp; Payment Report</a>. Which general contractors actually pay, and how fast, is a competitive signal a general CRM was never built to track. BidIntell ties payment behavior, ghost rate, and win rate to every GC in your bid history.</p>
+  </div>
+
   <h2>How the two tools work alongside each other</h2>
 
   <ol class="workflow-steps">
@@ -715,13 +747,21 @@ blockquote.callout {
 
   <h2>Why capturing this data now matters later</h2>
 
-  <p>Most specialty subcontracting firms have 10 to 30 GC relationships they are actively bidding at any given time. Some of those relationships are genuinely productive — the GC awards work at a fair rate, communicates honestly, and has project types that fit your trade. Others are what the industry calls shopping relationships — the GC uses your number to pressure their preferred sub and you never had a real chance at the award.</p>
+  <p>U.S. construction put in place reached $2.15 trillion in 2024 (<a href="https://www.census.gov/construction/c30/c30index.html" target="_blank" rel="noopener">U.S. Census Bureau</a>), and specialty subcontractors compete for it one bid at a time. Most specialty subcontracting firms have 10 to 30 GC relationships they are actively bidding at any given time. Some of those relationships are genuinely productive — the GC awards work at a fair rate, communicates honestly, and has project types that fit your trade. Others are what the industry calls shopping relationships — the GC uses your number to pressure their preferred sub and you never had a real chance at the award.</p>
 
   <p>Experienced estimators know the difference. Usually it is someone who has been around long enough to recognize the patterns. When that person leaves, the knowledge walks out with them.</p>
 
   <p>BidIntell captures that institutional knowledge as a systematic record tied to actual bid events and actual outcomes — not in someone's memory. A year of consistent outcome logging gives you a GC intelligence database that your CRM was never designed to build and that your estimating software does not track.</p>
 
   <p>That record makes future bid decisions faster and better, for whoever ends up making them.</p>
+
+  <section class="sources" aria-label="Sources">
+    <h2>Sources</h2>
+    <ol>
+      <li>Levelset (a Procore company). <em>2022 Construction Cash Flow &amp; Payment Report.</em> <a href="https://www.levelset.com/news/construction-cash-flow-payment-report-2022/" target="_blank" rel="noopener">levelset.com</a></li>
+      <li>U.S. Census Bureau. <em>Construction Spending — Value of Construction Put in Place (2024 annual).</em> <a href="https://www.census.gov/construction/c30/c30index.html" target="_blank" rel="noopener">census.gov/construction/c30</a></li>
+    </ol>
+  </section>
 
   <section class="cta-section">
     <h2>Start building your GC intelligence database</h2>

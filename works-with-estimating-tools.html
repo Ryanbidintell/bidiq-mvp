@@ -431,6 +431,33 @@ blockquote.callout {
   letter-spacing: -0.01em;
 }
 
+/* ===== STAT CALLOUT + SOURCES ===== */
+.stat-callout {
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 22px 26px;
+  margin: 36px 0;
+}
+.stat-callout .stat-num {
+  font-family: var(--mono);
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.stat-callout p { font-size: 0.95rem; color: var(--cloud); margin: 6px 0 0; line-height: 1.65; }
+.stat-callout a, .page-content p a { color: var(--fog); text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s; }
+.stat-callout a:hover, .page-content p a:hover { color: var(--white); }
+.sources { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06); }
+.sources h2 { font-size: 1.1rem !important; margin: 0 0 14px !important; }
+.sources ol { margin: 0; padding-left: 20px; }
+.sources li { font-size: 0.82rem; color: var(--slate-light); line-height: 1.6; margin-bottom: 8px; }
+.sources a { color: var(--fog); text-decoration: underline; text-underline-offset: 2px; }
+.sources a:hover { color: var(--white); }
+
 /* ===== CTA SECTION ===== */
 .cta-section {
   padding: 56px 48px;
@@ -642,6 +669,11 @@ blockquote.callout {
 
   <p>That is not a flaw in the estimating software. It is doing exactly what it is designed to do. The problem is upstream. The go or pass decision is still being made by gut feel, and faster takeoffs on wrong bids are still wasted hours — just shorter ones.</p>
 
+  <div class="stat-callout">
+    <div class="stat-num">$2.15T</div>
+    <p>was spent on U.S. construction in 2024 (<a href="https://www.census.gov/construction/c30/c30index.html" target="_blank" rel="noopener">U.S. Census Bureau</a>), and specialty subcontractors compete for it one bid at a time. Faster takeoffs speed up the losing bids too. The filter that decides <em>which</em> bids deserve a takeoff is where estimating hours are actually won or wasted.</p>
+  </div>
+
   <p>BidIntell addresses the decision that happens before your estimating software opens. A 60-second score on the bid documents is a filter that keeps your estimating capacity focused on the jobs with a realistic chance of winning.</p>
 
   <blockquote class="callout">
@@ -695,6 +727,16 @@ blockquote.callout {
   <p>Most specialty subcontracting firms do not have this data organized anywhere it can actually influence a decision. It exists in email threads and people's heads, but it is not connected to the next bid that comes in. BidIntell captures it at the point of decision, systematically, without adding significant time to the workflow.</p>
 
   <p>Firms using AI estimating tools are already thinking about efficiency in the bid process. This is the efficiency gain that happens before the estimating software opens.</p>
+
+  <p>And a won bid only helps if you collect on it. With 88% of construction firms reporting trouble with late payments (<a href="https://www.levelset.com/news/construction-cash-flow-payment-report-2022/" target="_blank" rel="noopener">Levelset / Procore 2022 Construction Cash Flow &amp; Payment Report</a>), which GCs award <em>and</em> pay is part of whether a bid is worth chasing. BidIntell tracks both against your history, so the go or pass call accounts for the relationship, not just the takeoff.</p>
+
+  <section class="sources" aria-label="Sources">
+    <h2>Sources</h2>
+    <ol>
+      <li>U.S. Census Bureau. <em>Construction Spending — Value of Construction Put in Place (2024 annual).</em> <a href="https://www.census.gov/construction/c30/c30index.html" target="_blank" rel="noopener">census.gov/construction/c30</a></li>
+      <li>Levelset (a Procore company). <em>2022 Construction Cash Flow &amp; Payment Report.</em> <a href="https://www.levelset.com/news/construction-cash-flow-payment-report-2022/" target="_blank" rel="noopener">levelset.com</a></li>
+    </ol>
+  </section>
 
   <section class="cta-section">
     <h2>Score your next bid before you pull the plans</h2>
