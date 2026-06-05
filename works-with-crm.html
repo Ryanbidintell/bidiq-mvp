@@ -50,6 +50,47 @@
     ]
   }
   </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "BidIntell",
+    "url": "https://bidintell.ai",
+    "logo": "https://bidintell.ai/logo.png",
+    "description": "BidIntell provides bid intelligence software for subcontractors, tracking GC payment behavior, RFI frequency, and win rates to improve bidding decisions.",
+    "sameAs": [
+      "https://www.linkedin.com/company/bidintell"
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "sales",
+      "url": "https://bidintell.ai/contact/"
+    }
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Bid Intelligence to Pair with Your CRM",
+    "author": {
+      "@type": "Person",
+      "name": "Ryan Elder",
+      "jobTitle": "Co-founder",
+      "url": "https://bidintell.ai/about/",
+      "sameAs": "https://www.linkedin.com/in/ryan-elder-bidintell"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "BidIntell",
+      "url": "https://bidintell.ai"
+    },
+    "datePublished": "2025-01-01",
+    "dateModified": "2026-05-20"
+  }
+  </script>
   <link rel="alternate" type="text/markdown" title="LLM-friendly site description" href="/llms.txt">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XGYJLV0E6G"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XGYJLV0E6G');</script>
@@ -455,6 +496,60 @@ blockquote.callout {
 .sources a { color: var(--fog); text-decoration: underline; text-underline-offset: 2px; }
 .sources a:hover { color: var(--white); }
 
+/* ===== HERO BYLINE ===== */
+.hero-byline {
+  font-size: 0.85rem;
+  color: var(--slate-light);
+  margin-top: 18px;
+  position: relative;
+}
+.hero-byline a {
+  color: var(--fog);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.2s;
+}
+.hero-byline a:hover { color: var(--white); }
+
+/* ===== AUTHOR BIO ===== */
+.author-bio {
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  margin-top: 48px;
+}
+.author-bio-inner { max-width: 720px; }
+.author-bio-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: block;
+}
+.author-bio-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 10px;
+}
+.author-bio-name a {
+  color: var(--white);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.2s;
+}
+.author-bio-name a:hover { color: var(--accent); }
+.author-bio-text {
+  font-size: 0.9rem;
+  color: var(--fog);
+  line-height: 1.7;
+  margin: 0;
+}
+
 /* ===== CTA SECTION ===== */
 .cta-section {
   padding: 56px 48px;
@@ -588,6 +683,7 @@ blockquote.callout {
     <p class="eyebrow">Workflow Guide</p>
     <h1>Bid Intelligence to Pair with Your CRM</h1>
     <p class="hero-sub">Your CRM tracks contacts and deals. BidIntell tracks which GCs are actually worth bidding for — based on your real bid history, not just their phone number.</p>
+    <p class="hero-byline">Written by <a href="https://www.linkedin.com/in/ryan-elder-bidintell" target="_blank" rel="noopener">Ryan Elder</a>, Co-founder at BidIntell</p>
   </div>
 </section>
 
@@ -761,6 +857,14 @@ blockquote.callout {
       <li>Levelset (a Procore company). <em>2022 Construction Cash Flow &amp; Payment Report.</em> <a href="https://www.levelset.com/news/construction-cash-flow-payment-report-2022/" target="_blank" rel="noopener">levelset.com</a></li>
       <li>U.S. Census Bureau. <em>Construction Spending — Value of Construction Put in Place (2024 annual).</em> <a href="https://www.census.gov/construction/c30/c30index.html" target="_blank" rel="noopener">census.gov/construction/c30</a></li>
     </ol>
+  </section>
+
+  <section class="author-bio" aria-label="About the author">
+    <div class="author-bio-inner">
+      <p class="author-bio-label">About the Author</p>
+      <p class="author-bio-name"><a href="https://www.linkedin.com/in/ryan-elder-bidintell" target="_blank" rel="noopener">Ryan Elder</a> — Co-founder, BidIntell</p>
+      <p class="author-bio-text">Ryan has spent years working with specialty subcontractors and general contractors across the commercial construction market, studying how estimating decisions get made and where bid intelligence breaks down. Before founding BidIntell, he worked inside construction businesses grappling with exactly the GC relationship data problem this software solves. He built BidIntell to give subcontractors the institutional knowledge tool that experienced estimators carry in their heads — captured systematically, tied to real bid events and outcomes.</p>
+    </div>
   </section>
 
   <section class="cta-section">
