@@ -25,12 +25,13 @@ slug: track-bid-outcomes
 - [How BidIntell Automates the Outcome Tracking Loop](#how-bidintell-automates-the-outcome-tracking-loop)
 - [What to Do With Your Outcome Data Right Now](#what-to-do-with-your-outcome-data-right-now)
 - [FAQs](#faqs)
+- [Sources](#sources)
 
 ---
 
 Most commercial subs track bids the same way: a spreadsheet someone updates when they remember to, a folder of PDFs named "Final_v3," and a rough sense that the win rate is somewhere around 20 percent. That's not a database. That's a guess.
 
-If you're a mechanical, electrical, or plumbing sub receiving 20 to 40 bid invites a month, the gap between a real outcome database and a rough guess is worth real money. Win rates on competitively bid commercial work are commonly cited at roughly 1 in 5 — though the real number varies widely by trade, market, and bid type. If you don't know your actual number, you can't improve it — and you can't protect your estimating hours from the bids you were never going to win anyway.
+If you're a mechanical, electrical, or plumbing sub receiving 20 to 40 bid invites a month, the gap between a real outcome database and a rough guess is worth real money. U.S. construction put in place topped $2.15 trillion in 2024 ([U.S. Census Bureau](https://www.census.gov/construction/c30/c30index.html)), and subcontractors compete for it one bid at a time. Win rates on competitively bid commercial work are commonly cited at roughly 1 in 5 — though the real number varies widely by trade, market, and bid type. If you don't know your actual number, you can't improve it — and you can't protect your estimating hours from the bids you were never going to win anyway.
 
 Here's exactly how to build a bid outcome tracking system that holds up, what data to capture, and how to use it to sharpen your go/no-go decisions over time.
 
@@ -114,7 +115,7 @@ Which GCs do you win with consistently? Which ones use you as a price check and 
 
 ### Ghost Rate by Client
 
-A GC who awards 70 percent of bids and communicates outcomes is worth more of your time than one who collects eight bids and goes silent. Ghost rate by client is a metric most subs never calculate because they don't track Ghosted as a distinct outcome. Start tracking it. It will change how you prioritize.
+A GC who awards 70 percent of bids and communicates outcomes is worth more of your time than one who collects eight bids and goes silent. Client behavior is a real cost signal — 88 percent of construction firms report trouble getting paid on time ([Levelset / Procore 2022 Construction Cash Flow & Payment Report](https://www.levelset.com/news/construction-cash-flow-payment-report-2022/)) — so how a GC behaves, whether they respond, award, and pay, tells you where your estimating hours are safe. Ghost rate by client is a metric most subs never calculate because they don't track Ghosted as a distinct outcome. Start tracking it. It will change how you prioritize.
 
 ### Average Bid Cost vs. Win Rate by Category
 
@@ -184,3 +185,10 @@ Yes. A well-structured spreadsheet with consistent outcome definitions and weekl
 
 **What should I do when a GC never responds to a submitted bid?**
 Record it as Ghosted, not Lost. Ghosted is a distinct outcome because it reflects client behavior, not just a lost competition. A GC with a high ghost rate over time is a signal — price more defensively, reduce your estimating investment, or deprioritize their invites entirely.
+
+---
+
+## Sources
+
+1. U.S. Census Bureau. *Construction Spending — Value of Construction Put in Place (2024 annual).* [census.gov/construction/c30](https://www.census.gov/construction/c30/c30index.html)
+2. Levelset (a Procore company). *2022 Construction Cash Flow & Payment Report.* [levelset.com](https://www.levelset.com/news/construction-cash-flow-payment-report-2022/)
