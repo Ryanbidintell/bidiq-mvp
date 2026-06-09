@@ -16553,10 +16553,18 @@ Respond now:`;
                 if ((type === 'won' || type === 'lost') && bidderCount > 0) {
                     const p = allProjectsCache.find(x => x.id === id);
                     if (p && p.gcs && p.gcs.length > 0) {
+                        // Office/metro disambiguator: keeps Turner-KC separate from Turner-Boston.
+                        // gc_key (normalized company) enables company-wide rollup; gc_key+gc_metro = office-level.
+                        const gcMetro = p.marketMetroArea
+                            || (p.extracted?.project_city && p.extracted?.project_state
+                                ? `${p.extracted.project_city}, ${p.extracted.project_state}`
+                                : null);
                         for (const gc of p.gcs) {
                             await supabaseClient.from('gc_competition_density').insert({
                                 user_id: currentUser.id,
                                 gc_name: gc.name,
+                                gc_key: normalizeCompanyName(gc.name) || null,
+                                gc_metro: gcMetro,
                                 building_type: p.extracted?.building_type || null,
                                 bidder_count: bidderCount,
                                 outcome: type,
