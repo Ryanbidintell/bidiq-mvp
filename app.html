@@ -9596,6 +9596,33 @@ IMPORTANT RULES:
             };
         }
 
+        // Resolve (or create) the canonical gc_master office id for a GC + metro.
+        // Cross-user registry: a company row (metro_key='') + an office child row
+        // (metro_key=<metro>, parent_id=company). Idempotent (ON CONFLICT DO NOTHING
+        // then re-select) and best-effort — never throws, returns null on any failure.
+        async function resolveGcOffice(gcName, metro) {
+            const key = normalizeCompanyName(gcName);
+            if (!key || !supabaseClient || !currentUser) return null;
+            const metroKey = (metro || '').trim();
+            const ensureRow = async (mKey, mArea, parentId, level) => {
+                await supabaseClient.from('gc_master').upsert({
+                    gc_key: key, metro_key: mKey, name: gcName, metro_area: mArea,
+                    parent_id: parentId, entity_level: level, created_by: currentUser.id
+                }, { onConflict: 'gc_key,metro_key', ignoreDuplicates: true });
+                const { data } = await supabaseClient.from('gc_master')
+                    .select('id').eq('gc_key', key).eq('metro_key', mKey).maybeSingle();
+                return data?.id || null;
+            };
+            try {
+                const companyId = await ensureRow('', null, null, 'company');
+                if (!metroKey) return companyId;
+                return await ensureRow(metroKey, metro, companyId, 'office');
+            } catch (e) {
+                console.warn('resolveGcOffice failed (non-fatal):', e?.message || e);
+                return null;
+            }
+        }
+
         // Find if a similar client already exists (fuzzy match)
         function findSimilarGC(newName, existingClients) {
             const normalizedNew = normalizeCompanyName(newName);
@@ -16653,11 +16680,15 @@ Respond now:`;
                                 : ((learned && learned.confidence === 'high')
                                     ? learned.office
                                     : (projectMetro || (learned ? learned.office : null)));
+                            // Link to the canonical gc_master office (best-effort, cross-user).
+                            let gcMasterOfficeId = null;
+                            try { gcMasterOfficeId = await resolveGcOffice(gc.name, gcMetro); } catch (e) {}
                             await supabaseClient.from('gc_competition_density').insert({
                                 user_id: currentUser.id,
                                 gc_name: gc.name,
                                 gc_key: normalizeCompanyName(gc.name) || null,
                                 gc_metro: gcMetro,
+                                gc_master_office_id: gcMasterOfficeId,
                                 building_type: p.extracted?.building_type || null,
                                 bidder_count: bidderCount,
                                 outcome: type,

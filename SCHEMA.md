@@ -343,12 +343,37 @@ ON projects FOR ALL USING (user_id = auth.uid());
 | `project_id` | uuid | YES | null | FK → projects(id) |
 | `gc_key` | text | YES | null | Normalized company name (normalizeCompanyName). `GROUP BY gc_key` = company-wide rollup. (migration 20260609_gc_identity_keys) |
 | `gc_metro` | text | YES | null | Office/metro disambiguator, defaulted to the user's learned office for that GC. `GROUP BY gc_key, gc_metro` = office-level (Turner-KC vs Turner-Boston). |
+| `gc_master_office_id` | uuid | YES | null | FK → gc_master(id) — canonical cross-user office (best-effort, stamped via resolveGcOffice). (migration 20260609_gc_master_hierarchy) |
 
 ### RLS Policy
 ```sql
 CREATE POLICY "Users can manage their own competition data"
 ON gc_competition_density FOR ALL USING (user_id = auth.uid());
 ```
+
+---
+
+## 📋 Table: `gc_master`
+
+**Purpose:** Cross-user canonical GC registry with a company → office hierarchy. Built 2026-06-09 (the earlier `20260203_gc_normalization.sql` was never applied). Self-populated at outcome time via `resolveGcOffice()`.
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `id` | uuid | NO | gen_random_uuid() | Primary key |
+| `gc_key` | text | NO | — | Normalized company name (`normalizeCompanyName`) — the match key |
+| `metro_key` | text | NO | '' | `''` = company-level row; else the office metro |
+| `name` | text | NO | — | Display company name |
+| `metro_area` | text | YES | null | Display metro (null for company rows) |
+| `parent_id` | uuid | YES | null | FK → gc_master(id); set on office rows → their company row |
+| `entity_level` | text | NO | 'company' | `company` \| `office` |
+| `aliases` | text[] | YES | {} | Known name variants (for future fuzzy merge) |
+| `created_by` | uuid | YES | null | FK → auth.users(id) |
+| `approved` | boolean | YES | true | Admin-curation flag (no gate yet) |
+
+- **Unique:** `(gc_key, metro_key)` — idempotent client upserts (`onConflict`, ignoreDuplicates).
+- **RLS:** authenticated read-all + insert-own (no UPDATE/DELETE for regular users).
+- **Aggregation:** office-level = `gc_master.id`; company-wide = `COALESCE(parent_id, id)`.
+- ⚠️ Exact-key matching only. Fuzzy cross-user alias merging + admin review queue are a later layer (the `gc_review_queue` table from the 2026-02 migration is also NOT deployed).
 
 ---
 
@@ -586,6 +611,7 @@ SELECT
 | Mar 11, 2026 | 2.1 | Added plan_rooms text[] to user_settings. Added oauth_connections table for 3rd-party OAuth tokens (BC). |
 | Apr 10, 2026 | 2.2 | Added outcome_nudge_count (int, default 0) + last_nudge_sent_at (timestamptz) to projects. Added outcome_reminder_days (int, default 21) to user_settings. (migration 009_outcome_nudge.sql) |
 | Jun 9, 2026 | 2.3 | Added `company_context` jsonb to projects (per-bid frozen snapshot for time-series/Phase-B intel). Added `company_size` + `typical_project_size` text buckets to user_settings. Snapshot written by app.html `saveProject()` + inbound-email edge function. (migration 20260609_company_context_snapshot.sql) |
+| Jun 9, 2026 | 2.4 | GC office identity: added `gc_key` + `gc_metro` + `gc_master_office_id` to gc_competition_density; created `gc_master` canonical registry (company→office hierarchy). Office split (Turner-KC≠Boston) + COALESCE(parent_id,id) company rollup. (migrations 20260609_gc_identity_keys, 20260609_gc_master_hierarchy) |
 
 ---
 
