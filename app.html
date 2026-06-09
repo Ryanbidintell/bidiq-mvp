@@ -1994,6 +1994,32 @@
                                 <input type="email" class="form-input" id="settingUserEmail" placeholder="you@company.com" required>
                                 <div class="form-hint">Used for notifications and support communications</div>
                             </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Company Size</label>
+                                    <select class="form-select" id="settingCompanySize">
+                                        <option value="">Prefer not to say</option>
+                                        <option value="1-10">1–10 employees</option>
+                                        <option value="11-25">11–25 employees</option>
+                                        <option value="26-50">26–50 employees</option>
+                                        <option value="51-100">51–100 employees</option>
+                                        <option value="100+">100+ employees</option>
+                                    </select>
+                                    <div class="form-hint">Helps BidIntell judge competition and fit. Never shared individually.</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Typical Project Size</label>
+                                    <select class="form-select" id="settingTypicalProjectSize">
+                                        <option value="">Prefer not to say</option>
+                                        <option value="&lt;250k">Under $250K</option>
+                                        <option value="250k-1m">$250K – $1M</option>
+                                        <option value="1m-5m">$1M – $5M</option>
+                                        <option value="5m-20m">$5M – $20M</option>
+                                        <option value="20m+">$20M+</option>
+                                    </select>
+                                    <div class="form-hint">The project range you usually bid.</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -4884,6 +4910,8 @@ ${fullText.substring(0, 40000)}`;
                     clientTypes: data.client_types || ['gcs'],
                     riskTolerance: data.risk_tolerance || 'medium',
                     capacity: data.capacity || 'steady',
+                    company_size: data.company_size || null,
+                    typical_project_size: data.typical_project_size || null,
                     ai_advisor_name: data.ai_advisor_name || 'Sam',
                     ai_advisor_tone: data.ai_advisor_tone || 'supportive',
                     weights: weights,
@@ -4942,6 +4970,8 @@ ${fullText.substring(0, 40000)}`;
                     client_types: s.client_types || [],
                     risk_tolerance: s.risk_tolerance || s.riskTolerance,
                     capacity: capacity,
+                    company_size: s.company_size || null,
+                    typical_project_size: s.typical_project_size || null,
                     ai_advisor_name: s.ai_advisor_name || 'Sam',
                     ai_advisor_tone: s.ai_advisor_tone || 'supportive',
                     weights: s.weights,
@@ -5208,6 +5238,7 @@ ${fullText.substring(0, 40000)}`;
                     // Intelligence Engine fields
                     validationStatus: p.validation_status || null,
                     intelligenceTags: p.intelligence_tags || {},
+                    companyContext: p.company_context || null,
                     aiAdvisorOutput: p.ai_advisor_output || null,
                     scoreExplanation: p.score_explanation || null,
                     // Layer 0 data
@@ -5288,6 +5319,31 @@ ${fullText.substring(0, 40000)}`;
 
                 const now = new Date();
 
+                // Snapshot the company's operating context at the moment of this bid.
+                // user_settings is overwrite-in-place, so this freezes what the company
+                // looked like when the bid was made — required for time-series analysis
+                // (capacity shifts, growth, etc.) that can't be reconstructed later.
+                let companyContext = null;
+                try {
+                    const s = await getSettings();
+                    companyContext = {
+                        captured_at: now.toISOString(),
+                        company_type: s.companyType || null,
+                        company_size: s.company_size || null,
+                        typical_project_size: s.typical_project_size || null,
+                        capacity: s.capacity || null,
+                        risk_tolerance: s.riskTolerance || null,
+                        trades: s.trades || [],
+                        preferred_csi_sections: s.preferred_csi_sections || [],
+                        search_radius: s.radius || null,
+                        target_margin: s.target_margin || null,
+                        office_city: s.city || null,
+                        office_state: s.state || null
+                    };
+                } catch (ctxErr) {
+                    console.warn('⚠️ Could not snapshot company context (non-fatal):', ctxErr);
+                }
+
                 // Deep sanitize all data to remove null characters before saving
                 const projectData = deepSanitize({
                     user_id: currentUser.id,
@@ -5312,6 +5368,7 @@ ${fullText.substring(0, 40000)}`;
                     // Intelligence Engine Data
                     validation_status: project.validationStatus || { complete: false, missing_fields: [] },
                     intelligence_tags: project.intelligenceTags || {},
+                    company_context: companyContext,
                     ai_advisor_output: project.aiAdvisorOutput || null,
                     // Time-series data for fast aggregation
                     created_year: now.getFullYear(),
@@ -17571,6 +17628,8 @@ Respond now:`;
             document.getElementById('settingLocationMatters').checked = s.locationMatters;
             document.getElementById('settingRiskTolerance').value = s.riskTolerance;
             document.getElementById('settingCapacity').value = s.capacity;
+            if (document.getElementById('settingCompanySize')) document.getElementById('settingCompanySize').value = s.company_size || '';
+            if (document.getElementById('settingTypicalProjectSize')) document.getElementById('settingTypicalProjectSize').value = s.typical_project_size || '';
             document.getElementById('settingDecisionTime').value = s.decisionTime;
             document.getElementById('settingDefaultStars').value = s.defaultStars;
             if (document.getElementById('settingTargetMargin')) document.getElementById('settingTargetMargin').value = s.target_margin || 15;
@@ -19204,6 +19263,8 @@ Respond now:`;
                 locationMatters: document.getElementById('settingLocationMatters').checked,
                 riskTolerance: document.getElementById('settingRiskTolerance').value,
                 capacity: document.getElementById('settingCapacity').value,
+                company_size: document.getElementById('settingCompanySize')?.value || null,
+                typical_project_size: document.getElementById('settingTypicalProjectSize')?.value || null,
                 decisionTime: parseInt(document.getElementById('settingDecisionTime').value) || 45,
                 defaultStars: parseInt(document.getElementById('settingDefaultStars').value),
                 target_margin: parseFloat(document.getElementById('settingTargetMargin')?.value) || 15,

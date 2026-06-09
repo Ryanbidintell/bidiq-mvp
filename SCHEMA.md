@@ -81,6 +81,8 @@ USING (user_id = auth.uid());
 | `client_types` | text[] | YES | ['gcs'] | Which client types to score GCs for |
 | `risk_tolerance` | text | NO | 'medium' | Contract risk sensitivity (low/medium/high) |
 | `capacity` | text | NO | 'steady' | Current capacity (slow/steady/aggressive) |
+| `company_size` | text | YES | null | Bucketed employee count: 1-10/11-25/26-50/51-100/100+ (null = not set) |
+| `typical_project_size` | text | YES | null | Bucketed project size: <250k/250k-1m/1m-5m/5m-20m/20m+ (null = not set) |
 | `ai_advisor_name` | text | NO | 'Sam' | AI advisor persona name |
 | `ai_advisor_tone` | text | NO | 'supportive' | AI advisor tone (supportive/direct/analytical) |
 | `weights` | jsonb | YES | null | Scoring weights `{location, keywords, gc, trade}` |
@@ -214,6 +216,7 @@ ON clients FOR ALL USING (user_id = auth.uid());
 | `contract_risks` | jsonb | YES | null | Detected contract risk clauses |
 | `validation_status` | jsonb | YES | null | Intelligence Engine completeness check |
 | `intelligence_tags` | jsonb | YES | {} | Layer 0 market intelligence tags |
+| `company_context` | jsonb | YES | null | Frozen snapshot of user's operating context at bid time (capacity, company_size, typical_project_size, risk_tolerance, trades, radius, margin, office city/state). Never updated after insert — time-series source of truth. |
 | `ai_advisor_output` | text | YES | null | AI advisor recommendation text |
 | `user_agreement` | text | YES | 'agree' | User's reaction to AI score (agree/disagree) |
 | `user_agreement_note` | text | YES | null | Free-text note if user disagreed |
@@ -579,6 +582,7 @@ SELECT
 | Mar 5, 2026 | 2.0 | Full audit and rewrite. Corrected: general_contractors→clients, keywords→user_keywords, added 5 missing tables (user_revenue, api_usage, beta_feedback, admin_events, admin_metrics_snapshots), updated user_settings to 30 columns, updated projects to 24 columns |
 | Mar 11, 2026 | 2.1 | Added plan_rooms text[] to user_settings. Added oauth_connections table for 3rd-party OAuth tokens (BC). |
 | Apr 10, 2026 | 2.2 | Added outcome_nudge_count (int, default 0) + last_nudge_sent_at (timestamptz) to projects. Added outcome_reminder_days (int, default 21) to user_settings. (migration 009_outcome_nudge.sql) |
+| Jun 9, 2026 | 2.3 | Added `company_context` jsonb to projects (per-bid frozen snapshot for time-series/Phase-B intel). Added `company_size` + `typical_project_size` text buckets to user_settings. Snapshot written by app.html `saveProject()` + inbound-email edge function. (migration 20260609_company_context_snapshot.sql) |
 
 ---
 

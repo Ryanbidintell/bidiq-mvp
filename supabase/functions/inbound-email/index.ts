@@ -620,7 +620,7 @@ async function processEmail(payload: Record<string, unknown>) {
     // 2. Look up user by alias
     const { data: userRow } = await supabase
         .from('user_settings')
-        .select('user_id, user_email, company_name, city, state, search_radius, location_matters, trades, preferred_csi_sections, risk_tolerance, default_stars, weights')
+        .select('user_id, user_email, company_name, city, state, search_radius, location_matters, trades, preferred_csi_sections, risk_tolerance, default_stars, weights, company_type, capacity, company_size, typical_project_size, target_margin')
         .eq('email_alias', alias)
         .maybeSingle();
 
@@ -860,6 +860,23 @@ async function processEmail(payload: Record<string, unknown>) {
                     email_subject:   Subject || null
                 },
                 scores,
+                // Snapshot company operating context at bid time (mirrors app.html saveProject).
+                // Frozen for time-series analysis — user_settings is overwrite-in-place.
+                company_context: {
+                    captured_at:          now.toISOString(),
+                    company_type:         (userRow.company_type as string) || null,
+                    company_size:         (userRow.company_size as string) || null,
+                    typical_project_size: (userRow.typical_project_size as string) || null,
+                    capacity:             (userRow.capacity as string) || null,
+                    risk_tolerance:       (userRow.risk_tolerance as string) || null,
+                    trades:               (userRow.trades as string[]) || [],
+                    preferred_csi_sections: (userRow.preferred_csi_sections as string[]) || [],
+                    search_radius:        (userRow.search_radius as number) ?? null,
+                    target_margin:        (userRow.target_margin as number) ?? null,
+                    office_city:          (userRow.city as string) || null,
+                    office_state:         (userRow.state as string) || null,
+                    source:               'email_forward'
+                },
                 gc_bids:       [gcBidEntry],
                 gcs:           extracted.gc_name ? [{ name: extracted.gc_name }] : [],
                 files:         qualifying.map(a => ({ name: a.Name || 'attachment.pdf', size: null })),
