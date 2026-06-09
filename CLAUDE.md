@@ -61,6 +61,12 @@ git commit -m "Before [change description]"
 3. Then: Propose changes and get approval
 4. Finally: Generate migration, don't run it automatically
 
+**⚠️ MIGRATION WORKFLOW — read before touching migrations:**
+- **Apply migrations via the Supabase MCP `apply_migration` tool, or the SQL Editor.** MCP `apply_migration` records the migration in the tracking table; SQL Editor does not.
+- **DO NOT run `supabase db push` / `supabase migration up`.** The migration tracking table (`schema_migrations`) is intentionally **incomplete** — the ~50 Feb–May 2026 migrations were applied manually via the SQL Editor and were never recorded. The CLI would try to **replay all of them**, and some historical files conflict with the current schema (e.g. the deleted `20260203_gc_normalization.sql` would recreate a now-wrong `gc_master`).
+- Migration files are idempotent house style: `ADD COLUMN IF NOT EXISTS`, NULL-safe `CHECK`, constraints/policies guarded by `DO $$ ... IF NOT EXISTS ... $$`. Apply the DDL first, **then** push code that references the new column (else inserts fail in prod).
+- Only reconcile the tracking table (`migration repair`) if you adopt the CLI for a team/staging setup — not needed for solo + single prod DB.
+
 ---
 
 ### 4. TESTING BEFORE DEPLOYMENT
