@@ -341,6 +341,8 @@ ON projects FOR ALL USING (user_id = auth.uid());
 | `bidder_count` | integer | NO | — | Number of bidders on that project |
 | `outcome` | text | NO | — | won / lost |
 | `project_id` | uuid | YES | null | FK → projects(id) |
+| `gc_key` | text | YES | null | Normalized company name (normalizeCompanyName). `GROUP BY gc_key` = company-wide rollup. (migration 20260609_gc_identity_keys) |
+| `gc_metro` | text | YES | null | Office/metro disambiguator, defaulted to the user's learned office for that GC. `GROUP BY gc_key, gc_metro` = office-level (Turner-KC vs Turner-Boston). |
 
 ### RLS Policy
 ```sql
