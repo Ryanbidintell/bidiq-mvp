@@ -19297,6 +19297,18 @@ Respond now:`;
 
             try {
                 await saveSettingsStorage(s);
+                // Capacity is overwrite-in-place; log each change to admin_events so the
+                // shift over time is preserved (feeds the Capacity Pressure Index / Phase-B
+                // workload pulse). Fire-and-forget — never block the save.
+                if (s.capacity !== currentSettings.capacity) {
+                    try {
+                        supabaseClient.from('admin_events').insert({
+                            event_type: 'capacity_changed',
+                            user_id: currentUser.id,
+                            event_data: { from: currentSettings.capacity || null, to: s.capacity, source: 'settings' }
+                        });
+                    } catch (e) {}
+                }
                 await updateCapacity();
                 gtag('event', 'settings_updated');
                 // Reload settings from database to confirm they were saved

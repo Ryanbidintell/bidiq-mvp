@@ -476,6 +476,7 @@ ON oauth_connections FOR ALL USING (user_id = auth.uid());
 **Known `event_type` values:**
 - `first_bid` — User analyzed their first bid
 - `outcome_recorded` — User recorded a win/loss/ghost outcome
+- `capacity_changed` — User changed their capacity in Settings. `event_data`: `{ from, to, source }`. Append-only time series of capacity shifts (capacity itself is overwrite-in-place on user_settings) — feeds Phase-B workload/capacity-pressure analysis.
 - `roi_lead` — ROI calculator lead (written by notify.js)
 - `cancellation` / `subscription_created` / `welcome_email_step_1` / `trial_ending_email` — Stripe lifecycle (stripe-webhook.js)
 - `email_forward_received` — Inbound email processed (Supabase edge function `inbound-email`; the old Netlify `inbound-email-background.js` was decommissioned 2026-06-02)
