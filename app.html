@@ -15978,6 +15978,37 @@ Respond now:`;
             const prefillAmount = bidDetails?.amount || '';
             const prefillMargin = bidDetails?.margin || '';
 
+            // Office confirm chip (which office of this GC issued the bid). Pre-filled from the
+            // user's learned office; editable via datalist; flagged for confirmation when uncertain.
+            const _primaryGc = project?.gcs?.[0]?.name || '';
+            const _learnedOffice = _primaryGc ? getLearnedOffice(_primaryGc) : null;
+            const _projMetro = project?.marketMetroArea
+                || (project?.extracted?.project_city && project?.extracted?.project_state
+                    ? `${project.extracted.project_city}, ${project.extracted.project_state}` : null);
+            let officeFieldHtml = '';
+            if (_primaryGc) {
+                const _opts = []; const _seen = new Set();
+                const _add = m => { if (m && !_seen.has(m)) { _seen.add(m); _opts.push(m); } };
+                _add(_learnedOffice?.office);
+                (_learnedOffice?.distribution || []).forEach(d => _add(d.metro));
+                _add(_projMetro);
+                const _selected = _learnedOffice?.office || _projMetro || '';
+                const _conf = _learnedOffice?.confidence;
+                const _needsConfirm = !_learnedOffice || _conf === 'low' || _conf === 'guess';
+                const _hint = !_learnedOffice ? 'No history yet — confirm which office issued this.'
+                    : _conf === 'high' ? `Defaulted from your history (${_learnedOffice.samples} bids with this office). Change it if this one was different.`
+                    : _conf === 'low' ? 'You bid more than one office of this GC — please confirm which one.'
+                    : _conf === 'guess' ? 'Guessed from your home area — confirm which office.'
+                    : 'Confirm which office issued this bid.';
+                officeFieldHtml = `
+                    <div class="form-group">
+                        <label class="form-label">${_escAttr(_primaryGc)} — which office? ${_needsConfirm ? '<span style="color:var(--danger);font-size:11px;">confirm</span>' : '<span style="color:var(--text-muted);font-size:11px;">auto from history</span>'}</label>
+                        <input type="text" class="form-input" id="outcomeGcOffice" list="gcOfficeOptions" value="${_escAttr(_selected)}" placeholder="e.g. Kansas City, MO">
+                        <datalist id="gcOfficeOptions">${_opts.map(o => `<option value="${_escAttr(o)}"></option>`).join('')}</datalist>
+                        <div class="form-hint">${_hint} Keeps this GC's offices separate (KC vs Boston) while still rolling up company-wide.</div>
+                    </div>`;
+            }
+
             if (type === 'won') {
                 html = `
                     <div class="form-group">
@@ -16032,6 +16063,7 @@ Respond now:`;
                         <input type="number" class="form-input" id="outcomeBidderCount" min="1" max="50" placeholder="e.g. 4">
                         <div class="form-hint">Including yours. This trains AI to predict competition on future bids.</div>
                     </div>
+                    ${officeFieldHtml}
                     <div class="form-group">
                         <label class="form-label">Hours spent estimating (optional)</label>
                         <input type="number" class="form-input" id="outcomeHoursSpent" min="0.5" max="40" step="0.5" placeholder="e.g. 3.5">
@@ -16083,6 +16115,7 @@ Respond now:`;
                         <input type="number" class="form-input" id="outcomeBidderCount" min="1" max="50" placeholder="e.g. 4">
                         <div class="form-hint">Including yours. This trains AI to predict competition on future bids.</div>
                     </div>
+                    ${officeFieldHtml}
                     <div class="form-group">
                         <label class="form-label">Hours spent estimating (optional)</label>
                         <input type="number" class="form-input" id="outcomeHoursSpent" min="0.5" max="40" step="0.5" placeholder="e.g. 3.5">
@@ -16607,15 +16640,19 @@ Respond now:`;
                             || (p.extracted?.project_city && p.extracted?.project_state
                                 ? `${p.extracted.project_city}, ${p.extracted.project_state}`
                                 : null);
+                        // The office the user confirmed in the modal (applies to the primary GC).
+                        const officeOverride = (document.getElementById('outcomeGcOffice')?.value || '').trim();
+                        const primaryGcName = p.gcs[0]?.name;
                         for (const gc of p.gcs) {
-                            // Default to the office this user usually bids for this GC (their
-                            // history is a better office signal than where this one job sits —
-                            // a KC sub's Topeka job still belongs to Turner-KC). Fall back to
-                            // project metro when there's no confident learned office.
+                            // Priority: user's explicit confirmation (primary GC) > confident
+                            // learned office > project metro. So a KC sub's out-of-town job still
+                            // books under their usual Turner office, and a correction always wins.
                             const learned = getLearnedOffice(gc.name);
-                            const gcMetro = (learned && learned.confidence === 'high')
-                                ? learned.office
-                                : (projectMetro || (learned ? learned.office : null));
+                            const gcMetro = (officeOverride && gc.name === primaryGcName)
+                                ? officeOverride
+                                : ((learned && learned.confidence === 'high')
+                                    ? learned.office
+                                    : (projectMetro || (learned ? learned.office : null)));
                             await supabaseClient.from('gc_competition_density').insert({
                                 user_id: currentUser.id,
                                 gc_name: gc.name,
