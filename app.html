@@ -9548,6 +9548,54 @@ IMPORTANT RULES:
             return normalized;
         }
 
+        // Learn which local office of a GC this user typically bids, from their own
+        // bid history (in-memory allProjectsCache — works retroactively, no DB call).
+        // Returns the dominant metro for this company + a confidence signal so callers
+        // can decide whether to default silently or ask the user to confirm.
+        //   confidence: 'high'  -> dominant office (>=3 bids, >=70% share) — default silently
+        //               'medium'-> single known office, thin history
+        //               'low'   -> genuinely split between offices — should confirm
+        //               'guess' -> no history; fell back to user's home metro
+        function getLearnedOffice(gcName) {
+            const key = normalizeCompanyName(gcName);
+            if (!key) return null;
+            const counts = {}; // metro -> { count, last }
+            for (const p of (allProjectsCache || [])) {
+                const matches = (p.gcs || []).some(g => normalizeCompanyName(g.name) === key);
+                if (!matches) continue;
+                const metro = p.marketMetroArea
+                    || (p.extracted?.project_city && p.extracted?.project_state
+                        ? `${p.extracted.project_city}, ${p.extracted.project_state}` : null);
+                if (!metro) continue;
+                if (!counts[metro]) counts[metro] = { count: 0, last: 0 };
+                counts[metro].count++;
+                const ts = new Date(p.createdAt || 0).getTime();
+                if (ts > counts[metro].last) counts[metro].last = ts;
+            }
+            const entries = Object.entries(counts)
+                .sort((a, b) => b[1].count - a[1].count || b[1].last - a[1].last);
+            if (entries.length === 0) {
+                const s = dataCache.settings;
+                const home = s && s.city && s.state ? `${s.city}, ${s.state}` : null;
+                return home ? { office: home, confidence: 'guess', source: 'home_metro', distribution: [] } : null;
+            }
+            const total = entries.reduce((sum, [, v]) => sum + v.count, 0);
+            const [topMetro, topVal] = entries[0];
+            const share = topVal.count / total;
+            let confidence;
+            if (topVal.count >= 3 && share >= 0.7) confidence = 'high';
+            else if (entries.length === 1) confidence = 'medium';
+            else confidence = 'low';
+            return {
+                office: topMetro,
+                confidence,
+                share,
+                samples: topVal.count,
+                source: 'history',
+                distribution: entries.map(([metro, v]) => ({ metro, count: v.count }))
+            };
+        }
+
         // Find if a similar client already exists (fuzzy match)
         function findSimilarGC(newName, existingClients) {
             const normalizedNew = normalizeCompanyName(newName);
@@ -16555,11 +16603,19 @@ Respond now:`;
                     if (p && p.gcs && p.gcs.length > 0) {
                         // Office/metro disambiguator: keeps Turner-KC separate from Turner-Boston.
                         // gc_key (normalized company) enables company-wide rollup; gc_key+gc_metro = office-level.
-                        const gcMetro = p.marketMetroArea
+                        const projectMetro = p.marketMetroArea
                             || (p.extracted?.project_city && p.extracted?.project_state
                                 ? `${p.extracted.project_city}, ${p.extracted.project_state}`
                                 : null);
                         for (const gc of p.gcs) {
+                            // Default to the office this user usually bids for this GC (their
+                            // history is a better office signal than where this one job sits —
+                            // a KC sub's Topeka job still belongs to Turner-KC). Fall back to
+                            // project metro when there's no confident learned office.
+                            const learned = getLearnedOffice(gc.name);
+                            const gcMetro = (learned && learned.confidence === 'high')
+                                ? learned.office
+                                : (projectMetro || (learned ? learned.office : null));
                             await supabaseClient.from('gc_competition_density').insert({
                                 user_id: currentUser.id,
                                 gc_name: gc.name,
