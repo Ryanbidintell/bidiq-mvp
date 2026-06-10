@@ -76,6 +76,33 @@ async function refreshAccessToken(refreshToken) {
 /**
  * Map a BuildingConnected opportunity to a BidIntell projects row.
  */
+// ── Import gate ───────────────────────────────────────────────────────────
+// By default, import only LIVE opportunities (still biddable). Without this, a
+// first BuildingConnected sync dumps the user's ENTIRE history (the "250 old
+// bids at once" problem) and buries the few bids they actually need to act on.
+// Live = not resolved (won/lost/declined/etc.) AND the bid due date hasn't passed.
+const BC_RESOLVED_STATES = new Set(['WON', 'LOST', 'DECLINED', 'NO_BID', 'ARCHIVED', 'EXPIRED', 'CANCELLED', 'CANCELED']);
+const BC_UNDATED_MAX_AGE_DAYS = 45;
+const BC_DUE_GRACE_MS = 24 * 60 * 60 * 1000; // keep bids due as recently as yesterday
+
+function isLiveOpportunity(opp) {
+    // Resolved bids are history, not decisions.
+    if (BC_RESOLVED_STATES.has(String(opp.outcome?.state || '').toUpperCase())) return false;
+    // Past-due bids are history.
+    if (opp.dueAt) {
+        const due = new Date(opp.dueAt);
+        if (!isNaN(due.getTime())) return due.getTime() >= Date.now() - BC_DUE_GRACE_MS;
+    }
+    // No usable due date — fall back to recency so ancient undated opps don't flood in.
+    if (opp.createdAt) {
+        const created = new Date(opp.createdAt);
+        if (!isNaN(created.getTime())) {
+            return (Date.now() - created.getTime()) <= BC_UNDATED_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+        }
+    }
+    return true; // no date signal at all (rare) — keep
+}
+
 function mapOpportunityToProject(opp, userId) {
     const location = opp.location || {};
     const gcName   = opp.client?.company?.name || null;
@@ -628,10 +655,18 @@ exports.handler = async function(event) {
     // Shared geocode cache — avoids re-geocoding the same city across many opportunities
     const geocodeCache = new Map();
 
+    // ── Apply the import gate (default: live bids only) ───────────────────────
+    // Stops the "entire history dumped at once" problem. Override with ?mode=all
+    // to import everything (the original behavior).
+    const importMode = String(event.queryStringParameters?.mode || 'live').toLowerCase();
+    const totalFetched = opportunities.length;
+    const workingSet = importMode === 'all' ? opportunities : opportunities.filter(isLiveOpportunity);
+    const gatedOut = totalFetched - workingSet.length;
+
     // ── Import into projects table ────────────────────────────────────────────
     let imported = 0, skipped = 0, errors = 0;
 
-    for (const opp of opportunities) {
+    for (const opp of workingSet) {
         if (!opp.id) { errors++; continue; }
 
         try {
@@ -693,17 +728,23 @@ exports.handler = async function(event) {
         .eq('user_id', userId)
         .eq('provider', 'buildingconnected');
 
+    const gateNote = (importMode !== 'all' && gatedOut > 0)
+        ? ` Skipped ${gatedOut} past-due or closed bid${gatedOut !== 1 ? 's' : ''} (live bids only).`
+        : '';
+
     const message = imported > 0
-        ? `Imported ${imported} new bid invitation${imported !== 1 ? 's' : ''} with scores.${skipped > 0 ? ` ${skipped} already synced.` : ''}`
+        ? `Imported ${imported} live bid invitation${imported !== 1 ? 's' : ''} with scores.${skipped > 0 ? ` ${skipped} already synced.` : ''}${gateNote}`
         : skipped > 0
-        ? `All ${skipped} invitations already synced — nothing new.`
-        : opportunities.length === 0
+        ? `All ${skipped} live invitations already synced — nothing new.${gateNote}`
+        : totalFetched === 0
         ? 'No bid invitations found in your BuildingConnected account.'
+        : gatedOut > 0
+        ? `No live bids to import — the ${gatedOut} found were past-due or closed. (Add ?mode=all to import history.)`
         : `Sync complete. ${errors > 0 ? errors + ' errors.' : ''}`;
 
     return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ success: true, total: opportunities.length, imported, skipped, errors, message })
+        body: JSON.stringify({ success: true, total: totalFetched, imported, skipped, errors, gated_out: gatedOut, mode: importMode, message })
     };
 };
