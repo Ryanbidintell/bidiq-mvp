@@ -563,6 +563,7 @@ The "exact 6-digit code" detection above was too strict — bid text rarely prin
 
 ### Brand Identity — Verified (Apr 2026)
 
+- **Product & company name:** **BidIntell** (both). "BidIQ" is ONLY the repo/folder name (`bidiq-mvp`) and legacy doc names — **never** use "BidIQ" in customer-facing copy, the site, emails, or positioning. The 0–100 score is the **BidIndex** (that name IS correct/customer-facing).
 - **Accent color:** Orange `#F26522` — NOT teal/cyan. Never describe it as teal.
 - **ICP:** Subcontractors · Distributors & suppliers · Manufacturers' reps (all three, not subs only)
 - **Annual pricing:** $470 / $950 / $1,720 per year (Save 20%). NOT $490/$990/$1790.
