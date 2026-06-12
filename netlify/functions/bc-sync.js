@@ -559,6 +559,15 @@ exports.handler = async function(event) {
     }
 
     // ── Fetch all BC opportunities (paginated) ────────────────────────────────
+    // env=test → hit Autodesk's BuildingConnected TEST environment (x-bc-mode: test),
+    // which returns predefined sample opportunities WITHOUT a Bid Board Pro subscription
+    // or company API enablement. Lets us demo/validate the full flow end-to-end (OAuth →
+    // import → scoring → dashboard) before a real customer turns on API access. Live data
+    // is unaffected — this only applies when the caller explicitly asks for ?env=test.
+    const bcEnv = String(event.queryStringParameters?.env || 'live').toLowerCase();
+    const fetchHeaders = { 'Authorization': `Bearer ${accessToken}` };
+    if (bcEnv === 'test') fetchHeaders['x-bc-mode'] = 'test';
+
     const opportunities = [];
     let cursorState = null;
     let page = 0;
@@ -575,7 +584,7 @@ exports.handler = async function(event) {
             let res;
             try {
                 res = await fetch(url.toString(), {
-                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                    headers: fetchHeaders,
                     signal: controller.signal
                 });
             } finally {
@@ -765,10 +774,12 @@ exports.handler = async function(event) {
         ? `No live bids to import — the ${gatedOut} found were past-due or closed. (Add ?mode=all to import history.)`
         : `Sync complete. ${errors > 0 ? errors + ' errors.' : ''}`;
 
+    const testNote = bcEnv === 'test' ? ' [Autodesk TEST data — not real bids]' : '';
+
     return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ success: true, total: totalFetched, imported, skipped, errors, gated_out: gatedOut, mode: importMode, since: sinceLabel, message })
+        body: JSON.stringify({ success: true, total: totalFetched, imported, skipped, errors, gated_out: gatedOut, mode: importMode, env: bcEnv, since: sinceLabel, message: message + testNote })
     };
 };
 

@@ -19316,6 +19316,11 @@ Respond now:`;
                         <button type="button" class="btn btn-secondary bcSinceQuick" data-days="30" style="padding:5px 10px;font-size:12px;">Last 30 days</button>
                         <button type="button" class="btn btn-secondary bcSinceQuick" data-days="90" style="padding:5px 10px;font-size:12px;">Last 90 days</button>
                     </div>
+                    ${isAdmin() ? `
+                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:10px 12px;background:rgba(242,101,34,0.08);border:1px solid rgba(242,101,34,0.25);border-radius:8px;font-size:12px;color:var(--text-secondary,#667);cursor:pointer;">
+                        <input type="checkbox" id="bcTestEnv" style="width:15px;height:15px;cursor:pointer;">
+                        <span><strong>Use Autodesk test data</strong> (admin/demo only — pulls sample bids, no Bid Board Pro needed)</span>
+                    </label>` : ''}
                     <div style="display:flex;justify-content:flex-end;gap:8px;">
                         <button type="button" id="bcSyncCancel" class="btn btn-secondary" style="padding:8px 16px;font-size:13px;">Cancel</button>
                         <button type="button" id="bcSyncGo" class="btn btn-primary" style="padding:8px 16px;font-size:13px;">Import bids</button>
@@ -19334,8 +19339,9 @@ Respond now:`;
             });
             overlay.querySelector('#bcSyncGo').onclick = () => {
                 const since = overlay.querySelector('#bcSinceInput').value || null;
+                const useTest = !!overlay.querySelector('#bcTestEnv')?.checked;
                 close();
-                syncBC(since);
+                syncBC(since, useTest);
             };
         }
 
@@ -19343,8 +19349,9 @@ Respond now:`;
          * Call bc-sync Netlify function with user's session token.
          * Imports new BC opportunities into the Projects table.
          * @param {string|null} sinceDate - optional YYYY-MM-DD floor (received on/after)
+         * @param {boolean} useTest - admin/demo: pull Autodesk test-environment sample bids
          */
-        async function syncBC(sinceDate) {
+        async function syncBC(sinceDate, useTest) {
             const syncBtn   = document.getElementById('bcSyncBtn');
             const subtextEl = document.getElementById('bcConnectionSubtext');
 
@@ -19359,8 +19366,11 @@ Respond now:`;
                 if (syncBtn) { syncBtn.disabled = true; syncBtn.textContent = 'Syncing…'; }
                 if (subtextEl) subtextEl.textContent = 'Syncing with BuildingConnected…';
 
-                const syncUrl = '/.netlify/functions/bc-sync'
-                    + (sinceDate ? `?since=${encodeURIComponent(sinceDate)}` : '');
+                const _params = new URLSearchParams();
+                if (sinceDate) _params.set('since', sinceDate);
+                if (useTest)   _params.set('env', 'test');
+                const _qs = _params.toString();
+                const syncUrl = '/.netlify/functions/bc-sync' + (_qs ? `?${_qs}` : '');
                 const res = await fetch(syncUrl, {
                     method: 'POST',
                     headers: {
