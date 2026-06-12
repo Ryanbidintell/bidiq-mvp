@@ -700,6 +700,17 @@ const { sendAlert } = require('./alert');
 
 **Fix:** `scripts/check-app-syntax.js` now runs `node --check` on EVERY `netlify/functions/*.js` (not just app.html). A syntax error in any function fails the build. Run it anytime: `node scripts/check-app-syntax.js`. Test the alert system: `node scripts/test-alert.js` (25 assertions, fully mocked).
 
+### Serverless: ALWAYS `await` DB writes before returning (June 12, 2026)
+
+**Lesson:** In Netlify/Lambda functions, any I/O not awaited before the handler returns is **frozen/dropped** when the runtime suspends the container after the response. `notify.js` logged `roi_lead` to `admin_events` as fire-and-forget (`fetch(...).catch()` with no `await`) then immediately returned — so the row often never flushed. Combined with an env-var typo (`SUPABASE_SERVICE_ROLE_KEY` vs the actual `SUPABASE_SERVICE_KEY`), this is why `admin_events` had **zero** `roi_lead`/`signup` rows despite real activity for months.
+
+- **Rule:** `await` every Supabase/REST write in a serverless function before `return`. Wrap in try/catch so a logging failure still can't break the response, but don't skip the await.
+- **Env-var names:** every function uses `SUPABASE_SERVICE_KEY`. Accept `|| SUPABASE_SERVICE_ROLE_KEY` as a fallback; don't read only the `_ROLE_` name (it's unset in Netlify + .env).
+- **Browser context is exempt** — the `signup` event logged from app.html on `SIGNED_IN` is fine fire-and-forget; only serverless freezes.
+- Signup tracking now fires at **account creation** (auth hook), not onboarding completion, because most users stall before finishing onboarding. Funnel: `signup → onboarding_completed → first_bid`.
+
+**New files this session:** `AUTODESK_AECO_PARTNER_KIT.md` + `BIDINTELL_CONTEXT_FOR_DESKTOP.md` (repo root); `scripts/test-bc-gate.js`, `scripts/preview-roi-email.js`, `scripts/signup-e2e.js`. BC sync supports `?env=test` (admin demo, Autodesk test data) + `?since=YYYY-MM-DD` (date floor) on top of the live-bids gate.
+
 ---
 
 ## 🚫 ABSOLUTE PROHIBITIONS
