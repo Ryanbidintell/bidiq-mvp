@@ -37,6 +37,29 @@ Founder, BidIntell.ai
 
 ---
 
+## Tiffany Friesen reply — onboarding questions (final, as sent)
+
+**1. What does your technology do?**
+BidIntell (bidintell.ai) scores commercial construction bid documents 0–100 and recommends GO / REVIEW / PASS, so subcontractors, distributors, and manufacturers' reps focus estimating time on the bids they can actually win. The score is personalized to each company's trades, service area, and client history, and it sharpens as they log outcomes — giving each customer a private, growing picture of their own win patterns, client behavior, and project economics so they make smarter bidding decisions over time.
+
+**2. API integration or plugin?** API integration (cloud) — already built and deployed.
+
+**3. Which Autodesk platform?** BuildingConnected, via Autodesk Platform Services (3-legged OAuth + the v2 Opportunities API). Our APS app is registered as "BidIntell.ai".
+
+**4. Are you in the Autodesk Developer Network?** Not an ADN member yet. I do have an APS developer account with our app set up, and our BuildingConnected integration is already built on APS — so we're active on the platform. Ready to enroll in ADN when it's the right step for the entitlements.
+
+**5. Are you a startup?** Yes — early-stage, founder-led construction-tech, Kansas City area.
+
+**6. Do you offer sustainability workflows?** No — focused on bid qualification and estimating efficiency, not sustainability.
+
+**7. What sustainable outcomes do you enable?** None specific to sustainability (per #6); the value is helping subs avoid wasted estimating effort on low-fit work.
+
+**8. Do you plan to publish the integration for public use?** Yes — a publicly available BuildingConnected integration any subcontractor customer can connect, with a listing once we meet program requirements.
+
+> **Data-positioning note (important):** the marketplace-data / "understand the bidding marketplace" angle was deliberately CUT from the Autodesk-facing answers. Aggregating BuildingConnected customer data into a market-intelligence product is a data-governance red flag with the platform whose data we touch, and likely restricted by API terms. Customer-owned, benefit-to-them framing only. The data-moat vision stays in investor/internal materials, not partner intake.
+
+---
+
 ## Integration description (technical — for the partner team / App Store listing)
 
 **Name:** BidIntell — BuildingConnected bid scoring & qualification
