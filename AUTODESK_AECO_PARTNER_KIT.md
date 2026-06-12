@@ -100,4 +100,21 @@ Pre-revenue beta. Strongest current reference: **Summit Sealants** (active beta 
 - Don't let any of this block the immediate work: we can validate via `test` mode and concierge-onboard our first real BC user without waiting for partner approval.
 
 ---
+
+## Demo readiness (test mode — no Bid Board Pro needed)
+
+A `test`-environment toggle is wired into the BuildingConnected sync so you can demo the full flow live, on real UI, without a paid BC subscription or company API enablement. It uses Autodesk's documented `x-bc-mode: test` environment, which returns predefined sample opportunities.
+
+**To get demo-ready (≈2 min, do this before the Jeremy call):**
+1. App → **Settings → Integrations → BuildingConnected → Connect.** Sign in with your Autodesk ID (any ID works — no Bid Board Pro required). This replaces the old revoked connection.
+2. Click **Sync Now** → in the modal, check **"Use Autodesk test data (admin/demo only)"** → **Import bids.**
+3. Sample opportunities import and score → screen-share this flow with Jeremy.
+
+**Caveats / what to watch:**
+- Test mode is **admin-only** (gated to ryan@fsikc.com / ryan@bidintell.ai) — customers never see the checkbox. Live customer syncs are unaffected.
+- If the first try returns **0 or errors**, that tells us the test env requires the partner/entitlement step after all — which is itself a useful, specific thing to raise with Jeremy.
+- Sample bids carry an `[Autodesk TEST data — not real bids]` note in the result so it's never confused with live data.
+- This relies on Autodesk's test env behaving as documented — confirm it works once before relying on it in front of Jeremy.
+
+---
 *Pairs with [BIDINTELL_CONTEXT_FOR_DESKTOP.md]. Update when the partner status, tier, or referenceable-customer list changes.*
