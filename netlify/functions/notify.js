@@ -393,20 +393,28 @@ exports.handler = async function(event, context) {
             const sbUrl = process.env.SUPABASE_URL || 'https://szifhqmrddmdkgschkkw.supabase.co';
             const sbKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
             if (sbKey) {
-                fetch(`${sbUrl}/rest/v1/admin_events`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': sbKey,
-                        'Authorization': `Bearer ${sbKey}`,
-                        'Prefer': 'return=minimal'
-                    },
-                    body: JSON.stringify({
-                        event_type: 'roi_lead',
-                        user_id: null,
-                        event_data: { email: userEmail, bids, hours, winRate, avgValue, margin, hoursSaved, addlMargin }
-                    })
-                }).catch(err => console.warn('roi_lead event log failed:', err));
+                // MUST await: this is a serverless function, so any I/O not awaited before
+                // the handler returns is frozen/dropped by the Lambda runtime. The insert
+                // used to be fire-and-forget, so even with a valid key the row often never
+                // flushed. Wrapped so a logging failure still doesn't break the response.
+                try {
+                    await fetch(`${sbUrl}/rest/v1/admin_events`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': sbKey,
+                            'Authorization': `Bearer ${sbKey}`,
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify({
+                            event_type: 'roi_lead',
+                            user_id: null,
+                            event_data: { email: userEmail, bids, hours, winRate, avgValue, margin, hoursSaved, addlMargin }
+                        })
+                    });
+                } catch (err) {
+                    console.warn('roi_lead event log failed:', err);
+                }
             }
 
             return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
