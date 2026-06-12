@@ -409,7 +409,7 @@ exports.handler = async function(event, context) {
       <tr>
         <td style="background:#0B0F14;padding:22px 28px;border-radius:0 0 8px 8px;">
           <p style="margin:0 0 14px;font-size:13px;color:#7C8A9C;line-height:1.7;">These projections use a conservative model and the inputs you provided. Real results depend on your trade, market, and bid mix — and get more accurate the more you use BidIntell to track actual outcomes. We'd rather under-promise here than sell you a number.</p>
-          <p style="margin:0;font-size:14px;color:#CBD5E1;">— Ryan Elder<br><span style="color:#7C8A9C;">Founder, BidIntell · 23 years in commercial construction</span><br><span style="color:#7C8A9C;font-size:13px;">Reply any time — it comes straight to me.</span></p>
+          <p style="margin:0;font-size:14px;color:#CBD5E1;">— Ryan Elder<br><span style="color:#7C8A9C;">Founder, BidIntell.ai</span><br><span style="color:#7C8A9C;font-size:13px;">Reply any time — it comes straight to me.</span></p>
         </td>
       </tr>
 
