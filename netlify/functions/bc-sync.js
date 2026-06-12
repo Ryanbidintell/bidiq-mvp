@@ -689,9 +689,11 @@ exports.handler = async function(event) {
         if (!isNaN(d.getTime())) { sinceMs = d.getTime(); sinceLabel = sinceParam; }
     }
 
+    // Test env returns sample bids with arbitrary dates — bypass the gate + date floor
+    // so a demo reliably shows data instead of filtering it all out.
     const totalFetched = opportunities.length;
-    let workingSet = importMode === 'all' ? opportunities : opportunities.filter(isLiveOpportunity);
-    if (sinceMs !== null) workingSet = workingSet.filter(opp => oppReceivedMs(opp) >= sinceMs);
+    let workingSet = (importMode === 'all' || bcEnv === 'test') ? opportunities : opportunities.filter(isLiveOpportunity);
+    if (sinceMs !== null && bcEnv !== 'test') workingSet = workingSet.filter(opp => oppReceivedMs(opp) >= sinceMs);
     const gatedOut = totalFetched - workingSet.length;
 
     // ── Import into projects table ────────────────────────────────────────────
