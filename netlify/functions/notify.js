@@ -386,8 +386,12 @@ exports.handler = async function(event, context) {
             });
 
             // Log to admin_events for founder dashboard (fire-and-forget)
+            // NOTE: every other function uses SUPABASE_SERVICE_KEY (that's the name set in
+            // Netlify). This block used to read only SUPABASE_SERVICE_ROLE_KEY, which is
+            // unset — so the insert was silently skipped and roi_lead never landed. Accept
+            // both names so it works regardless of which is configured.
             const sbUrl = process.env.SUPABASE_URL || 'https://szifhqmrddmdkgschkkw.supabase.co';
-            const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+            const sbKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
             if (sbKey) {
                 fetch(`${sbUrl}/rest/v1/admin_events`, {
                     method: 'POST',

@@ -103,6 +103,16 @@ function isLiveOpportunity(opp) {
     return true; // no date signal at all (rare) — keep
 }
 
+// The date the user filters on when they pick a "since" cutoff: when the invitation
+// landed in BC (createdAt), falling back to its due date. Opportunities with no usable
+// date are never dropped by the since floor (they're still caught by the live gate).
+function oppReceivedMs(opp) {
+    for (const v of [opp.createdAt, opp.dueAt]) {
+        if (v) { const d = new Date(v); if (!isNaN(d.getTime())) return d.getTime(); }
+    }
+    return Infinity;
+}
+
 function mapOpportunityToProject(opp, userId) {
     const location = opp.location || {};
     const gcName   = opp.client?.company?.name || null;
@@ -659,8 +669,20 @@ exports.handler = async function(event) {
     // Stops the "entire history dumped at once" problem. Override with ?mode=all
     // to import everything (the original behavior).
     const importMode = String(event.queryStringParameters?.mode || 'live').toLowerCase();
+
+    // Optional user-supplied "since" floor (YYYY-MM-DD): only import bids received on or
+    // after this date. Lets the user manage volume on first connect ("just the last 2 weeks")
+    // instead of taking every live bid at once. Applied on top of the live gate.
+    let sinceMs = null, sinceLabel = null;
+    const sinceParam = event.queryStringParameters?.since || null;
+    if (sinceParam) {
+        const d = new Date(sinceParam);
+        if (!isNaN(d.getTime())) { sinceMs = d.getTime(); sinceLabel = sinceParam; }
+    }
+
     const totalFetched = opportunities.length;
-    const workingSet = importMode === 'all' ? opportunities : opportunities.filter(isLiveOpportunity);
+    let workingSet = importMode === 'all' ? opportunities : opportunities.filter(isLiveOpportunity);
+    if (sinceMs !== null) workingSet = workingSet.filter(opp => oppReceivedMs(opp) >= sinceMs);
     const gatedOut = totalFetched - workingSet.length;
 
     // ── Import into projects table ────────────────────────────────────────────
@@ -728,8 +750,9 @@ exports.handler = async function(event) {
         .eq('user_id', userId)
         .eq('provider', 'buildingconnected');
 
+    const sinceNote = sinceLabel ? ` (bids received on/after ${sinceLabel})` : '';
     const gateNote = (importMode !== 'all' && gatedOut > 0)
-        ? ` Skipped ${gatedOut} past-due or closed bid${gatedOut !== 1 ? 's' : ''} (live bids only).`
+        ? ` Skipped ${gatedOut} past-due, closed${sinceLabel ? ', or older' : ''} bid${gatedOut !== 1 ? 's' : ''}${sinceLabel ? sinceNote : ' (live bids only)'}.`
         : '';
 
     const message = imported > 0
@@ -745,6 +768,10 @@ exports.handler = async function(event) {
     return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ success: true, total: totalFetched, imported, skipped, errors, gated_out: gatedOut, mode: importMode, message })
+        body: JSON.stringify({ success: true, total: totalFetched, imported, skipped, errors, gated_out: gatedOut, mode: importMode, since: sinceLabel, message })
     };
 };
+
+// Exported for unit testing the import gate (does not affect the handler).
+exports.isLiveOpportunity = isLiveOpportunity;
+exports.oppReceivedMs = oppReceivedMs;

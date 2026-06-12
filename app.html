@@ -3604,7 +3604,25 @@
                         // Fire sign_up GA4 event if account was created in the last 60s
                         if (event === 'SIGNED_IN' && currentUser.created_at) {
                             const ageMs = Date.now() - new Date(currentUser.created_at).getTime();
-                            if (ageMs < 60000) gtag('event', 'sign_up', { method: 'magic_link' });
+                            if (ageMs < 60000) {
+                                gtag('event', 'sign_up', { method: 'magic_link' });
+                                // Log signup to admin_events at ACCOUNT CREATION — not at onboarding
+                                // completion. Most users stall before finishing onboarding, so the old
+                                // completion-time logging missed nearly every real signup and left the
+                                // founder dashboard blind. localStorage de-dupes the rare double
+                                // SIGNED_IN inside the 60s window. Fire-and-forget.
+                                try {
+                                    const _signupKey = 'bidintell_signup_logged_' + currentUser.id;
+                                    if (!localStorage.getItem(_signupKey)) {
+                                        localStorage.setItem(_signupKey, '1');
+                                        supabaseClient.from('admin_events').insert({
+                                            event_type: 'signup',
+                                            user_id: currentUser.id,
+                                            event_data: { method: 'magic_link', email: currentUser.email, created_at: currentUser.created_at }
+                                        }).then(({ error }) => { if (error) console.warn('signup event:', error.message); });
+                                    }
+                                } catch (e) { console.warn('signup event logging failed:', e); }
+                            }
                         }
                         showApp();
                     }
@@ -7503,10 +7521,12 @@ ${fullText.substring(0, 40000)}`;
 
                 console.log('🎉 Onboarding complete!');
 
-                // Log signup event (fire and forget - don't block user flow)
+                // Log onboarding completion (fire and forget - don't block user flow).
+                // Signup itself is now logged at account creation (see auth state handler),
+                // so this is the second funnel step: signup → onboarding_completed → first_bid.
                 try {
                     supabaseClient.from('admin_events').insert({
-                        event_type: 'signup',
+                        event_type: 'onboarding_completed',
                         user_id: currentUser.id,
                         event_data: {
                             source: onboardingData.acquisition_source || 'unknown',
@@ -19252,7 +19272,7 @@ Respond now:`;
                                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                                 Connected
                             </span>
-                            <button id="bcSyncBtn" onclick="syncBC()" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;">Sync Now</button>
+                            <button id="bcSyncBtn" onclick="promptBCSync()" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;">Sync Now</button>
                             <button onclick="disconnectBC()" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">Disconnect</button>
                         </div>
                     `;
@@ -19269,10 +19289,62 @@ Respond now:`;
         }
 
         /**
+         * Ask the user how far back to import before syncing BuildingConnected.
+         * Keeps the first sync manageable — they pick a "received on/after" date
+         * instead of having every live bid land at once. Builds a small modal
+         * (createElement, no markup edits to the giant Settings block).
+         */
+        function promptBCSync() {
+            // Default floor: 30 days ago (local date, YYYY-MM-DD for <input type=date>)
+            const d = new Date(); d.setDate(d.getDate() - 30);
+            const pad = n => String(n).padStart(2, '0');
+            const defaultSince = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+            const overlay = document.createElement('div');
+            overlay.id = 'bcSyncModal';
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
+            overlay.innerHTML = `
+                <div style="background:var(--bg-card,#fff);color:var(--text-primary);border-radius:12px;max-width:440px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                    <div style="font-size:17px;font-weight:700;margin-bottom:6px;">Import bid invitations</div>
+                    <div style="font-size:13px;color:var(--text-secondary,#667);line-height:1.5;margin-bottom:18px;">
+                        Choose how far back to pull. We'll import <strong>live (still-biddable)</strong> invitations received on or after this date. This keeps your first sync manageable.
+                    </div>
+                    <label style="font-size:12px;font-weight:600;color:var(--text-secondary,#667);display:block;margin-bottom:6px;">Received on or after</label>
+                    <input type="date" id="bcSinceInput" value="${defaultSince}" style="width:100%;padding:9px 12px;font-size:14px;border:1px solid var(--border,#d3d8e0);border-radius:8px;margin-bottom:12px;background:var(--bg-input,#fff);color:var(--text-primary);">
+                    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+                        <button type="button" class="btn btn-secondary bcSinceQuick" data-days="7"  style="padding:5px 10px;font-size:12px;">Last 7 days</button>
+                        <button type="button" class="btn btn-secondary bcSinceQuick" data-days="30" style="padding:5px 10px;font-size:12px;">Last 30 days</button>
+                        <button type="button" class="btn btn-secondary bcSinceQuick" data-days="90" style="padding:5px 10px;font-size:12px;">Last 90 days</button>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;">
+                        <button type="button" id="bcSyncCancel" class="btn btn-secondary" style="padding:8px 16px;font-size:13px;">Cancel</button>
+                        <button type="button" id="bcSyncGo" class="btn btn-primary" style="padding:8px 16px;font-size:13px;">Import bids</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(overlay);
+
+            const close = () => overlay.remove();
+            overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+            overlay.querySelector('#bcSyncCancel').onclick = close;
+            overlay.querySelectorAll('.bcSinceQuick').forEach(b => {
+                b.onclick = () => {
+                    const qd = new Date(); qd.setDate(qd.getDate() - parseInt(b.dataset.days, 10));
+                    overlay.querySelector('#bcSinceInput').value = `${qd.getFullYear()}-${pad(qd.getMonth() + 1)}-${pad(qd.getDate())}`;
+                };
+            });
+            overlay.querySelector('#bcSyncGo').onclick = () => {
+                const since = overlay.querySelector('#bcSinceInput').value || null;
+                close();
+                syncBC(since);
+            };
+        }
+
+        /**
          * Call bc-sync Netlify function with user's session token.
          * Imports new BC opportunities into the Projects table.
+         * @param {string|null} sinceDate - optional YYYY-MM-DD floor (received on/after)
          */
-        async function syncBC() {
+        async function syncBC(sinceDate) {
             const syncBtn   = document.getElementById('bcSyncBtn');
             const subtextEl = document.getElementById('bcConnectionSubtext');
 
@@ -19287,7 +19359,9 @@ Respond now:`;
                 if (syncBtn) { syncBtn.disabled = true; syncBtn.textContent = 'Syncing…'; }
                 if (subtextEl) subtextEl.textContent = 'Syncing with BuildingConnected…';
 
-                const res = await fetch('/.netlify/functions/bc-sync', {
+                const syncUrl = '/.netlify/functions/bc-sync'
+                    + (sinceDate ? `?since=${encodeURIComponent(sinceDate)}` : '');
+                const res = await fetch(syncUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type':  'application/json',
