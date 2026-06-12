@@ -270,13 +270,27 @@ exports.handler = async function(event, context) {
 
         // ── ROI calculator breakdown ─────────────────────────────────────────
         if (emailType === 'roi_breakdown') {
-            const { userEmail, bids, hours, winRate, avgValue, margin, hoursSaved, addlMargin } = body;
+            const { userEmail, bids, hours, winRate, avgValue, margin, hoursSaved, addlMargin, hourlyRate, timeValue } = body;
 
             const fmt = (n) => {
                 if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
                 if (n >= 10000)   return '$' + Math.round(n / 1000) + 'K';
                 return '$' + Math.round(n).toLocaleString();
             };
+            const num = (n) => Number(n) || 0;
+            const round1 = (n) => Math.round(n * 10) / 10;
+
+            // Derived insight (mirrors the calculator: 12.5% relative win-rate lift, capped 50%)
+            const _hourly     = num(hourlyRate) || 65;
+            const _timeValue  = num(timeValue) || Math.round(num(hoursSaved) * _hourly);
+            const winFrac     = num(winRate) / 100;
+            const newWinFrac  = Math.min(winFrac * 1.125, 0.5);
+            const newWinPct   = round1(newWinFrac * 100);
+            const currentWins = num(bids) * winFrac;
+            const addlWins    = round1(Math.max(0, num(bids) * newWinFrac - currentWins));
+            const currentHrs  = Math.round(num(bids) * num(hours));
+            const weeksFreed  = round1(num(hoursSaved) / 40);
+            const totalValue  = num(addlMargin) + _timeValue;
 
             await sendEmail({
                 to: userEmail,
@@ -302,66 +316,100 @@ exports.handler = async function(event, context) {
         </td>
       </tr>
 
+      <!-- Title -->
+      <tr>
+        <td style="background:#141A23;padding:28px 28px 8px;">
+          <p style="margin:0 0 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#F26522;">Bid economics analysis</p>
+          <p style="margin:0 0 8px;font-size:23px;font-weight:700;color:#F8FAFC;line-height:1.25;">What one better bid decision is worth to your shop</p>
+          <p style="margin:0;font-size:14px;color:#94A3B8;line-height:1.6;">A read on the numbers you entered — and where the leverage actually sits.</p>
+        </td>
+      </tr>
+
+      <!-- Narrative insight -->
+      <tr>
+        <td style="background:#141A23;padding:14px 28px 4px;">
+          <p style="margin:0 0 14px;font-size:15px;color:#CBD5E1;line-height:1.7;">
+            Your team reviews <strong style="color:#F8FAFC;">${bids} bids a year</strong> at about <strong style="color:#F8FAFC;">${hours} hours each</strong> — roughly <strong style="color:#F8FAFC;">${currentHrs.toLocaleString()} estimating hours</strong> annually. At a <strong style="color:#F8FAFC;">${winRate}% win rate</strong>, that's about <strong style="color:#F8FAFC;">${round1(currentWins)} wins</strong> on <strong style="color:#F8FAFC;">${fmt(avgValue)}</strong> projects.
+          </p>
+          <p style="margin:0 0 14px;font-size:15px;color:#CBD5E1;line-height:1.7;">
+            The leverage isn't bidding <em>more</em> — it's bidding <em>smarter</em>. A structured bid/no-bid process typically lifts win rate <strong style="color:#F8FAFC;">10–15%</strong> (relative) by steering estimating hours away from low-fit invitations. Applying a deliberately conservative <strong style="color:#F8FAFC;">12.5%</strong> to your inputs moves your win rate from <strong style="color:#F8FAFC;">${winRate}%</strong> to <strong style="color:#F8FAFC;">${newWinPct}%</strong> — about <strong style="color:#22C55E;">${addlWins} more wins</strong> a year.
+          </p>
+        </td>
+      </tr>
+
       <!-- Hero stat -->
       <tr>
-        <td style="background:#141A23;padding:28px 28px 0;">
-          <p style="margin:0 0 6px;font-size:22px;font-weight:700;color:#F8FAFC;">Your bid economics snapshot</p>
-          <p style="margin:0 0 24px;font-size:14px;color:#94A3B8;">Based on the numbers you entered in the calculator.</p>
+        <td style="background:#141A23;padding:10px 28px 4px;">
           <table width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr>
-              <td style="background:#1C2533;border-radius:6px;padding:20px;">
-                <p style="margin:0 0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94A3B8;">Potential additional margin / year</p>
-                <p style="margin:0;font-size:40px;font-weight:700;color:#22C55E;font-family:monospace;line-height:1;">${fmt(addlMargin)}</p>
+              <td style="background:#11261A;border:1px solid #1F7A45;border-radius:8px;padding:22px 20px;">
+                <p style="margin:0 0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#7CCFa0;">Potential additional margin / year</p>
+                <p style="margin:0 0 6px;font-size:42px;font-weight:700;color:#22C55E;font-family:monospace;line-height:1;">${fmt(addlMargin)}</p>
+                <p style="margin:0;font-size:13px;color:#94A3B8;line-height:1.5;">Plus ~${fmt(_timeValue)} in recaptured estimator time — <strong style="color:#CBD5E1;">${fmt(totalValue)} of total annual opportunity</strong>.</p>
               </td>
             </tr>
           </table>
         </td>
       </tr>
 
-      <!-- Stats table -->
+      <!-- Today vs With BidIntell -->
       <tr>
-        <td style="background:#141A23;padding:20px 28px;">
+        <td style="background:#141A23;padding:22px 28px 8px;">
+          <p style="margin:0 0 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94A3B8;">Today vs. with BidIntell</p>
           <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px;">
             <tr>
-              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#94A3B8;">Bids reviewed / year</td>
-              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#F8FAFC;text-align:right;font-family:monospace;font-weight:600;">${bids}</td>
+              <td style="padding:0 0 8px;color:#5A6A7E;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;">Metric</td>
+              <td style="padding:0 0 8px;color:#5A6A7E;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;text-align:right;">Today</td>
+              <td style="padding:0 0 8px;color:#5A6A7E;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;text-align:right;">With BidIntell</td>
             </tr>
             <tr>
-              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#94A3B8;">Hours per bid evaluation</td>
-              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#F8FAFC;text-align:right;font-family:monospace;font-weight:600;">${hours} hrs</td>
+              <td style="padding:11px 0;border-top:1px solid #384254;color:#CBD5E1;">Win rate</td>
+              <td style="padding:11px 0;border-top:1px solid #384254;color:#94A3B8;text-align:right;font-family:monospace;">${winRate}%</td>
+              <td style="padding:11px 0;border-top:1px solid #384254;color:#22C55E;text-align:right;font-family:monospace;font-weight:600;">${newWinPct}%</td>
             </tr>
             <tr>
-              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#94A3B8;">Current win rate</td>
-              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#F8FAFC;text-align:right;font-family:monospace;font-weight:600;">${winRate}%</td>
+              <td style="padding:11px 0;border-top:1px solid #384254;color:#CBD5E1;">Wins / year</td>
+              <td style="padding:11px 0;border-top:1px solid #384254;color:#94A3B8;text-align:right;font-family:monospace;">${round1(currentWins)}</td>
+              <td style="padding:11px 0;border-top:1px solid #384254;color:#22C55E;text-align:right;font-family:monospace;font-weight:600;">${round1(currentWins + addlWins)}</td>
             </tr>
             <tr>
-              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#94A3B8;">Average project value</td>
-              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#F8FAFC;text-align:right;font-family:monospace;font-weight:600;">${fmt(avgValue)}</td>
+              <td style="padding:11px 0;border-top:1px solid #384254;color:#CBD5E1;">Margin / year</td>
+              <td style="padding:11px 0;border-top:1px solid #384254;color:#94A3B8;text-align:right;font-family:monospace;">${fmt(Math.round(currentWins * num(avgValue) * num(margin) / 100))}</td>
+              <td style="padding:11px 0;border-top:1px solid #384254;color:#22C55E;text-align:right;font-family:monospace;font-weight:600;">${fmt(Math.round(currentWins * num(avgValue) * num(margin) / 100) + num(addlMargin))}</td>
             </tr>
             <tr>
-              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#94A3B8;">Net margin</td>
-              <td style="padding:11px 0;border-bottom:1px solid #384254;color:#F8FAFC;text-align:right;font-family:monospace;font-weight:600;">${margin}%</td>
-            </tr>
-            <tr>
-              <td style="padding:11px 0;color:#94A3B8;">Estimating hours saved / year</td>
-              <td style="padding:11px 0;color:#22C55E;text-align:right;font-family:monospace;font-weight:600;">−${hoursSaved} hrs</td>
+              <td style="padding:11px 0;border-top:1px solid #384254;color:#CBD5E1;">Estimating hours / year</td>
+              <td style="padding:11px 0;border-top:1px solid #384254;color:#94A3B8;text-align:right;font-family:monospace;">${currentHrs.toLocaleString()}</td>
+              <td style="padding:11px 0;border-top:1px solid #384254;color:#22C55E;text-align:right;font-family:monospace;font-weight:600;">${(currentHrs - num(hoursSaved)).toLocaleString()}</td>
             </tr>
           </table>
+          <p style="margin:14px 0 0;font-size:13px;color:#94A3B8;line-height:1.6;">That's <strong style="color:#CBD5E1;">~${hoursSaved} estimator hours recaptured</strong> — about <strong style="color:#CBD5E1;">${weeksFreed} work weeks</strong> redirected toward the bids you can actually win.</p>
+        </td>
+      </tr>
+
+      <!-- What moves it -->
+      <tr>
+        <td style="background:#141A23;padding:22px 28px 4px;">
+          <p style="margin:0 0 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#94A3B8;">What actually moves this number</p>
+          <p style="margin:0 0 10px;font-size:14px;color:#CBD5E1;line-height:1.6;"><strong style="color:#F26522;">1 · Qualify before you estimate.</strong> Score every invite on scope fit, geography, client history, and contract risk — so hours go to winnable work.</p>
+          <p style="margin:0 0 10px;font-size:14px;color:#CBD5E1;line-height:1.6;"><strong style="color:#F26522;">2 · Capture every outcome.</strong> Won, lost, or no-bid — logged outcomes turn your own history into a sharper filter over time.</p>
+          <p style="margin:0 0 4px;font-size:14px;color:#CBD5E1;line-height:1.6;"><strong style="color:#F26522;">3 · Pass earlier, with conviction.</strong> The cheapest hour an estimator spends is the one that decides <em>not</em> to bid. BidIntell makes that call explicit instead of accidental.</p>
         </td>
       </tr>
 
       <!-- CTA -->
       <tr>
-        <td style="background:#141A23;padding:0 28px 28px;text-align:center;">
-          <a href="https://bidintell.ai/#apply" style="display:inline-block;background:#F26522;color:#ffffff;padding:13px 32px;border-radius:6px;text-decoration:none;font-weight:700;font-size:15px;">Get Started Free →</a>
+        <td style="background:#141A23;padding:24px 28px 28px;text-align:center;">
+          <a href="https://bidintell.ai/app?utm_source=roi_email&utm_medium=email&utm_campaign=roi-lead" style="display:inline-block;background:#F26522;color:#ffffff;padding:14px 34px;border-radius:6px;text-decoration:none;font-weight:700;font-size:15px;">Score your next bid free →</a>
+          <p style="margin:14px 0 0;font-size:12px;color:#94A3B8;">7-day free trial · no credit card at signup · founding pricing locks in for life</p>
         </td>
       </tr>
 
       <!-- Footer text -->
       <tr>
-        <td style="background:#0B0F14;padding:20px 28px;border-radius:0 0 8px 8px;">
-          <p style="margin:0 0 16px;font-size:13px;color:#5A6A7E;line-height:1.6;">These numbers are based on industry averages and your inputs. Actual results will vary — and get more accurate the more you use BidIntell to track real outcomes.</p>
-          <p style="margin:0;font-size:13px;color:#5A6A7E;">— Ryan<br><em>Founder, BidIntell</em></p>
+        <td style="background:#0B0F14;padding:22px 28px;border-radius:0 0 8px 8px;">
+          <p style="margin:0 0 14px;font-size:13px;color:#7C8A9C;line-height:1.7;">These projections use a conservative model and the inputs you provided. Real results depend on your trade, market, and bid mix — and get more accurate the more you use BidIntell to track actual outcomes. We'd rather under-promise here than sell you a number.</p>
+          <p style="margin:0;font-size:14px;color:#CBD5E1;">— Ryan Elder<br><span style="color:#7C8A9C;">Founder, BidIntell · 23 years in commercial construction</span><br><span style="color:#7C8A9C;font-size:13px;">Reply any time — it comes straight to me.</span></p>
         </td>
       </tr>
 

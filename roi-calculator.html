@@ -760,7 +760,7 @@ function calcROI() {
   const methodHours = document.getElementById('roi-method-hours');
   if (methodHours) methodHours.textContent = fmtHours(hours);
 
-  roiState = { bids, hours: Math.round(hours * 10) / 10, winPct, avgValue, marginPct, hourlyRate, hoursSaved, addlMargin: Math.round(addlMargin) };
+  roiState = { bids, hours: Math.round(hours * 10) / 10, winPct, avgValue, marginPct, hourlyRate, hoursSaved, timeValue, addlMargin: Math.round(addlMargin) };
 }
 
 async function submitROIEmail() {
@@ -807,6 +807,8 @@ async function submitROIEmail() {
         avgValue:   roiState.avgValue,
         margin:     roiState.marginPct,
         hoursSaved: roiState.hoursSaved,
+        timeValue:  roiState.timeValue,
+        hourlyRate: roiState.hourlyRate,
         addlMargin: roiState.addlMargin
       })
     });
