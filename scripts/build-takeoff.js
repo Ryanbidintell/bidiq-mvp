@@ -295,6 +295,10 @@ img { max-width: 100%; display: block; }
 @media (max-width: 960px) { .articles-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 640px) { .articles-grid { grid-template-columns: 1fr; } }
 
+/* RELATED GUIDES (article footer) */
+.related-section { padding: 24px 0 90px; border-top: 1px solid rgba(255,255,255,0.06); }
+.related-heading { font-size: 1.4rem; font-weight: 700; color: var(--white); letter-spacing: -0.02em; margin-bottom: 28px; }
+
 /* ARTICLE PAGE */
 .article-hero { padding: 140px 0 40px; position: relative; overflow: hidden; }
 .article-hero::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 800px; height: 400px; background: radial-gradient(ellipse, var(--accent-glow), transparent 70%); pointer-events: none; opacity: 0.4; }
@@ -543,15 +547,54 @@ ${cards}
 }
 
 // =====================================================================
+// Related guides block — picks up to 3 other articles, same category
+// first, then most recent. Internal-linking + GEO discovery, real URLs.
+// =====================================================================
+function pickRelated(current, allArticles, limit = 3) {
+  return allArticles
+    .filter((a) => a.meta.slug !== current.meta.slug)
+    .sort((a, b) => {
+      const aSame = a.meta.category === current.meta.category ? 0 : 1;
+      const bSame = b.meta.category === current.meta.category ? 0 : 1;
+      if (aSame !== bSame) return aSame - bSame;
+      return (b.meta.publishedAt || '').localeCompare(a.meta.publishedAt || '');
+    })
+    .slice(0, limit);
+}
+
+function renderRelated(related) {
+  if (!related.length) return '';
+  const cards = related.map((a) => `
+        <article class="article-card">
+          <p class="category-tag">${escapeHtml(a.meta.category || 'Article')}</p>
+          <h2><a href="/takeoff/${a.meta.slug}/">${escapeHtml(a.meta.title)}</a></h2>
+          <p class="excerpt">${escapeHtml(a.meta.excerpt || '')}</p>
+          <div class="card-meta">
+            <span>${escapeHtml(a.meta.readTime || '')}</span>
+            <a href="/takeoff/${a.meta.slug}/" class="read-more">Read more →</a>
+          </div>
+        </article>`).join('\n');
+  return `<section class="related-section">
+    <div class="container">
+      <h2 class="related-heading">Related guides</h2>
+      <div class="articles-grid">
+${cards}
+      </div>
+    </div>
+  </section>`;
+}
+
+// =====================================================================
 // Article page
 // =====================================================================
-function renderArticle(article) {
+function renderArticle(article, allArticles = []) {
   const m = article.meta;
   const bodyHtml = renderMarkdown(article.body);
   const canonical = `${SITE_ORIGIN}/takeoff/${m.slug}/`;
   const seoTitle = m.seoTitle || m.title;
   const seoDescription = m.seoDescription || m.excerpt || '';
   const faqs = extractFaqs(article.body);
+  const related = pickRelated(article, allArticles);
   const faqSchemaEntry = faqs.length === 0 ? '' : `,
       {
         "@type": "FAQPage",
@@ -657,6 +700,7 @@ ${bodyHtml}
     </div>
   </section>
 
+  ${renderRelated(related)}
   ${getCtaSection()}
   ${getFooter()}
 </body>
@@ -730,7 +774,7 @@ function main() {
   for (const a of articles) {
     const dir = path.join(OUTPUT_DIR, a.meta.slug);
     ensureDir(dir);
-    fs.writeFileSync(path.join(dir, 'index.html'), renderArticle(a));
+    fs.writeFileSync(path.join(dir, 'index.html'), renderArticle(a, articles));
     console.log(`  • takeoff/${a.meta.slug}/index.html`);
   }
 
