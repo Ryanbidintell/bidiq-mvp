@@ -46,6 +46,17 @@
           { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bidintell.ai/" },
           { "@type": "ListItem", "position": 2, "name": "Works with CRMs", "item": "https://bidintell.ai/works-with-crm" }
         ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://bidintell.ai/works-with-crm#faq",
+        "mainEntity": [
+          { "@type": "Question", "name": "Does BidIntell replace my CRM?", "acceptedAnswer": { "@type": "Answer", "text": "No. They run in parallel and solve different problems. Your CRM manages contacts, deal pipeline, and follow-up activity. BidIntell captures bid-level GC intelligence — win and loss history by GC, ghost rate, contract risk, and trade-match history — that a general CRM was never built to track." } },
+          { "@type": "Question", "name": "Which CRMs does BidIntell work alongside?", "acceptedAnswer": { "@type": "Answer", "text": "BidIntell works alongside Pipedrive, HubSpot, Salesforce, Procore Preconstruction, and Buildxact. If you do not use a CRM at all — which is common for specialty subs under about ten million in revenue — BidIntell's GC Manager works as a lightweight, bid-specific alternative." } },
+          { "@type": "Question", "name": "What does BidIntell track that my CRM does not?", "acceptedAnswer": { "@type": "Answer", "text": "Win and loss history by GC, ghost rate (no response after bid day), the BidIndex Score at time of submission, contract risk flags by GC, trade-match history by CSI section, and payment behavior. With 88% of construction firms reporting trouble with late payments, knowing which GCs award work and actually pay is a competitive signal a general CRM does not capture." } },
+          { "@type": "Question", "name": "Does BidIntell sync or integrate with my CRM?", "acceptedAnswer": { "@type": "Answer", "text": "No. There is no integration or data sync. The two systems run in parallel — your CRM for contacts and follow-up, BidIntell for bid scoring and GC relationship history. The data in each is different enough that they do not overlap much." } },
+          { "@type": "Question", "name": "I do not use a CRM — can I still use BidIntell?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Most specialty subcontractors under about ten million in revenue do not run a dedicated CRM. BidIntell's GC Manager functions as a lightweight, bid-specific alternative built for how subcontracting businesses actually operate." } }
+        ]
       }
     ]
   }
@@ -517,6 +528,13 @@ blockquote.callout {
 }
 .related-pages a:hover { color: var(--accent-dark); }
 
+/* ===== FAQ ===== */
+.faq-section { margin-top: 24px; }
+.faq-item { padding: 22px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.faq-item:last-child { border-bottom: none; }
+.faq-item h3 { font-size: 1.05rem; font-weight: 600; color: var(--white); margin-bottom: 10px; letter-spacing: -0.01em; }
+.faq-item p { font-size: 0.95rem; color: var(--fog); line-height: 1.7; margin: 0; }
+
 /* ===== FOOTER ===== */
 .footer { padding: 48px 0 36px; border-top: 1px solid rgba(255,255,255,0.04); }
 .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
@@ -754,6 +772,35 @@ blockquote.callout {
   <p>BidIntell captures that institutional knowledge as a systematic record tied to actual bid events and actual outcomes — not in someone's memory. A year of consistent outcome logging gives you a GC intelligence database that your CRM was never designed to build and that your estimating software does not track.</p>
 
   <p>That record makes future bid decisions faster and better, for whoever ends up making them.</p>
+
+  <section class="faq-section">
+    <h2>Frequently asked questions</h2>
+
+    <div class="faq-item">
+      <h3>Does BidIntell replace my CRM?</h3>
+      <p>No. They run in parallel and solve different problems. Your CRM manages contacts, deal pipeline, and follow-up activity. BidIntell captures bid-level GC intelligence — win and loss history by GC, ghost rate, contract risk, and trade-match history — that a general CRM was never built to track.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Which CRMs does BidIntell work alongside?</h3>
+      <p>BidIntell works alongside Pipedrive, HubSpot, Salesforce, Procore Preconstruction, and Buildxact. If you do not use a CRM at all — which is common for specialty subs under about ten million in revenue — BidIntell's GC Manager works as a lightweight, bid-specific alternative.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>What does BidIntell track that my CRM does not?</h3>
+      <p>Win and loss history by GC, ghost rate (no response after bid day), the BidIndex Score at time of submission, contract risk flags by GC, trade-match history by CSI section, and payment behavior. With 88% of construction firms reporting trouble with late payments, knowing which GCs award work and actually pay is a competitive signal a general CRM does not capture.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Does BidIntell sync or integrate with my CRM?</h3>
+      <p>No. There is no integration or data sync. The two systems run in parallel — your CRM for contacts and follow-up, BidIntell for bid scoring and GC relationship history. The data in each is different enough that they do not overlap much.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>I do not use a CRM — can I still use BidIntell?</h3>
+      <p>Yes. Most specialty subcontractors under about ten million in revenue do not run a dedicated CRM. BidIntell's GC Manager functions as a lightweight, bid-specific alternative built for how subcontracting businesses actually operate.</p>
+    </div>
+  </section>
 
   <section class="sources" aria-label="Sources">
     <h2>Sources</h2>

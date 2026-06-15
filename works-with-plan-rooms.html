@@ -46,6 +46,17 @@
           { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bidintell.ai/" },
           { "@type": "ListItem", "position": 2, "name": "Works with Plan Rooms", "item": "https://bidintell.ai/works-with-plan-rooms" }
         ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://bidintell.ai/works-with-plan-rooms#faq",
+        "mainEntity": [
+          { "@type": "Question", "name": "Which plan rooms does BidIntell work with?", "acceptedAnswer": { "@type": "Answer", "text": "BidIntell works alongside Dodge Construction Network, ConstructConnect, BuildingConnected, iSqFt, SmartBid, and any plan room that delivers bid notifications by email or downloadable documents — including bids a GC sends directly. It does not require an integration or data sync with the plan room; it works with the documents you already receive." } },
+          { "@type": "Question", "name": "How do bid documents get into BidIntell?", "acceptedAnswer": { "@type": "Answer", "text": "Two ways. Forward the bid-notification email to the unique forwarding address on your BidIntell account and it processes the email body and any attachments automatically, or download the package from a plan room portal and upload it directly. Either method returns a BidIndex Score in about 60 seconds." } },
+          { "@type": "Question", "name": "What data does BidIntell pull from the bid documents?", "acceptedAnswer": { "@type": "Answer", "text": "It scans the documents for four things that determine whether an opportunity fits your company: trade match (CSI MasterFormat section codes and your trade keywords), location fit (project distance and territory), GC relationship history (from outcomes you have logged on past bids), and contract risk signals such as pay-if-paid provisions, broad indemnification, no-damage-for-delay clauses, and liquidated damages." } },
+          { "@type": "Question", "name": "Do I need to connect or sync my plan room account?", "acceptedAnswer": { "@type": "Answer", "text": "No. There is no API connection or data sync to set up. BidIntell works with the bid documents you already receive by email or download, so it works with any plan room with no setup beyond your account's forwarding address." } },
+          { "@type": "Question", "name": "Does the same bid score the same for every contractor?", "acceptedAnswer": { "@type": "Answer", "text": "No. The BidIndex Score is personalized to your company — the same bid documents score differently for different contractors because trade fit, location, and GC history are different for each one." } }
+        ]
       }
     ]
   }
@@ -450,6 +461,13 @@ blockquote.callout {
 }
 .related-pages a:hover { color: var(--accent-dark); }
 
+/* ===== FAQ ===== */
+.faq-section { margin-top: 24px; }
+.faq-item { padding: 22px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.faq-item:last-child { border-bottom: none; }
+.faq-item h3 { font-size: 1.05rem; font-weight: 600; color: var(--white); margin-bottom: 10px; letter-spacing: -0.01em; }
+.faq-item p { font-size: 0.95rem; color: var(--fog); line-height: 1.7; margin: 0; }
+
 /* ===== FOOTER ===== */
 .footer { padding: 48px 0 36px; border-top: 1px solid rgba(255,255,255,0.04); }
 .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
@@ -652,6 +670,35 @@ blockquote.callout {
   <p>The forwarding address removes one more step from the workflow. Instead of logging into BidIntell to upload a document, the analysis starts the moment you forward the email. By the time you open BidIntell, the score is already there.</p>
 
   <p>Firms that log outcomes consistently get a compounding benefit over time: the score gets more accurate. The more bid results you track — won, lost, ghosted, declined — the more precisely BidIntell weights the factors that actually predict success for your company with your specific GC relationships in your territory.</p>
+
+  <section class="faq-section">
+    <h2>Frequently asked questions</h2>
+
+    <div class="faq-item">
+      <h3>Which plan rooms does BidIntell work with?</h3>
+      <p>BidIntell works alongside Dodge Construction Network, ConstructConnect, BuildingConnected, iSqFt, SmartBid, and any plan room that delivers bid notifications by email or downloadable documents — including bids a GC sends directly. It does not require an integration or data sync with the plan room; it works with the documents you already receive.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>How do bid documents get into BidIntell?</h3>
+      <p>Two ways. Forward the bid-notification email to the unique forwarding address on your BidIntell account and it processes the email body and any attachments automatically, or download the package from a plan room portal and upload it directly. Either method returns a BidIndex Score in about 60 seconds.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>What data does BidIntell pull from the bid documents?</h3>
+      <p>It scans the documents for four things that determine whether an opportunity fits your company: trade match (CSI MasterFormat section codes and your trade keywords), location fit (project distance and territory), GC relationship history (from outcomes you have logged on past bids), and contract risk signals such as pay-if-paid provisions, broad indemnification, no-damage-for-delay clauses, and liquidated damages.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Do I need to connect or sync my plan room account?</h3>
+      <p>No. There is no API connection or data sync to set up. BidIntell works with the bid documents you already receive by email or download, so it works with any plan room with no setup beyond your account's forwarding address.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Does the same bid score the same for every contractor?</h3>
+      <p>No. The BidIndex Score is personalized to your company — the same bid documents score differently for different contractors because trade fit, location, and GC history are different for each one.</p>
+    </div>
+  </section>
 
   <section class="cta-section">
     <h2>Try it on your next set of bid documents</h2>

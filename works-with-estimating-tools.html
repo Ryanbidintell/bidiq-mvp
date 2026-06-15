@@ -46,6 +46,17 @@
           { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bidintell.ai/" },
           { "@type": "ListItem", "position": 2, "name": "Works with Estimating Tools", "item": "https://bidintell.ai/works-with-estimating-tools" }
         ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://bidintell.ai/works-with-estimating-tools#faq",
+        "mainEntity": [
+          { "@type": "Question", "name": "Does BidIntell replace my estimating software?", "acceptedAnswer": { "@type": "Answer", "text": "No. BidIntell is not estimating software. It sits upstream of it — the go-or-pass filter you run before opening Stack, Togal, ProEst, or any takeoff tool. Your estimating software builds the bid number; BidIntell helps you decide whether that number is worth building in the first place." } },
+          { "@type": "Question", "name": "Which estimating tools does BidIntell work alongside?", "acceptedAnswer": { "@type": "Answer", "text": "BidIntell works alongside Stack, Togal.AI, Buildxact, ProEst, Sage Estimating, Planswift, On-Screen Takeoff, and even spreadsheets. There is no integration or data sync — it works independently, upstream of whatever you use for the takeoff, so it fits any estimating tool." } },
+          { "@type": "Question", "name": "Does BidIntell integrate or sync with my estimating software?", "acceptedAnswer": { "@type": "Answer", "text": "No. There is no API connection or data sync. You score the bid documents in BidIntell, make the go-or-pass call, then open your estimating software the same way you always have." } },
+          { "@type": "Question", "name": "What does BidIntell score a bid on?", "acceptedAnswer": { "@type": "Answer", "text": "It returns a 0-to-100 BidIndex Score in about 60 seconds based on four factors specific to your company: trade match, location fit, GC relationship history (from outcomes you have logged), and contract risk signals in the documents." } },
+          { "@type": "Question", "name": "Why use BidIntell if my estimating software is already fast?", "acceptedAnswer": { "@type": "Answer", "text": "Faster takeoffs speed up the bids you lose, too — the speed gain applies to every bid, including the ones you were never going to win. BidIntell reduces how many takeoffs you run on low-fit jobs by filtering the go-or-pass decision before the takeoff starts." } }
+        ]
       }
     ]
   }
@@ -520,6 +531,13 @@ blockquote.callout {
 }
 .related-pages a:hover { color: var(--accent-dark); }
 
+/* ===== FAQ ===== */
+.faq-section { margin-top: 24px; }
+.faq-item { padding: 22px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.faq-item:last-child { border-bottom: none; }
+.faq-item h3 { font-size: 1.05rem; font-weight: 600; color: var(--white); margin-bottom: 10px; letter-spacing: -0.01em; }
+.faq-item p { font-size: 0.95rem; color: var(--fog); line-height: 1.7; margin: 0; }
+
 /* ===== FOOTER ===== */
 .footer { padding: 48px 0 36px; border-top: 1px solid rgba(255,255,255,0.04); }
 .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
@@ -729,6 +747,35 @@ blockquote.callout {
   <p>Firms using AI estimating tools are already thinking about efficiency in the bid process. This is the efficiency gain that happens before the estimating software opens.</p>
 
   <p>And a won bid only helps if you collect on it. With 88% of construction firms reporting trouble with late payments (<a href="https://www.levelset.com/news/construction-cash-flow-payment-report-2022/" target="_blank" rel="noopener">Levelset / Procore 2022 Construction Cash Flow &amp; Payment Report</a>), which GCs award <em>and</em> pay is part of whether a bid is worth chasing. BidIntell tracks both against your history, so the go or pass call accounts for the relationship, not just the takeoff.</p>
+
+  <section class="faq-section">
+    <h2>Frequently asked questions</h2>
+
+    <div class="faq-item">
+      <h3>Does BidIntell replace my estimating software?</h3>
+      <p>No. BidIntell is not estimating software. It sits upstream of it — the go-or-pass filter you run before opening Stack, Togal, ProEst, or any takeoff tool. Your estimating software builds the bid number; BidIntell helps you decide whether that number is worth building in the first place.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Which estimating tools does BidIntell work alongside?</h3>
+      <p>BidIntell works alongside Stack, Togal.AI, Buildxact, ProEst, Sage Estimating, Planswift, On-Screen Takeoff, and even spreadsheets. There is no integration or data sync — it works independently, upstream of whatever you use for the takeoff, so it fits any estimating tool.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Does BidIntell integrate or sync with my estimating software?</h3>
+      <p>No. There is no API connection or data sync. You score the bid documents in BidIntell, make the go-or-pass call, then open your estimating software the same way you always have.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>What does BidIntell score a bid on?</h3>
+      <p>It returns a 0-to-100 BidIndex Score in about 60 seconds based on four factors specific to your company: trade match, location fit, GC relationship history (from outcomes you have logged), and contract risk signals in the documents.</p>
+    </div>
+
+    <div class="faq-item">
+      <h3>Why use BidIntell if my estimating software is already fast?</h3>
+      <p>Faster takeoffs speed up the bids you lose, too — the speed gain applies to every bid, including the ones you were never going to win. BidIntell reduces how many takeoffs you run on low-fit jobs by filtering the go-or-pass decision before the takeoff starts.</p>
+    </div>
+  </section>
 
   <section class="sources" aria-label="Sources">
     <h2>Sources</h2>
