@@ -642,6 +642,33 @@ blockquote.callout {
 }
 .related-pages a:hover { color: var(--accent-dark); }
 
+/* ===== STAT CALLOUT + SOURCES ===== */
+.stat-callout {
+  background: var(--ink-light);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 22px 26px;
+  margin: 32px 0;
+}
+.stat-callout .stat-num {
+  font-family: var(--mono);
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.stat-callout p { font-size: 0.95rem; color: var(--cloud); margin: 6px 0 0; line-height: 1.65; }
+.page-content p a, .stat-callout a { color: var(--fog); text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s; }
+.page-content p a:hover, .stat-callout a:hover { color: var(--white); }
+.sources { margin-top: 48px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06); }
+.sources h2 { font-size: 1.1rem !important; margin: 0 0 14px !important; }
+.sources ol { margin: 0; padding-left: 20px; }
+.sources li { font-size: 0.82rem; color: var(--slate-light); line-height: 1.6; margin-bottom: 8px; }
+.sources a { color: var(--fog); text-decoration: underline; text-underline-offset: 2px; }
+.sources a:hover { color: var(--white); }
+
 /* ===== FOOTER ===== */
 .footer { padding: 48px 0 36px; border-top: 1px solid rgba(255,255,255,0.04); }
 .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
@@ -731,6 +758,17 @@ blockquote.callout {
   <blockquote class="callout">
     The question is not whether you can build the job. The question is whether this specific bid, for this specific client, on this specific project, has a realistic path to an award.
   </blockquote>
+
+  <h2>The economics behind the bid/no-bid decision</h2>
+
+  <p>The pressure to bid everything makes more sense once you look at the structure of the industry. Across U.S. construction, <strong>91% of firms employ fewer than 20 people</strong> (<a href="https://www.cpwr.com/research/data-center/the-construction-chart-book/" target="_blank" rel="noopener">CPWR Construction Chart Book</a>, drawing on U.S. Bureau of Labor Statistics data). The typical specialty sub is a small shop with one or two estimators competing for the same work as everyone else — which is exactly why estimating hours are the scarce resource a bid/no-bid process exists to protect.</p>
+
+  <div class="stat-callout">
+    <div class="stat-num">88%</div>
+    <p>of construction firms report trouble with late payments, and only 12% say they are always paid on time, according to the <a href="https://www.levelset.com/news/construction-cash-flow-payment-report-2022/" target="_blank" rel="noopener">Levelset / Procore 2022 Construction Cash Flow &amp; Payment Report</a>. Nearly half — <strong>48%</strong> — wait more than 30 days to get paid (<a href="https://www.levelset.com/tools/2020-national-construction-payments-report/" target="_blank" rel="noopener">Levelset 2020 National Construction Payment Report</a>).</p>
+  </div>
+
+  <p>That payment reality is why Factor 2 (contract terms) and Factor 3 (client history) carry as much weight as they do. On a <strong>$2.15 trillion</strong> U.S. construction market (<a href="https://www.census.gov/construction/c30/c30index.html" target="_blank" rel="noopener">U.S. Census Bureau, 2024</a>) there is no shortage of work to bid. The question a bid/no-bid process answers is narrower and more useful: which clients actually award — and actually pay — the firms they invite.</p>
 
   <h2>The five factors that actually predict whether a bid is worth pursuing</h2>
 
@@ -974,6 +1012,16 @@ blockquote.callout {
   </table>
 
   <p>The manual checklist approach works for principals who have been in the market for decades and carry all of this in their heads. It breaks down when that person is out, when a new estimator joins, or when the firm is trying to make decisions faster than human judgment can move.</p>
+
+  <section class="sources" aria-label="Sources">
+    <h2>Sources</h2>
+    <ol>
+      <li>U.S. Census Bureau. <em>Construction Spending — Value of Construction Put in Place (2024 annual).</em> <a href="https://www.census.gov/construction/c30/c30index.html" target="_blank" rel="noopener">census.gov/construction/c30</a></li>
+      <li>CPWR — The Center for Construction Research and Training. <em>The Construction Chart Book (7th ed.),</em> drawing on U.S. Bureau of Labor Statistics data. <a href="https://www.cpwr.com/research/data-center/the-construction-chart-book/" target="_blank" rel="noopener">cpwr.com</a></li>
+      <li>Levelset (a Procore company). <em>2022 Construction Cash Flow &amp; Payment Report.</em> <a href="https://www.levelset.com/news/construction-cash-flow-payment-report-2022/" target="_blank" rel="noopener">levelset.com</a></li>
+      <li>Levelset. <em>2020 National Construction Payments Report.</em> <a href="https://www.levelset.com/tools/2020-national-construction-payments-report/" target="_blank" rel="noopener">levelset.com</a></li>
+    </ol>
+  </section>
 
   <section class="cta-section">
     <h2>Run your next bid through the framework</h2>
