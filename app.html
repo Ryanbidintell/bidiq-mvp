@@ -2430,6 +2430,48 @@
                 </header>
                 <div class="page-content">
 
+                    <!-- Outreach Pipeline -->
+                    <div class="settings-card" id="outreachCard">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">🎯 Outreach Pipeline</div>
+                            <div class="settings-card-description">Your warm pipeline — who you're working, status, next step. Change status inline; "Log touch" stamps today; click a Next Step or Notes cell to edit.</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px;">
+                                <input id="oaCompany" class="form-input" placeholder="Company *" style="flex:1 1 150px;">
+                                <input id="oaContact" class="form-input" placeholder="Contact" style="flex:1 1 110px;">
+                                <input id="oaEmail" class="form-input" placeholder="Email" style="flex:1 1 140px;">
+                                <select id="oaStatus" class="form-select" style="flex:0 1 150px;">
+                                    <option value="to_contact">To contact</option>
+                                    <option value="contacted">Contacted</option>
+                                    <option value="in_conversation">In conversation</option>
+                                    <option value="meeting_set">Meeting set</option>
+                                    <option value="won">Won</option>
+                                    <option value="passed">Passed</option>
+                                    <option value="stalled">Stalled</option>
+                                </select>
+                                <input id="oaNext" class="form-input" placeholder="Next step" style="flex:2 1 180px;">
+                                <button class="btn btn-primary" onclick="addOutreach()" style="white-space:nowrap;">+ Add</button>
+                            </div>
+                            <div style="overflow-x:auto;">
+                                <table id="outreachTable" style="width:100%;border-collapse:collapse;font-size:13px;">
+                                    <thead>
+                                        <tr style="text-align:left;color:var(--text-muted);border-bottom:1px solid var(--border-color);">
+                                            <th style="padding:8px 10px;font-weight:600;">Company</th>
+                                            <th style="padding:8px 10px;font-weight:600;">Status</th>
+                                            <th style="padding:8px 10px;font-weight:600;white-space:nowrap;">Last Touch</th>
+                                            <th style="padding:8px 10px;font-weight:600;">Next Step</th>
+                                            <th style="padding:8px 10px;font-weight:600;">Next Date</th>
+                                            <th style="padding:8px 10px;font-weight:600;">Notes</th>
+                                            <th style="padding:8px 10px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Beta Feedback Section -->
                     <div class="settings-card">
                         <div class="settings-card-header">
@@ -5782,6 +5824,7 @@ ${fullText.substring(0, 40000)}`;
                 await loadMetricsTab();
             } else if (id === 'admin') {
                 await loadSystemStats();
+                await loadOutreach();
             } else if (id === 'settings') {
                 dataCache.settings = null; // Force fresh read so post-onboarding data appears
                 await loadSettings();
@@ -21239,6 +21282,115 @@ Respond now:`;
         // ============================================
 
         let allFeedback = [];
+
+        // ===== Outreach Pipeline (Operations tab, admin-only) =====
+        const OA_STATUS = {
+            to_contact:      { label: 'To contact',      color: '#9ca3af' },
+            contacted:       { label: 'Contacted',       color: '#60a5fa' },
+            in_conversation: { label: 'In conversation', color: '#a78bfa' },
+            meeting_set:     { label: 'Meeting set',     color: '#22d3ee' },
+            won:             { label: 'Won',             color: '#22c55e' },
+            passed:          { label: 'Passed',          color: '#6b7280' },
+            stalled:         { label: 'Stalled',         color: '#f59e0b' },
+        };
+        function escapeOA(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+        async function loadOutreach() {
+            const tbody = document.querySelector('#outreachTable tbody');
+            if (!tbody || !supabaseClient) return;
+            const { data, error } = await supabaseClient
+                .from('founder_outreach')
+                .select('*')
+                .order('sort_order', { ascending: true })
+                .order('updated_at', { ascending: false });
+            if (error) { console.warn('founder_outreach:', error.message); tbody.innerHTML = `<tr><td colspan="7" style="color:var(--danger);padding:12px;font-style:italic;">Could not load pipeline (${escapeOA(error.message)})</td></tr>`; return; }
+            renderOutreach(data || []);
+        }
+
+        function renderOutreach(rows) {
+            const tbody = document.querySelector('#outreachTable tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" style="color:var(--text-muted);padding:12px;font-style:italic;">No outreach yet — add a company above.</td></tr>'; return; }
+            const fmtDate = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—';
+            const cellStyle = 'padding:8px 10px;border-bottom:1px solid var(--border-color);vertical-align:top;';
+
+            rows.forEach(r => {
+                const tr = document.createElement('tr');
+
+                const tdCo = document.createElement('td'); tdCo.style.cssText = cellStyle;
+                tdCo.innerHTML = `<strong style="color:var(--text-primary);">${escapeOA(r.company)}</strong>` + (r.contact_name || r.contact_email ? `<br><span style="color:var(--text-muted);font-size:12px;">${escapeOA(r.contact_name || '')}${r.contact_email ? ` · ${escapeOA(r.contact_email)}` : ''}</span>` : '');
+                tr.appendChild(tdCo);
+
+                const tdSt = document.createElement('td'); tdSt.style.cssText = cellStyle;
+                const sel = document.createElement('select');
+                sel.style.cssText = `background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:6px;padding:4px 6px;font-size:12px;font-weight:600;color:${(OA_STATUS[r.status] || {}).color || 'var(--text-primary)'};`;
+                Object.entries(OA_STATUS).forEach(([v, o]) => { const op = document.createElement('option'); op.value = v; op.textContent = o.label; if (v === r.status) op.selected = true; sel.appendChild(op); });
+                sel.addEventListener('change', () => { r.status = sel.value; updateOutreach(r.id, { status: sel.value }, true); });
+                tdSt.appendChild(sel); tr.appendChild(tdSt);
+
+                const tdLt = document.createElement('td'); tdLt.style.cssText = cellStyle + 'white-space:nowrap;';
+                const ltSpan = document.createElement('span'); ltSpan.style.cssText = 'font-size:12px;color:var(--text-secondary);'; ltSpan.textContent = fmtDate(r.last_touch_at); tdLt.appendChild(ltSpan);
+                const logBtn = document.createElement('button'); logBtn.textContent = 'Log touch'; logBtn.style.cssText = 'margin-left:6px;padding:2px 6px;font-size:11px;border:1px solid var(--border-color);border-radius:4px;background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;';
+                logBtn.addEventListener('click', () => updateOutreach(r.id, { last_touch_at: new Date().toISOString().slice(0, 10) }, true));
+                tdLt.appendChild(logBtn); tr.appendChild(tdLt);
+
+                const mkEdit = (val, field, minW) => {
+                    const td = document.createElement('td'); td.style.cssText = cellStyle;
+                    const inp = document.createElement('input'); inp.value = val || ''; inp.placeholder = '—';
+                    inp.style.cssText = `width:100%;min-width:${minW}px;padding:4px 6px;border:1px solid transparent;border-radius:4px;font-size:12px;background:transparent;color:var(--text-primary);`;
+                    inp.addEventListener('focus', () => { inp.style.border = '1px solid var(--border-color)'; inp.style.background = 'var(--bg-secondary)'; });
+                    inp.addEventListener('blur', () => { inp.style.border = '1px solid transparent'; inp.style.background = 'transparent'; const v = inp.value.trim(); if (v !== (val || '')) { r[field] = v; updateOutreach(r.id, { [field]: v || null }, false); } });
+                    td.appendChild(inp); return td;
+                };
+                tr.appendChild(mkEdit(r.next_step, 'next_step', 170));
+
+                const tdNd = document.createElement('td'); tdNd.style.cssText = cellStyle;
+                const ndIn = document.createElement('input'); ndIn.type = 'date'; if (r.next_step_date) ndIn.value = r.next_step_date; ndIn.style.cssText = 'padding:4px 6px;border:1px solid var(--border-color);border-radius:4px;font-size:11px;background:var(--bg-secondary);color:var(--text-primary);';
+                ndIn.addEventListener('change', () => { r.next_step_date = ndIn.value || null; updateOutreach(r.id, { next_step_date: ndIn.value || null }, false); });
+                tdNd.appendChild(ndIn); tr.appendChild(tdNd);
+
+                tr.appendChild(mkEdit(r.notes, 'notes', 130));
+
+                const tdDel = document.createElement('td'); tdDel.style.cssText = cellStyle;
+                const del = document.createElement('button'); del.textContent = '✕'; del.title = 'Remove from pipeline'; del.style.cssText = 'padding:2px 7px;font-size:12px;border:none;border-radius:4px;background:rgba(239,68,68,0.15);color:#f87171;cursor:pointer;';
+                del.addEventListener('click', () => deleteOutreach(r.id, r.company));
+                tdDel.appendChild(del); tr.appendChild(tdDel);
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function addOutreach() {
+            const company = document.getElementById('oaCompany').value.trim();
+            if (!company) { alert('Company is required.'); return; }
+            const row = {
+                company,
+                contact_name: document.getElementById('oaContact').value.trim() || null,
+                contact_email: document.getElementById('oaEmail').value.trim() || null,
+                status: document.getElementById('oaStatus').value,
+                next_step: document.getElementById('oaNext').value.trim() || null,
+                sort_order: 100,
+            };
+            const { error } = await supabaseClient.from('founder_outreach').insert(row);
+            if (error) { alert('Could not add: ' + error.message); return; }
+            ['oaCompany', 'oaContact', 'oaEmail', 'oaNext'].forEach(id => document.getElementById(id).value = '');
+            await loadOutreach();
+        }
+
+        async function updateOutreach(id, patch, reload) {
+            patch.updated_at = new Date().toISOString();
+            const { error } = await supabaseClient.from('founder_outreach').update(patch).eq('id', id);
+            if (error) { alert('Could not save: ' + error.message); await loadOutreach(); return; }
+            if (reload) await loadOutreach();
+        }
+
+        async function deleteOutreach(id, company) {
+            if (!confirm(`Remove "${company}" from the pipeline?`)) return;
+            const { error } = await supabaseClient.from('founder_outreach').delete().eq('id', id);
+            if (error) { alert('Could not delete: ' + error.message); return; }
+            await loadOutreach();
+        }
 
         async function loadAllFeedback() {
             try {

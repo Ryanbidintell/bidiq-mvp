@@ -208,45 +208,6 @@
             <div class="metrics-grid" id="metrics-grid"></div>
 
             <!-- SECTION A: Churn Analysis -->
-            <!-- SECTION: Outreach Pipeline -->
-            <div class="section" id="outreach-section">
-                <h2 class="section-title">🎯 Outreach Pipeline</h2>
-                <p style="color:#666;font-size:13px;margin-bottom:16px;">Your warm pipeline — who you're working, where it stands, the next step. Change status inline; "Log touch" stamps today; click a Next Step or Notes cell to edit.</p>
-
-                <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px;padding:14px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;">
-                    <input id="oa-company" placeholder="Company *" style="flex:1 1 150px;padding:7px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:13px;">
-                    <input id="oa-contact" placeholder="Contact" style="flex:1 1 110px;padding:7px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:13px;">
-                    <input id="oa-email" placeholder="Email" style="flex:1 1 140px;padding:7px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:13px;">
-                    <select id="oa-status" style="flex:0 1 140px;padding:7px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:13px;">
-                        <option value="to_contact">To contact</option>
-                        <option value="contacted">Contacted</option>
-                        <option value="in_conversation">In conversation</option>
-                        <option value="meeting_set">Meeting set</option>
-                        <option value="won">Won</option>
-                        <option value="passed">Passed</option>
-                        <option value="stalled">Stalled</option>
-                    </select>
-                    <input id="oa-next" placeholder="Next step" style="flex:2 1 180px;padding:7px 10px;border:1px solid #d1d5db;border-radius:5px;font-size:13px;">
-                    <button onclick="addOutreach()" style="padding:8px 16px;background:#4F46E5;color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;">+ Add</button>
-                </div>
-
-                <table id="outreach-table">
-                    <thead>
-                        <tr>
-                            <th>Company</th>
-                            <th>Channel</th>
-                            <th>Status</th>
-                            <th>Last Touch</th>
-                            <th>Next Step</th>
-                            <th>Next Date</th>
-                            <th>Notes</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-
             <div class="section">
                 <h2 class="section-title">📉 Churn Analysis (Segmented)</h2>
                 <table id="churn-table">
@@ -1330,123 +1291,12 @@
             }
         }
 
-        // ===== Outreach Pipeline =====
-        const OA_STATUS = {
-            to_contact:      { label: 'To contact',      color: '#6b7280' },
-            contacted:       { label: 'Contacted',       color: '#2563eb' },
-            in_conversation: { label: 'In conversation', color: '#7c3aed' },
-            meeting_set:     { label: 'Meeting set',     color: '#0891b2' },
-            won:             { label: 'Won',             color: '#16a34a' },
-            passed:          { label: 'Passed',          color: '#9ca3af' },
-            stalled:         { label: 'Stalled',         color: '#d97706' },
-        };
-
-        function escapeHtmlOA(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
-        async function loadOutreach() {
-            const tbody = document.querySelector('#outreach-table tbody');
-            if (!tbody) return;
-            const { data, error } = await supabaseClient
-                .from('founder_outreach')
-                .select('*')
-                .order('sort_order', { ascending: true })
-                .order('updated_at', { ascending: false });
-            if (error) { console.warn('founder_outreach:', error.message); tbody.innerHTML = `<tr><td colspan="8" style="color:#c00;font-style:italic;">Could not load pipeline (${error.message})</td></tr>`; return; }
-            renderOutreach(data || []);
-        }
-
-        function renderOutreach(rows) {
-            const tbody = document.querySelector('#outreach-table tbody');
-            tbody.innerHTML = '';
-            if (!rows.length) { tbody.innerHTML = '<tr><td colspan="8" style="color:#999;font-style:italic;">No outreach yet — add a company above.</td></tr>'; return; }
-            const fmtDate = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—';
-
-            rows.forEach(r => {
-                const tr = document.createElement('tr');
-
-                const tdCo = document.createElement('td');
-                tdCo.innerHTML = `<strong>${escapeHtmlOA(r.company)}</strong>` + (r.contact_name || r.contact_email ? `<br><span style="color:#888;font-size:12px;">${escapeHtmlOA(r.contact_name || '')}${r.contact_email ? ` · ${escapeHtmlOA(r.contact_email)}` : ''}</span>` : '');
-                tr.appendChild(tdCo);
-
-                const tdCh = document.createElement('td'); tdCh.textContent = r.channel || '—'; tdCh.style.cssText = 'color:#666;font-size:12px;text-transform:capitalize;'; tr.appendChild(tdCh);
-
-                const tdSt = document.createElement('td');
-                const sel = document.createElement('select');
-                sel.style.cssText = `padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:12px;font-weight:600;color:${(OA_STATUS[r.status] || {}).color || '#333'};`;
-                Object.entries(OA_STATUS).forEach(([v, o]) => { const op = document.createElement('option'); op.value = v; op.textContent = o.label; if (v === r.status) op.selected = true; sel.appendChild(op); });
-                sel.addEventListener('change', () => { r.status = sel.value; updateOutreach(r.id, { status: sel.value }, true); });
-                tdSt.appendChild(sel); tr.appendChild(tdSt);
-
-                const tdLt = document.createElement('td'); tdLt.style.whiteSpace = 'nowrap';
-                const ltSpan = document.createElement('span'); ltSpan.style.cssText = 'font-size:12px;color:#444;'; ltSpan.textContent = fmtDate(r.last_touch_at); tdLt.appendChild(ltSpan);
-                const logBtn = document.createElement('button'); logBtn.textContent = 'Log touch'; logBtn.style.cssText = 'margin-left:6px;padding:2px 6px;font-size:11px;border:1px solid #d1d5db;border-radius:4px;background:#fff;cursor:pointer;';
-                logBtn.addEventListener('click', () => updateOutreach(r.id, { last_touch_at: new Date().toISOString().slice(0, 10) }, true));
-                tdLt.appendChild(logBtn); tr.appendChild(tdLt);
-
-                const tdNs = document.createElement('td');
-                const nsIn = document.createElement('input'); nsIn.value = r.next_step || ''; nsIn.placeholder = '—'; nsIn.style.cssText = 'width:100%;min-width:170px;padding:4px 6px;border:1px solid transparent;border-radius:4px;font-size:12px;background:transparent;';
-                nsIn.addEventListener('focus', () => nsIn.style.border = '1px solid #d1d5db');
-                nsIn.addEventListener('blur', () => { nsIn.style.border = '1px solid transparent'; const v = nsIn.value.trim(); if (v !== (r.next_step || '')) { r.next_step = v; updateOutreach(r.id, { next_step: v || null }, false); } });
-                tdNs.appendChild(nsIn); tr.appendChild(tdNs);
-
-                const tdNd = document.createElement('td');
-                const ndIn = document.createElement('input'); ndIn.type = 'date'; if (r.next_step_date) ndIn.value = r.next_step_date; ndIn.style.cssText = 'padding:4px 6px;border:1px solid #d1d5db;border-radius:4px;font-size:11px;';
-                ndIn.addEventListener('change', () => { r.next_step_date = ndIn.value || null; updateOutreach(r.id, { next_step_date: ndIn.value || null }, false); });
-                tdNd.appendChild(ndIn); tr.appendChild(tdNd);
-
-                const tdNo = document.createElement('td');
-                const noIn = document.createElement('input'); noIn.value = r.notes || ''; noIn.placeholder = '—'; noIn.style.cssText = 'width:100%;min-width:130px;padding:4px 6px;border:1px solid transparent;border-radius:4px;font-size:12px;background:transparent;';
-                noIn.addEventListener('focus', () => noIn.style.border = '1px solid #d1d5db');
-                noIn.addEventListener('blur', () => { noIn.style.border = '1px solid transparent'; const v = noIn.value.trim(); if (v !== (r.notes || '')) { r.notes = v; updateOutreach(r.id, { notes: v || null }, false); } });
-                tdNo.appendChild(noIn); tr.appendChild(tdNo);
-
-                const tdDel = document.createElement('td');
-                const del = document.createElement('button'); del.textContent = '✕'; del.title = 'Remove from pipeline'; del.style.cssText = 'padding:2px 7px;font-size:12px;border:none;border-radius:4px;background:#fee2e2;color:#b91c1c;cursor:pointer;';
-                del.addEventListener('click', () => deleteOutreach(r.id, r.company));
-                tdDel.appendChild(del); tr.appendChild(tdDel);
-
-                tbody.appendChild(tr);
-            });
-        }
-
-        async function addOutreach() {
-            const company = document.getElementById('oa-company').value.trim();
-            if (!company) { alert('Company is required.'); return; }
-            const row = {
-                company,
-                contact_name: document.getElementById('oa-contact').value.trim() || null,
-                contact_email: document.getElementById('oa-email').value.trim() || null,
-                status: document.getElementById('oa-status').value,
-                next_step: document.getElementById('oa-next').value.trim() || null,
-                sort_order: 100,
-            };
-            const { error } = await supabaseClient.from('founder_outreach').insert(row);
-            if (error) { alert('Could not add: ' + error.message); return; }
-            ['oa-company', 'oa-contact', 'oa-email', 'oa-next'].forEach(id => document.getElementById(id).value = '');
-            await loadOutreach();
-        }
-
-        async function updateOutreach(id, patch, reload) {
-            patch.updated_at = new Date().toISOString();
-            const { error } = await supabaseClient.from('founder_outreach').update(patch).eq('id', id);
-            if (error) { alert('Could not save: ' + error.message); await loadOutreach(); return; }
-            if (reload) await loadOutreach();
-        }
-
-        async function deleteOutreach(id, company) {
-            if (!confirm(`Remove "${company}" from the pipeline?`)) return;
-            const { error } = await supabaseClient.from('founder_outreach').delete().eq('id', id);
-            if (error) { alert('Could not delete: ' + error.message); return; }
-            await loadOutreach();
-        }
-
         // Initialize
         (async () => {
             const isAuth = await checkAuth();
             if (isAuth) {
                 await loadMetrics();
                 await loadProspectMetrics();
-                await loadOutreach();
             }
         })();
     </script>
