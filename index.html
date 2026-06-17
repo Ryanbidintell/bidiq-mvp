@@ -437,8 +437,8 @@ img { max-width: 100%; display: block; }
 
 .hero-grid {
   display: grid;
-  grid-template-columns: 0.95fr 1.35fr;
-  gap: 56px;
+  grid-template-columns: 0.88fr 1.45fr;
+  gap: 44px;
   align-items: center;
   position: relative;
 }
@@ -550,6 +550,17 @@ img { max-width: 100%; display: block; }
 
 /* Hero Right - Score Card Mock */
 .hero-visual { position: relative; }
+
+.hero-demo-caption {
+  margin-top: 16px; min-height: 1.4em;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  font-size: 0.95rem; font-weight: 600; letter-spacing: 0.02em;
+  color: var(--slate-light); transition: opacity 0.25s ease;
+}
+.hero-demo-caption::before {
+  content: ''; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent); flex: 0 0 auto;
+}
 
 .score-card {
   background: var(--ink-light);
@@ -1695,14 +1706,25 @@ a.press-outlet:hover { color: var(--white); }
         <p style="margin-top:14px; font-size:0.8rem; color:var(--slate-light);">7-day free trial &nbsp;•&nbsp; No credit card required &nbsp;•&nbsp; Setup takes 5 minutes</p>
       </div>
       <div class="hero-visual">
-        <video class="hero-demo" autoplay loop muted playsinline preload="auto"
+        <video id="heroDemo" class="hero-demo" autoplay loop muted playsinline preload="auto"
                poster="/hero-demo-poster.png"
-               aria-label="BidIntell demo: upload a bid invite and get a BidIndex score in seconds"
-               style="width:100%; height:auto; border-radius:14px; box-shadow:0 24px 60px rgba(0,0,0,0.45); display:block;">
+               aria-label="BidIntell demo: upload bid documents and get a score in seconds"
+               style="width:100%; height:auto; display:block; border-radius:14px; border:1px solid rgba(255,255,255,0.08); box-shadow:0 24px 60px rgba(0,0,0,0.45);">
           <source src="/hero-demo.webm" type="video/webm">
           <source src="/hero-demo.mp4" type="video/mp4">
         </video>
+        <div class="hero-demo-caption" id="heroDemoCaption">Upload the bid documents</div>
       </div>
+      <script>
+      (function(){
+        var v=document.getElementById('heroDemo'),c=document.getElementById('heroDemoCaption');
+        if(!v||!c)return;
+        var steps=[[0,'Upload the bid documents'],[4.2,'We score the bid for you'],[7.35,'Get your answer in seconds']];
+        function pick(t){var s=steps[0][1];for(var i=0;i<steps.length;i++){if(t>=steps[i][0])s=steps[i][1];}return s;}
+        function upd(){var txt=pick(v.currentTime||0);if(c.getAttribute('data-cur')===txt)return;c.setAttribute('data-cur',txt);c.style.opacity='0';setTimeout(function(){c.textContent=txt;c.style.opacity='1';},140);}
+        v.addEventListener('timeupdate',upd);v.addEventListener('loadeddata',upd);upd();
+      })();
+      </script>
     </div>
   </div>
 </section>
