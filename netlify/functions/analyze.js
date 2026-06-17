@@ -98,7 +98,7 @@ exports.handler = async function(event, context) {
         const messages = [{ role: 'user', content: text }];
         const claudeModel = operation === 'doc_classify'
             ? 'claude-haiku-4-5-20251001'
-            : 'claude-sonnet-4-20250514';
+            : 'claude-sonnet-4-6';
 
         let result, provider;
 
