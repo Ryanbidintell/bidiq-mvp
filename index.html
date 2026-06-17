@@ -1666,7 +1666,7 @@ a.press-outlet:hover { color: var(--white); }
       <li><a href="/takeoff/">Take-Off</a></li>
       <li><a href="/diagnostic">Diagnostic</a></li>
       <li><a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=nav-cta" style="color: var(--cloud);">Sign In</a></li>
-      <li><a href="/demo" class="nav-cta">Schedule a Demo</a></li>
+      <li><a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=nav-cta-trial" class="nav-cta" onclick="gtag('event','cta_click',{cta_location:'nav',cta_text:'Start Free Trial'})">Start Free Trial</a></li>
     </ul>
     <button class="mobile-menu-btn" aria-label="Menu">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1690,68 +1690,18 @@ a.press-outlet:hover { color: var(--white); }
         <p class="hero-sub">BidIntell scores every invite 0–100, weighted to your trade, your region, and your client history. The same job scores differently for different contractors — so GO, REVIEW, or PASS is the call for your shop, not a generic read on the PDF.</p>
         <div class="hero-actions">
           <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=beta-launch&utm_content=hero-cta" class="btn-primary" onclick="gtag('event','cta_click',{cta_location:'hero',cta_text:'Score Your First Bid Free'})">Score Your First Bid Free</a>
-          <a href="#how" class="btn-secondary">See How the BidIndex Works</a>
+          <a href="/diagnostic" class="btn-secondary" onclick="gtag('event','cta_click',{cta_location:'hero',cta_text:'Get a Free Bid Diagnostic'})">Get a free bid diagnostic — no pitch</a>
         </div>
         <p style="margin-top:14px; font-size:0.8rem; color:var(--slate-light);">7-day free trial &nbsp;•&nbsp; No credit card required &nbsp;•&nbsp; Setup takes 5 minutes</p>
       </div>
       <div class="hero-visual">
-        <div class="score-card">
-          <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--slate-light); margin-bottom:12px; font-weight:500;">Sample Analysis</div>
-          <div class="sc-header">
-            <div>
-              <div class="sc-project-name">Medical Office Renovation</div>
-              <div class="sc-project-meta">ABC General Contractors · Your Area · $4.2M</div>
-            </div>
-            <div class="sc-badge go">GO</div>
-          </div>
-          <div class="score-ring-area">
-            <div class="score-ring">
-              <svg viewBox="0 0 100 100">
-                <circle class="ring-bg" cx="50" cy="50" r="42"/>
-                <circle class="ring-fill" cx="50" cy="50" r="42"/>
-              </svg>
-              <div class="score-number">
-                83
-                <span class="score-label">BidIndex</span>
-              </div>
-            </div>
-            <div class="score-components">
-              <div class="sc-component">
-                <span class="sc-comp-label">Location Fit</span>
-                <div class="sc-comp-bar">
-                  <div class="sc-bar-track"><div class="sc-bar-fill" style="width:92%; background:var(--green)"></div></div>
-                  <span class="sc-comp-val">92</span>
-                </div>
-              </div>
-              <div class="sc-component">
-                <span class="sc-comp-label">Trade Match</span>
-                <div class="sc-comp-bar">
-                  <div class="sc-bar-track"><div class="sc-bar-fill" style="width:88%; background:var(--green)"></div></div>
-                  <span class="sc-comp-val">88</span>
-                </div>
-              </div>
-              <div class="sc-component">
-                <span class="sc-comp-label">Client Relationship</span>
-                <div class="sc-comp-bar">
-                  <div class="sc-bar-track"><div class="sc-bar-fill" style="width:75%; background:var(--yellow)"></div></div>
-                  <span class="sc-comp-val">75</span>
-                </div>
-              </div>
-              <div class="sc-component">
-                <span class="sc-comp-label">Contract Risk</span>
-                <div class="sc-comp-bar">
-                  <div class="sc-bar-track"><div class="sc-bar-fill" style="width:78%; background:var(--green)"></div></div>
-                  <span class="sc-comp-val">78</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="sc-footer">
-            <div class="sc-flag">⚡ 12 mi from office</div>
-            <div class="sc-flag">✓ Prior client relationship</div>
-            <div class="sc-flag">⚠ Pay-if-paid clause</div>
-          </div>
-        </div>
+        <video class="hero-demo" autoplay loop muted playsinline preload="auto"
+               poster="/hero-demo-poster.png"
+               aria-label="BidIntell demo: upload a bid invite and get a BidIndex score in seconds"
+               style="width:100%; height:auto; border-radius:14px; box-shadow:0 24px 60px rgba(0,0,0,0.45); display:block;">
+          <source src="/hero-demo.webm" type="video/webm">
+          <source src="/hero-demo.mp4" type="video/mp4">
+        </video>
       </div>
     </div>
   </div>
