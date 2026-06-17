@@ -551,17 +551,6 @@ img { max-width: 100%; display: block; }
 /* Hero Right - Score Card Mock */
 .hero-visual { position: relative; }
 
-.hero-demo-caption {
-  margin-top: 16px; min-height: 1.4em;
-  display: flex; align-items: center; justify-content: center; gap: 9px;
-  font-size: 0.95rem; font-weight: 600; letter-spacing: 0.02em;
-  color: var(--slate-light); transition: opacity 0.25s ease;
-}
-.hero-demo-caption::before {
-  content: ''; width: 7px; height: 7px; border-radius: 50%;
-  background: var(--accent); flex: 0 0 auto;
-}
-
 .score-card {
   background: var(--ink-light);
   border: 1px solid rgba(255,255,255,0.08);
@@ -1713,18 +1702,7 @@ a.press-outlet:hover { color: var(--white); }
           <source src="/hero-demo.webm" type="video/webm">
           <source src="/hero-demo.mp4" type="video/mp4">
         </video>
-        <div class="hero-demo-caption" id="heroDemoCaption">Upload the bid documents</div>
       </div>
-      <script>
-      (function(){
-        var v=document.getElementById('heroDemo'),c=document.getElementById('heroDemoCaption');
-        if(!v||!c)return;
-        var steps=[[0,'Upload the bid documents'],[4.2,'We score the bid for you'],[7.35,'Get your answer in seconds']];
-        function pick(t){var s=steps[0][1];for(var i=0;i<steps.length;i++){if(t>=steps[i][0])s=steps[i][1];}return s;}
-        function upd(){var txt=pick(v.currentTime||0);if(c.getAttribute('data-cur')===txt)return;c.setAttribute('data-cur',txt);c.style.opacity='0';setTimeout(function(){c.textContent=txt;c.style.opacity='1';},140);}
-        v.addEventListener('timeupdate',upd);v.addEventListener('loadeddata',upd);upd();
-      })();
-      </script>
     </div>
   </div>
 </section>
