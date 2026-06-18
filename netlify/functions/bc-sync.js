@@ -788,3 +788,10 @@ exports.handler = async function(event) {
 // Exported for unit testing the import gate (does not affect the handler).
 exports.isLiveOpportunity = isLiveOpportunity;
 exports.oppReceivedMs = oppReceivedMs;
+// Additively exported (zero behavior change) so the scheduled auto-screener
+// (bc-auto-screen.js) can reuse the SAME scoring/mapping/token logic instead of
+// duplicating it — keeps scoring from diverging across the manual and auto paths.
+exports.refreshAccessToken = refreshAccessToken;
+exports.mapOpportunityToProject = mapOpportunityToProject;
+exports.computeScores = computeScores;
+exports.BC_API_BASE = BC_API_BASE;
