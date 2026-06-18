@@ -25,6 +25,18 @@ const PRINCIPLE_INSTRUCTIONS = {
   unity: `This is a unity touch. Emphasize shared identity — you've worked on similar projects in this market, you understand how this GC operates, you're both building in this city. Reference shared history if it exists. Avoid generic "we're the right team" language. One specific true thing that makes you and this GC part of the same professional community. Tone: understated, collegial.`,
 };
 
+// Agent #3: outcome-triggered follow-ups. These run as a ONE-OFF email after the
+// user logs a bid outcome (won/lost/ghost), not as part of a timed cadence. When
+// context.outcomeContext is present, the outcome goal below overrides the cadence
+// principle instruction. Absent → existing cadence behavior is unchanged.
+const OUTCOME_INSTRUCTIONS = {
+  won: `This is a post-award thank-you after WINNING the bid. The goal is to cement the relationship for smooth mobilization and future work — not to sell. Thank them genuinely for the award, signal you're ready and reliable for next steps, and leave the door open for the next project. Warm, professional, brief. One light forward-looking line. Do not be effusive.`,
+
+  lost: `This is a gracious note after NOT winning the bid. The goal is to lose well and stay on the GC's invite list for next time. Thank them for the opportunity with zero sour grapes, express genuine continued interest in bidding their future work, and — if natural — ask one low-pressure question about where you landed so you sharpen next time. Classy, secure, never bitter. One ask maximum.`,
+
+  ghost: `This is a gentle re-engagement after submitting a bid and hearing nothing back. The goal is to revive the conversation without seeming needy. Reference the specific bid, offer one genuinely useful thing (a clarification, a heads-up, your availability), and ask one easy yes/no question. Unhurried and collegial — never pushy, never a guilt-trip.`,
+};
+
 const HARD_CONSTRAINTS = `
 HARD CONSTRAINTS — violating any of these invalidates the draft:
 - Never use exclamation points. Not one.
@@ -59,12 +71,24 @@ function buildPrompt(context) {
     customInstruction,
     priorTouches,
     templateName,
+    outcomeContext,
   } = context;
 
   const principleInstruction = PRINCIPLE_INSTRUCTIONS[primaryPrinciple] || PRINCIPLE_INSTRUCTIONS.reciprocity;
   const secondaryNote = secondaryPrinciple && PRINCIPLE_INSTRUCTIONS[secondaryPrinciple]
     ? `\nAs a secondary layer, also weave in a subtle element of the ${secondaryPrinciple} principle. Don't force it — only if it fits naturally.`
     : '';
+
+  // Outcome-triggered follow-up (Agent #3): a one-off email after a logged outcome.
+  // Overrides the principle instruction with the outcome goal and injects the facts.
+  const oc = outcomeContext && OUTCOME_INSTRUCTIONS[outcomeContext.outcome] ? outcomeContext : null;
+  const effectivePrincipleInstruction = oc ? OUTCOME_INSTRUCTIONS[oc.outcome] : principleInstruction;
+  const outcomeFacts = oc ? [
+    oc.outcome === 'won' ? 'You WON this bid.' : oc.outcome === 'lost' ? 'You did NOT win this bid.' : 'You submitted this bid and have not heard back.',
+    oc.margin != null ? `Your margin: ${oc.margin}%.` : '',
+    oc.howHigh ? `Where you landed vs. the winner: ${oc.howHigh}.` : '',
+    oc.bidderCount ? `Bidders on the job: ${oc.bidderCount}.` : ''
+  ].filter(Boolean).join(' ') : '';
 
   const priorTouchHistory = (priorTouches || []).map((t, i) =>
     `Touch ${i + 1} (sent ${t.sent_at ? new Date(t.sent_at).toLocaleDateString() : 'unknown'}): Subject: "${t.draft_subject || t.user_edited_subject || '(no subject)'}"`
@@ -77,12 +101,12 @@ function buildPrompt(context) {
 
 PROJECT: ${projectName || 'the project'} — ${projectAddress || ''}${sizeLine}, ${projectType || 'commercial construction'}${scoreLine}
 GC: ${gcName || 'the GC'}${gcContactName ? `, contact: ${gcContactName}` : ''}
-THIS IS TOUCH ${touchNumber} OF ${totalTouches} (template: ${templateName || 'Standard GC'})
+${oc ? `THIS IS A ONE-TIME FOLLOW-UP AFTER A LOGGED OUTCOME (${oc.outcome.toUpperCase()}) — not part of a timed cadence.\nOUTCOME FACTS: ${outcomeFacts}` : `THIS IS TOUCH ${touchNumber} OF ${totalTouches} (template: ${templateName || 'Standard GC'})`}
 
 ${priorTouchHistory ? `PRIOR TOUCHES SENT:\n${priorTouchHistory}\n` : ''}
 
 PRINCIPLE INSTRUCTION:
-${principleInstruction}${secondaryNote}
+${effectivePrincipleInstruction}${secondaryNote}
 
 ${customInstruction ? `USER'S CUSTOM INSTRUCTION FOR THIS TOUCH:\n${customInstruction}\n` : ''}
 
