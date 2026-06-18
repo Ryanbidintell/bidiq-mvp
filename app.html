@@ -16501,6 +16501,24 @@ Respond now:`;
                     }
                 }
 
+                // Agent #3 (ADMIN PREVIEW, non-blocking): draft a one-off follow-up to each
+                // GC that just got a won/lost/ghost outcome, queued in Follow-ups → Needs Review
+                // for approval. Wrapped so it can NEVER affect the outcome save.
+                if (typeof isAdmin === 'function' && isAdmin()) {
+                    for (const sub of pendingSubmissions) {
+                        const subOutcome = submissionOutcomeSelections[sub.id];
+                        if (!['won', 'lost', 'ghost'].includes(subOutcome)) continue;
+                        try {
+                            const { data: { session } } = await supabaseClient.auth.getSession();
+                            await fetch(`${API_BASE_URL}/outcome-triggered-followup`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                                body: JSON.stringify({ projectId: id, outcome: subOutcome, gcName: sub.gc_name, outcomeData: { margin: sub.margin, howHigh: sub.howHigh } })
+                            });
+                        } catch (e) { console.warn('Outcome follow-up draft failed (non-fatal):', e); }
+                    }
+                }
+
                 // Update client stats — won and lost only (not gc_lost)
                 for (const sub of pendingSubmissions) {
                     const outcome = submissionOutcomeSelections[sub.id];
