@@ -99,6 +99,13 @@ exports.handler = async function(event, context) {
         const claudeModel = operation === 'doc_classify'
             ? 'claude-haiku-4-5-20251001'
             : 'claude-sonnet-4-6';
+        // Fallback Claude model — tried if the primary Claude call fails (e.g. a model is
+        // retired and 404s, as happened Jun 2026). Keeps scoring alive on Claude before
+        // falling back to OpenAI, which removes the single point of failure when OpenAI is
+        // out of quota.
+        const claudeFallbackModel = claudeModel === 'claude-sonnet-4-6'
+            ? 'claude-haiku-4-5-20251001'
+            : 'claude-sonnet-4-6';
 
         let result, provider;
 
@@ -107,14 +114,21 @@ exports.handler = async function(event, context) {
             result = { text: claudeResponse.content[0].text, model: claudeResponse.model, usage: claudeResponse.usage };
             provider = 'claude';
         } catch (claudeError) {
-            console.error('Claude API failed, trying OpenAI:', claudeError.message);
+            console.error(`Claude (${claudeModel}) failed, trying Claude fallback (${claudeFallbackModel}):`, claudeError.message);
             try {
-                const openaiResponse = await callOpenAIAPI(messages, systemPrompt);
-                result = { text: openaiResponse.choices[0].message.content, model: openaiResponse.model, usage: openaiResponse.usage };
-                provider = 'openai';
-            } catch (openaiError) {
-                console.error('Both APIs failed:', openaiError.message);
-                throw new Error('All AI providers unavailable');
+                const fallbackResponse = await callClaudeAPI(messages, systemPrompt, claudeFallbackModel);
+                result = { text: fallbackResponse.content[0].text, model: fallbackResponse.model, usage: fallbackResponse.usage };
+                provider = 'claude-fallback';
+            } catch (fallbackError) {
+                console.error('Claude fallback failed, trying OpenAI:', fallbackError.message);
+                try {
+                    const openaiResponse = await callOpenAIAPI(messages, systemPrompt);
+                    result = { text: openaiResponse.choices[0].message.content, model: openaiResponse.model, usage: openaiResponse.usage };
+                    provider = 'openai';
+                } catch (openaiError) {
+                    console.error('All AI providers failed:', openaiError.message);
+                    throw new Error('All AI providers unavailable');
+                }
             }
         }
 
