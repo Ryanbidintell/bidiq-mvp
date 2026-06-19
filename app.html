@@ -8796,6 +8796,14 @@ Rules:
                 return null;
             }
 
+            // Cache SUCCESSFUL geocodes so repeat analyses of the same bid are deterministic.
+            // Nominatim is rate-limited/flaky — without this, the same address can resolve one
+            // run and fail the next, making Location Fit inconsistent. Failures aren't cached
+            // (they fall through and may retry).
+            geocode._cache = geocode._cache || new Map();
+            const _geoCacheKey = addr.toLowerCase().trim();
+            if (geocode._cache.has(_geoCacheKey)) return geocode._cache.get(_geoCacheKey);
+
             console.log('🗺️ GEOCODING REQUEST:', {
                 address: addr,
                 fallbackCity: fallbackCity,
@@ -8983,12 +8991,14 @@ Rules:
                         }
 
                         console.log(`  ✅ Geocoded: ${searchAddr} → ${result.display_name}`);
-                        return {
+                        const _resolved = {
                             lat: parseFloat(result.lat),
                             lon: parseFloat(result.lon),
                             display_name: result.display_name,
                             method: i === 0 ? 'exact' : 'fallback'
                         };
+                        geocode._cache.set(_geoCacheKey, _resolved);
+                        return _resolved;
                     } else {
                         console.log(`  ⚠️ No results for attempt ${i + 1}`);
                     }
