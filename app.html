@@ -9601,12 +9601,19 @@ IMPORTANT RULES:
                 .replace(/\s+(offices?|buildings?|projects?|towers?|centers?)\s+(at|in|on|for)\s+[\w\s]+/gi, '')
                 .replace(/[,\-\(]\s*([\w\s]+\s+(office|branch|division|location|region|regional))\)*/gi, '')
                 .replace(/\s*[,\-]\s*[a-z]{2,}(?:\s+[a-z]{2,}){0,2}\s*$/, '')
-                // Remove entity type suffixes — legal and trade
-                .replace(/\s*(llc|l\.l\.c\.|inc\.?|incorporated|corp\.?|corporation|ltd\.?|limited)\s*$/gi, '')
-                .replace(/\s*(construction|constructors|contracting|contractors?|contractor|builders?|building|company|co\.?|group|associates?|services?|enterprises?)\s*$/gi, '')
                 .replace(/\s+/g, ' ')
                 .replace(/[,\-\(\)]+$/g, '')
                 .trim();
+
+            // Strip trailing entity-type / trade suffixes REPEATEDLY, so multi-word
+            // suffixes ("Construction Partners", "Building Group") fully reduce — otherwise
+            // "Newkirk Novak Construction Partners" never matches "Newkirk Novak".
+            const SUFFIX = /\s*(?:llc|l\.l\.c\.|inc\.?|incorporated|corp\.?|corporation|ltd\.?|limited|construction|constructors?|contracting|contractors?|contractor|builders?|building|company|co\.?|group|associates?|services?|enterprises?|partners?|partnership|holdings?|development|developers?)\s*$/i;
+            for (let i = 0; i < 5; i++) {
+                const next = normalized.replace(SUFFIX, '').trim();
+                if (!next || next === normalized) break;
+                normalized = next;
+            }
 
             return normalized;
         }
