@@ -72,7 +72,7 @@ async function fetchOpportunities(userId) {
     let cursorState = null, page = 0;
     do {
         const url = new URL(`${bc.BC_API_BASE}/opportunities`);
-        url.searchParams.set('limit', '25');
+        url.searchParams.set('limit', '20'); // BC API caps page size at 20 (400s on 25)
         if (cursorState) url.searchParams.set('cursorState', cursorState);
         const controller = new AbortController();
         const t = setTimeout(() => controller.abort(), 22000);

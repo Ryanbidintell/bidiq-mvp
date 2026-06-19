@@ -576,7 +576,7 @@ exports.handler = async function(event) {
     try {
         do {
             const url = new URL(`${BC_API_BASE}/opportunities`);
-            url.searchParams.set('limit', '25');
+            url.searchParams.set('limit', '20'); // BC API caps page size at 20 (400s on 25)
             if (cursorState) url.searchParams.set('cursorState', cursorState);
 
             const controller = new AbortController();
