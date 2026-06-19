@@ -11001,7 +11001,22 @@ IMPORTANT RULES:
 
             // GC
             let gcScore = 50;
-            const gcCount = selectedGCs.length;
+            // Collapse GC name variants ("Newkirk Novak" vs "Newkirk Novak Construction
+            // Partners") to one company so the score + bidder count aren't split. Keep the
+            // FULL/legal name (the longest variant — what's on the contract) for display,
+            // and carry the best stats across the merged records.
+            const scoredGCs = Object.values(selectedGCs.reduce((acc, g) => {
+                const key = normalizeCompanyName(g.name).replace(/\s/g, '') || (g.name || '').toLowerCase().replace(/\s/g, '');
+                if (!acc[key]) { acc[key] = { ...g }; }
+                else {
+                    if ((g.name || '').length > (acc[key].name || '').length) acc[key].name = g.name;
+                    acc[key].bids = Math.max(acc[key].bids || 0, g.bids || 0);
+                    acc[key].wins = Math.max(acc[key].wins || 0, g.wins || 0);
+                    acc[key].rating = Math.max(acc[key].rating || 0, g.rating || 0);
+                }
+                return acc;
+            }, {}));
+            const gcCount = scoredGCs.length;
             const compPenalty = gcCount <= 2 ? 0 : gcCount <= 5 ? 5 : gcCount <= 10 ? 10 : 15;
             let totalW = 0, weightedSum = 0, bestGC = null, bestRate = 0;
 
@@ -11011,7 +11026,7 @@ IMPORTANT RULES:
                 selectedGCs: selectedGCs.map(gc => ({ name: gc.name, rating: gc.rating, bids: gc.bids, wins: gc.wins }))
             });
 
-            for (const gc of selectedGCs) {
+            for (const gc of scoredGCs) {
                 // Use star rating if no wins yet, even if they have bids
                 if (gc.bids > 0 && gc.wins > 0) {
                     const rate = (gc.wins / gc.bids) * 100;
@@ -11038,7 +11053,7 @@ IMPORTANT RULES:
                 finalScore: gcScore,
                 bestGC: bestGC?.name
             });
-            components.gc = { score: gcScore, weight: weights.gc, reason: `${gcCount} GC${gcCount > 1 ? 's' : ''} bidding${compPenalty ? ' (-' + compPenalty + ' competition penalty)' : ''}`, details: { gcCount, compPenalty, bestGC: bestGC ? { name: bestGC.name, rate: bestGC.bids > 0 ? Math.round(bestGC.wins / bestGC.bids * 100) : null, rating: bestGC.rating } : null, allGCs: selectedGCs.map(g => ({ name: g.name, bids: g.bids || 0, wins: g.wins || 0, rating: g.rating || 0 })) } };
+            components.gc = { score: gcScore, weight: weights.gc, reason: `${gcCount} GC${gcCount > 1 ? 's' : ''} bidding${compPenalty ? ' (-' + compPenalty + ' competition penalty)' : ''}`, details: { gcCount, compPenalty, bestGC: bestGC ? { name: bestGC.name, rate: bestGC.bids > 0 ? Math.round(bestGC.wins / bestGC.bids * 100) : null, rating: bestGC.rating } : null, allGCs: scoredGCs.map(g => ({ name: g.name, bids: g.bids || 0, wins: g.wins || 0, rating: g.rating || 0 })) } };
 
             // Trade/Product Match
             if (settings.companyType === 'subcontractor') {
