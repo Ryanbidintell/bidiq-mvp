@@ -11800,9 +11800,13 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                 const aiRisks   = kw.aiRisks?.risksDetected?.length || 0;
 
                 if (badTerms.length >= 2 || aiRisks >= 2) {
-                    const n = badTerms.length + aiRisks;
-                    const list = badTerms.slice(0, 2).join(', ') || '';
-                    candidates.push({ label: 'Contract has red flags', detail: `${n} unfavorable clause${n > 1 ? 's' : ''} detected${list ? ': ' + list : ''}. Open the Contract tab before you pull a takeoff.`, strength: 'strong', direction: '-', _sort: 10 });
+                    // Report the AI-detected risk clauses — the exact ones the Contract tab
+                    // shows — so the count and names reconcile. (Previously summed bad keyword
+                    // hits + AI risks and listed the keyword terms, which didn't match the tab.)
+                    const aiList = (kw.aiRisks?.risksDetected || []).map(r => r.classification).filter(Boolean);
+                    const n = aiRisks > 0 ? aiRisks : badTerms.length;
+                    const list = (aiList.length ? aiList : badTerms).slice(0, 2).join(', ') || '';
+                    candidates.push({ label: 'Contract has red flags', detail: `${n} unfavorable clause${n !== 1 ? 's' : ''} detected${list ? ': ' + list : ''}. Open the Contract tab before you pull a takeoff.`, strength: 'strong', direction: '-', _sort: 10 });
                 } else if (badTerms.length === 1 || aiRisks === 1) {
                     const term = badTerms[0] || kw.aiRisks?.risksDetected?.[0]?.classification || 'risk clause';
                     candidates.push({ label: 'Contract flag worth reviewing', detail: `${term} detected. Check the Contract tab — may affect your margin.`, strength: 'moderate', direction: '-', _sort: 6 });
