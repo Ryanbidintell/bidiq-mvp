@@ -142,7 +142,10 @@ function mapOpportunityToProject(opp, userId) {
         created_month: createdAt.getMonth() + 1,
         created_week:  getWeekNumber(createdAt),
         extracted_data: {
-            project_name:      opp.name || 'Untitled Opportunity',
+            // opp.name is the OPPORTUNITY/bid-package name (often the trade scope);
+            // the real project name lives in clientValues.name (copied from the BC project).
+            project_name:      opp.clientValues?.name || opp.name || 'Untitled Opportunity',
+            trade_package:     opp.tradeName || opp.name || null,
             gc_name:           gcName,
             project_address:   addressParts.join(', ') || null,
             project_city:      location.city  || null,
@@ -633,7 +636,7 @@ exports.handler = async function(event) {
     const [settingsRes, keywordsRes, clientsRes] = await Promise.all([
         getSupabase()
             .from('user_settings')
-            .select('city, state, zip, street, radius, location_matters, trades, preferred_csi_sections, risk_tolerance, weights_location, weights_keywords, weights_gc, weights_trade, default_stars, company_type')
+            .select('city, state, zip, street, search_radius, location_matters, trades, preferred_csi_sections, risk_tolerance, weights, default_stars, company_type')
             .eq('user_id', userId)
             .maybeSingle(),
         getSupabase()
@@ -653,7 +656,7 @@ exports.handler = async function(event) {
         state:                   rawSettings.state || '',
         street:                  rawSettings.street || '',
         zip:                     rawSettings.zip   || '',
-        radius:                  rawSettings.radius || 50,
+        radius:                  rawSettings.search_radius || 50,
         locationMatters:         rawSettings.location_matters !== false,
         trades:                  rawSettings.trades || [],
         preferred_csi_sections:  rawSettings.preferred_csi_sections || [],
@@ -661,10 +664,10 @@ exports.handler = async function(event) {
         defaultStars:            rawSettings.default_stars || 3,
         companyType:             rawSettings.company_type || 'subcontractor',
         weights: {
-            location: rawSettings.weights_location || 25,
-            keywords: rawSettings.weights_keywords || 30,
-            gc:       rawSettings.weights_gc       || 25,
-            trade:    rawSettings.weights_trade    || 20
+            location: rawSettings.weights?.location ?? 25,
+            keywords: rawSettings.weights?.keywords ?? 30,
+            gc:       rawSettings.weights?.gc       ?? 25,
+            trade:    rawSettings.weights?.trade    ?? 20
         }
     };
 

@@ -33,18 +33,18 @@ const isAdminEmail = (e) => !!e && (ADMIN_EMAILS.includes(e.toLowerCase()) || e.
 /** Pull the user's scoring inputs (mirrors bc-sync's parallel fetch + mapping). */
 async function loadUserContext(userId) {
     const [settingsRes, keywordsRes, clientsRes] = await Promise.all([
-        db().from('user_settings').select('city, state, zip, street, radius, location_matters, trades, preferred_csi_sections, risk_tolerance, weights_location, weights_keywords, weights_gc, weights_trade, default_stars, company_type').eq('user_id', userId).maybeSingle(),
+        db().from('user_settings').select('city, state, zip, street, search_radius, location_matters, trades, preferred_csi_sections, risk_tolerance, weights, default_stars, company_type').eq('user_id', userId).maybeSingle(),
         db().from('user_keywords').select('good_keywords, bad_keywords').eq('user_id', userId).maybeSingle(),
         db().from('clients').select('name, rating, bids, wins, client_type').eq('user_id', userId)
     ]);
     const r = settingsRes.data || {};
     const settings = {
         city: r.city || '', state: r.state || '', street: r.street || '', zip: r.zip || '',
-        radius: r.radius || 50, locationMatters: r.location_matters !== false,
+        radius: r.search_radius || 50, locationMatters: r.location_matters !== false,
         trades: r.trades || [], preferred_csi_sections: r.preferred_csi_sections || [],
         riskTolerance: r.risk_tolerance || 'medium', defaultStars: r.default_stars || 3,
         companyType: r.company_type || 'subcontractor',
-        weights: { location: r.weights_location || 25, keywords: r.weights_keywords || 30, gc: r.weights_gc || 25, trade: r.weights_trade || 20 }
+        weights: { location: r.weights?.location ?? 25, keywords: r.weights?.keywords ?? 30, gc: r.weights?.gc ?? 25, trade: r.weights?.trade ?? 20 }
     };
     return { settings, keywords: keywordsRes.data || { good_keywords: [], bad_keywords: [] }, clients: clientsRes.data || [] };
 }
