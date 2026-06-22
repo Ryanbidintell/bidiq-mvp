@@ -142,9 +142,11 @@ function mapOpportunityToProject(opp, userId) {
         created_month: createdAt.getMonth() + 1,
         created_week:  getWeekNumber(createdAt),
         extracted_data: {
-            // opp.name is the OPPORTUNITY/bid-package name (often the trade scope);
-            // the real project name lives in clientValues.name (copied from the BC project).
-            project_name:      opp.clientValues?.name || opp.name || 'Untitled Opportunity',
+            // Per the BC Opportunities schema, the real construction project name is
+            // opp.project.name. opp.name / opp.tradeName are the bid-PACKAGE/trade scope,
+            // and clientValues holds client-entered values (clientValues.client = the client),
+            // NOT the project name. Fall back through the old fields if project.name is absent.
+            project_name:      opp.project?.name || opp.clientValues?.name || opp.name || 'Untitled Opportunity',
             trade_package:     opp.tradeName || opp.name || null,
             gc_name:           gcName,
             project_address:   addressParts.join(', ') || null,
