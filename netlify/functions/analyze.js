@@ -34,7 +34,10 @@ async function callClaudeAPI(messages, systemPrompt, model = 'claude-sonnet-4-6'
             'x-api-key': CLAUDE_API_KEY,
             'anthropic-version': '2023-06-01'
         },
-        body: JSON.stringify({ model, max_tokens: 4096, system: systemPrompt, messages })
+        // temperature: 0 — extraction/scoring must be deterministic. Without it Claude
+        // defaults to ~1.0, so re-analyzing the same bid yields different project names,
+        // scope, and scores (e.g. "Children's Mercy Wichita MOB" vs "Wichita MOB", 34 vs 52).
+        body: JSON.stringify({ model, max_tokens: 4096, temperature: 0, system: systemPrompt, messages })
     });
     if (!response.ok) throw new Error(`Claude API error: ${response.status} ${response.statusText}`);
     return response.json();
@@ -50,7 +53,7 @@ async function callOpenAIAPI(messages, systemPrompt) {
         body: JSON.stringify({
             model: 'gpt-4o',
             messages: [{ role: 'system', content: systemPrompt }, ...messages],
-            temperature: 0.3,
+            temperature: 0,
             response_format: { type: 'json_object' }
         })
     });

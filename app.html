@@ -10170,6 +10170,12 @@ IMPORTANT RULES:
 
                 // Clean up extracted data
                 let projectName = extracted.project_name || null;
+                // Strip forwarded-email subject prefixes (FW:/FWD:/RE:) that leak in when a
+                // bid is analyzed from an email subject line — "FW: Safety culture" → "Safety culture".
+                if (projectName) {
+                    const _pn = projectName.replace(/^(?:\s*(?:fwd?|re)\s*:\s*)+/i, '').replace(/\s+/g, ' ').trim();
+                    if (_pn) projectName = _pn;
+                }
                 let projectCity = extracted.project_city || null;
                 let projectState = extracted.project_state || null;
                 let projectAddress = extracted.project_address || null;
