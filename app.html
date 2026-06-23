@@ -1769,6 +1769,42 @@
                         </div>
                     </div>
 
+                    <!-- Win Rate by Project Size -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Win Rate by Project Size</h3>
+                            <div class="form-hint">Where do you win by project value? Only bands with 2+ competitive outcomes shown.</div>
+                        </div>
+                        <div class="card-body">
+                            <div id="winRateBySize"></div>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:13px;color:var(--text-secondary);line-height:1.85;margin-top:10px;padding:14px 16px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <p style="margin:0 0 10px;"><strong style="color:var(--text-primary);">What it measures:</strong> Win rate (won ÷ won + lost) grouped by the project's dollar value — Under $1M, $1M–$5M, $5M–$20M, $20M+. The bid value must be present in the documents to be included.</p>
+                                    <p style="margin:0;">Shows whether you compete better on smaller or larger jobs. A high win rate in a band you rarely bid is a signal to chase more of it.</p>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+
+                    <!-- Win Rate by Region -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Win Rate by Region</h3>
+                            <div class="form-hint">Where do you win geographically? Only regions with 2+ competitive outcomes shown.</div>
+                        </div>
+                        <div class="card-body">
+                            <div id="winRateByRegion"></div>
+                            <details style="margin-top:14px;">
+                                <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:500;user-select:none;">How to read this</summary>
+                                <div style="font-size:13px;color:var(--text-secondary);line-height:1.85;margin-top:10px;padding:14px 16px;background:var(--bg-secondary);border-radius:var(--radius);">
+                                    <p style="margin:0 0 10px;"><strong style="color:var(--text-primary);">What it measures:</strong> Win rate by the project's metro/region (from the bid location). Only regions with 2+ outcomes shown.</p>
+                                    <p style="margin:0;">Confirms where your geographic strength really is. High volume + low win rate in a region may mean a local competitor has the edge — weigh that before spending estimating hours there.</p>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+
                     <!-- Client Type Performance -->
                     <div class="card">
                         <div class="card-header">
@@ -20853,6 +20889,101 @@ Respond now:`;
             el.innerHTML = html;
         }
 
+        // Shared renderer for a win-rate bar list (matches the building-type/trade look).
+        function _winRateBarList(entries, footnote) {
+            let html = '';
+            entries.forEach(([label, v]) => {
+                const winRate = Math.round((v.won / v.total) * 100);
+                const color = winRate >= 50 ? '#22c55e' : winRate >= 25 ? '#eab308' : '#94a3b8';
+                html += `<div style="margin-bottom:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+                        <span style="font-size:13px;font-weight:600;color:var(--text-primary);">${label}</span>
+                        <span style="font-size:13px;color:var(--text-muted);">${v.won} won / ${v.total} total &mdash; <strong style="color:var(--text-primary);">${winRate}%</strong></span>
+                    </div>
+                    <div style="height:10px;background:var(--bg-tertiary);border-radius:5px;overflow:hidden;">
+                        <div style="height:100%;width:${winRate}%;background:${color};border-radius:5px;"></div>
+                    </div>
+                </div>`;
+            });
+            html += `<div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${footnote}</div>`;
+            return html;
+        }
+
+        function renderWinRateBySize(projects) {
+            const el = document.getElementById('winRateBySize');
+            if (!el) return;
+
+            const withOutcome = projects.filter(p =>
+                (p.outcome === 'won' || p.outcome === 'lost') && p.extracted
+            );
+            if (withOutcome.length < 3) {
+                el.innerHTML = '<div class="help-text">Log at least 3 outcomes to see project-size performance.</div>';
+                return;
+            }
+
+            const bucketOf = (raw) => {
+                const n = parseFloat(String(raw == null ? '' : raw).replace(/[^0-9.]/g, ''));
+                if (!n || isNaN(n)) return null;
+                if (n < 1e6) return 'Under $1M';
+                if (n < 5e6) return '$1M – $5M';
+                if (n < 20e6) return '$5M – $20M';
+                return '$20M+';
+            };
+            const order = ['Under $1M', '$1M – $5M', '$5M – $20M', '$20M+'];
+
+            const map = {};
+            withOutcome.forEach(p => {
+                const b = bucketOf(p.extracted?.estimated_value);
+                if (!b) return;
+                if (!map[b]) map[b] = { won: 0, total: 0 };
+                map[b].total++;
+                if (p.outcome === 'won') map[b].won++;
+            });
+
+            const entries = order.filter(b => map[b] && map[b].total >= 2).map(b => [b, map[b]]);
+            if (entries.length === 0) {
+                el.innerHTML = '<div class="help-text">Need at least 2 outcomes in a value band (with bid value logged) to compare. Keep logging outcomes.</div>';
+                return;
+            }
+            el.innerHTML = _winRateBarList(entries, 'Win rate by project value. Bands with fewer than 2 outcomes (or no value logged) are excluded.');
+        }
+
+        function renderWinRateByRegion(projects) {
+            const el = document.getElementById('winRateByRegion');
+            if (!el) return;
+
+            const withOutcome = projects.filter(p => p.outcome === 'won' || p.outcome === 'lost');
+            if (withOutcome.length < 3) {
+                el.innerHTML = '<div class="help-text">Log at least 3 outcomes to see regional performance.</div>';
+                return;
+            }
+
+            const regionOf = (p) => {
+                if (p.marketMetroArea) return p.marketMetroArea;
+                const c = p.extracted?.project_city, s = p.extracted?.project_state;
+                if (c && s) return `${c}, ${s}`;
+                return s || null;
+            };
+
+            const map = {};
+            withOutcome.forEach(p => {
+                const r = regionOf(p);
+                if (!r) return;
+                if (!map[r]) map[r] = { won: 0, total: 0 };
+                map[r].total++;
+                if (p.outcome === 'won') map[r].won++;
+            });
+
+            const entries = Object.entries(map)
+                .filter(([, v]) => v.total >= 2)
+                .sort((a, b) => (b[1].won / b[1].total) - (a[1].won / a[1].total));
+            if (entries.length === 0) {
+                el.innerHTML = '<div class="help-text">Need at least 2 outcomes per region to compare. Keep logging outcomes.</div>';
+                return;
+            }
+            el.innerHTML = _winRateBarList(entries, 'Win rate by project location. Regions with fewer than 2 outcomes are excluded.');
+        }
+
         function renderAnalyticsKPIs(projects) {
             const el = document.getElementById('analyticsKPIBar');
             if (!el) return;
@@ -20956,6 +21087,8 @@ Respond now:`;
                 document.getElementById('scoreOutcomeChart').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('winRateByBuildingType').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('winRateByTrade').innerHTML = '<div class="help-text">No data available yet.</div>';
+                document.getElementById('winRateBySize').innerHTML = '<div class="help-text">No data available yet.</div>';
+                document.getElementById('winRateByRegion').innerHTML = '<div class="help-text">No data available yet.</div>';
                 const bidROICardEl = document.getElementById('bidROICard');
                 if (bidROICardEl) bidROICardEl.style.display = 'none';
 
@@ -20973,6 +21106,8 @@ Respond now:`;
             renderScoreOutcomeChart(filtered);
             renderWinRateByBuildingType(filtered);
             renderWinRateByTrade(filtered, settings);
+            renderWinRateBySize(filtered);
+            renderWinRateByRegion(filtered);
 
             // Calculate metrics
             const accuracy = calculatePredictionAccuracy(filtered);
