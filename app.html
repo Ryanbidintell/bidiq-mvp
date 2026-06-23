@@ -20686,10 +20686,12 @@ Respond now:`;
                 };
             });
 
-            const canvas = document.createElement('canvas');
-            canvas.style.height = '200px';
-            el.innerHTML = '';
-            el.appendChild(canvas);
+            // Fixed-height relative wrapper. With responsive:true + maintainAspectRatio:false,
+            // Chart.js sizes the canvas to its PARENT; an unconstrained parent makes the
+            // scatter grow huge. A height-capped relative container fixes it (inline
+            // canvas.style.height is ignored in responsive mode).
+            el.innerHTML = '<div style="position:relative;height:340px;width:100%;"><canvas></canvas></div>';
+            const canvas = el.querySelector('canvas');
 
             chartInstances.riskReward = new Chart(canvas, {
                 type: 'scatter',
