@@ -9711,6 +9711,28 @@ IMPORTANT RULES:
             }
         }
 
+        // Levenshtein edit distance — for fuzzy GC name matching (misspellings the
+        // suffix/substring checks can't catch, e.g. "McCown" vs "McCowan").
+        function levenshtein(a, b) {
+            if (a === b) return 0;
+            const m = a.length, n = b.length;
+            if (!m) return n;
+            if (!n) return m;
+            let prev = Array.from({ length: n + 1 }, (_, i) => i);
+            for (let i = 1; i <= m; i++) {
+                const cur = [i];
+                for (let j = 1; j <= n; j++) {
+                    cur[j] = Math.min(
+                        prev[j] + 1,
+                        cur[j - 1] + 1,
+                        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+                    );
+                }
+                prev = cur;
+            }
+            return prev[n];
+        }
+
         // Find if a similar client already exists (fuzzy match)
         function findSimilarGC(newName, existingClients) {
             const normalizedNew = normalizeCompanyName(newName);
@@ -9744,6 +9766,16 @@ IMPORTANT RULES:
                             return client;
                         }
                     }
+                }
+
+                // Fuzzy match — catches MISSPELLINGS the substring checks miss, e.g.
+                // "mccowngordon" vs "mccowangordon" (McCown vs McCowan), where neither is
+                // a substring of the other. Conservative threshold + length guard so genuinely
+                // distinct GCs don't get falsely merged.
+                if (tokenNew.length >= 6 && tokenExisting.length >= 6) {
+                    const dist = levenshtein(tokenNew, tokenExisting);
+                    const sim = 1 - dist / Math.max(tokenNew.length, tokenExisting.length);
+                    if (sim >= 0.87) return client;
                 }
             }
 
