@@ -5132,7 +5132,7 @@ ${fullText.substring(0, 40000)}`;
 
                 const { data, error } = await query;
 
-                const clients = (data || []).map(c => ({
+                const clients = deduplicateClients((data || []).map(c => ({
                     id: c.id,
                     name: c.name,
                     clientType: c.client_type || 'general_contractor',
@@ -5146,7 +5146,7 @@ ${fullText.substring(0, 40000)}`;
                     avg_rfi: c.avg_rfi || null,
                     rfi_count: c.rfi_count || 0,
                     payment_flag: c.payment_flag || null
-                }));
+                })));
 
                 if (!clientType) {
                     dataCache.clients = clients;
@@ -5206,6 +5206,14 @@ ${fullText.substring(0, 40000)}`;
                     // Update existing record by primary key
                     query = supabaseClient.from('clients').upsert({ id: client.id, ...row }, { onConflict: 'id' });
                 } else {
+                    // Dedup-on-write: don't create a duplicate of an existing client.
+                    // If a similar client already exists (normalized-name match), return it
+                    // instead of inserting a new row. Non-fatal — any error falls through to insert.
+                    try {
+                        const existingForDedup = await getClients();
+                        const dupe = findSimilarGC(client.name, existingForDedup);
+                        if (dupe && dupe.id) return dupe;
+                    } catch (_) { /* fall through to insert */ }
                     // Insert new record — let DB generate the UUID
                     query = supabaseClient.from('clients').insert(row);
                 }
