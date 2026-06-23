@@ -1,6 +1,6 @@
 # BidIntell — Build Roadmap
 
-**Last Updated:** June 1, 2026
+**Last Updated:** June 23, 2026
 **Owner:** Ryan Elder
 **Status:** ACTIVE — single source of truth for what to build and in what order
 
@@ -50,6 +50,32 @@ Runs alongside the build work; doesn't compete for build hours. Status as of 5/2
 | PlanHub | Plan room | Active conversations (Barry → Samantha → Evan; Fleischman CPO) | Ongoing |
 
 **Note:** The follow-up-automation gate on takeoff outreach was **released early** — proposals are going out now, ahead of the build shipping. Positioning: *"We filter, they measure"* / *"A faster takeoff on a wrong-fit job is still wasted time."* Doc: `BidIntell_Togal_Partnership_Proposal_v2.docx` (template for MeasureSquare + FloorRight).
+
+---
+
+## POST-AUTODESK (decided Jun 22-23 2026 — revisit right after the Jun 23 Autodesk demo)
+
+New, decided work from the Jun 22-23 strategy + office-hours sessions. Not in NOW yet (respects the queue); sequence after the Autodesk call informs the BC items.
+
+**Strategy frame that drives all of this:** be the **embedded, neutral intelligence layer** inside the platforms subs already use (PlanHub, estimating tools, BuildingConnected) — do NOT build a standalone destination (that's RhinoDox's game; they have no integration/partner play). Moat = **distribution + neutrality, not features.** Full thesis + competitor read: memory `bidintell-platform-strategy` / `bidintell-competitors`.
+
+| # | Item | Notes / pointer |
+|---|------|-----------------|
+| A | **Contract-risk redesign** — decouple from the BidIndex; awareness panel + above-market flag (AIA A401 baseline). Don't penalize universal/non-negotiable clauses (they make every bid PASS). | Design doc `contract_risk_scoring_decision.md`. Assignment: hand-label 4-5 real subcontracts + A401 via Claude Desktop → above-market ruleset. Then `/plan-eng-review`. |
+| B | **Headless scoring API** — extract scoring from the `app.html` monolith into a documented in/out service (opportunity + docs → BidIndex + breakdown + flags). | #1 enabler of the embed strategy. |
+| C | **Score-follows-the-sub profile** — one portable profile/score across platforms (the neutrality moat, in the data model). | |
+| D | **Frictionless outcome capture** inside host platforms — protects the NORTH STAR logging rate when embedded. | |
+| E | **Document ingestion via partner APIs** — signed URLs / webhooks → async score → return. | Same plumbing the Autodesk/PlanHub doc-access unlocks. |
+| F | **Win the FIT decision** — validate BidIndex vs real outcomes (does GO win > PASS), auto-tune GO/REVIEW thresholds per user (stop hardcoding 80/60). | The real differentiator + the proof platforms & customers demand. |
+| G | **B2B2C partner plumbing** — tenant separation, co-branded onboarding, rev-share billing hooks, SSO. | Needed before any platform embed (e.g. PlanHub) goes live. |
+| H | **Publish corrected Take-Off article** (accuracy-fixed: per-user competitive pressure, no email-forward promise, no fabricated stats, generic competitors). | Draft: `Downloads/TakeOff_AI_Bid_Scoring_2026_FINAL.md` → wire into live `/takeoff/`. |
+| I | **PlanHub outreach** — send Barry email (passes his "I sell, I don't buy" filter); send the proposal as PDF after he replies; Barry Zoom next week. | Drafts in `Downloads/PlanHub_Outreach_Draft.md`; proposal `BidIntell.ai/Planroom partnerships/`. |
+| J | **✅ "Import from Autodesk" doc-pull (path CONFIRMED on the Jun 23 call).** Build: (0) **join ADN** [critical path — Jeremy sending discount/partner code + approval] → dev accounts + BC sandbox/alpha; (1) **APS app with Forma Data Management + Forma Build entitlements**; (2) **3-legged OAuth** (user's own file permission); (3) **"Import from Autodesk" button** → pull drawings/specs → auto-score; (4) **publish to the Autodesk App Gallery** (tile). Check if the **BC bid-package endpoint** already surfaces GC-shared docs. | APS guide: aps.autodesk.com/en/docs/data/v2/tutorials/download-file/. Verify Forma-DM-subscription need in sandbox. Escalation to BC PMs available via Jeremy. Memory `bidintell-autodesk-partnership` / `bidintell-bc-roadmap`. |
+| K | **Analytics upgrade (DO post-Autodesk):** (1) **per-estimator/team metrics** — group existing win-rate/score/calibration by `user_id` within `org_id` (makes the SOLD-but-unbuilt "Team analytics" bullet real; Summit ask). ⏳ STILL TODO — needs org-wide project load + RLS + can't validate solo; route via `/plan-eng-review` when a team account exists. (2) win-loss by **project size / region** — ✅ BUILT Jun 23 (commit `52651ca`, app.html `renderWinRateBySize`/`renderWinRateByRegion`), held for push. | Already built: GC/client-type/building-type/trade performance + score calibration (memory `bidintell-analytics-features`). |
+| K-later | **Analytics — PARKED for later:** (3) **margin-fade tracking** (needs NEW data capture: final/actual margin at completion); (4) **backlog/pipeline view** (bid-board/PM/assignment — off the "don't build a destination" strategy). | Don't claim either as live; revisit after K ships. |
+| L | **GC/client edit + MERGE on the GC screen** — the edit modal has Type/Rating/Tags/Notes but **no Name field and no Merge.** Add (a) editable name; (b) a merge function (fold duplicate GCs together, reassign bids/outcomes, reconcile fragmented ids). | Recurring manual pain: "tu"→Turner done in-DB Jun 23, Newkirk merge before. GC fragmentation also damages relationship scoring + analytics dedup. See [[bidintell-gc-office-identity]] (gc_master / normalizeCompanyName). |
+
+**Don't over-build:** contract-risk beyond the awareness layer (don't chase RhinoDox's 100-criteria risk race); the standalone destination UI (keep it thin, for direct-customer proof only).
 
 ---
 

@@ -140,4 +140,88 @@ A `test`-environment toggle is wired into the BuildingConnected sync so you can 
 - This relies on Autodesk's test env behaving as documented — confirm it works once before relying on it in front of Jeremy.
 
 ---
-*Pairs with [BIDINTELL_CONTEXT_FOR_DESKTOP.md]. Update when the partner status, tier, or referenceable-customer list changes.*
+
+# ════════════════════════════════════════════════════════
+# JUNE 22, 2026 — DEMO PREP + VERIFIED INTEGRATION RESEARCH
+# ════════════════════════════════════════════════════════
+*(Added the day before the Jun 23 4:00 PM CT demo with Jeremy Wallin + Tiffany Friesen. This section supersedes the "Demo readiness" notes above where they conflict. Everything below is verified against rendered Autodesk docs unless marked otherwise.)*
+
+## 1. Demo strategy (what changed and why)
+
+**The Autodesk BuildingConnected TEST environment returns synthetic `faker.js` data** — fake company names ("Cremin, Orn and Casper," "Senger-Roob"), scope fields literally "Info1/Info3," random cities, trades like "Safety Officer." Every test row scores a flat **39/PASS** because there's no real scope text to match (garbage in → uniform score out). This is NOT a scoring bug — it's the sandbox.
+
+**Implication:** do NOT use the test-data list as the demo showcase. Jeremy works at Autodesk and will recognize his own fixture data; a board full of identical "39/PASS / Cremin, Orn and Casper" rows makes BidIntell look like a dumb importer.
+
+**Demo choreography (decided):**
+1. **Showcase intelligence on REAL data** — the 7 real KC projects already in the account (scores 34→78, real GCs, real locations). Drill into **Jackson County Detention Center (76, J.E. Dunn, Kansas City)**. Backup story: **NAIC Renovation (78, won)** — "flagged REVIEW, you bid it, you won."
+2. **Prove the integration is live** — click **Sync Now** (test data) to show invites streaming from the BC API, framed honestly: "this is your sandbox, so names are placeholders; in production these are real invites, auto-scored on arrival."
+3. **If the live sync hiccups:** stay on the populated dashboard — data's already there, nothing breaks.
+
+**Dashboard cleanup done (Jun 22):** removed 3 junk test-forward rows ("Safety culture" x2, an empty duplicate "Midwest Trust") and the 23 synthetic BC test rows (re-syncable in one click). Account now shows 7 clean real projects. Backup of the 3 deleted rows: `OLD/demo-cleanup-backup-2026-06-22.json`.
+
+## 2. Bug fixed (commit `7106ae2`, deployed)
+
+BC sync was importing **trade/package names as project names** (e.g., "Drywall & Acoustical" shown as the project). Root cause: `project_name` was read from `opp.clientValues.name`. Per the verified Opportunities schema the real project name is **`opp.project.name`**; `clientValues` holds client-entered values, `tradeName`/`name` is the bid package. Fixed in `netlify/functions/bc-sync.js` `mapOpportunityToProject` (also covers `bc-auto-screen.js`, which reuses it). Falls back to old fields if `project.name` is absent — no regression.
+
+## 3. ★ THE BIG FINDING — scoring the actual drawings is buildable (sub-side)
+
+**The problem with the current integration:** metadata scoring is a weak proxy. A bid invite is just the GC's blurb, and you can't control what they type. An accurate bid/no-bid score needs the real drawings + specs. So the metadata screener is fast triage, not the real product.
+
+**Verified answer: the full-document score IS achievable, via two APIs together.**
+
+- **The BC API alone exposes NO drawings.** Full v2 endpoint list = opportunities, bid-packages, bids, bid-forms, line-items, plugs. The only file endpoints (`/bids/:id/attachments`) are the sub's own *proposal* attachments — not the GC's plan set.
+- **The real path = BuildingConnected API + Data Management API (Autodesk Docs).** When a BC project links to Autodesk Docs, Docs is the file backend. BC shares a specific Docs folder with bidders — at the bid-package level, only invited subs see that folder.
+- **The bridge field: `currentAccDocsFolderId`** — exposed on `GET projects` and `GET bid-packages`.
+
+**End-to-end flow:**
+```
+/opportunities  →  bid-package  →  read currentAccDocsFolderId
+   →  Data Management API: hub → project → folder → item → version → storage
+   →  download PDF (signed S3 URL)  →  analyze.js deep-scores the real plan set
+```
+
+## 4. How we get Data Management API access (mechanics)
+
+- **Same APS app** we already use for BuildingConnected — just **add the `data:read` scope** (likely `account:read` too).
+- **Same 3-legged OAuth** login the sub already does for BC.
+- **File retrieval:** traverse hub → project → folder → item → version → storage → download.
+
+## 5. ★ THE CRUX RISK — provisioning (this decides whether it scales)
+
+Data Management docs are explicit: for an app to read an ACC account's files, **the account admin generally must provision the app** (Account Admin → Custom Integrations → add the app's Client ID). That creates a fork:
+
+- **Bad case:** the bidder-shared folder is read through the **GC's** ACC hub → BidIntell would need provisioning in **every GC's account.** Non-starter for a sub-side tool at scale.
+- **Good case:** BC's bidder-sharing grants the **sub's own Autodesk identity** folder-level access, so BidIntell rides the **sub's** 3LO session — no per-GC provisioning. (BC exists to share plans with external subs who aren't ACC members, so a bidder path likely exists — but NOT confirmed to be exposed via Data Management without provisioning.)
+
+**This is the single make-or-break question for Jeremy.** (See asks below.)
+
+## 6. Scope & targeting decisions
+
+- **First integration target = Bid Board Pro (subs receiving invites), NOT BC Pro (GCs).** Matches the ICP and product; the document-pull flow works sub-side; keeps out of the upmarket / Boon-AI trap.
+- **Caveats to design around:** only works when the GC runs BC *with* Autodesk Docs (pure-BC + legacy "opportunity files" = partial/no file API); APS rate limits → async download/score pipeline for large drawing sets.
+- **Positioning conflict to fix before marketing:** `works-with-estimating-tools.html` currently says BidIntell "does not integrate with estimating software — no data sync or API connection." BC+Docs ingestion contradicts that; it becomes a new capability/tier — update the copy.
+
+## 7. The 5 asks for Jeremy (plain-English, demo brief PDF has these too)
+
+1. **Permission to reach files:** confirm `data:read` (+ `account:read`?) is what we request to download the plan folder for a sub's invited bids.
+2. **★ Make-or-break — can a SUB do it without GC provisioning?** "Does BidIntell need provisioning in each GC's ACC account, or does BC's bidder-sharing grant the sub's own login access to the shared package folder so we ride their session?"
+3. **Market coverage:** roughly what share of GCs run BuildingConnected *with* Autodesk Docs enabled?
+4. **Technical contact:** a named engineer to work the file-access details through with.
+5. **(Phase 2, later) Writeback:** can the BidIndex score be written back onto an opportunity so it shows where the estimator already works?
+
+**Credibility line to open with:** "We've already mapped your API — we pull opportunities, we found `currentAccDocsFolderId`, we know the download flow. We're not asking you to build anything; we need the access to use what's already there."
+
+## 8. Sources (verified Jun 22 2026)
+- BC v2 API reference (endpoint list): https://aps.autodesk.com/en/docs/buildingconnected/v2/reference/
+- BC API overview (files + Data Management): https://aps.autodesk.com/en/docs/buildingconnected/v2/developers_guide/overview/
+- BC field guide (`currentAccDocsFolderId`): https://aps.autodesk.com/en/docs/buildingconnected/v2/developers_guide/field_guide/buildingconnected/
+- Data Management API overview (access + hierarchy): https://aps.autodesk.com/en/docs/data/v2/developers_guide/overview/
+- Manage API access to Docs / custom-integration provisioning: https://aps.autodesk.com/en/docs/bim360/v1/tutorials/getting-started/manage-access-to-docs/
+- BC Pro + Autodesk Docs integration: https://support.buildingconnected.com/hc/en-us/articles/25752881793171-Bid-Board-and-Autodesk-Docs-Integration
+
+## 9. Companion artifacts
+- **`Downloads/BidIntell_Autodesk_Demo_Brief.pdf`** — one-page demo brief (story, 5 asks, click-path) to keep open during the call.
+- Memory: `bidintell-bc-roadmap.md` (verified findings + sharpened asks).
+
+---
+*Pairs with [BIDINTELL_CONTEXT_FOR_DESKTOP.md]. Update when the partner status, tier, or referenceable-customer list changes. Last major update: Jun 22 2026 — verified document-scoring path + demo prep.*
