@@ -84,22 +84,41 @@ exports.handler = async function(event, context) {
         };
     }
 
+    // Require a valid Supabase session and derive userId from the verified JWT.
+    // NEVER trust a userId from the request body — doing so let unauthenticated callers
+    // create Stripe customers and overwrite any user's user_revenue row (service-role write).
+    const authHeader = event.headers['authorization'] || event.headers['Authorization'] || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (!token) {
+        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Authentication required' }) };
+    }
+
+    let userId;
+    try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) throw new Error('invalid token');
+        userId = user.id;
+    } catch (e) {
+        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Invalid or expired session' }) };
+    }
+
     try {
         const body = JSON.parse(event.body);
-        const { userId, email, name, companyName, priceId, planName } = body;
+        // userId comes from the verified token above — body.userId is ignored.
+        const { email, name, companyName, priceId, planName } = body;
 
         // Validate required fields
-        if (!userId || !email || !priceId) {
+        if (!email || !priceId) {
             return {
                 statusCode: 400,
                 headers,
                 body: JSON.stringify({
-                    error: 'Missing required fields: userId, email, priceId'
+                    error: 'Missing required fields: email, priceId'
                 })
             };
         }
 
-        // Get or create Stripe customer
+        // Get or create Stripe customer (for the authenticated user only)
         const customerId = await getOrCreateCustomer(userId, email, name, companyName);
 
         // Create checkout session

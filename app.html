@@ -5725,9 +5725,14 @@ ${fullText.substring(0, 40000)}`;
         function calculateAPICost(provider, model, inputTokens, outputTokens) {
             const pricing = {
                 anthropic: {
-                    'claude-sonnet-4-20250514': { input: 3.00, output: 15.00 }, // per 1M tokens (Sonnet 4.5)
+                    // per 1M tokens. Keys must match the model id the API RETURNS (data.model),
+                    // not the id we request — otherwise calculateAPICost falls back to the $5/M
+                    // default and cost_usd is wrong (verified 2026-06-29: Haiku was over-billed ~3.6x).
+                    'claude-sonnet-4-6': { input: 3.00, output: 15.00 },          // current Sonnet 4.6
+                    'claude-haiku-4-5-20251001': { input: 1.00, output: 5.00 },   // current Haiku 4.5
+                    'claude-sonnet-4-20250514': { input: 3.00, output: 15.00 },   // legacy Sonnet 4 id (older rows)
                     'claude-sonnet-4.5': { input: 3.00, output: 15.00 },
-                    'claude-haiku-4': { input: 0.25, output: 1.25 },
+                    'claude-haiku-4': { input: 0.25, output: 1.25 },              // legacy Haiku 4 (unused)
                     'claude-opus-4.5': { input: 15.00, output: 75.00 }
                 },
                 openai: {
@@ -19851,12 +19856,16 @@ Respond now:`;
                 const originalText = button?.textContent;
                 if (button) button.textContent = '⏳ Loading...';
 
-                // Call Netlify function to create checkout session
+                // Call Netlify function to create checkout session.
+                // Authorization required — the server derives userId from the JWT, not the body.
+                const { data: { session: _ckSession } } = await supabaseClient.auth.getSession();
                 const response = await fetch('/.netlify/functions/stripe-create-checkout', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${_ckSession?.access_token || ''}`
+                    },
                     body: JSON.stringify({
-                        userId: currentUser.id,
                         email,
                         name,
                         companyName,
@@ -19896,13 +19905,16 @@ Respond now:`;
                 const originalText = button?.textContent;
                 if (button) button.textContent = '⏳ Opening...';
 
-                // Call Netlify function to create portal session
+                // Call Netlify function to create portal session.
+                // Authorization required — the server derives userId from the JWT, not the body.
+                const { data: { session: _bpSession } } = await supabaseClient.auth.getSession();
                 const response = await fetch('/.netlify/functions/stripe-create-portal', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userId: currentUser.id
-                    })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${_bpSession?.access_token || ''}`
+                    },
+                    body: JSON.stringify({})
                 });
 
                 const data = await response.json();

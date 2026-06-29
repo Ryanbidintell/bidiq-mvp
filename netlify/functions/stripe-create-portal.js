@@ -61,19 +61,26 @@ exports.handler = async function(event, context) {
         };
     }
 
+    // Require a valid Supabase session and derive userId from the verified JWT.
+    // NEVER trust a userId from the request body — doing so was an IDOR that let any
+    // unauthenticated caller open (and cancel) any customer's Stripe billing portal.
+    const authHeader = event.headers['authorization'] || event.headers['Authorization'] || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (!token) {
+        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Authentication required' }) };
+    }
+
+    let userId;
     try {
-        const body = JSON.parse(event.body);
-        const { userId } = body;
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) throw new Error('invalid token');
+        userId = user.id;
+    } catch (e) {
+        return { statusCode: 401, headers, body: JSON.stringify({ error: 'Invalid or expired session' }) };
+    }
 
-        if (!userId) {
-            return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Missing userId' })
-            };
-        }
-
-        // Get Stripe customer ID from database
+    try {
+        // Get Stripe customer ID from database (for the authenticated user only)
         const customerId = await getStripeCustomerId(userId);
 
         // Create portal session
