@@ -1,7 +1,7 @@
 # BidIQ Architecture Documentation
 
-**Last Updated:** March 5, 2026
-**Version:** 2.0 (full audit — line numbers removed, function names used)
+**Last Updated:** June 29, 2026
+**Version:** 2.1 (added follow-up automation functions + OAuth flow; 2026-06-29 doc reconciliation)
 
 ---
 
@@ -230,6 +230,29 @@ Scheduled (cron via netlify.toml). Aggregates daily metrics → `admin_metrics_s
 
 ---
 
+## 📧 Follow-Up Automation Functions (added 2026-05-20; admin-gated)
+
+Built but UI-gated to admins (`isAdmin()` in app.html). Spec: `BidIntell_FollowUp_Automation_Build_Spec_v1.md`. Verified 2026-06-29 (`VERIFICATION_2026-06-29.md`).
+
+**Outbound pipeline (works against the schema):**
+- `generate-followup-drafts.js` — daily cron (6am CT). Finds `follow_up_touches` due within 24h, drafts via Claude, sets `awaiting_approval`. ⚠️ **Has bugs:** queries a non-existent `users` table and non-existent `projects` columns (`name`, `bid_score`, etc.) — see KNOWN_BUGS.md.
+- `oauth-shared/claude-draft-followup.js` — `generateDraft(context)`; builds the Cialdini-principle prompt (7 principles + outcome-aware won/lost/ghost variants), real Claude call (`claude-sonnet-4-6`), returns `{subject, body, reasoning}`.
+- `send-followup-email.js` — user-triggered. Sends an approved touch via the user's own Gmail (`gmail.send`) or M365 Graph (`sendMail`). 10 sends/hr rate limit. Marks touch `sent`/`failed`.
+- `prompt-ghost-outcome.js` — daily cron (7am CT). After the last touch sent >7d ago with no outcome, emails the user to mark Ghosted. ⚠️ Same `users`-table bug.
+- `outcome-triggered-followup.js` — Agent #3. On a user-logged won/lost/ghost outcome, drafts a one-off follow-up and queues it for approval. **Reads the schema correctly** (extracted_data + user_settings + clients.email) — the path actually wired into the live admin UI.
+
+**OAuth (Gmail + M365):**
+- `google-oauth-start.js` / `google-oauth-callback.js`, `microsoft-oauth-start.js` / `microsoft-oauth-callback.js` — consent + code-for-token exchange → encrypted tokens in `user_email_integrations`.
+- `oauth-shared/token-crypto.js` — encrypt/decrypt token helpers.
+- `oauth-shared/refresh-oauth-token.js` — `getValidAccessToken(integration, supabase)`; silent refresh with a 60s buffer.
+- `email-integration-disconnect.js` — marks the integration inactive.
+
+**Cancellation** lives inline in app.html as `cancelFollowupSchedule(projectId, reason, gcName)` — NOT a Netlify function (spec called it `cancel-followup-schedule.js`).
+
+> ⚠️ **No inbound side.** Nothing ingests, parses, or assigns GC *replies* to follow-ups. There is no reply handler, no AI reply interpretation, and no `Message-ID`/`In-Reply-To` threading (sends don't persist a message-id). This was never in the build spec. `prospect-reply.js` (Postmark inbound) is for cold-outreach *prospects*, not bid follow-ups.
+
+---
+
 ## 🗄️ Database (Supabase)
 
 10 tables. See **SCHEMA.md** for full column details.
@@ -437,5 +460,5 @@ netlify dev
 
 ---
 
-**Last Updated:** March 5, 2026 by Claude Code
-**Version:** 2.0
+**Last Updated:** June 29, 2026 by Claude Code
+**Version:** 2.1

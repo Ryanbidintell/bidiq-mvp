@@ -1,6 +1,6 @@
 # Known Bugs & Fixes
 
-**Last Updated:** April 23, 2026
+**Last Updated:** June 29, 2026
 
 ---
 
@@ -30,6 +30,14 @@
 - BidIndex scores need real-world validation
 - Trade detection accuracy
 - Location scoring (distance calculations)
+
+### Follow-up cron functions query non-existent table/columns (found 2026-06-29, verification)
+- **Severity:** P1 — these crons run with broken context; feature is admin-gated so no real users hit it yet.
+- **What:** `netlify/functions/generate-followup-drafts.js` and `netlify/functions/prompt-ghost-outcome.js` both query `.from('users')` (`first_name`, `last_name`, `email`). **There is no public `users` table per SCHEMA.md** — user data lives in `user_settings` (`user_name`, `user_email`). Result: draft cron produces null `userName`/`userFirstName`; ghost-prompt cron sends to `user?.email = undefined` (no email goes out).
+- **Also:** `generate-followup-drafts.js` reads `projects.name, address, project_type, project_size_sf, bid_score` — **none are columns on `projects`** (real data is in `extracted_data` / `scores` jsonb). Scheduled-cadence draft context would be largely null.
+- **Note:** the **outcome-triggered path** (`outcome-triggered-followup.js`) reads `extracted_data` + `user_settings` correctly — it is the path actually wired into the live (admin) UI. The bugs are confined to the scheduled-cron path.
+- **Expected:** crons should read `user_settings` (or a real `users` view if one is intended) and pull project fields from `extracted_data`/`scores`.
+- **Status:** OPEN. Not fixed in the 2026-06-29 verification session (read-only).
 
 ## ⏳ OPEN — P3 (Polish)
 

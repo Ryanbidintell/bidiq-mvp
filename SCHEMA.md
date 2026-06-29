@@ -1,8 +1,8 @@
 # BidIQ Database Schema Documentation
 
-**Last Updated:** March 5, 2026
+**Last Updated:** June 29, 2026
 **Database:** Supabase PostgreSQL
-**Version:** 2.0 (current state — audited from live code)
+**Version:** 2.5 (current state — audited from live code)
 
 ---
 
@@ -10,7 +10,7 @@
 
 BidIQ uses **Supabase PostgreSQL** with **Row Level Security (RLS)** enabled on all user-data tables. Each user can only access their own data.
 
-**Tables (11 total):**
+**Tables (16 total** — 11 core below + 5 follow-up-automation tables documented in their own section before "Database Relationships"**):**
 | Table | Type | Description |
 |-------|------|-------------|
 | `user_settings` | User data | Profile, preferences, scoring weights |
@@ -531,6 +531,24 @@ ON oauth_connections FOR ALL USING (user_id = auth.uid());
 
 ---
 
+## 📋 Follow-Up Automation Tables (5) — added 2026-05-20
+
+**Source of truth:** `supabase/migrations/20260520_followup_automation.sql` (+ `20260520_followup_multi_gc.sql`). Feature is **built but admin-gated** in app.html (verified 2026-06-29 — see `VERIFICATION_2026-06-29.md`). All five have RLS with `WITH CHECK`.
+
+| Table | Purpose | Key columns |
+|-------|---------|-------------|
+| `follow_up_sequence_templates` | System + user cadence templates (4 system templates seeded: Standard GC, Public Bid, Repeat Client, Aggressive) | `user_id` (NULL = system), `name`, `is_default`, `is_system_template`, `use_business_days` |
+| `follow_up_sequence_steps` | Per-template step config | `template_id` FK, `step_number` (1–6), `days_offset`, `primary_principle` / `secondary_principle` (7 Cialdini values), `custom_instruction`, `word_count_target` |
+| `follow_up_schedules` | One follow-up plan per bid | `project_id` FK (ON DELETE CASCADE), `user_id`, `template_id`, `bid_submitted_at`, `status` (inactive/active/completed/cancelled), `cancelled_reason` |
+| `follow_up_touches` | Individual scheduled emails | `schedule_id` FK, `touch_number`, `scheduled_at`, `status` (pending/awaiting_approval/approved/sent/skipped/cancelled/failed), `primary_principle`, `draft_subject`/`draft_body`/`draft_reasoning`, `user_edited_*`, `sent_at`, `send_error`, `recipient_email`/`recipient_name`. ⚠️ **No `sent_message_id`/`thread_id`** — sends don't persist a thread key, so inbound-reply matching is not possible without a schema add. |
+| `user_email_integrations` | OAuth tokens for Gmail/M365 send | `user_id` UNIQUE, `provider` (google/microsoft), `email_address`, `access_token_encrypted`, `refresh_token_encrypted`, `token_expires_at`, `scopes_granted`, `is_active`, `total_sends` |
+
+**`projects` additions (same migration):** `bid_submitted_at timestamptz`, `gc_contact_email text`, `gc_contact_name text`, `follow_up_schedule_id uuid` (FK → follow_up_schedules).
+
+> ⚠️ **No `users` table exists.** `generate-followup-drafts.js` and `prompt-ghost-outcome.js` query `.from('users')` — a bug (see KNOWN_BUGS.md). User data is in `user_settings`. There is **no inbound GC-reply ingestion, parsing, or reply→project assignment** anywhere in the schema or code.
+
+---
+
 ## 🗺️ Database Relationships
 
 ```
@@ -612,6 +630,7 @@ SELECT
 | Apr 10, 2026 | 2.2 | Added outcome_nudge_count (int, default 0) + last_nudge_sent_at (timestamptz) to projects. Added outcome_reminder_days (int, default 21) to user_settings. (migration 009_outcome_nudge.sql) |
 | Jun 9, 2026 | 2.3 | Added `company_context` jsonb to projects (per-bid frozen snapshot for time-series/Phase-B intel). Added `company_size` + `typical_project_size` text buckets to user_settings. Snapshot written by app.html `saveProject()` + inbound-email edge function. (migration 20260609_company_context_snapshot.sql) |
 | Jun 9, 2026 | 2.4 | GC office identity: added `gc_key` + `gc_metro` + `gc_master_office_id` to gc_competition_density; created `gc_master` canonical registry (company→office hierarchy). Office split (Turner-KC≠Boston) + COALESCE(parent_id,id) company rollup. (migrations 20260609_gc_identity_keys, 20260609_gc_master_hierarchy) |
+| Jun 29, 2026 | 2.5 | **Documented (retroactively) the 5 follow-up-automation tables** (`follow_up_sequence_templates`, `follow_up_sequence_steps`, `follow_up_schedules`, `follow_up_touches`, `user_email_integrations`) + `projects` additions (`bid_submitted_at`, `gc_contact_email`, `gc_contact_name`, `follow_up_schedule_id`). Tables shipped 2026-05-20 but were never added to SCHEMA.md until this verification pass. No DDL change — doc reconciliation only. |
 
 ---
 
