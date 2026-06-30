@@ -15,6 +15,23 @@ const ADMIN_ONLY_TYPES = ['beta_approval', 'founding_coupon', 'beta_to_paid_warn
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// In-memory rate limit for the OPEN (non-admin) email paths. magic_link is the
+// login flow and beta_application / roi_breakdown / contact_form are public lead
+// forms, so they can't require auth — rate-limit instead to curb email-bombing of
+// arbitrary addresses and signup spam. Max 5 sends per (IP + email + type) per
+// 10 minutes. In-memory, resets on cold start (best-effort, not a hard guarantee).
+const RL_WINDOW_MS = 10 * 60 * 1000;
+const RL_MAX = 5;
+const _rl = new Map();
+function notifyRateLimited(key) {
+    const now = Date.now();
+    const hits = (_rl.get(key) || []).filter(t => t > now - RL_WINDOW_MS);
+    if (hits.length >= RL_MAX) return true;
+    hits.push(now);
+    _rl.set(key, hits);
+    return false;
+}
+
 async function sendEmail({ to, subject, htmlBody }) {
     const isInternalOnly = to === 'ryan@bidintell.ai';
     const response = await fetch('https://api.resend.com/emails', {
@@ -63,6 +80,15 @@ exports.handler = async function(event, context) {
             const { data: { user }, error: authError } = await supabase.auth.getUser(token);
             if (authError || !user || !ADMIN_EMAILS.includes(user.email)) {
                 return { statusCode: 403, headers, body: JSON.stringify({ error: 'Admin access required' }) };
+            }
+        } else {
+            // Open paths (login magic_link + public lead forms): rate-limit by IP+email+type
+            // to curb email-bombing of arbitrary addresses and signup-spam via the magic_link
+            // signup fallback. Server is the boundary; the UI hint isn't.
+            const ip = String(event.headers['x-forwarded-for'] || event.headers['X-Forwarded-For'] || 'unknown').split(',')[0].trim();
+            const rlKey = `${ip}:${String(body.userEmail || '').toLowerCase()}:${emailType || 'error'}`;
+            if (notifyRateLimited(rlKey)) {
+                return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many requests. Please wait a few minutes and try again.' }) };
             }
         }
 

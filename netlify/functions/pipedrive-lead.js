@@ -1,8 +1,28 @@
 const PIPEDRIVE_BASE = 'https://api.pipedrive.com/v1';
 
+// In-memory rate limit — this is a public demo-form handler (no auth by design),
+// so cap CRM-record creation to curb spam flooding. Max 3 submissions per IP per
+// 10 minutes. Resets on cold start (best-effort).
+const PL_WINDOW_MS = 10 * 60 * 1000;
+const PL_MAX = 3;
+const _plHits = new Map();
+function pipedriveRateLimited(ip) {
+  const now = Date.now();
+  const hits = (_plHits.get(ip) || []).filter(t => t > now - PL_WINDOW_MS);
+  if (hits.length >= PL_MAX) return true;
+  hits.push(now);
+  _plHits.set(ip, hits);
+  return false;
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
+
+  const _ip = String((event.headers && (event.headers['x-forwarded-for'] || event.headers['X-Forwarded-For'])) || 'unknown').split(',')[0].trim();
+  if (pipedriveRateLimited(_ip)) {
+    return { statusCode: 429, body: JSON.stringify({ success: false, error: 'Too many requests. Please wait a few minutes and try again.' }) };
   }
 
   const token = process.env.PIPEDRIVE_API_TOKEN;

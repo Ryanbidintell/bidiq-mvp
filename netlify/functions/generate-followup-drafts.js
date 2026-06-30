@@ -98,7 +98,19 @@ async function processDraftForTouch(touch) {
   return draft;
 }
 
-exports.handler = async function () {
+exports.handler = async function (event) {
+    // Internal/scheduled endpoint — block public HTTP abuse (email spam / AI cost).
+    // Allow Netlify scheduled runs (body carries next_run) or a CRON_SECRET request.
+    {
+        let _sched = false;
+        try { _sched = !!JSON.parse((event && event.body) || '{}').next_run; } catch (_) {}
+        const _sec = process.env.CRON_SECRET;
+        const _h = (event && event.headers) || {};
+        const _q = (event && event.queryStringParameters) || {};
+        if (!(_sched || (_sec && (_h['x-cron-secret'] === _sec || _q.cron_secret === _sec)))) {
+            return { statusCode: 401, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Unauthorized internal endpoint' }) };
+        }
+    }
   const now = new Date();
   const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 

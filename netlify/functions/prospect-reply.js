@@ -43,9 +43,12 @@ exports.handler = async (event) => {
     // (X-Prospect-Reply-Token) in Postmark's inbound webhook settings.
     const inboundToken = event.headers['x-prospect-reply-token']
         || event.headers['X-Prospect-Reply-Token'];
-    if (process.env.POSTMARK_PROSPECT_REPLY_TOKEN
-            && inboundToken !== process.env.POSTMARK_PROSPECT_REPLY_TOKEN) {
-        console.warn('prospect-reply: rejected — invalid or missing X-Prospect-Reply-Token');
+    // Fail CLOSED: require the shared secret. Previously, if POSTMARK_PROSPECT_REPLY_TOKEN
+    // was unset the check was skipped and anyone could POST to mark prospects "replied"
+    // and stop their sequence. Now an unset secret rejects all calls.
+    if (!process.env.POSTMARK_PROSPECT_REPLY_TOKEN
+            || inboundToken !== process.env.POSTMARK_PROSPECT_REPLY_TOKEN) {
+        console.warn('prospect-reply: rejected — missing/invalid X-Prospect-Reply-Token (or POSTMARK_PROSPECT_REPLY_TOKEN unset)');
         return { statusCode: 200, body: 'ok' };
     }
 

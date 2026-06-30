@@ -1006,6 +1006,23 @@ Deno.serve(async (req) => {
         return new Response('ok', { status: 200 });
     }
 
+    // Optional shared-secret gate. SendGrid Inbound Parse can't HMAC-sign its webhook,
+    // so the standard protection is a secret embedded in the webhook URL. To activate:
+    // set INBOUND_PARSE_SECRET and append ?key=<secret> to the SendGrid Inbound Parse
+    // destination URL (or have it send an x-inbound-secret header). This rejects forged
+    // POSTs that would otherwise run Claude on attachments + send a Resend reply.
+    // If the env var is unset the check is skipped, so the live scoring path is NOT
+    // broken before SendGrid is reconfigured — set the env var to turn it on.
+    const inboundSecret = Deno.env.get('INBOUND_PARSE_SECRET');
+    if (inboundSecret) {
+        const provided = new URL(req.url).searchParams.get('key')
+            || req.headers.get('x-inbound-secret') || '';
+        if (provided !== inboundSecret) {
+            console.warn('inbound-email: rejected — missing/invalid inbound secret');
+            return new Response('unauthorized', { status: 401 });
+        }
+    }
+
     let payload: Record<string, unknown>;
     try {
         const contentType = req.headers.get('content-type') || '';

@@ -22,6 +22,18 @@ exports.handler = async (event) => {
   // Scheduled → no event.httpMethod, runs from netlify.toml cron entry
 
   const isManual = event && event.httpMethod === 'GET';
+
+  // Manual HTTP trigger must carry CRON_SECRET (runs Google Drive scans + Claude per
+  // folder — don't let anonymous callers burn AI budget). Scheduled runs (no GET) pass.
+  if (isManual) {
+    const _sec = process.env.CRON_SECRET;
+    const _h = event.headers || {};
+    const _q = event.queryStringParameters || {};
+    if (!_sec || !(_h['x-cron-secret'] === _sec || _q.cron_secret === _sec)) {
+      return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized: manual trigger requires CRON_SECRET (x-cron-secret header or ?cron_secret=)' }) };
+    }
+  }
+
   console.log(`process-transcripts-background starting (${isManual ? 'manual' : 'scheduled'})`);
 
   let drive, sheets;

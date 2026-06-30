@@ -129,7 +129,19 @@ function buildReminderHtml({ name, nudgeCount, bids, snoozeUrl7, snoozeUrl14, sk
 </div>`;
 }
 
-exports.handler = async () => {
+exports.handler = async (event) => {
+    // Internal/scheduled endpoint — block public HTTP abuse (email spam / AI cost).
+    // Allow Netlify scheduled runs (body carries next_run) or a CRON_SECRET request.
+    {
+        let _sched = false;
+        try { _sched = !!JSON.parse((event && event.body) || '{}').next_run; } catch (_) {}
+        const _sec = process.env.CRON_SECRET;
+        const _h = (event && event.headers) || {};
+        const _q = (event && event.queryStringParameters) || {};
+        if (!(_sched || (_sec && (_h['x-cron-secret'] === _sec || _q.cron_secret === _sec)))) {
+            return { statusCode: 401, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Unauthorized internal endpoint' }) };
+        }
+    }
     console.log('[outcome-reminder] Started:', new Date().toISOString());
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !RESEND_API_KEY) {
