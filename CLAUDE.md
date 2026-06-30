@@ -711,6 +711,16 @@ const { sendAlert } = require('./alert');
 
 **New files this session:** `AUTODESK_AECO_PARTNER_KIT.md` + `BIDINTELL_CONTEXT_FOR_DESKTOP.md` (repo root); `scripts/test-bc-gate.js`, `scripts/preview-roi-email.js`, `scripts/signup-e2e.js`. BC sync supports `?env=test` (admin demo, Autodesk test data) + `?since=YYYY-MM-DD` (date floor) on top of the live-bids gate.
 
+### Endpoint Security — Internal Functions Must Be Gated (Jun 30, 2026)
+
+Full endpoint audit + hardening pass (see memory `bidintell-security-hardening.md`, `COST_ANALYSIS_2026-06-29.md`).
+
+- **Every `netlify/functions/*.js` is a PUBLIC HTTP endpoint.** Anything that sends email, runs Claude, or does a service-role DB write MUST verify the caller. **Never read a `userId`/`projectId` from the request body and act on it without an auth check** — this was a live Stripe IDOR (`stripe-create-portal`/`-checkout` let anyone open/cancel any customer's billing or overwrite `user_revenue`). Derive the user id from the verified JWT (`supabase.auth.getUser(token)`), never from the body.
+- **Cron/scheduled functions are publicly invokable too.** Gate them: allow Netlify scheduled runs (`next_run` in body) OR a `CRON_SECRET` header/query, else 401. (Applied to all 12 disabled email/AI crons + the active process-transcripts manual trigger.)
+- **Open-by-necessity endpoints** (magic_link login, public lead forms, pipedrive demo form) can't require auth → **rate-limit** instead (in-memory per IP+email+type).
+- **New env vars to set in prod to activate:** `CRON_SECRET` (Netlify), `INBOUND_PARSE_SECRET` (Supabase) + append `?key=` to the SendGrid Inbound Parse URL, `POSTMARK_PROSPECT_REPLY_TOKEN`. The inbound-email secret is opt-in (inert until set) so it can't break the live scoring path before SendGrid is reconfigured.
+- Edge function deploys separately from Netlify: `supabase functions deploy inbound-email`.
+
 ---
 
 ## 🚫 ABSOLUTE PROHIBITIONS
