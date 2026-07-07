@@ -10868,7 +10868,10 @@ IMPORTANT RULES:
         // every GC subcontract has the same non-negotiable clauses, so penalizing their presence
         // drags every bid down and turns the signal into noise. Default OFF (merges dark); flip
         // after review. Above-market (AIA A401) flagging is a later phase, needs labeled contracts.
-        const FLAG_DECOUPLE_CONTRACT_RISK = false;
+        // Contract-risk decouple: ADMIN-GATED for live QA (ryan@fsikc.com / ryan@bidintell.ai
+        // only, per isAdmin()). Evaluated at use-time because isAdmin() needs the auth session,
+        // so it's a function, not a load-time const. Broaden to all users once QA passes.
+        function contractRiskDecoupled() { return typeof isAdmin === 'function' && isAdmin(); }
 
         async function calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks = null, tradeDetection = null, gcNames = [], foundSections = [], scopeFound = []) {
             const components = {};
@@ -11097,7 +11100,7 @@ IMPORTANT RULES:
             // Item #5a: when decoupled, clauses are still detected + shown in the Contract panel
             // (analysis.contractRisks flows on untouched), but no penalty is deducted from the score.
             let aiRiskPenalty = 0;
-            if (!FLAG_DECOUPLE_CONTRACT_RISK && contractRisks && contractRisks.hasContractLanguage && contractRisks.risksDetected && contractRisks.risksDetected.length > 0) {
+            if (!contractRiskDecoupled() && contractRisks && contractRisks.hasContractLanguage && contractRisks.risksDetected && contractRisks.risksDetected.length > 0) {
                 aiRiskPenalty = calculateContractRiskPenalty(contractRisks, settings.riskTolerance);
                 kwScore -= aiRiskPenalty;
             }
@@ -11551,7 +11554,7 @@ IMPORTANT RULES:
                                 BidIndex™ scores bid fit on a 0–100 scale across five weighted factors. ≥80 = GO · 60–79 = REVIEW · &lt;60 = PASS.
                                 <div style="margin-top:8px;display:grid;gap:5px;">
                                     <div><strong>Location Fit</strong> — Distance from your office to the job site.</div>
-                                    <div><strong>${FLAG_DECOUPLE_CONTRACT_RISK ? 'Keywords &amp; Terms' : 'Contract Terms'}</strong> — Favorable terms you want (design-assist, negotiated, etc.) add points. ${FLAG_DECOUPLE_CONTRACT_RISK ? 'Detected contract clauses (pay-if-paid, liquidated damages) are flagged as alerts, not deducted from your score.' : 'Risk terms (liquidated damages, pay-if-paid) subtract based on your tolerance.'}</div>
+                                    <div><strong>${contractRiskDecoupled() ? 'Keywords &amp; Terms' : 'Contract Terms'}</strong> — Favorable terms you want (design-assist, negotiated, etc.) add points. ${contractRiskDecoupled() ? 'Detected contract clauses (pay-if-paid, liquidated damages) are flagged as alerts, not deducted from your score.' : 'Risk terms (liquidated damages, pay-if-paid) subtract based on your tolerance.'}</div>
                                     <div><strong>Trade Match</strong> — Finds your CSI spec sections in the spec book. Falls back to scope keywords on drawings-only bids.</div>
                                     <div><strong>Client Relationship</strong> — Your star rating, bid count, and win rate with the specific client.</div>
                                     <div><strong>Competitive Pressure</strong> — Unlocks after 3 logged outcomes.</div>
@@ -11581,7 +11584,7 @@ IMPORTANT RULES:
 
                     <div id="ar-score" class="ar-panel">
                         ${renderComponent('', 'Location Fit', analysis.scores.components.location)}
-                        ${renderComponent('', FLAG_DECOUPLE_CONTRACT_RISK ? 'Keywords & Terms' : 'Contract Terms', analysis.scores.components.keywords)}
+                        ${renderComponent('', contractRiskDecoupled() ? 'Keywords & Terms' : 'Contract Terms', analysis.scores.components.keywords)}
                         ${renderComponent('', 'Client Relationship', analysis.scores.components.gc)}
                         ${renderComponent('', settings.companyType === 'subcontractor' ? 'Trade Match' : 'Product Match', analysis.scores.components.trade)}
                         ${(analysis.scores.components.trade?.score < 50 && !((settings.preferred_csi_sections||[]).length > 0) && !((settings.trades||[]).length > 0)) ? `<div class="profile-incomplete-callout" style="margin:0 0 2px;">No trade types configured — this score is a rough estimate. <span class="link" onclick="switchTab('settings')">Set your trade types →</span></div>` : ''}
@@ -11773,7 +11776,7 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
     ${rowHtml('Location Fit', comp.location)}
     ${rowHtml('Trade / Scope Match', comp.trade)}
     ${rowHtml('Client Relationship', comp.gc)}
-    ${rowHtml(FLAG_DECOUPLE_CONTRACT_RISK ? 'Keywords & Terms' : 'Contract Terms', comp.keywords)}
+    ${rowHtml(contractRiskDecoupled() ? 'Keywords & Terms' : 'Contract Terms', comp.keywords)}
   </div>
   <h3 class="sec">What we found</h3>
   <ul class="find">${findings}</ul>
@@ -13948,7 +13951,7 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                                     BidIndex™ scores bid fit on a 0–100 scale across five weighted factors. ≥80 = GO · 60–79 = REVIEW · &lt;60 = PASS.
                                     <div style="margin-top:8px;display:grid;gap:5px;">
                                         <div>📍 <strong>Location Fit</strong> — Distance from your office to the job site.</div>
-                                        <div><strong>${FLAG_DECOUPLE_CONTRACT_RISK ? 'Keywords &amp; Terms' : 'Contract Terms'}</strong> — Favorable terms you want (design-assist, negotiated) add points. ${FLAG_DECOUPLE_CONTRACT_RISK ? 'Detected contract clauses (pay-if-paid, liquidated damages) are flagged as alerts, not deducted from your score.' : 'Risk terms (liquidated damages, pay-if-paid) subtract based on your tolerance.'}</div>
+                                        <div><strong>${contractRiskDecoupled() ? 'Keywords &amp; Terms' : 'Contract Terms'}</strong> — Favorable terms you want (design-assist, negotiated) add points. ${contractRiskDecoupled() ? 'Detected contract clauses (pay-if-paid, liquidated damages) are flagged as alerts, not deducted from your score.' : 'Risk terms (liquidated damages, pay-if-paid) subtract based on your tolerance.'}</div>
                                         <div>🏢 <strong>Client Relationship</strong> — Your star rating, bid count, and win rate with the specific client inviting you.</div>
                                         <div>🔧 <strong>Trade / Product Match</strong> — Whether your CSI divisions or product lines appear in the spec.</div>
                                         <div>⚔️ <strong>Competitive Pressure</strong> — How many subs typically bid this client's jobs. Unlocks after 3 logged outcomes.</div>
@@ -13962,7 +13965,7 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                         </div>
                         ${profileWarningHtml}
                         ${p.scores?.components?.location ? renderComponent('📍', 'Location Fit', p.scores.components.location) : ''}
-                        ${p.scores?.components?.keywords ? renderComponent('', FLAG_DECOUPLE_CONTRACT_RISK ? 'Keywords & Terms' : 'Contract Terms', p.scores.components.keywords) : ''}
+                        ${p.scores?.components?.keywords ? renderComponent('', contractRiskDecoupled() ? 'Keywords & Terms' : 'Contract Terms', p.scores.components.keywords) : ''}
                         ${p.scores?.components?.gc ? renderComponent('🏢', 'Client Relationship', p.scores.components.gc) : ''}
                         ${p.scores?.components?.trade ? renderComponent(tradeIcon, tradeLabel, p.scores.components.trade) : ''}
                         ${tradeNudgeHtml}
@@ -18297,7 +18300,7 @@ Respond now:`;
             if (!el) return;
             const profiles = [
                 { label: 'Relationship-First', desc: 'You win on trust and track record. GC relationship is your primary signal.', condition: () => g >= 40 },
-                { label: 'Risk-Averse', desc: FLAG_DECOUPLE_CONTRACT_RISK ? 'You weight your own favorable/risk keywords heavily; detected contract clauses show as alerts, not score.' : 'Bad contract terms are a dealbreaker. You protect margin over volume.', condition: () => k >= 38 },
+                { label: 'Risk-Averse', desc: contractRiskDecoupled() ? 'You weight your own favorable/risk keywords heavily; detected contract clauses show as alerts, not score.' : 'Bad contract terms are a dealbreaker. You protect margin over volume.', condition: () => k >= 38 },
                 { label: 'Trade Specialist', desc: 'Your work must match the specs. You go deep in a few divisions.', condition: () => t >= 35 },
                 { label: 'Market-Volume', desc: "You're building presence. Location and availability drive pursuit decisions.", condition: () => l >= 35 },
                 { label: 'Balanced', desc: 'You weigh all factors evenly. Good default for shops with diverse GC lists.', condition: () => true }
@@ -18311,7 +18314,7 @@ Respond now:`;
         // the keywords slider no longer scores detected contract clauses. Rewrites the static
         // settings text when the flag is on; no-op when off (panel keeps its current wording).
         function applyContractRiskDecoupleUX() {
-            if (!FLAG_DECOUPLE_CONTRACT_RISK) return;
+            if (!contractRiskDecoupled()) return;
             const kwLabel = document.querySelector('#weightKeywords .weight-slider-label');
             if (kwLabel) kwLabel.textContent = 'Keywords & Terms';
             const kwHint = document.querySelector('#weightKeywords .weight-slider-hint');
@@ -18323,7 +18326,7 @@ Respond now:`;
         function applyWeightPreset(preset) {
             const presets = {
                 relationship: { location: 15, keywords: 15, gc: 55, trade: 15 },
-                risk_averse:  FLAG_DECOUPLE_CONTRACT_RISK
+                risk_averse:  contractRiskDecoupled()
                     ? { location: 20, keywords: 15, gc: 45, trade: 20 }  // Option A: cautious shop weights client relationship & competition; contract risk read via alerts
                     : { location: 20, keywords: 45, gc: 20, trade: 15 },
                 market:       { location: 35, keywords: 20, gc: 25, trade: 20 },
