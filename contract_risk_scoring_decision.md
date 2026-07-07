@@ -1,6 +1,6 @@
 # Contract Risk Scoring — Design Decision (Jun 22 2026)
 
-**From an /office-hours challenge-the-approach session. Status: DECIDED, not yet built. Revisit after the Jun 23 Autodesk call.**
+**From an /office-hours challenge-the-approach session. Status: PHASE A BUILT — Jul 7 2026, behind `FLAG_DECOUPLE_CONTRACT_RISK` (default OFF, not yet deployed).** Penalty removed from the BidIndex + the UX reworked to match (Score Weights slider "Contract Terms & Risk" → "Keywords & Terms", hint/section copy, "Risk-Averse" preset repurposed to client-relationship/competition per Option A, score explainer + breakdown relabeled). Validated by the Jul 7 Wallworks diagnostic ("contract risk = alerts, not penalties"). Branch: `sprint/item5a-contract-risk-decouple`; test `scripts/test-contract-decouple.js`. **Phase B (STANDARD vs ABOVE-MARKET vs AIA A401) still needs the hand-labeled subcontracts below.** At flip time also update: ARCHITECTURE.md scoring step, contract_risk_detection_guide.md (penalty→alert framing), and any marketing copy claiming contract risk lowers the score.
 
 ## The decision
 **Decouple contract risk from the BidIndex. Do not penalize the score for the presence of risk clauses.** Surface them as an awareness panel + flag only the clauses that are *worse than normal*.
