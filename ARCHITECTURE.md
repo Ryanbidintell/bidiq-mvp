@@ -153,6 +153,8 @@ Post-analysis nudge: "Chat with AI Advisor →" (if not yet clicked)
 
 ### Score Calculation Flow
 
+> ⚠️ **Canonical scoring reference is now [`SCORING.md`](SCORING.md).** The flow below is the base model; the contract-risk decouple and keywords→modifier consolidation (currently admin-gated) are documented there. Update SCORING.md, not this block.
+
 ```
 calculateScores(extracted, settings, ...)
     ↓
