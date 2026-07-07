@@ -10862,6 +10862,14 @@ IMPORTANT RULES:
             return new RegExp(`${d1}[-\\s.]*${d2}[-\\s.]*${d3}`, 'i');
         }
 
+        // Item #5a — contract-risk decouple (contract_risk_scoring_decision.md; validated by the
+        // Jul 7 Wallworks diagnostic: "alerts, not penalties"). When ON, detected contract-risk
+        // clauses are still surfaced in the Contract panel but NOT subtracted from the BidIndex —
+        // every GC subcontract has the same non-negotiable clauses, so penalizing their presence
+        // drags every bid down and turns the signal into noise. Default OFF (merges dark); flip
+        // after review. Above-market (AIA A401) flagging is a later phase, needs labeled contracts.
+        const FLAG_DECOUPLE_CONTRACT_RISK = false;
+
         async function calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks = null, tradeDetection = null, gcNames = [], foundSections = [], scopeFound = []) {
             const components = {};
             let weights = { ...settings.weights };
@@ -11085,9 +11093,11 @@ IMPORTANT RULES:
                 }
             }
 
-            // Apply AI Contract Risk Detection penalty
+            // Apply AI Contract Risk Detection penalty.
+            // Item #5a: when decoupled, clauses are still detected + shown in the Contract panel
+            // (analysis.contractRisks flows on untouched), but no penalty is deducted from the score.
             let aiRiskPenalty = 0;
-            if (contractRisks && contractRisks.hasContractLanguage && contractRisks.risksDetected && contractRisks.risksDetected.length > 0) {
+            if (!FLAG_DECOUPLE_CONTRACT_RISK && contractRisks && contractRisks.hasContractLanguage && contractRisks.risksDetected && contractRisks.risksDetected.length > 0) {
                 aiRiskPenalty = calculateContractRiskPenalty(contractRisks, settings.riskTolerance);
                 kwScore -= aiRiskPenalty;
             }
