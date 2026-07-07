@@ -42,5 +42,19 @@ check('FLAG ON: detected clauses STILL surfaced (alerts, not penalties)', clause
 check('FLAG OFF: clauses surfaced too', clausesSurfaced(false, 3) === true);
 check('no clauses detected -> nothing to surface', clausesSurfaced(true, 0) === false);
 
+// UX bundle: "Risk-Averse" preset repurposed (Option A) when decoupled — weight client
+// relationship & competition instead of contract terms. Mirrors app.html applyWeightPreset.
+function riskAversePreset(flagDecouple) {
+    return flagDecouple
+        ? { location: 20, keywords: 15, gc: 45, trade: 20 }
+        : { location: 20, keywords: 45, gc: 20, trade: 15 };
+}
+const sumW = w => w.location + w.keywords + w.gc + w.trade;
+check('Risk-Averse preset sums to 100 (flag off)', sumW(riskAversePreset(false)) === 100);
+check('Risk-Averse preset sums to 100 (flag on)', sumW(riskAversePreset(true)) === 100);
+check('FLAG OFF: Risk-Averse is keyword/contract-heavy (today)', riskAversePreset(false).keywords === 45);
+check('FLAG ON: Risk-Averse shifts to client relationship & competition (Option A)',
+    riskAversePreset(true).gc === 45 && riskAversePreset(true).keywords === 15);
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);
