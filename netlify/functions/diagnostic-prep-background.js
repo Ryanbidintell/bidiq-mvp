@@ -73,6 +73,26 @@ function findAnswer(qa, ...keywords) {
   return '';
 }
 
+// Calendly start_time is ISO-8601 UTC. Render it in Central (where BidIntell's
+// construction ops live) for the founder email + agent prompt — otherwise a 4 PM CT
+// slot shows as "9 PM UTC" and the agent wrongly flags it as a "late slot".
+function formatCentralTime(iso) {
+  if (!iso || iso === 'TBD') return 'TBD';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleString('en-US', {
+    timeZone: 'America/Chicago',
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+  });
+}
+function centralDateOnly(iso) {
+  if (!iso || iso === 'TBD') return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-CA', { timeZone: 'America/Chicago' }); // YYYY-MM-DD
+}
+
 function parseProspect(payload) {
   const qa = payload.questions_and_answers || [];
   const fullName = payload.name || '';
@@ -90,6 +110,12 @@ function parseProspect(payload) {
     role = splitMatch[2].trim();
   }
 
+  const callTimeRaw =
+    payload.calendar_event?.start_time ||
+    payload.scheduled_event?.start_time ||
+    payload.event?.start_time ||
+    'TBD';
+
   return {
     firstName,
     lastName,
@@ -101,11 +127,9 @@ function parseProspect(payload) {
     revenueBand: findAnswer(qa, 'revenue', 'annual revenue'),
     intakeAnswer: findAnswer(qa, 'hoping to get', 'one sentence', 'on your mind'),
     geography: '', // not collected in current Calendly form; agent infers from research
-    callTime:
-      payload.calendar_event?.start_time ||
-      payload.scheduled_event?.start_time ||
-      payload.event?.start_time ||
-      'TBD',
+    callTimeISO: callTimeRaw,
+    callTime: formatCentralTime(callTimeRaw), // Central, human-readable (was raw UTC ISO)
+    callDate: centralDateOnly(callTimeRaw),
   };
 }
 
@@ -379,7 +403,7 @@ exports.handler = async (event) => {
         email: prospect.email,
         source: 'Inbound /diagnostic page',
         dateBooked: new Date().toISOString().split('T')[0],
-        dateOfCall: prospect.callTime.split('T')[0],
+        dateOfCall: prospect.callDate || (prospect.callTimeISO || '').split('T')[0],
         intakeAnswer: prospect.intakeAnswer,
         fitRead,
         driveFolderUrl: folderUrl,
