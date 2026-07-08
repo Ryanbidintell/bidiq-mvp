@@ -19,6 +19,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
     <script src="lib/contractRiskDetection.js"></script>
     <script src="lib/buildingTypeExtraction.js"></script>
+    <script src="lib/scoring-core.js"></script>
+    <script src="lib/doc-set.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAPxYsWrlpVgYW4xBdXg82Zcp5Ll0_icd0&libraries=places&callback=initGoogleMaps" async defer></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10698,6 +10700,12 @@ IMPORTANT RULES:
                     intelligenceTags
                 };
 
+                // v2 scoring PREVIEW (admin only) — non-destructive, computed alongside the live score.
+                if (scoreV2Enabled()) {
+                    try { currentAnalysis.scoresV2 = scoreOpportunity(buildV2Opportunity(currentAnalysis), buildV2Profile(settings)); }
+                    catch (e) { console.warn('v2 preview failed:', e.message); }
+                }
+
                 // No auto-save - user must click "Save to Projects" button
                 gtag('event', 'bid_analyzed', {
                     score: scores?.final || 0,
@@ -10876,6 +10884,55 @@ IMPORTANT RULES:
         // keywords); favorable/risk keywords become a capped ±10 modifier, not a weighted component.
         // ADMIN-GATED for live QA. Broaden once validated.
         function scopeModelConsolidated() { return typeof isAdmin === 'function' && isAdmin(); }
+
+        // ── BidIndex v2 PREVIEW (admin only) — compute the v2 engine (lib/scoring-core.js) from the
+        // same inputs and show it ALONGSIDE the live score. Non-destructive: never changes the live
+        // score, never affects non-admins. Lets Ryan compare v1 vs v2 on real bids before we cut over.
+        function scoreV2Enabled() { return typeof isAdmin === 'function' && isAdmin() && typeof scoreOpportunity === 'function'; }
+        function buildV2Profile(settings) {
+            const w = settings.weights || { location: 25, keywords: 30, gc: 25, trade: 20 };
+            const p = w.location, s = w.trade, cl = w.gc, sum = (p + s + cl) || 1;
+            return {
+                weights3: { project: Math.round(p / sum * 100), scope: Math.round(s / sum * 100), client: Math.round(cl / sum * 100) },
+                searchRadius: settings.search_radius, defaultStars: settings.default_stars || 3,
+                targetBuildingTypes: settings.target_building_types || [],
+            };
+        }
+        function buildV2Opportunity(a) {
+            const c = (a.scores && a.scores.components) || {};
+            const gc0 = (a.gcs || [])[0] || null;
+            const bt = typeof a.extracted?.building_type === 'object' ? a.extracted.building_type?.type : a.extracted?.building_type;
+            let daysUntilDue = null;
+            if (a.extracted?.bid_deadline) { const d = new Date(a.extracted.bid_deadline); if (!isNaN(d.getTime())) daysUntilDue = Math.round((d - new Date()) / 86400000); }
+            return {
+                availability: 'full',
+                distanceMiles: c.location?.details?.dist ?? null,
+                city: a.extracted?.project_city, state: a.extracted?.project_state,
+                buildingType: bt || null,
+                foundSections: c.trade?.details?.foundSections || c.trade?.details?.found || [],
+                scopeKeywordsFound: (c.trade?.details?.scopeKeywordsFound || []).map(x => (x && x.keyword) || x),
+                client: gc0 ? { name: gc0.name, rating: gc0.rating, bids: gc0.bids || 0, wins: gc0.wins || 0 } : null,
+                avgBidders: c.competitive?.details?.avgBidders ?? null,
+                goodCount: (a.goodFound || []).length, badCount: (a.badFound || []).length,
+                daysUntilDue,
+                contractClauses: (a.contractRisks?.risksDetected || []).map(r => ({ type: r.type })),
+            };
+        }
+        function renderV2Preview(a) {
+            if (!scoreV2Enabled() || !a || !a.scoresV2) return '';
+            const v = a.scoresV2;
+            const col = { GO: 'var(--success)', OPEN_AND_ASSIGN: 'var(--success)', REVIEW: 'var(--warning)', WORTH_A_LOOK: 'var(--warning)', PASS: 'var(--danger)', LIKELY_SKIP: 'var(--danger)' }[v.recommendation] || 'var(--text-muted)';
+            const bkt = (label, b) => `<div style="font-size:13px;margin:4px 0;"><b>${label}:</b> ${b.score} <span style="opacity:.55;">(conf ${Math.round((b.confidence || 0) * 100)}%)</span>${(b.reasons || []).length ? `<div style="font-size:11px;opacity:.7;">${b.reasons.join(' · ')}</div>` : ''}</div>`;
+            const chips = (v.alerts || []).map(al => `<span class="meta-chip">${al.label || al.type}</span>`).join('');
+            return `<div style="margin-top:16px;padding:16px;border:1px dashed var(--accent);border-radius:var(--radius);background:rgba(242,101,34,0.05);">
+                <div style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">🧪 BidIndex v2 preview — admin only</div>
+                <div style="display:flex;gap:14px;align-items:baseline;margin-bottom:8px;"><div style="font-size:34px;font-weight:800;color:${col};">${v.index == null ? '—' : v.index}</div><div style="font-size:13px;"><b>${v.recommendation}</b><br><span style="opacity:.7;">${v.mode} mode · completeness ${v.completeness}%</span></div></div>
+                ${bkt('Project Fit', v.buckets.project)}${bkt('Scope Fit', v.buckets.scope)}${bkt('Client Fit', v.buckets.client)}
+                <div style="font-size:12px;margin-top:6px;opacity:.85;">Modifiers: keyword ${v.modifiers.keyword >= 0 ? '+' : ''}${v.modifiers.keyword}${v.modifiers.contractOutlier ? `, contract ${v.modifiers.contractOutlier}` : ''}</div>
+                ${chips ? `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">${chips}</div>` : ''}
+                <div style="font-size:11px;opacity:.55;margin-top:8px;">Preview only — does not affect the score above. Compare v1 (top) vs v2 (here).</div>
+            </div>`;
+        }
 
         async function calculateScores(extracted, settings, goodFound, badFound, tradesFound, contractRisks = null, tradeDetection = null, gcNames = [], foundSections = [], scopeFound = []) {
             const components = {};
@@ -11601,6 +11658,7 @@ IMPORTANT RULES:
                     ${tradeWarningBanner}
                 </div>
 
+                ${renderV2Preview(analysis)}
                 <div class="analysis-tabs-container">
                     <div style="display:flex;gap:0;border-bottom:2px solid var(--border-color);margin-bottom:20px;overflow-x:auto;-webkit-overflow-scrolling:touch;">
                         <button class="rpt-tab rpt-tab-active" onclick="switchAnalysisTab(this,'ar-score')">Score</button>
