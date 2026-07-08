@@ -689,7 +689,8 @@ async function processEmail(payload: Record<string, unknown>) {
     const extractionSystemPrompt = 'You are extracting structured data from a construction bid document email. Return JSON only. No preamble. No markdown.';
     const extractionUserPrompt =
         `Extract the following fields from this bid document email. Use null for any field not explicitly stated — do not guess.\n\n` +
-        `{"gc_name":string|null,"project_name":string|null,"project_city":string|null,"project_state":string|null,"project_address":string|null,"bid_due_date":string|null,"scope_description":string|null,"trade_keywords":string[],"bond_required":boolean|null,"estimated_value":number|null}\n\n` +
+        `{"gc_name":string|null,"project_name":string|null,"project_city":string|null,"project_state":string|null,"project_address":string|null,"bid_due_date":string|null,"scope_description":string|null,"trade_keywords":string[],"bond_required":boolean|null,"estimated_value":number|null,"building_type":string|null,"project_type":string|null}\n` +
+        `building_type = ONE of: Healthcare, Office, Multifamily, Retail, Industrial, Education, Higher Education, Government, Religious, Mixed-Use, Infrastructure, Other. project_type = New Construction, Renovation, Addition, Tenant Improvement, Demolition, Mixed. null if unclear.\n\n` +
         `Sender: ${From}\nSubject: ${Subject || ''}\nEmail body:\n${emailContent}`;
 
     let extracted: Record<string, unknown> = {};
@@ -752,7 +753,8 @@ async function processEmail(payload: Record<string, unknown>) {
             const pdfSystemPrompt = 'You are extracting structured project data from a construction bid document PDF. Return JSON only. No preamble. No markdown.';
             const pdfUserPrompt =
                 `Extract these fields from the PDF. Use null if not found.\n\n` +
-                `{"gc_name":string|null,"project_name":string|null,"project_city":string|null,"project_state":string|null,"project_address":string|null,"bid_due_date":string|null,"scope_description":string|null,"trade_keywords":string[],"bond_required":boolean|null,"estimated_value":number|null,"contract_risk_flags":string[],"searchable_text":string}\n\n` +
+                `{"gc_name":string|null,"project_name":string|null,"project_city":string|null,"project_state":string|null,"project_address":string|null,"bid_due_date":string|null,"scope_description":string|null,"trade_keywords":string[],"bond_required":boolean|null,"estimated_value":number|null,"building_type":string|null,"project_type":string|null,"contract_risk_flags":string[],"searchable_text":string}\n` +
+                `building_type = ONE of: Healthcare, Office, Multifamily, Retail, Industrial, Education, Higher Education, Government, Religious, Mixed-Use, Infrastructure, Other. project_type = New Construction, Renovation, Addition, Tenant Improvement, Demolition, Mixed. null if unclear.\n\n` +
                 `For "searchable_text": concatenate ALL text from the document that describes scope of work, specifications, materials, products, systems, CSI division/section headings, general notes, and schedule items. This is used for keyword searching — include product names, brand names, material types, spec section titles, and trade descriptions. Aim for 2000-4000 characters of the most relevant content.`;
 
             const pdfRaw = await callClaude(
@@ -771,7 +773,7 @@ async function processEmail(payload: Record<string, unknown>) {
             try { pdfExtracted = JSON.parse(pdfRaw.replace(/```json\n?|```/g, '').trim()); } catch { /* use empty */ }
 
             // Merge: PDF wins over email for non-null fields
-            for (const key of ['gc_name', 'project_name', 'project_city', 'project_state', 'project_address', 'bid_due_date', 'scope_description', 'bond_required', 'estimated_value']) {
+            for (const key of ['gc_name', 'project_name', 'project_city', 'project_state', 'project_address', 'bid_due_date', 'scope_description', 'bond_required', 'estimated_value', 'building_type', 'project_type']) {
                 if (pdfExtracted[key] != null) extracted[key] = pdfExtracted[key];
             }
             if (Array.isArray(pdfExtracted.trade_keywords) && pdfExtracted.trade_keywords.length > 0) {
@@ -855,6 +857,8 @@ async function processEmail(payload: Record<string, unknown>) {
                     estimated_value: extracted.estimated_value || null,
                     scope_summary:   extracted.scope_description || null,
                     bond_required:   extracted.bond_required || null,
+                    building_type:   extracted.building_type || null,
+                    project_type:    extracted.project_type || null,
                     source:          'email_forward',
                     email_from:      From || null,
                     email_subject:   Subject || null

@@ -2,7 +2,7 @@
 // Tests for lib/scoring-core.js (BidIndex v2 unified core). Pure logic, no prod wiring.
 // Run: node scripts/test-scoring-core.js
 
-const { scoreOpportunity, keywordModifier, BUILDING_TYPES } = require('../lib/scoring-core.js');
+const { scoreOpportunity, keywordModifier, outlierContractPenalty, BUILDING_TYPES } = require('../lib/scoring-core.js');
 
 let passed = 0, failed = 0;
 const check = (n, c) => c ? (passed++, console.log('  ✅ ' + n)) : (failed++, console.log('  ❌ ' + n));
@@ -58,6 +58,13 @@ check('many bidders lowers Client Fit + raises alert', crowded.buckets.client.sc
 check('keyword modifier caps at +10', keywordModifier(10, 0) === 10);
 check('keyword modifier caps at -10', keywordModifier(0, 10) === -10);
 check('12 building types defined for the picker', BUILDING_TYPES.length === 12);
+
+// --- outlier contract penalty: standard = neutral, above-market = bounded ---
+check('standard clauses apply NO penalty', outlierContractPenalty([{ type: 'pay_when_paid' }, { type: 'standard_indemnity' }]) === 0);
+check('one above-market clause → small penalty (6)', outlierContractPenalty([{ type: 'pay_if_paid_condition_precedent' }]) === 6);
+check('above-market penalty caps at 15', outlierContractPenalty([{ type: 'pay_if_paid_condition_precedent' }, { type: 'no_damage_for_delay' }, { type: 'own_negligence_indemnity' }]) === 15);
+const outlierBid = scoreOpportunity({ ...strongFull, contractClauses: [{ type: 'pay_if_paid_condition_precedent' }] }, profile);
+check('above-market clause subtracts from index AND raises an alert', outlierBid.index < r.index && outlierBid.alerts.some(a => a.type === 'above_market_contract'));
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed === 0 ? 0 : 1);
