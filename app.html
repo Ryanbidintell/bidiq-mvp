@@ -10742,6 +10742,7 @@ IMPORTANT RULES:
                 if (scoreV2Enabled()) {
                     try { currentAnalysis.scoresV2 = scoreOpportunity(buildV2Opportunity(currentAnalysis), buildV2Profile(settings)); }
                     catch (e) { console.warn('v2 preview failed:', e.message); }
+                    logScoringDivergence(currentAnalysis);
                 }
 
                 // No auto-save - user must click "Save to Projects" button
@@ -10927,6 +10928,27 @@ IMPORTANT RULES:
         // same inputs and show it ALONGSIDE the live score. Non-destructive: never changes the live
         // score, never affects non-admins. Lets Ryan compare v1 vs v2 on real bids before we cut over.
         function scoreV2Enabled() { return typeof isAdmin === 'function' && isAdmin() && typeof scoreOpportunity === 'function'; }
+        // Shadow logging: record v1-vs-v2 divergence per analysis to admin_events (serve v1, log v2).
+        // This is the dataset that tells us when it's safe to flip v2 on for real (R-1 cutover).
+        async function logScoringDivergence(a) {
+            try {
+                if (!a || !a.scoresV2 || !supabaseClient || !currentUser) return;
+                const v1 = a.scores || {}, v2 = a.scoresV2;
+                await supabaseClient.from('admin_events').insert({
+                    event_type: 'scoring_v2_shadow',
+                    user_id: currentUser.id,
+                    event_data: {
+                        v1_final: v1.final ?? null, v1_rec: v1.recommendation ?? null,
+                        v2_index: v2.index ?? null, v2_rec: v2.recommendation ?? null,
+                        delta: (v1.final != null && v2.index != null) ? v2.index - v1.final : null,
+                        rec_flipped: (v1.recommendation && v2.recommendation) ? v1.recommendation !== v2.recommendation : null,
+                        completeness: v2.completeness ?? null,
+                        building_type: (typeof a.extracted?.building_type === 'object' ? a.extracted.building_type?.type : a.extracted?.building_type) || null,
+                        project_name: a.extracted?.project_name || null
+                    }
+                });
+            } catch (e) { console.warn('shadow log failed:', e.message); }
+        }
         // v2 weights live in localStorage during the preview phase (per-browser, zero DB/save-path
         // risk). Returns null if unset → buildV2Profile derives from the live 4-way weights.
         function getV2Weights() {
