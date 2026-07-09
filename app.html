@@ -2249,6 +2249,34 @@
                         </div>
                     </div>
 
+                    <div class="settings-card" id="v2WeightsCard" style="display:none;border:1px dashed var(--accent);">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">🧪 v2 Score Weights (preview — admin)</div>
+                            <div class="settings-card-description">The 3-bucket v2 model. These drive your admin BidIndex v2 preview only (saved to this browser). In v2, keywords are a ±10 modifier — not a weighted bucket. Must total 100%.</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div class="weights-container">
+                                <div class="weight-slider" id="v2wProject">
+                                    <div class="weight-slider-header"><span class="weight-slider-label">Project Fit</span><span class="weight-slider-value">34%</span></div>
+                                    <input type="range" min="0" max="80" value="34">
+                                    <div class="weight-slider-hint">Location, building type, and timeline — is this the kind of job you want?</div>
+                                </div>
+                                <div class="weight-slider" id="v2wScope">
+                                    <div class="weight-slider-header"><span class="weight-slider-label">Scope Fit</span><span class="weight-slider-value">33%</span></div>
+                                    <input type="range" min="0" max="80" value="33">
+                                    <div class="weight-slider-hint">Do your CSI sections / scope appear in the specs — is this your work?</div>
+                                </div>
+                                <div class="weight-slider" id="v2wClient">
+                                    <div class="weight-slider-header"><span class="weight-slider-label">Client Fit</span><span class="weight-slider-value">33%</span></div>
+                                    <input type="range" min="0" max="80" value="33">
+                                    <div class="weight-slider-hint">Your relationship with the client + how many subs typically bid them.</div>
+                                </div>
+                                <div class="weight-total">Total: <span class="weight-total-value valid" id="v2WeightTotal">100%</span><span id="v2WeightWarning" style="display:none;color:var(--danger);font-size:12px;margin-left:10px;">Must equal 100%</span></div>
+                                <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">Saved to this browser. Re-score a bid to see the v2 preview update. This is the preview model, not the live score yet.</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <div class="settings-card-title">Risk & Capacity</div>
@@ -10889,11 +10917,45 @@ IMPORTANT RULES:
         // same inputs and show it ALONGSIDE the live score. Non-destructive: never changes the live
         // score, never affects non-admins. Lets Ryan compare v1 vs v2 on real bids before we cut over.
         function scoreV2Enabled() { return typeof isAdmin === 'function' && isAdmin() && typeof scoreOpportunity === 'function'; }
+        // v2 weights live in localStorage during the preview phase (per-browser, zero DB/save-path
+        // risk). Returns null if unset → buildV2Profile derives from the live 4-way weights.
+        function getV2Weights() {
+            try { const r = JSON.parse(localStorage.getItem('bidintell_v2_weights') || 'null'); if (r && r.project != null) return r; } catch (e) {}
+            return null;
+        }
+        function setV2Weights(w) { try { localStorage.setItem('bidintell_v2_weights', JSON.stringify(w)); } catch (e) {} }
+        function initV2WeightsCard() {
+            const card = document.getElementById('v2WeightsCard');
+            if (!card || !scoreV2Enabled()) return;
+            card.style.display = '';
+            const saved = getV2Weights() || { project: 34, scope: 33, client: 33 };
+            const ids = { v2wProject: 'project', v2wScope: 'scope', v2wClient: 'client' };
+            const recalc = () => {
+                let total = 0; const w = {};
+                for (const [id, key] of Object.entries(ids)) {
+                    const v = parseInt(document.querySelector(`#${id} input`).value) || 0;
+                    document.querySelector(`#${id} .weight-slider-value`).textContent = v + '%';
+                    w[key] = v; total += v;
+                }
+                const tEl = document.getElementById('v2WeightTotal'), wEl = document.getElementById('v2WeightWarning');
+                if (tEl) { tEl.textContent = total + '%'; tEl.className = 'weight-total-value ' + (total === 100 ? 'valid' : 'invalid'); }
+                if (wEl) wEl.style.display = total === 100 ? 'none' : 'inline';
+                if (total === 100) setV2Weights(w);
+            };
+            for (const id of Object.keys(ids)) {
+                const input = document.querySelector(`#${id} input`);
+                if (!input) continue;
+                input.value = saved[ids[id]];
+                input.oninput = recalc;
+            }
+            recalc();
+        }
         function buildV2Profile(settings) {
             const w = settings.weights || { location: 25, keywords: 30, gc: 25, trade: 20 };
             const p = w.location, s = w.trade, cl = w.gc, sum = (p + s + cl) || 1;
+            const derived = { project: Math.round(p / sum * 100), scope: Math.round(s / sum * 100), client: Math.round(cl / sum * 100) };
             return {
-                weights3: { project: Math.round(p / sum * 100), scope: Math.round(s / sum * 100), client: Math.round(cl / sum * 100) },
+                weights3: (typeof getV2Weights === 'function' && getV2Weights()) || derived,
                 searchRadius: settings.search_radius, defaultStars: settings.default_stars || 3,
                 targetBuildingTypes: settings.target_building_types || [],
             };
@@ -18112,6 +18174,7 @@ Respond now:`;
             updateWeightTotal();
             updateScoringProfile(s.weights.location, s.weights.keywords, s.weights.gc, s.weights.trade);
             applyContractRiskDecoupleUX();
+            initV2WeightsCard();
 
             // Render Trades or Product Lines based on company type
             const tradesContainer = document.getElementById('tradesCheckboxes');
