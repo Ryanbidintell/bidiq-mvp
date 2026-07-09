@@ -11003,7 +11003,7 @@ IMPORTANT RULES:
                 scopeKeywordsFound: (c.trade?.details?.scopeKeywordsFound || []).map(x => (x && x.keyword) || x),
                 client: gc0 ? { name: gc0.name, rating: gc0.rating, bids: gc0.bids || 0, wins: gc0.wins || 0 } : null,
                 avgBidders: c.competitive?.details?.avgBidders ?? null,
-                goodCount: (a.goodFound || []).length, badCount: (a.badFound || []).length,
+                goodCount: (a.goodFound || a.good_found || []).length, badCount: (a.badFound || a.bad_found || []).length,
                 daysUntilDue,
                 contractClauses: (a.contractRisks?.risksDetected || []).map(r => ({ type: r.type })),
             };
@@ -13973,6 +13973,12 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                 const tradeIcon = settings.companyType === 'subcontractor' ? '🔧' : '📦';
                 const tradeLabel = settings.companyType === 'subcontractor' ? 'Trade Match' : 'Product Match';
 
+                // v2 PREVIEW (admin) for saved reports — same engine as fresh analysis, non-destructive.
+                if (scoreV2Enabled()) {
+                    try { p.scoresV2 = scoreOpportunity(buildV2Opportunity(p), buildV2Profile(settings)); }
+                    catch (e) { console.warn('v2 preview (saved) failed:', e.message); }
+                }
+
                 // Populate page title
                 console.log('Populating title...');
                 const titleEl = document.getElementById('reportPageTitle');
@@ -14152,6 +14158,8 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                         ${tradeNudgeHtml}
                         ${p.scores?.components?.competitive?.weight > 0 ? renderComponent('⚔️', 'Competitive Pressure', p.scores.components.competitive) : ''}
                     </div>
+
+                    ${renderV2Preview(p)}
 
                     <div class="manual-override" style="margin-top:20px;padding:16px;background:var(--bg-tertiary);border-radius:var(--radius);border:1px solid var(--border-color);">
                         <div style="margin-bottom:10px;">
