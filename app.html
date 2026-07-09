@@ -2277,6 +2277,16 @@
                         </div>
                     </div>
 
+                    <div class="settings-card" id="v2BuildingTypesCard" style="display:none;border:1px dashed var(--accent);">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">🧪 Target Project Types (preview — admin)</div>
+                            <div class="settings-card-description">Building types you target. In the v2 preview, a match boosts Project Fit; non-matches are neutral (no penalty). Leave all unchecked = no preference. Saved to this browser.</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div id="v2BuildingTypesList" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+                        </div>
+                    </div>
+
                     <div class="settings-card">
                         <div class="settings-card-header">
                             <div class="settings-card-title">Risk & Capacity</div>
@@ -10950,6 +10960,24 @@ IMPORTANT RULES:
             }
             recalc();
         }
+        // Target project types (v2 preview) — localStorage, per-browser. Empty = no preference.
+        function getTargetBuildingTypes() {
+            try { const r = JSON.parse(localStorage.getItem('bidintell_target_building_types') || 'null'); if (Array.isArray(r)) return r; } catch (e) {}
+            return [];
+        }
+        function setTargetBuildingTypes(list) { try { localStorage.setItem('bidintell_target_building_types', JSON.stringify(list)); } catch (e) {} }
+        function initV2BuildingTypesCard() {
+            const card = document.getElementById('v2BuildingTypesCard');
+            const list = document.getElementById('v2BuildingTypesList');
+            if (!card || !list || !scoreV2Enabled() || typeof BUILDING_TYPES === 'undefined') return;
+            card.style.display = '';
+            const selected = getTargetBuildingTypes();
+            const types = BUILDING_TYPES.filter(t => t !== 'Other');
+            list.innerHTML = types.map(t => `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:var(--bg-secondary);border-radius:var(--radius);font-size:13px;"><input type="checkbox" value="${t}"${selected.includes(t) ? ' checked' : ''}> ${t}</label>`).join('');
+            list.querySelectorAll('input[type=checkbox]').forEach(cb => {
+                cb.onchange = () => setTargetBuildingTypes(Array.from(list.querySelectorAll('input:checked')).map(x => x.value));
+            });
+        }
         function buildV2Profile(settings) {
             const w = settings.weights || { location: 25, keywords: 30, gc: 25, trade: 20 };
             const p = w.location, s = w.trade, cl = w.gc, sum = (p + s + cl) || 1;
@@ -10957,7 +10985,7 @@ IMPORTANT RULES:
             return {
                 weights3: (typeof getV2Weights === 'function' && getV2Weights()) || derived,
                 searchRadius: settings.search_radius, defaultStars: settings.default_stars || 3,
-                targetBuildingTypes: settings.target_building_types || [],
+                targetBuildingTypes: (typeof getTargetBuildingTypes === 'function' ? getTargetBuildingTypes() : (settings.target_building_types || [])),
             };
         }
         function buildV2Opportunity(a) {
@@ -18175,6 +18203,7 @@ Respond now:`;
             updateScoringProfile(s.weights.location, s.weights.keywords, s.weights.gc, s.weights.trade);
             applyContractRiskDecoupleUX();
             initV2WeightsCard();
+            initV2BuildingTypesCard();
 
             // Render Trades or Product Lines based on company type
             const tradesContainer = document.getElementById('tradesCheckboxes');
