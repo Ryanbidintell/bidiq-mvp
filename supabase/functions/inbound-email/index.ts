@@ -33,6 +33,8 @@ const CLAUDE_API_KEY       = Deno.env.get('CLAUDE_API_KEY')!;
 const RESEND_API_KEY       = Deno.env.get('RESEND_API_KEY')!;
 
 const MAX_ATTACHMENTS = 3;
+// Invite-mode: an invite email with no bid documents gets a TRIAGE verdict, not a confident GO/PASS.
+const FLAG_INVITE_MODE = true;
 
 // ── Supabase admin client ────────────────────────────────────────────────────
 
@@ -816,9 +818,18 @@ async function processEmail(payload: Record<string, unknown>) {
 
     const components = { location: locComp, keywords: kwComp, gc: gcComp, trade: trComp };
     const finalScore = computeFinalScore(components, contractRisks, settings.riskTolerance);
-    const recommendation = finalScore >= 80 ? 'GO' : finalScore >= 60 ? 'REVIEW CAREFULLY' : 'PASS';
 
-    const scores = { final: finalScore, recommendation, components, source: 'email_forward' };
+    // Invite-mode: an invite email with no bid documents can't be scored like a full package.
+    // Never emit a confident GO/PASS from thin data — return a triage verdict + completeness note.
+    const availability = qualifying.length > 0 ? 'full' : 'invite';
+    const inviteMode = FLAG_INVITE_MODE && availability === 'invite';
+    const completeness = availability === 'full' ? 80 : 35;
+    const recommendation = inviteMode
+        ? (finalScore >= 70 ? 'OPEN & ASSIGN' : finalScore >= 45 ? 'WORTH A LOOK' : 'LIKELY SKIP')
+        : (finalScore >= 80 ? 'GO' : finalScore >= 60 ? 'REVIEW CAREFULLY' : 'PASS');
+    const scoreLabel = inviteMode ? 'Invite Score' : 'BidIndex Score';
+
+    const scores = { final: finalScore, recommendation, components, source: 'email_forward', availability, completeness };
 
     // 10. Build gc_bid entry for this GC
     const gcBidEntry = {
@@ -923,7 +934,7 @@ async function processEmail(payload: Record<string, unknown>) {
     // 13. Send reply email
     const projectName = (extracted.project_name as string) || Subject || 'New Bid';
     const gcName      = (extracted.gc_name as string) || 'Unknown GC';
-    const replySubject = `BidIndex Score: ${finalScore}/100 — ${projectName} (${gcName})`;
+    const replySubject = `${scoreLabel}: ${finalScore}/100 — ${projectName} (${gcName})`;
     const topRisk = contractRisks?.risksDetected?.[0];
 
     const topMergeSuggestion = mergeSuggestions[0];
@@ -933,8 +944,9 @@ async function processEmail(payload: Record<string, unknown>) {
 
     const replyLines = [
         `─────────────────────────────────`,
-        `BidIndex Score: ${finalScore}/100 — ${recommendation}`,
+        `${scoreLabel}: ${finalScore}/100 — ${recommendation}`,
         `─────────────────────────────────`,
+        inviteMode ? `📋 Based on the invite only (~${completeness}% complete) — a triage read, not bid/no-bid. Forward the drawings/specs for a full BidIndex.` : null,
         ``,
         `${gcName} | ${projectName}`,
         extracted.project_city && extracted.project_state ? `${extracted.project_city}, ${extracted.project_state}` : ((extracted.project_city as string) || (extracted.project_state as string) || ''),
