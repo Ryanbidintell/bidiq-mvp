@@ -26,6 +26,13 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // by scripts/gen-csi-scope.js (single source of truth). Regenerate + redeploy when
 // the app.html lexicon changes. Keeps email-forward scoring in step with the app.
 import { CSI_SECTION_SCOPE } from './csi-scope.ts';
+// BidIndex v2 unified engine (ported from lib/scoring-core.js). Served to admin
+// forwards now; shadow-logged for everyone else until eval clears broadening.
+import { scoreOpportunity } from './scoring-core.ts';
+
+// Admin whitelist (mirrors app.html isAdmin) — v2 is served only to these on the
+// email path; all other users still get v1 in the reply (v2 shadow-logged).
+const ADMIN_EMAILS = ['ryan@fsikc.com', 'ryan@bidintell.ai'];
 
 const SUPABASE_URL         = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -459,17 +466,17 @@ function scoreTrade(scopeText: string, settings: Settings) {
             const terms = CSI_SECTION_SCOPE[normalizeSectionCode(code)] || [];
             return codeHit || terms.some(t => lower.includes(t.toLowerCase()));
         });
-        if (found.length === 0) return { score: 0, weight, reason: 'None of your spec sections found in scope' };
+        if (found.length === 0) return { score: 0, weight, reason: 'None of your spec sections found in scope', found: [] as string[] };
         const score = Math.min(65 + (found.length - 1) * 5, 100);
-        return { score, weight, reason: `${found.length}/${sections.length} spec section${sections.length !== 1 ? 's' : ''} found` };
+        return { score, weight, reason: `${found.length}/${sections.length} spec section${sections.length !== 1 ? 's' : ''} found`, found };
     }
 
     // Fallback: division-level (legacy — only when no preferred sections configured).
     const detectedDivs = detectDivisionsFromText(scopeText);
-    if (!settings.trades?.length) return { score: 50, weight, reason: 'No trades configured' };
+    if (!settings.trades?.length) return { score: 50, weight, reason: 'No trades configured', found: [] as string[] };
     const found = settings.trades.filter(t => detectedDivs.includes(t));
     const score = found.length === 0 ? 0 : Math.min(65 + (found.length - 1) * 5, 100);
-    return { score, weight, reason: found.length === 0 ? 'No matching trades found' : `${found.length}/${settings.trades.length} trades matched` };
+    return { score, weight, reason: found.length === 0 ? 'No matching trades found' : `${found.length}/${settings.trades.length} trades matched`, found };
 }
 
 function computeFinalScore(components: Record<string, { score: number; weight: number }>, _contractRisks: ContractRisks | null, _riskTolerance: string) {
@@ -905,19 +912,55 @@ async function processEmail(payload: Record<string, unknown>) {
     const kwComp   = { score: kwResult.score, weight: kwResult.weight, reason: kwResult.reason };
 
     const components = { location: locComp, keywords: kwComp, gc: gcComp, trade: trComp };
-    const finalScore = computeFinalScore(components, contractRisks, settings.riskTolerance);
+    const v1FinalScore = computeFinalScore(components, contractRisks, settings.riskTolerance);
 
-    // Invite-mode: an invite email with no bid documents can't be scored like a full package.
-    // Never emit a confident GO/PASS from thin data — return a triage verdict + completeness note.
+    // 9b. BidIndex v2 — unified engine (keywords become a ±10 modifier, Trade Match owns
+    // "is this my work?", 3 weighted buckets). This is the same scorer the app upload path
+    // uses; running it here collapses the two-engine divergence (R-1). Served to ADMIN
+    // forwards now (real-world eval); everyone else still gets v1 in the reply, with the
+    // v1-vs-v2 divergence shadow-logged below. Flip `serveV2` to all once eval clears.
     const availability = qualifying.length > 0 ? 'full' : 'invite';
+    const isAdmin = ADMIN_EMAILS.includes((userEmail || '').toLowerCase());
+    const w1 = settings.weights;
+    const wsum3 = (w1.location + w1.trade + w1.gc) || 1;
+    const gcMatch = ((clients as Client[]) || []).find(c => (c.name || '').toLowerCase().trim() === ((extracted.gc_name as string) || '').toLowerCase().trim());
+    let daysUntilDue: number | null = null;
+    if (extracted.bid_due_date) { const dd = new Date(extracted.bid_due_date as string); if (!isNaN(dd.getTime())) daysUntilDue = Math.round((dd.getTime() - Date.now()) / 86400000); }
+    const v2 = scoreOpportunity({
+        availability,
+        distanceMiles:      (locComp as { details?: { dist?: number } }).details?.dist ?? null,
+        city:               (extracted.project_city as string) || null,
+        state:              (extracted.project_state as string) || null,
+        buildingType:       (extracted.building_type as string) || null,
+        foundSections:      (trComp as { found?: string[] }).found || [],
+        scopeKeywordsFound: [],
+        client:             extracted.gc_name ? { name: extracted.gc_name, rating: gcMatch?.rating || settings.defaultStars || 3, bids: gcMatch?.bids || 0, wins: gcMatch?.wins || 0 } : null,
+        avgBidders:         null,
+        goodCount:          kwResult.goodFound.length,
+        badCount:           kwResult.badFound.length,
+        daysUntilDue,
+        contractClauses:    (contractRisks?.risksDetected || []).map(r => ({ type: r.type })),
+    }, {
+        weights3:            { project: Math.round(w1.location / wsum3 * 100), scope: Math.round(w1.trade / wsum3 * 100), client: Math.round(w1.gc / wsum3 * 100) },
+        searchRadius:        settings.radius,
+        defaultStars:        settings.defaultStars || 3,
+        targetBuildingTypes: ((userRow.target_building_types as string[]) || []),
+    });
+
+    const serveV2 = isAdmin && v2.index != null;
     const inviteMode = FLAG_INVITE_MODE && availability === 'invite';
-    const completeness = availability === 'full' ? 80 : 35;
-    const recommendation = inviteMode
-        ? (finalScore >= 70 ? 'OPEN & ASSIGN' : finalScore >= 45 ? 'WORTH A LOOK' : 'LIKELY SKIP')
-        : (finalScore >= 80 ? 'GO' : finalScore >= 60 ? 'REVIEW CAREFULLY' : 'PASS');
+    const humanizeRec = (r: string): string => (({ GO: 'GO', REVIEW: 'REVIEW CAREFULLY', PASS: 'PASS', OPEN_AND_ASSIGN: 'OPEN & ASSIGN', WORTH_A_LOOK: 'WORTH A LOOK', LIKELY_SKIP: 'LIKELY SKIP', INSUFFICIENT_INFO: 'NEED MORE INFO' } as Record<string, string>)[r] || r);
+
+    const finalScore    = serveV2 ? (v2.index as number) : v1FinalScore;
+    const completeness  = serveV2 ? v2.completeness : (availability === 'full' ? 80 : 35);
+    const recommendation = serveV2
+        ? humanizeRec(v2.recommendation)
+        : (inviteMode
+            ? (v1FinalScore >= 70 ? 'OPEN & ASSIGN' : v1FinalScore >= 45 ? 'WORTH A LOOK' : 'LIKELY SKIP')
+            : (v1FinalScore >= 80 ? 'GO' : v1FinalScore >= 60 ? 'REVIEW CAREFULLY' : 'PASS'));
     const scoreLabel = inviteMode ? 'Invite Score' : 'BidIndex Score';
 
-    const scores = { final: finalScore, recommendation, components, source: 'email_forward', availability, completeness };
+    const scores = { final: finalScore, recommendation, components, source: 'email_forward', availability, completeness, engine: serveV2 ? 'v2' : 'v1', scoresV2: v2 };
 
     // 10. Build gc_bid entry for this GC
     const gcBidEntry = {
@@ -1030,6 +1073,28 @@ async function processEmail(payload: Record<string, unknown>) {
         ? `\n⚠️  Possible duplicate detected (${topMergeSuggestion.confidence} confidence): ${topMergeSuggestion.reason}.\n   Review and merge in app → https://bidintell.ai/app.html`
         : null;
 
+    // v2 (admin): 3 buckets + keyword/contract modifiers. v1 (others): the legacy 4-factor
+    // breakdown, with the keyword line's stale "neutral for email forwards" label replaced by
+    // the actual reason (it does compute a real keyword score now).
+    const breakdownLines: (string | null)[] = serveV2
+        ? [
+            `WHY THIS SCORE`,
+            `Project Fit:   ${v2.buckets.project.score}/100  — ${(v2.buckets.project.reasons[0] || '').trim()}`,
+            `Scope Fit:     ${v2.buckets.scope.score}/100  — ${(v2.buckets.scope.reasons[0] || '').trim()}`,
+            `Client Fit:    ${v2.buckets.client.score}/100  — ${(v2.buckets.client.reasons[0] || '').trim()}`,
+            `Keyword nudge: ${v2.modifiers.keyword >= 0 ? '+' : ''}${v2.modifiers.keyword} (favorable − risk terms; a small nudge, not a factor)`,
+            v2.modifiers.contractOutlier ? `Contract:      ${v2.modifiers.contractOutlier} (above-market clauses)` : null,
+            contractRisks?.risksDetected?.length ? `Contract terms: ${contractRisks.risksDetected.length} clause(s) flagged — see full report` : null,
+        ]
+        : [
+            `SCORE BREAKDOWN`,
+            `Location Match:   ${locComp.score}/100 (weight ${locComp.weight}%)`,
+            `Trade Match:      ${trComp.score}/100 (weight ${trComp.weight}%)`,
+            `Client Relationship: ${gcComp.score}/100 (weight ${gcComp.weight}%)`,
+            `Keywords:         ${kwComp.score}/100 (weight ${kwComp.weight}%) — ${kwResult.reason}`,
+            contractRisks?.risksDetected?.length ? `Contract Risks:   ${contractRisks.risksDetected.length} clause(s) detected — see full report` : null,
+        ];
+
     const replyLines = [
         `─────────────────────────────────`,
         `${scoreLabel}: ${finalScore}/100 — ${recommendation}`,
@@ -1040,14 +1105,7 @@ async function processEmail(payload: Record<string, unknown>) {
         extracted.project_city && extracted.project_state ? `${extracted.project_city}, ${extracted.project_state}` : ((extracted.project_city as string) || (extracted.project_state as string) || ''),
         `Bid Due: ${formatDate((extracted.bid_due_date as string) || null)}`,
         ``,
-        `SCORE BREAKDOWN`,
-        `Location Match:   ${locComp.score}/100 (weight ${locComp.weight}%)`,
-        `Trade Match:      ${trComp.score}/100 (weight ${trComp.weight}%)`,
-        `Client Relationship: ${gcComp.score}/100 (weight ${gcComp.weight}%)`,
-        `Keywords:         ${kwComp.score}/100 (weight ${kwComp.weight}%) — neutral for email forwards`,
-        contractRisks?.risksDetected?.length
-            ? `Contract Risks:   ${contractRisks.risksDetected.length} clause(s) detected — see full report`
-            : null,
+        ...breakdownLines,
         ``,
         topRisk ? `⚠️  ${topRisk.type || 'Contract risk flag'}` : null,
         extracted.bond_required === true ? `⚠️  Bond required` : null,
@@ -1112,7 +1170,13 @@ async function processEmail(payload: Record<string, unknown>) {
         extracted_gc:          extracted.gc_name || null,
         extracted_city:        extracted.project_city || null,
         extraction_error:      extractionError,
-        extraction_raw:        extractionRaw
+        extraction_raw:        extractionRaw,
+        // v1-vs-v2 shadow divergence (served = which one the reply used)
+        engine_served:         serveV2 ? 'v2' : 'v1',
+        v1_score:              v1FinalScore,
+        v2_index:              v2.index,
+        v2_recommendation:     v2.recommendation,
+        v2_completeness:       v2.completeness
     }, supabase);
 }
 
