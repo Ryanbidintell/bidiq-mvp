@@ -733,25 +733,24 @@ async function processEmail(payload: Record<string, unknown>) {
         console.warn('Email extraction parse failed:', extractionError);
     }
 
-    // 6. GC name fallback
+    // 6. GC name fallback (only if AI extraction missed the GC). Pull the ORIGINAL sender's
+    // company from the forwarded body — never the forwarder. Note: emailContent is
+    // whitespace-collapsed (no newlines), so match up to the email angle-bracket, not "\n".
+    // BuildingConnected/Outlook style is "From: Person (Company Name) <email>" → prefer the
+    // "(Company Name)" when present, else the display name before the address.
     if (!extracted.gc_name) {
-        // Try to extract original sender from forwarded message headers in email body
-        // Covers: "From: ABC GC <email>" patterns in forwarded email body
-        const fwdFromMatch = emailContent.match(/(?:^|\n)From:\s*([^\n<]+?)(?:\s*<[^>]+>)?\s*\n/i);
-        if (fwdFromMatch) {
-            const candidate = fwdFromMatch[1].trim();
-            // Only use if it looks like a company name (not an email address)
+        const fwdFrom = emailContent.match(/From:\s*([^<\n]+?)\s*(?:<|$)/i);
+        if (fwdFrom) {
+            const rawName = fwdFrom[1].trim();
+            const paren = rawName.match(/\(([^)]+)\)/);
+            const candidate = (paren ? paren[1] : rawName).trim();
             if (candidate && !candidate.includes('@') && candidate.length > 2) {
                 extracted.gc_name = candidate;
             }
         }
-        // Fallback: use display name from From field (not domain — avoids pulling user's own domain)
-        if (!extracted.gc_name) {
-            const displayMatch = (From || '').match(/^(.+?)\s*</);
-            if (displayMatch) {
-                extracted.gc_name = displayMatch[1].trim();
-            }
-        }
+        // Deliberately NO fallback to the inbound From header's display name — on a forwarded
+        // bid that's the forwarding user (the estimator), not the GC. An honest "Unknown GC"
+        // beats confidently mislabeling the bid with the forwarder's name.
     }
 
     // 7. Process PDF attachments
@@ -1082,7 +1081,6 @@ async function processEmail(payload: Record<string, unknown>) {
             `Project Fit:   ${v2.buckets.project.score}/100  — ${(v2.buckets.project.reasons[0] || '').trim()}`,
             `Scope Fit:     ${v2.buckets.scope.score}/100  — ${(v2.buckets.scope.reasons[0] || '').trim()}`,
             `Client Fit:    ${v2.buckets.client.score}/100  — ${(v2.buckets.client.reasons[0] || '').trim()}`,
-            `Keyword nudge: ${v2.modifiers.keyword >= 0 ? '+' : ''}${v2.modifiers.keyword} (favorable − risk terms; a small nudge, not a factor)`,
             v2.modifiers.contractOutlier ? `Contract:      ${v2.modifiers.contractOutlier} (above-market clauses)` : null,
             contractRisks?.risksDetected?.length ? `Contract terms: ${contractRisks.risksDetected.length} clause(s) flagged — see full report` : null,
         ]
