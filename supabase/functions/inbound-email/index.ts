@@ -715,11 +715,15 @@ async function processEmail(payload: Record<string, unknown>) {
         `Sender: ${From}\nSubject: ${Subject || ''}\nEmail body:\n${emailContent}`;
 
     let extracted: Record<string, unknown> = {};
+    let extractionError: string | null = null;
+    let extractionRaw: string | null = null;
     try {
         const raw = await callClaude([{ role: 'user', content: extractionUserPrompt }], extractionSystemPrompt);
+        extractionRaw = (raw || '').substring(0, 300);
         extracted = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
     } catch (e) {
-        console.warn('Email extraction parse failed:', (e as Error).message);
+        extractionError = (e as Error).message;
+        console.warn('Email extraction parse failed:', extractionError);
     }
 
     // 6. GC name fallback
@@ -1106,7 +1110,9 @@ async function processEmail(payload: Record<string, unknown>) {
         body_len:              emailContent.length,
         body_preview:          emailContent.substring(0, 600),
         extracted_gc:          extracted.gc_name || null,
-        extracted_city:        extracted.project_city || null
+        extracted_city:        extracted.project_city || null,
+        extraction_error:      extractionError,
+        extraction_raw:        extractionRaw
     }, supabase);
 }
 
