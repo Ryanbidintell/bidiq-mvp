@@ -687,11 +687,24 @@ async function processEmail(payload: Record<string, unknown>) {
         .select('name, rating, bids, wins')
         .eq('user_id', userId);
 
-    // 4. Build email content string
-    let emailContent = (TextBody || (HtmlBody || '').replace(/<[^>]*>/g, ' '))
+    // 4. Build email content string.
+    // Forwards vary: some clients put the real invite only in the HTML part and leave just
+    // forwarding chrome in the plain-text part. And a naive tag-strip of a rich HTML email
+    // leaves any embedded <style>/<script> CSS/JS as "text" — filling emailContent with junk
+    // that Claude can't extract from (looks like content, so the no-content guard passes) →
+    // flat 39. Strip style/script FIRST, then tags, then use whichever part has more real text.
+    const textPart = (TextBody || '').replace(/\s+/g, ' ').trim();
+    const htmlPart = (HtmlBody || '')
+        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+        .replace(/<!--[\s\S]*?-->/g, ' ')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&#\d+;|&[a-z]+;/gi, ' ')
         .replace(/\s+/g, ' ')
-        .trim()
-        .substring(0, 8000);
+        .trim();
+    let emailContent = (htmlPart.length > textPart.length ? htmlPart : textPart).substring(0, 8000);
 
     // 5. Extract project data from email via Claude
     const extractionSystemPrompt = 'You are extracting structured data from a construction bid document email. Return JSON only. No preamble. No markdown.';
@@ -1071,7 +1084,8 @@ async function processEmail(payload: Record<string, unknown>) {
         replyStatus = { ok: false, error: (e as Error).message };
     }
 
-    // 14. Log admin event
+    // 14. Log admin event (+ payload diagnostics so we can see exactly what SendGrid delivered
+    // when a forward scores oddly — attachment presence vs. body content)
     await logAdminEvent('email_forward_received', {
         alias,
         gc_name:               gcName,
@@ -1082,7 +1096,17 @@ async function processEmail(payload: Record<string, unknown>) {
         merge_suggestions:     mergeSuggestions.length,
         reply_status:          replyStatus,
         user_id:               userId,
-        project_id:            savedProjectId
+        project_id:            savedProjectId,
+        // diagnostics
+        attachment_count:      allAttachments.length,
+        attachment_types:      allAttachments.map(a => a.ContentType || '').slice(0, 10),
+        attachment_names:      allAttachments.map(a => a.Name || '').slice(0, 10),
+        text_len:              textPart.length,
+        html_len:              htmlPart.length,
+        body_len:              emailContent.length,
+        body_preview:          emailContent.substring(0, 600),
+        extracted_gc:          extracted.gc_name || null,
+        extracted_city:        extracted.project_city || null
     }, supabase);
 }
 
