@@ -158,6 +158,12 @@ What it really says: "contractor may terminate without cause"
 ## CHANGE ORDER RESTRICTIONS (MEDIUM RISK)
 What it really says: "notice within X hours/days" with very short windows, or "failure to notify constitutes waiver"
 
+## NOTICE-OF-CLAIM / STRICT CLAIMS PROCEDURE (MEDIUM-HIGH RISK)
+What it really says: "written notice within X hours/days" for ANY claim (delay, extra work, differing site conditions) with "failure to give timely notice constitutes a waiver of the claim." Broader than change orders alone; short windows (24–72 hrs) are aggressive.
+
+## LIEN WAIVER / NO-LIEN CLAUSE (HIGH RISK)
+What it really says: "subcontractor waives and releases any right to file a mechanic's lien" or requires unconditional lien waivers signed BEFORE payment. Strips the sub's strongest tool to get paid.
+
 ## BROAD ACCEPTANCE OF CONDITIONS (MEDIUM RISK)
 What it really says: "subcontractor has inspected the site and accepts all conditions"
 
@@ -796,6 +802,71 @@ async function processEmail(payload: Record<string, unknown>) {
         } catch (e) {
             console.warn('Attachment processing failed:', (e as Error).message);
         }
+    }
+
+    // 7b. No-content guard — a forward whose body arrived empty AND had no readable PDF gives
+    // the scorer nothing but defaults, which used to emit a misleading "39/100 — Unknown GC"
+    // as if a real bid were evaluated. Never fabricate a confident score from nothing: tell the
+    // user we couldn't read it, and log the payload shape so we can see WHY the body was empty
+    // (empty text/html vs. an unreadable "forward-as-attachment" .eml, etc.).
+    const bodyLen = (emailContent || '').trim().length;
+    const hasUsableContent = bodyLen > 20 || processedCount > 0;
+    if (!hasUsableContent) {
+        const diag = {
+            alias,
+            subject:          Subject || null,
+            had_text:         !!(TextBody && (TextBody as string).trim()),
+            had_html:         !!(HtmlBody && (HtmlBody as string).trim()),
+            body_len:         bodyLen,
+            attachment_count: allAttachments.length,
+            attachment_types: allAttachments.map(a => a.ContentType || '').slice(0, 10),
+            attachment_names: allAttachments.map(a => a.Name || '').slice(0, 10),
+            pdf_qualifying:   qualifying.length,
+            user_id:          userId
+        };
+
+        const noReadBody = [
+            `I received your forward but couldn't pull any bid details out of it, so I'm not going to guess a score.`,
+            ``,
+            hadAttachments
+                ? `It looks like the invite came through as an attachment I can't read automatically (I only open PDFs).`
+                : `The forwarded message body came through empty on my end.`,
+            ``,
+            `To get a score, try one of these:`,
+            `  • Attach the bid documents as a PDF and forward again, or`,
+            `  • Paste the invite text directly into the body of the email, or`,
+            `  • In Outlook, use "Forward" (not "Forward as Attachment") so the text comes through.`,
+            ``,
+            `Or upload it directly at https://bidintell.ai/app.html`,
+            ``,
+            `Powered by BidIntell · bidintell.ai`
+        ].join('\n');
+
+        let noReadReplyStatus: Record<string, unknown> = {};
+        try {
+            const r = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RESEND_API_KEY}` },
+                body: JSON.stringify({
+                    from: 'BidIntell <hello@bidintell.ai>',
+                    to: [userEmail],
+                    bcc: ['ryan@bidintell.ai'],
+                    subject: `Couldn't read this bid — ${Subject || 'forwarded email'}`,
+                    text: noReadBody
+                })
+            });
+            noReadReplyStatus = { ok: r.ok, status: r.status };
+        } catch (e) {
+            noReadReplyStatus = { ok: false, error: (e as Error).message };
+        }
+
+        await logAdminEvent('email_forward_no_content', { ...diag, reply_status: noReadReplyStatus }, supabase);
+        await alertEdge(
+            'Forwarded bid had no readable content',
+            `Body empty and no PDF processed for "${Subject || '(no subject)'}" — replied asking for a PDF/paste.`,
+            diag
+        );
+        return;
     }
 
     // 8. Scope text for trade + keyword scoring
