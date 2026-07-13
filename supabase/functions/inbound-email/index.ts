@@ -915,9 +915,10 @@ async function processEmail(payload: Record<string, unknown>) {
 
     // 9b. BidIndex v2 — unified engine (keywords become a ±10 modifier, Trade Match owns
     // "is this my work?", 3 weighted buckets). This is the same scorer the app upload path
-    // uses; running it here collapses the two-engine divergence (R-1). Served to ADMIN
-    // forwards now (real-world eval); everyone else still gets v1 in the reply, with the
-    // v1-vs-v2 divergence shadow-logged below. Flip `serveV2` to all once eval clears.
+    // already serves to every user; serving it here too collapses the two-engine divergence
+    // (R-1). Rolled out to ALL forwards (Jul 13 2026) — the prior admin gate + shadow log
+    // showed v2 tracking v1 closely (+1, +10 on the only real samples), so the email path now
+    // matches the app path. v1 is still computed for the shadow-log delta below.
     const availability = qualifying.length > 0 ? 'full' : 'invite';
     const isAdmin = ADMIN_EMAILS.includes((userEmail || '').toLowerCase());
     const w1 = settings.weights;
@@ -946,7 +947,7 @@ async function processEmail(payload: Record<string, unknown>) {
         targetBuildingTypes: ((userRow.target_building_types as string[]) || []),
     });
 
-    const serveV2 = isAdmin && v2.index != null;
+    const serveV2 = v2.index != null;
     const inviteMode = FLAG_INVITE_MODE && availability === 'invite';
     const humanizeRec = (r: string): string => (({ GO: 'GO', REVIEW: 'REVIEW CAREFULLY', PASS: 'PASS', OPEN_AND_ASSIGN: 'OPEN & ASSIGN', WORTH_A_LOOK: 'WORTH A LOOK', LIKELY_SKIP: 'LIKELY SKIP', INSUFFICIENT_INFO: 'NEED MORE INFO' } as Record<string, string>)[r] || r);
 
@@ -1196,6 +1197,7 @@ async function processEmail(payload: Record<string, unknown>) {
         extraction_raw:        extractionRaw,
         // v1-vs-v2 shadow divergence (served = which one the reply used)
         engine_served:         serveV2 ? 'v2' : 'v1',
+        admin_forward:         isAdmin,
         v1_score:              v1FinalScore,
         v2_index:              v2.index,
         v2_recommendation:     v2.recommendation,
