@@ -1064,7 +1064,12 @@ async function processEmail(payload: Record<string, unknown>) {
     // 13. Send reply email
     const projectName = (extracted.project_name as string) || Subject || 'New Bid';
     const gcName      = (extracted.gc_name as string) || 'Unknown GC';
-    const replySubject = `${scoreLabel}: ${finalScore}/100 — ${projectName} (${gcName})`;
+    // Subject mirrors the forwarded email's own subject (minus the Re:/Fw:/Fwd: chrome) so the
+    // estimator can match the score to the job at a glance in their inbox — with the score and
+    // verdict up front. Falls back to the extracted project name if the forward had no subject.
+    const fwdSubject = (Subject || '').replace(/^(\s*(re|fw|fwd)\s*:\s*)+/i, '').trim();
+    const jobLabel   = fwdSubject || projectName;
+    const replySubject = `${scoreLabel} ${finalScore}/100 (${recommendation}) — ${jobLabel}`;
     const topRisk = contractRisks?.risksDetected?.[0];
 
     const topMergeSuggestion = mergeSuggestions[0];
@@ -1093,9 +1098,29 @@ async function processEmail(payload: Record<string, unknown>) {
             contractRisks?.risksDetected?.length ? `Contract Risks:   ${contractRisks.risksDetected.length} clause(s) detected — see full report` : null,
         ];
 
+    // One-line "quick read" so a busy estimator gets the verdict — and the single biggest reason
+    // for it — without reading the full breakdown. Names the strongest and weakest driver from
+    // whichever engine's breakdown is shown below (v2 buckets for admins, v1 components for others).
+    const drivers: Array<{ label: string; score: number }> = serveV2
+        ? [
+            { label: 'Project Fit', score: v2.buckets.project.score },
+            { label: 'Scope Fit',   score: v2.buckets.scope.score },
+            { label: 'Client Fit',  score: v2.buckets.client.score },
+          ]
+        : [
+            { label: 'Location',    score: locComp.score },
+            { label: 'Trade Match', score: trComp.score },
+            { label: 'Client',      score: gcComp.score },
+            { label: 'Keywords',    score: kwComp.score },
+          ];
+    const best  = drivers.reduce((a, b) => (b.score > a.score ? b : a));
+    const worst = drivers.reduce((a, b) => (b.score < a.score ? b : a));
+    const quickRead = `Quick read: strongest on ${best.label} (${best.score}/100), weakest on ${worst.label} (${worst.score}/100).`;
+
     const replyLines = [
         `─────────────────────────────────`,
         `${scoreLabel}: ${finalScore}/100 — ${recommendation}`,
+        quickRead,
         `─────────────────────────────────`,
         inviteMode ? `📋 Based on the invite only (~${completeness}% complete) — a triage read, not bid/no-bid. Forward the drawings/specs for a full BidIndex.` : null,
         ``,
