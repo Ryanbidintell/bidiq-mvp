@@ -7162,6 +7162,7 @@ ${fullText.substring(0, 40000)}`;
                                 <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">Forward bid PDFs to:</div>
                                 <div style="font-family: monospace; font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 6px 0;">${onboardingData.emailAlias}@bids.bidintell.ai</div>
                                 <div style="font-size: 12px; color: var(--text-muted);">BidIntell will auto-score and reply with results. Max 10MB per file.</div>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.5;">📧 On <strong>Outlook / Microsoft 365</strong>? It may silently block forwards to outside addresses — have IT enable outbound forwarding, or forward from Gmail to confirm it's working. Setup steps live in <strong>Settings → Email Forwarding</strong>.</div>
                             </div>` : ''}
                             <div style="background: var(--bg-secondary); padding: 16px 20px; border-radius: var(--radius); margin-bottom: 12px; border-left: 3px solid var(--accent);">
                                 <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); font-weight: 600; margin-bottom: 8px;">Before You Bid — 2 Minutes</div>
@@ -18013,6 +18014,17 @@ Respond now:`;
                             Max 10MB per file, 3 attachments per email.
                             BidIntell will score them and reply with results.
                         </p>
+                        <details style="margin-bottom: 12px; font-size: 13px; color: var(--text-secondary);">
+                            <summary style="cursor: pointer; color: var(--accent); font-weight: 600;">📧 Using Outlook or Microsoft 365? Read this first</summary>
+                            <div style="margin-top: 10px; line-height: 1.6; border-left: 3px solid rgba(245,158,11,0.5); padding: 2px 0 2px 12px;">
+                                Microsoft 365 often <strong>silently blocks email forwarded to outside addresses</strong> by default, so your forwards may never reach us. If you forward a bid and don't get a score back:
+                                <ul style="margin: 8px 0 0 18px; padding: 0;">
+                                    <li style="margin-bottom: 6px;">Have your IT admin turn on outbound forwarding: <strong>Microsoft 365 Admin Center → Security → Anti-spam → Outbound policy → Automatic forwarding = On</strong>.</li>
+                                    <li style="margin-bottom: 6px;">Use plain <strong>Forward</strong> (not "Forward as Attachment") so the bid text comes through.</li>
+                                    <li>Forwarding from <strong>Gmail</strong> works with no setup — a good way to confirm everything's wired up.</li>
+                                </ul>
+                            </div>
+                        </details>
                         <a href="#" onclick="showAliasEditMode(); return false;" style="font-size: 13px; color: var(--accent); text-decoration: underline; cursor: pointer;">Change address</a>
                     </div>
                     <div id="emailAliasEdit" style="display: none;">
