@@ -64,7 +64,7 @@ Those are different questions. And the second one is harder to answer without yo
 
 AI bidding software built specifically for subcontractors does something the older tools don't: it combines document analysis with your firm's own win pattern data to produce a personalized recommendation.
 
-That's the core idea behind [BidIntell](https://bidintell.ai). You upload a bid PDF or forward the invite email. The platform extracts the project scope, flags contract risks like pay-if-paid clauses and retainage terms, and generates a BidIndex Score from 0 to 100. The output is a GO, REVIEW, or PASS — based on your trade, your service area, your client history, and your current capacity. Not a generic ranking.
+That's the core idea behind [BidIntell](https://bidintell.ai). You upload a bid PDF or forward the invite email. The platform extracts the project scope, flags contract risks like pay-if-paid clauses and retainage terms, and generates a BidIndex Score from 0 to 100. The output is a GO, REVIEW, or PASS — based on your trade, your service area, and your client history. Not a generic ranking. And when you've flagged that you're at capacity, it nudges you to pass on anything that isn't a strong fit.
 
 The part that compounds over time is the outcome tracking. Every result you record — Won, Lost, Ghosted, Passed, No Bid — along with your decline reasons, feeds back into the scoring model. The more outcomes you log, the more accurately the system reflects your actual win patterns. It gets smarter with your data, not someone else's.
 
