@@ -81,7 +81,7 @@
         "AI extraction of project details from bid PDFs and drawing sets",
         "Contract risk clause detection (bid shopping, vague scope, payment terms)",
         "Outcome tracking that personalizes future scores to your win history",
-        "Competitive Pressure component activates after 3+ outcomes per client",
+        "Competitive Pressure factored in automatically after 3+ logged outcomes per client",
         "CSI MasterFormat section-level scope matching (6-digit codes)",
         "Inbound email forwarding — score bids by forwarding the GC invite",
         "Estimator override with GO / REVIEW / PASS reason capture"
@@ -165,7 +165,7 @@
           "name": "What's the fastest way to improve my scores?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Complete your profile in Settings. Set your service area, add your CSI trade sections, enter a few good and bad keywords, and rate the clients you work with most. Each of those inputs directly feeds one of the four score factors. Incomplete profiles produce neutral 50-point scores on most factors — which tells you nothing."
+            "text": "Complete your profile in Settings. Set your service area, add your CSI trade sections, enter a few good and bad keywords, and rate the clients you work with most. Each of those inputs directly feeds the score. Incomplete profiles produce neutral 50-point scores on most factors — which tells you nothing."
           }
         },
         {
@@ -173,7 +173,7 @@
           "name": "Can I adjust the factor weights?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. In Settings → Scoring, you can shift weight between the four factors to match how your business actually evaluates bids. If client relationship is everything for you, push more weight there. If you travel and location is irrelevant, reduce it or turn it off entirely. Weights must add up to 100."
+            "text": "Yes. In Settings → Scoring, you can shift weight between the scoring factors to match how your business actually evaluates bids. If client relationship is everything for you, push more weight there. If you travel and location is irrelevant, reduce it or turn it off entirely. Weights must add up to 100."
           }
         },
         {
@@ -229,7 +229,7 @@
           "name": "How does the BidIndex Score work?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "The BidIndex Score is a 0–100 fit score — not a win probability. It measures how well a bid matches your business across four factors: location, scope and contract terms, client relationship, and trade match. Each factor is weighted and personalized to your settings."
+            "text": "The BidIndex Score is a 0–100 fit score — not a win probability. It measures how well a bid matches your business across the factors that matter: location, scope and contract terms, client relationship, and trade match — each weighted and personalized to your settings."
           }
         },
         {
@@ -2106,7 +2106,7 @@ a.press-outlet:hover { color: var(--white); }
       <span class="section-tag">How scoring works</span>
       <h2>What the BidIndex Score actually measures</h2>
     </div>
-    <p class="section-sub fade-up">The BidIndex Score is a fit score — not a win probability. It tells you how well a bid matches your specific business based on four factors you control. Think of it as a triage tool: it helps you spend time on bids worth chasing and skip the ones that aren't.</p>
+    <p class="section-sub fade-up">The BidIndex Score is a fit score — not a win probability. It tells you how well a bid matches your specific business based on the factors you control. Think of it as a triage tool: it helps you spend time on bids worth chasing and skip the ones that aren't.</p>
 
     <!-- 4 Score Components -->
     <div class="score-components fade-up">
@@ -2250,7 +2250,7 @@ a.press-outlet:hover { color: var(--white); }
             What's the fastest way to improve my scores?
             <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
-          <div class="faq-answer"><div class="faq-answer-inner">Complete your profile in Settings. Set your service area, add your CSI trade sections, enter a few good and bad keywords, and rate the clients you work with most. Each of those inputs directly feeds one of the four score factors. Incomplete profiles produce neutral 50-point scores on most factors — which tells you nothing.</div></div>
+          <div class="faq-answer"><div class="faq-answer-inner">Complete your profile in Settings. Set your service area, add your CSI trade sections, enter a few good and bad keywords, and rate the clients you work with most. Each of those inputs directly feeds the score. Incomplete profiles produce neutral 50-point scores on most factors — which tells you nothing.</div></div>
         </div>
 
         <div class="faq-item">
@@ -2258,7 +2258,7 @@ a.press-outlet:hover { color: var(--white); }
             Can I adjust the factor weights?
             <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
-          <div class="faq-answer"><div class="faq-answer-inner">Yes. In Settings → Scoring, you can shift weight between the four factors to match how your business actually evaluates bids. If client relationship is everything for you, push more weight there. If you travel and location is irrelevant, reduce it or turn it off entirely. Weights must add up to 100.</div></div>
+          <div class="faq-answer"><div class="faq-answer-inner">Yes. In Settings → Scoring, you can shift weight between the scoring factors to match how your business actually evaluates bids. If client relationship is everything for you, push more weight there. If you travel and location is irrelevant, reduce it or turn it off entirely. Weights must add up to 100.</div></div>
         </div>
 
         <div class="faq-item">
@@ -2615,7 +2615,7 @@ a.press-outlet:hover { color: var(--white); }
           How does the BidIndex Score work?
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <div class="faq-answer"><div class="faq-answer-inner">The BidIndex Score is a 0–100 fit score — not a win probability. It measures how well a bid matches your business across four factors: location, scope &amp; contract terms, client relationship, and trade match. Each factor is weighted and personalized to your settings. <a href="#bidindex-score">See the full breakdown →</a></div></div>
+        <div class="faq-answer"><div class="faq-answer-inner">The BidIndex Score is a 0–100 fit score — not a win probability. It measures how well a bid matches your business across the factors that matter: location, scope &amp; contract terms, client relationship, and trade match — each weighted and personalized to your settings. <a href="#bidindex-score">See the full breakdown →</a></div></div>
       </div>
       <div class="faq-item">
         <button class="faq-question" aria-expanded="false">
