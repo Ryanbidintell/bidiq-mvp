@@ -36,9 +36,9 @@
             --fog: #94A3B8;
             --cloud: #CBD5E1;
             --white: #F8FAFC;
-            --accent: #F26522;
-            --accent-dark: #D4551A;
-            --accent-glow: rgba(242, 101, 34, 0.15);
+            --accent: #E4562A;
+            --accent-dark: #C8461F;
+            --accent-glow: rgba(228, 86, 42, 0.15);
             --green: #22C55E;
             --green-muted: rgba(34, 197, 94, 0.12);
             --red: #EF4444;
@@ -68,15 +68,15 @@
             --border: rgba(255,255,255,0.06);
             --border-color: rgba(255,255,255,0.06);
             --border-light: rgba(255,255,255,0.04);
-            --border-focus: #F26522;
+            --border-focus: #E4562A;
 
             /* Legacy Compatibility */
-            --brand-gradient: linear-gradient(135deg, #F26522 0%, #d4561e 100%);
+            --brand-gradient: linear-gradient(135deg, #E4562A 0%, #C8461F 100%);
             --brand-gradient-subtle: #0B0F14;
-            --brand-primary: #F26522;
+            --brand-primary: #E4562A;
             --brand-secondary: #2F80ED;
-            --accent-hover: #D4551A;
-            --accent-dim: rgba(242, 101, 34, 0.15);
+            --accent-hover: #C8461F;
+            --accent-dim: rgba(228, 86, 42, 0.15);
             --success: #22C55E;
             --success-bg: rgba(34, 197, 94, 0.12);
             --warning: #EAB308;
@@ -106,7 +106,7 @@
             --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
             --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
             --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
-            --shadow-score: 0 8px 24px rgba(242, 101, 34, 0.2);
+            --shadow-score: 0 8px 24px rgba(228, 86, 42, 0.2);
 
             /* Transitions */
             --transition-fast: 150ms ease;
@@ -320,7 +320,7 @@
         
         /* Score report */
         /* ─── Score Report ─────────────────────────────────────────────────── */
-        .score-report { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 0 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(242,101,34,0.07); }
+        .score-report { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 0 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(228,86,42,0.07); }
         .score-report-header { padding: 28px 28px 20px; background: linear-gradient(160deg, #1C2533 0%, #141A23 100%); border-bottom: 1px solid var(--border); text-align: center; position: relative; }
         .score-report-header::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
         .score-report-header.rec-go::before { background: linear-gradient(90deg, transparent, rgba(34,197,94,0.8) 50%, transparent); }
@@ -790,7 +790,7 @@
         .setup-banner-link { color:var(--accent); font-weight:600; cursor:pointer; text-decoration:underline; }
         .profile-progress-bar { height:4px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; margin-top:8px; width:100%; }
         .profile-progress-fill { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--accent),#f59e0b); transition:width 0.4s ease; }
-        .profile-incomplete-callout { margin:12px 0 0; padding:11px 14px; background:rgba(242,101,34,0.07); border-left:3px solid var(--accent); border-radius:0 var(--radius) var(--radius) 0; font-size:13px; color:var(--text-secondary); line-height:1.5; }
+        .profile-incomplete-callout { margin:12px 0 0; padding:11px 14px; background:rgba(228,86,42,0.07); border-left:3px solid var(--accent); border-radius:0 var(--radius) var(--radius) 0; font-size:13px; color:var(--text-secondary); line-height:1.5; }
         .profile-incomplete-callout .link { color:var(--accent); font-weight:600; cursor:pointer; text-decoration:underline; }
 
         /* AI Advisor pulse ring — draws attention when never clicked */
@@ -1246,7 +1246,7 @@
                 </div>
 
                 <!-- Team -->
-                <div style="border: 2px solid var(--accent); border-radius: var(--radius-md); padding: 20px; background: linear-gradient(135deg, rgba(242, 101, 34, 0.05), rgba(242, 101, 34, 0.1)); position: relative;">
+                <div style="border: 2px solid var(--accent); border-radius: var(--radius-md); padding: 20px; background: linear-gradient(135deg, rgba(228, 86, 42, 0.05), rgba(228, 86, 42, 0.1)); position: relative;">
                     <div style="position: absolute; top: -11px; right: 14px; background: var(--accent); color: white; padding: 3px 10px; border-radius: var(--radius); font-size: 10px; font-weight: 700;">POPULAR</div>
                     <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">Team</div>
                     <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">Up to 3 seats</div>
@@ -1958,7 +1958,7 @@
             <div class="tab-content" id="tab-keywords">
                 <header class="page-header"><h2 class="page-title">Keywords</h2><p class="page-subtitle">Set your trade terms (Trade Match) and contract signals (Contract Terms)</p></header>
                 <div class="page-content">
-                    <div id="keywordsNudge" style="display:none; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">No trade terms added yet.</strong> Add your work type terms (like "roller shades" or "demountable partitions") so BidIntell can confirm your work is in each bid — directly improves Trade Match accuracy.</div>
+                    <div id="keywordsNudge" style="display:none; background: rgba(228,86,42,0.07); border: 1px solid rgba(228,86,42,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">No trade terms added yet.</strong> Add your work type terms (like "roller shades" or "demountable partitions") so BidIntell can confirm your work is in each bid — directly improves Trade Match accuracy.</div>
                     <div class="help-text">
                         <strong>Three separate lists, three different jobs:</strong><br>
                         • <span style="color: var(--accent)">My Trade Terms</span> = <strong>scope items AND preferred manufacturers</strong> — BidIntell searches the spec book and drawings for these to confirm <em>your work is in this bid</em> (feeds Trade Match). Add your work type terms ("roller shades", "demountable partitions") AND your key manufacturers ("MechoShade", "Draper", "SWF Contract") — a manufacturer call-out is even stronger confirmation your trade is specified<br>
@@ -1967,7 +1967,7 @@
                         <strong>Tip:</strong> Separate by commas to add multiple at once.
                     </div>
                     <div class="keywords-grid" style="grid-template-columns:1fr;gap:16px;">
-                        <div class="keywords-section" style="border-color:var(--accent);background:rgba(242,101,34,0.04);">
+                        <div class="keywords-section" style="border-color:var(--accent);background:rgba(228,86,42,0.04);">
                             <div class="keywords-section-header"><h4 style="color:var(--accent);">My Trade Terms — what you install/sell (BidIntell searches for these to confirm your scope is in the bid)</h4></div>
                             <div class="keywords-list" id="scopeKeywordsList"></div>
                             <div class="keywords-input-row">
@@ -2012,7 +2012,7 @@
                             <div class="settings-card-description">Your contact information and company details</div>
                         </div>
                         <div class="settings-card-body">
-                            <div id="profileNudge" style="display:none; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">Complete your profile:</strong> Add your company name and your name — they appear in reports and outbound emails.</div>
+                            <div id="profileNudge" style="display:none; background: rgba(228,86,42,0.07); border: 1px solid rgba(228,86,42,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">Complete your profile:</strong> Add your company name and your name — they appear in reports and outbound emails.</div>
                             <div class="form-group">
                                 <label class="form-label">Company Name</label>
                                 <input type="text" class="form-input" id="settingCompanyName" placeholder="Your Company LLC" required>
@@ -2125,7 +2125,7 @@
                                         <button class="btn" onclick="upgradeToSolo()" id="soloBtn" style="width: 100%; background: var(--bg-hover); color: var(--text-primary); border: 2px solid var(--border); font-weight: 600; font-size:12px; padding:8px;">Start Free Trial</button>
                                     </div>
                                     <!-- Team -->
-                                    <div style="border: 2px solid var(--accent); border-radius: var(--radius-md); padding: 16px; background: linear-gradient(135deg, rgba(242, 101, 34, 0.05), rgba(242, 101, 34, 0.1)); position: relative;">
+                                    <div style="border: 2px solid var(--accent); border-radius: var(--radius-md); padding: 16px; background: linear-gradient(135deg, rgba(228, 86, 42, 0.05), rgba(228, 86, 42, 0.1)); position: relative;">
                                         <div style="position: absolute; top: -10px; right: 10px; background: var(--accent); color: white; padding: 3px 8px; border-radius: var(--radius); font-size: 10px; font-weight: 700;">POPULAR</div>
                                         <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">Team</div>
                                         <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Up to 3 seats</div>
@@ -2157,8 +2157,8 @@
                             <div class="settings-card-description">Enter your full office address for accurate distance calculations. At minimum, provide city and state.</div>
                         </div>
                         <div class="settings-card-body">
-                            <div id="locationNudgeMissing" style="display:none; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">Office location not set.</strong> City and state are required for Location Fit scoring — without them, all location scores default to 50.</div>
-                            <div id="locationNudgePartial" style="display:none; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">Tip:</strong> Adding a street address improves Location Fit accuracy — city-level geocoding can be off by several miles.</div>
+                            <div id="locationNudgeMissing" style="display:none; background: rgba(228,86,42,0.07); border: 1px solid rgba(228,86,42,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">Office location not set.</strong> City and state are required for Location Fit scoring — without them, all location scores default to 50.</div>
+                            <div id="locationNudgePartial" style="display:none; background: rgba(228,86,42,0.07); border: 1px solid rgba(228,86,42,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">Tip:</strong> Adding a street address improves Location Fit accuracy — city-level geocoding can be off by several miles.</div>
                             <div class="form-group">
                                 <label class="form-label">Office Street Address (Optional)</label>
                                 <input type="text" class="form-input" id="settingStreet" placeholder="123 Main Street">
@@ -2186,7 +2186,7 @@
                             <div class="settings-card-description">Select the CSI divisions you work in. BidIntell searches bid docs for these divisions to calculate your Trade Match score.</div>
                         </div>
                         <div class="settings-card-body">
-                            <div id="tradesNudge" style="display:none; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">No trades selected.</strong> Trade Match scores will default to neutral (50) for every bid until you pick your CSI sections below.</div>
+                            <div id="tradesNudge" style="display:none; background: rgba(228,86,42,0.07); border: 1px solid rgba(228,86,42,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">No trades selected.</strong> Trade Match scores will default to neutral (50) for every bid until you pick your CSI sections below.</div>
                             <div class="checkbox-grid" id="tradesCheckboxes"></div>
                         </div>
                     </div>
@@ -2423,7 +2423,7 @@
                             <div class="settings-card-description">Customize how BidIntell follows up with GCs after you submit a bid. Each touch uses a Cialdini persuasion principle.</div>
                         </div>
                         <div class="settings-card-body">
-                            <div id="followupTemplatesNudge" style="display:none; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"></div>
+                            <div id="followupTemplatesNudge" style="display:none; background: rgba(228,86,42,0.07); border: 1px solid rgba(228,86,42,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"></div>
 
                             <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">System templates</div>
                             <div id="followupSystemTemplatesList" style="display: grid; gap: 10px; margin-bottom: 24px;">
@@ -2843,7 +2843,7 @@
             </div>
             <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
                 <!-- Principle banner -->
-                <div id="approvalPrincipleBanner" style="padding: 10px 14px; background: rgba(242,101,34,0.07); border: 1px solid rgba(242,101,34,0.18); border-radius: var(--radius); font-size: 13px; color: var(--text-secondary); line-height: 1.5;"></div>
+                <div id="approvalPrincipleBanner" style="padding: 10px 14px; background: rgba(228,86,42,0.07); border: 1px solid rgba(228,86,42,0.18); border-radius: var(--radius); font-size: 13px; color: var(--text-secondary); line-height: 1.5;"></div>
 
                 <!-- Subject line -->
                 <div>
@@ -9646,7 +9646,7 @@ IMPORTANT RULES:
                 const hoursForInit = actualHours || estimatedHours;
                 const dph = hoursForInit > 0 ? expected / hoursForInit : 0;
                 expectedHtml = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;">Expected Value</div><div style="font-size:20px;font-weight:700;color:var(--success);">${fmt(expected)}</div><div style="font-size:10px;color:var(--text-muted);">scope × margin × win rate</div>`;
-                dphHtml = `<div style="display:block;padding:10px 12px;background:rgba(242,101,34,0.08);border:1px solid rgba(242,101,34,0.2);border-radius:var(--radius);text-align:center;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-muted);">Expected return per estimating hour: </span><span style="font-size:17px;font-weight:700;color:var(--accent);">${fmt(dph)}/hr</span></div>`;
+                dphHtml = `<div style="display:block;padding:10px 12px;background:rgba(228,86,42,0.08);border:1px solid rgba(228,86,42,0.2);border-radius:var(--radius);text-align:center;margin-bottom:8px;"><span style="font-size:12px;color:var(--text-muted);">Expected return per estimating hour: </span><span style="font-size:17px;font-weight:700;color:var(--accent);">${fmt(dph)}/hr</span></div>`;
             } else if (savedAmount && !winRate) {
                 const needed = Math.max(0, 3 - withOutcomes.length);
                 expectedHtml = `<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;">Expected Value</div><div style="font-size:16px;font-weight:700;color:var(--warning);">Almost there</div><div style="font-size:10px;color:var(--text-muted);">track ${needed} more outcome${needed !== 1 ? 's' : ''}</div>`;
@@ -11047,7 +11047,7 @@ IMPORTANT RULES:
             const col = { GO: 'var(--success)', OPEN_AND_ASSIGN: 'var(--success)', REVIEW: 'var(--warning)', WORTH_A_LOOK: 'var(--warning)', PASS: 'var(--danger)', LIKELY_SKIP: 'var(--danger)' }[v.recommendation] || 'var(--text-muted)';
             const bkt = (label, b) => `<div style="font-size:13px;margin:4px 0;"><b>${label}:</b> ${b.score} <span style="opacity:.55;">(conf ${Math.round((b.confidence || 0) * 100)}%)</span>${(b.reasons || []).length ? `<div style="font-size:11px;opacity:.7;">${b.reasons.join(' · ')}</div>` : ''}</div>`;
             const chips = (v.alerts || []).map(al => `<span class="meta-chip">${al.label || al.type}</span>`).join('');
-            return `<div style="margin-top:16px;padding:16px;border:1px dashed var(--accent);border-radius:var(--radius);background:rgba(242,101,34,0.05);">
+            return `<div style="margin-top:16px;padding:16px;border:1px dashed var(--accent);border-radius:var(--radius);background:rgba(228,86,42,0.05);">
                 <div style="font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">🧪 BidIndex v2 preview — admin only</div>
                 <div style="display:flex;gap:14px;align-items:baseline;margin-bottom:8px;"><div style="font-size:34px;font-weight:800;color:${col};">${v.index == null ? '—' : v.index}</div><div style="font-size:13px;"><b>${v.recommendation}</b><br><span style="opacity:.7;">${v.mode} mode · completeness ${v.completeness}%</span></div></div>
                 ${bkt('Project Fit', v.buckets.project)}${bkt('Scope Fit', v.buckets.scope)}${bkt('Client Fit', v.buckets.client)}
@@ -11915,7 +11915,7 @@ IMPORTANT RULES:
 
                 const doc = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BidIntell Report — ${esc(project)}</title>
 <style>
-:root{--ink:#0B0F14;--body:#2b333d;--muted:#6b7785;--line:#e4e8ec;--accent:#F26522;--go:#16a34a;--review:#d97706;--pass:#dc2626;--panel:#f7f8fa;}
+:root{--ink:#0B0F14;--body:#2b333d;--muted:#6b7785;--line:#e4e8ec;--accent:#E4562A;--go:#16a34a;--review:#d97706;--pass:#dc2626;--panel:#f7f8fa;}
 *{box-sizing:border-box;} html,body{margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--body);background:#eceff2;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 .page{width:8.5in;min-height:11in;margin:24px auto;background:#fff;padding:.6in .65in .5in;box-shadow:0 4px 24px rgba(0,0,0,.12);}
@@ -12364,7 +12364,7 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                 if (comp.details.scoring_mode === 'keyword_fallback') {
                     const skFound = comp.details.scopeKeywordsFound || [];
                     if (skFound.length > 0) {
-                        details = `<div class="score-component-details"><span style="color:var(--text-muted)">No spec sections found — scope confirmed via scope keywords in drawings.</span><div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">${skFound.map(k => `<span class="keyword-tag" style="background:rgba(242,101,34,0.12);border-color:rgba(242,101,34,0.3);color:var(--accent);">${k.keyword}</span>`).join('')}</div></div>`;
+                        details = `<div class="score-component-details"><span style="color:var(--text-muted)">No spec sections found — scope confirmed via scope keywords in drawings.</span><div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;">${skFound.map(k => `<span class="keyword-tag" style="background:rgba(228,86,42,0.12);border-color:rgba(228,86,42,0.3);color:var(--accent);">${k.keyword}</span>`).join('')}</div></div>`;
                     } else {
                         details = `<div class="score-component-details"><span style="color:var(--warning)">No spec sections or scope keywords found. Add scope keywords (your work types) in the Keywords tab to improve this score.</span></div>`;
                     }
@@ -12446,7 +12446,7 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                         <div style="margin-bottom:8px;font-size:13px;color:var(--text-muted);">See how competitive this client's jobs really are — how many subs you're up against, based on your own bid history. Log outcomes on <strong style="color:var(--text-primary)">3 bids with this client</strong> to unlock it.</div>
                         <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">${logged} of ${needed} outcomes logged with this client</div>
                         <div style="height:6px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden;">
-                            <div style="height:100%;width:${pct}%;background:#F26522;border-radius:3px;transition:width 0.3s;"></div>
+                            <div style="height:100%;width:${pct}%;background:#E4562A;border-radius:3px;transition:width 0.3s;"></div>
                         </div>
                     </div>`;
                 } else if (d?.status === 'active') {
@@ -13814,7 +13814,7 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                                             if (!primaryGC) return '';
                                             const count = gcOutcomeCount[primaryGC] || 0;
                                             if (count >= 3) return '<div style="display:inline-flex;align-items:center;gap:4px;margin-top:3px;padding:1px 7px;border-radius:4px;background:rgba(34,197,94,0.10);border:1px solid rgba(34,197,94,0.20);font-size:10px;color:var(--success);font-weight:600;">CP Active</div>';
-                                            if (count >= 1) return `<div style="display:inline-flex;align-items:center;gap:4px;margin-top:3px;padding:1px 7px;border-radius:4px;background:rgba(242,101,34,0.10);border:1px solid rgba(242,101,34,0.20);font-size:10px;color:#F26522;"><span style="font-weight:600;">${count}/3</span><span style="color:var(--text-muted);">outcomes</span></div>`;
+                                            if (count >= 1) return `<div style="display:inline-flex;align-items:center;gap:4px;margin-top:3px;padding:1px 7px;border-radius:4px;background:rgba(228,86,42,0.10);border:1px solid rgba(228,86,42,0.20);font-size:10px;color:#E4562A;"><span style="font-weight:600;">${count}/3</span><span style="color:var(--text-muted);">outcomes</span></div>`;
                                             return '';
                                         })()}
                                     </td>
@@ -13940,7 +13940,7 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                 needsOutcome.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
                 const firstId = needsOutcome[0].id;
                 const wrap = document.createElement('div');
-                wrap.style.cssText = 'background:rgba(242,101,34,0.08);border:1px solid rgba(242,101,34,0.3);border-left:3px solid #F26522;border-radius:var(--radius);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;';
+                wrap.style.cssText = 'background:rgba(228,86,42,0.08);border:1px solid rgba(228,86,42,0.3);border-left:3px solid #E4562A;border-radius:var(--radius);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;';
                 const left = document.createElement('div');
                 left.style.cssText = 'display:flex;align-items:center;gap:10px;flex:1;min-width:0;';
                 const textDiv = document.createElement('div');
@@ -13955,7 +13955,7 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                 left.appendChild(textDiv);
                 const btn = document.createElement('button');
                 btn.className = 'btn btn-sm';
-                btn.style.cssText = 'background:#F26522;color:white;white-space:nowrap;flex-shrink:0;';
+                btn.style.cssText = 'background:#E4562A;color:white;white-space:nowrap;flex-shrink:0;';
                 btn.textContent = 'Log Outcome \u2192';
                 btn.addEventListener('click', () => showOutcome(firstId));
                 wrap.appendChild(left);
@@ -17330,11 +17330,11 @@ Respond now:`;
             ).join('');
 
             const progressRows = progressItems.map(item => item.celebration
-                ? `<div style="font-size:13px;color:#F26522;padding:10px 12px;background:rgba(242,101,34,0.08);border-radius:6px;margin-bottom:10px;">${item.text}</div>`
+                ? `<div style="font-size:13px;color:#E4562A;padding:10px 12px;background:rgba(228,86,42,0.08);border-radius:6px;margin-bottom:10px;">${item.text}</div>`
                 : `<div style="margin-bottom:14px;">
                     <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">${item.label}</div>
                     <div style="height:4px;background:var(--bg-secondary);border-radius:2px;overflow:hidden;">
-                        <div style="height:100%;width:${item.pct}%;background:#F26522;border-radius:2px;"></div>
+                        <div style="height:100%;width:${item.pct}%;background:#E4562A;border-radius:2px;"></div>
                     </div>
                   </div>`
             ).join('');
@@ -17851,7 +17851,7 @@ Respond now:`;
         // Keywords - FIXED
         async function loadKeywords() {
             const kw = await getKeywords();
-            document.getElementById('scopeKeywordsList').innerHTML = (kw.scope || []).map(k => `<span class="keyword-tag" style="background:rgba(242,101,34,0.12);border-color:rgba(242,101,34,0.3);color:var(--accent);">${k}<span class="remove" onclick="removeKeyword('scope','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No trade terms yet — add what your company installs/sells</span>';
+            document.getElementById('scopeKeywordsList').innerHTML = (kw.scope || []).map(k => `<span class="keyword-tag" style="background:rgba(228,86,42,0.12);border-color:rgba(228,86,42,0.3);color:var(--accent);">${k}<span class="remove" onclick="removeKeyword('scope','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No trade terms yet — add what your company installs/sells</span>';
             document.getElementById('goodKeywordsList').innerHTML = kw.good.map(k => `<span class="keyword-tag good">${k}<span class="remove" onclick="removeKeyword('good','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No favorable terms yet</span>';
             document.getElementById('badKeywordsList').innerHTML = kw.bad.map(k => `<span class="keyword-tag bad">${k}<span class="remove" onclick="removeKeyword('bad','${k.replace(/'/g, "\\'")}')">×</span></span>`).join('') || '<span style="color:var(--text-muted);font-size:12px;">No risk terms yet</span>';
             const kwNudge = document.getElementById('keywordsNudge');
@@ -19363,7 +19363,7 @@ Respond now:`;
                                 ${t.draft_subject ? `<div style="font-size: 13px; color: var(--text-secondary); margin-top: 6px; font-style: italic;">"${escapeHtml(t.draft_subject)}"</div>` : ''}
                             </div>
                             <div style="flex-shrink: 0; text-align: right;">
-                                <div style="display: inline-block; padding: 3px 10px; background: rgba(242,101,34,0.12); color: var(--brand-primary); border-radius: 99px; font-size: 11px; font-weight: 600; margin-bottom: 4px;">Needs review</div>
+                                <div style="display: inline-block; padding: 3px 10px; background: rgba(228,86,42,0.12); color: var(--brand-primary); border-radius: 99px; font-size: 11px; font-weight: 600; margin-bottom: 4px;">Needs review</div>
                                 <div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(dateStr)}</div>
                             </div>
                         </div>
@@ -19765,7 +19765,7 @@ Respond now:`;
                         <button type="button" class="btn btn-secondary bcSinceQuick" data-days="90" style="padding:5px 10px;font-size:12px;">Last 90 days</button>
                     </div>
                     ${isAdmin() ? `
-                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:10px 12px;background:rgba(242,101,34,0.08);border:1px solid rgba(242,101,34,0.25);border-radius:8px;font-size:12px;color:var(--text-secondary,#667);cursor:pointer;">
+                    <label style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:10px 12px;background:rgba(228,86,42,0.08);border:1px solid rgba(228,86,42,0.25);border-radius:8px;font-size:12px;color:var(--text-secondary,#667);cursor:pointer;">
                         <input type="checkbox" id="bcTestEnv" style="width:15px;height:15px;cursor:pointer;">
                         <span><strong>Use Autodesk test data</strong> (admin/demo only — pulls sample bids, no Bid Board Pro needed)</span>
                     </label>` : ''}
@@ -20075,7 +20075,7 @@ Respond now:`;
                 el.style.left = annual ? '23px' : '3px';
             });
             document.querySelectorAll('#billingToggle').forEach(t => {
-                t.parentElement?.querySelector('span:first-of-type') && (t.parentElement.querySelector('span:first-of-type').style.background = annual ? '#F26522' : '#334155');
+                t.parentElement?.querySelector('span:first-of-type') && (t.parentElement.querySelector('span:first-of-type').style.background = annual ? '#E4562A' : '#334155');
             });
             const prices = annual
                 ? { solo: '$470', team: '$950', company: '$1,720', per: '/yr' }
