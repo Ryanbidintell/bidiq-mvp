@@ -226,6 +226,23 @@ exports.handler = async function(event, context) {
                 } catch (err) { console.warn('capacity_waitlist event log failed:', err); }
             }
 
+            // Fire the diagnostic-agent research in the background (non-blocking).
+            // Background function returns 202 immediately, then runs Claude research ≤15min.
+            // Requires CRON_SECRET on both sides; if unset we skip (enrichment stays off until configured).
+            try {
+                const cronSecret = process.env.CRON_SECRET;
+                if (cronSecret) {
+                    const base = process.env.URL || process.env.DEPLOY_PRIME_URL || 'https://bidintell.ai';
+                    await fetch(`${base}/.netlify/functions/capacity-enrich-background`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-internal-secret': cronSecret },
+                        body: JSON.stringify({ email: userEmail, company: company || '', trade: trade || '' })
+                    });
+                } else {
+                    console.warn('CRON_SECRET unset — skipping Capacity enrichment for', userEmail);
+                }
+            } catch (err) { console.warn('capacity enrichment trigger failed:', err); }
+
             return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
         }
 
