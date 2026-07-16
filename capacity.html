@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BidIntell Capacity — Labor Planning</title>
+<meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --brand:#4F46E5; --brand-2:#6366F1; --accent:#F26522;
+    --ink:#0B0F14; --slate:#334155; --muted:#64748B; --line:#E2E8F0;
+    --bg:#F8FAFC; --card:#FFFFFF; --ok:#16A34A; --warn:#D97706; --bad:#DC2626;
+    --shadow:0 1px 2px rgba(15,23,42,.06), 0 4px 16px rgba(15,23,42,.05);
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink);background:var(--bg);font-size:15px;line-height:1.5}
+  a{color:var(--brand);text-decoration:none}
+  button{font-family:inherit;cursor:pointer}
+  .hidden{display:none !important}
+
+  /* Layout */
+  .shell{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+  .side{background:#0B0F14;color:#CBD5E1;padding:20px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:6px}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 16px}
+  .brand .badge{width:34px;height:34px;border-radius:9px;background:var(--accent);color:#fff;font-weight:800;display:grid;place-items:center;font-size:15px}
+  .brand .name{color:#fff;font-weight:800;font-size:16px;letter-spacing:-.2px}
+  .brand .sub{color:#64748B;font-size:11px;font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+  .navlink{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;color:#94A3B8;font-weight:600;font-size:14px;border:none;background:none;text-align:left;width:100%}
+  .navlink:hover{background:#1E293B;color:#E2E8F0}
+  .navlink.active{background:var(--brand);color:#fff}
+  .navlink .ic{width:18px;text-align:center;opacity:.9}
+  .side .spacer{flex:1}
+  .side .whoami{font-size:12px;color:#64748B;padding:8px;border-top:1px solid #1E293B;margin-top:6px}
+  .side .whoami b{color:#CBD5E1;display:block;font-size:12px;word-break:break-all}
+
+  .main{padding:22px 28px 60px;max-width:1180px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+  .topbar h1{font-size:22px;margin:0;letter-spacing:-.4px}
+  .topbar .desc{color:var(--muted);font-size:13px;margin-top:3px}
+  .btn{border:1px solid var(--line);background:#fff;color:var(--slate);padding:9px 14px;border-radius:10px;font-weight:600;font-size:14px}
+  .btn:hover{border-color:#CBD5E1}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:#4338CA}
+  .btn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.sm{padding:6px 10px;font-size:13px;border-radius:8px}
+  .btn.ghost{background:none;border:none;color:var(--brand)}
+  .btn.danger{color:var(--bad);border-color:#FCA5A5}
+
+  .banner{padding:11px 14px;border-radius:11px;font-size:13px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  .banner.demo{background:#FEF3C7;color:#92400E;border:1px solid #FDE68A}
+  .banner.cloud{background:#DCFCE7;color:#166534;border:1px solid #BBF7D0}
+
+  .view{display:none}
+  .view.active{display:block}
+
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+  .kpi .label{color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+  .kpi .val{font-size:26px;font-weight:800;margin-top:6px;letter-spacing:-.5px}
+  .kpi .hint{font-size:12px;color:var(--muted);margin-top:3px}
+  .val.bad{color:var(--bad)} .val.ok{color:var(--ok)} .val.warn{color:var(--warn)}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:18px}
+  .panel h2{font-size:16px;margin:0 0 4px} .panel .ph{color:var(--muted);font-size:13px;margin:0 0 14px}
+  .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+  .panel-head h2{margin:0}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.3px;padding:8px 10px;border-bottom:1px solid var(--line)}
+  td{padding:9px 10px;border-bottom:1px solid #F1F5F9}
+  tr:last-child td{border-bottom:none}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .chip{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}
+  .chip.hire{background:#EEF2FF;color:#4338CA} .chip.overtime{background:#FEF3C7;color:#92400E}
+  .chip.outside_labor{background:#ECFEFF;color:#0E7490} .chip.hold{background:#F1F5F9;color:#475569}
+  .chip.pass{background:#FEE2E2;color:#991B1B} .chip.escalate{background:#FEE2E2;color:#991B1B}
+  .chip.awarded{background:#DCFCE7;color:#166534} .chip.pursuit{background:#EEF2FF;color:#4338CA}
+  .chip.full{background:#DCFCE7;color:#166534} .chip.partial{background:#FEF3C7;color:#92400E} .chip.invite{background:#FEE2E2;color:#991B1B}
+
+  .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:12.5px;font-weight:600;color:var(--slate)}
+  .field .fh{font-size:11.5px;color:var(--muted)}
+  input,select,textarea{font-family:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);width:100%}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+
+  .heat{font-variant-numeric:tabular-nums;text-align:center;font-size:12px;font-weight:700;padding:5px 4px;border-radius:6px}
+  .scroll-x{overflow-x:auto}
+  .weekcell{min-width:44px}
+
+  .rec{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start}
+  .rec .body{flex:1} .rec .title{font-weight:700;font-size:14.5px;margin-bottom:3px}
+  .rec .why{color:var(--slate);font-size:13px} .rec .meta{color:var(--muted);font-size:12px;margin-top:6px}
+  .rec .acts{display:flex;flex-direction:column;gap:6px}
+  .urg{font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px}
+  .urg.high{background:#FEE2E2;color:#991B1B} .urg.med{background:#FEF3C7;color:#92400E} .urg.low{background:#F1F5F9;color:#475569}
+
+  .row-actions{display:flex;gap:6px;justify-content:flex-end}
+  .muted{color:var(--muted)} .small{font-size:12.5px}
+  .tag{display:inline-block;background:#F1F5F9;color:#475569;border-radius:6px;padding:1px 7px;font-size:11.5px;font-weight:600;margin-right:4px}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .compare td.better{color:var(--ok);font-weight:700} .compare td.worse{color:var(--bad);font-weight:700}
+  .curve-input{width:52px;padding:5px;text-align:center;font-size:12px}
+  .loading{display:grid;place-items:center;height:100vh;color:var(--muted);font-weight:600}
+  @media(max-width:900px){.shell{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;flex-wrap:wrap}.cards{grid-template-columns:repeat(2,1fr)}.form-grid,.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="boot" class="loading">Loading BidIntell Capacity…</div>
+
+<div id="app" class="shell hidden">
+  <!-- Sidebar -->
+  <aside class="side">
+    <div class="brand">
+      <div class="badge">BI</div>
+      <div>
+        <div class="name">BidIntell</div>
+        <div class="sub">Capacity</div>
+      </div>
+    </div>
+    <button class="navlink active" data-view="dashboard"><span class="ic">▤</span> Dashboard</button>
+    <button class="navlink" data-view="forecast"><span class="ic">◔</span> Forecast</button>
+    <button class="navlink" data-view="backlog"><span class="ic">≣</span> Backlog &amp; Pipeline</button>
+    <button class="navlink" data-view="people"><span class="ic">◍</span> People</button>
+    <button class="navlink" data-view="templates"><span class="ic">◫</span> Templates</button>
+    <button class="navlink" data-view="scenarios"><span class="ic">⑂</span> Scenarios</button>
+    <button class="navlink" data-view="data"><span class="ic">⇪</span> Import Data</button>
+    <button class="navlink" data-view="settings"><span class="ic">⚙</span> Settings</button>
+    <div class="spacer"></div>
+    <div class="whoami">
+      <span class="muted">Signed in as</span>
+      <b id="whoami">—</b>
+      <a href="/app.html" class="small">← Back to BidIntell</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div id="modeBanner"></div>
+
+    <!-- DASHBOARD -->
+    <section class="view active" id="view-dashboard">
+      <div class="topbar">
+        <div>
+          <h1>Capacity Dashboard</h1>
+          <div class="desc">Weekly, role-based labor demand from awarded backlog + weighted pipeline vs your current bench.</div>
+        </div>
+        <button class="btn primary" onclick="runAndRender()">↻ Run forecast</button>
+      </div>
+      <div class="cards" id="kpiCards"></div>
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>Demand vs capacity</h2><p class="ph">Stacked awarded + weighted pipeline (FTE) with your capacity line, by week.</p></div>
+        </div>
+        <canvas id="dashChart" height="110"></canvas>
+      </div>
+      <div class="split">
+        <div class="panel">
+          <h2>Role gap summary</h2><p class="ph">Peak shortage &amp; surplus across the horizon.</p>
+          <table id="roleSummaryTable"></table>
+        </div>
+        <div class="panel">
+          <h2>Key driver projects</h2><p class="ph">What's generating the most labor demand.</p>
+          <table id="driverTable"></table>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><h2>Staffing actions</h2><p class="ph">Transparent, rules-based recommendations. Accept to add to your plan.</p></div></div>
+        <div id="recList"></div>
+      </div>
+    </section>
+
+    <!-- FORECAST -->
+    <section class="view" id="view-forecast">
+      <div class="topbar"><div><h1>Forecast</h1><div class="desc">Portfolio manpower curve. Positive gap = shortage, negative = bench.</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="roleFilter" style="width:auto" onchange="renderForecast()"></select>
+          <button class="btn primary" onclick="runAndRender()">↻ Run</button>
+        </div>
+      </div>
+      <div class="panel"><canvas id="fcChart" height="110"></canvas></div>
+      <div class="panel">
+        <h2>Weekly gap by role (FTE)</h2><p class="ph">Red = shortage, green = surplus. Demand is awarded at 100% + pipeline discounted by win probability × document confidence.</p>
+        <div class="scroll-x"><table id="gapGrid"></table></div>
+      </div>
+    </section>
+
+    <!-- BACKLOG & PIPELINE -->
+    <section class="view" id="view-backlog">
+      <div class="topbar"><div><h1>Backlog &amp; Pipeline</h1><div class="desc">Awarded projects drive certain demand; pipeline pursuits drive weighted demand.</div></div></div>
+      <div class="panel">
+        <div class="panel-head"><div><h2>Awarded / active projects</h2></div><button class="btn sm primary" onclick="editProject()">+ Add project</button></div>
+        <table id="projectsTable"></table>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><h2>Pipeline opportunities</h2></div><button class="btn sm primary" onclick="editOpportunity()">+ Add opportunity</button></div>
+        <table id="oppsTable"></table>
+      </div>
+    </section>
+
+    <!-- PEOPLE -->
+    <section class="view" id="view-people">
+      <div class="topbar"><div><h1>People</h1><div class="desc">Your bench. A future "available from" date models an approved-but-not-started hire.</div></div>
+        <button class="btn sm primary" onclick="editPerson()">+ Add person</button></div>
+      <div class="panel"><table id="peopleTable"></table></div>
+    </section>
+
+    <!-- TEMPLATES -->
+    <section class="view" id="view-templates">
+      <div class="topbar"><div><h1>Labor templates</h1><div class="desc">Reusable role-by-week crew curves per trade &amp; project type. Direct field labor is separated from indirect (PM/detailer).</div></div>
+        <button class="btn sm primary" onclick="editTemplate()">+ New template</button></div>
+      <div class="panel"><table id="templatesTable"></table></div>
+    </section>
+
+    <!-- SCENARIOS -->
+    <section class="view" id="view-scenarios">
+      <div class="topbar"><div><h1>Scenario planner</h1><div class="desc">Duplicate the base forecast, change assumptions, compare side by side.</div></div></div>
+      <div class="panel">
+        <h2>Build a scenario</h2><p class="ph">Layer changes on top of your live data — nothing is saved to the base plan.</p>
+        <div id="scenarioBuilder"></div>
+      </div>
+      <div class="panel">
+        <h2>Base vs scenario</h2>
+        <table class="compare" id="scenarioCompare"></table>
+      </div>
+    </section>
+
+    <!-- DATA / IMPORT -->
+    <section class="view" id="view-data">
+      <div class="topbar"><div><h1>Import data</h1><div class="desc">Upload CSVs for roster, awarded backlog, and pipeline. Download a template to see the exact columns.</div></div></div>
+      <div class="cards" style="grid-template-columns:repeat(3,1fr)">
+        <div class="card">
+          <div class="kpi"><div class="label">People</div><div class="hint" style="margin:8px 0 12px">Your crew &amp; planned hires.</div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" onclick="downloadTemplate('people')">⬇ Template</button>
+          <label class="btn sm primary" style="margin:0">⬆ Upload<input type="file" accept=".csv" class="hidden" onchange="importCsv('people',this)"></label></div>
+        </div>
+        <div class="card">
+          <div class="kpi"><div class="label">Awarded projects</div><div class="hint" style="margin:8px 0 12px">Backlog you must staff.</div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" onclick="downloadTemplate('projects')">⬇ Template</button>
+          <label class="btn sm primary" style="margin:0">⬆ Upload<input type="file" accept=".csv" class="hidden" onchange="importCsv('projects',this)"></label></div>
+        </div>
+        <div class="card">
+          <div class="kpi"><div class="label">Opportunities</div><div class="hint" style="margin:8px 0 12px">Pursuits to weight.</div></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" onclick="downloadTemplate('opportunities')">⬇ Template</button>
+          <label class="btn sm primary" style="margin:0">⬆ Upload<input type="file" accept=".csv" class="hidden" onchange="importCsv('opportunities',this)"></label></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Data tools</h2>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+          <button class="btn" onclick="loadDemo(true)">↺ Reload demo data</button>
+          <button class="btn danger" onclick="clearAll()">🗑 Clear all data</button>
+        </div>
+        <p class="small muted" style="margin-top:12px">Templates must exist before importing projects/opportunities — the <b>template_id</b> or <b>archetype</b> column links a row to its labor curve. Import matches on <b>archetype</b> when no template_id is given.</p>
+        <div id="importLog" class="small muted" style="margin-top:10px"></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" id="view-settings">
+      <div class="topbar"><div><h1>Company assumptions</h1><div class="desc">These drive supply, confidence weighting, and recommendations.</div></div>
+        <button class="btn primary" onclick="saveSettings()">Save</button></div>
+      <div class="panel"><div class="form-grid" id="settingsForm"></div></div>
+    </section>
+  </main>
+</div>
+
+<!-- Modal -->
+<div id="modal" class="hidden" style="position:fixed;inset:0;background:rgba(11,15,20,.5);display:grid;place-items:center;padding:20px;z-index:50">
+  <div style="background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)">
+      <h2 id="modalTitle" style="margin:0;font-size:17px"></h2>
+      <button class="btn ghost" onclick="closeModal()" style="font-size:20px;padding:0 6px">×</button>
+    </div>
+    <div id="modalBody" style="padding:22px"></div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid var(--line)">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" id="modalSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// CONFIG + CONSTANTS
+// ============================================================================
+const SUPABASE_URL = 'https://szifhqmrddmdkgschkkw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6aWZocW1yZGRtZGtnc2Noa2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwOTkyMDUsImV4cCI6MjA4NDY3NTIwNX0.XSStBZABbfJRMkGqwG-uh2X6nco7GqtiIxUg_0HHlZE';
+const LS_KEY = 'bidintell_capacity_v1';
+
+const ROLES = {
+  installer: {label:'Installer', type:'direct'},
+  painter:   {label:'Painter',   type:'direct'},
+  foreman:   {label:'Foreman',   type:'direct'},
+  laborer:   {label:'Laborer',   type:'direct'},
+  pm:        {label:'Project Manager', type:'indirect'},
+  detailer:  {label:'Detailer / Estimator', type:'indirect'},
+};
+const ROLE_KEYS = Object.keys(ROLES);
+const DEFAULT_SETTINGS = {
+  company_name:'', trades:['flooring','painting'], home_metro:'',
+  planning_horizon_weeks:180, hours_per_fte_week:40, hiring_lead_time_weeks:6,
+  attrition_pct_annual:0.08, overtime_max_pct:0.15, outside_labor_enabled:true,
+  outside_labor_fte:3, utilization_target:0.90,
+  conf_invite_max:0.40, conf_partial_max:0.70,
+  conf_weight_invite:0.50, conf_weight_partial:0.80, conf_weight_full:1.00,
+};
+
+let supabaseClient=null, currentUser=null, MODE='demo';
+let STATE=null, lastRun=null, dashChartObj=null, fcChartObj=null, modalSaveHandler=null;
+
+// ============================================================================
+// DATE HELPERS
+// ============================================================================
+function mondayOf(d){ d=new Date(d); const day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); d.setHours(0,0,0,0); return d; }
+function addWeeks(d,n){ d=new Date(d); d.setDate(d.getDate()+n*7); return d; }
+function addDays(d,n){ d=new Date(d); d.setDate(d.getDate()+n); return d; }
+function horizonStart(){ return mondayOf(new Date()); }
+function weekIndexOf(date, start){ return Math.round((mondayOf(date)-start)/(7*86400000)); }
+function fmtDate(d){ if(!d) return ''; d=new Date(d); if(isNaN(d.getTime())) return ''; return d.toISOString().slice(0,10); }
+function fmtShort(d){ d=new Date(d); return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+function r1(n){ return Math.round(n*10)/10; }
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function uid(){ return 'x'+Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4); }
+
+// ============================================================================
+// CONFIDENCE
+// ============================================================================
+function confBand(score, s){ s=s||STATE.settings; if(score<s.conf_invite_max) return 'invite'; if(score<s.conf_partial_max) return 'partial'; return 'full'; }
+function confWeight(score, s){ s=s||STATE.settings; const b=confBand(score,s); return b==='invite'?s.conf_weight_invite : b==='partial'?s.conf_weight_partial : s.conf_weight_full; }
+
+// ============================================================================
+// FORECAST ENGINE (deterministic, rules-based)
+// ============================================================================
+function templateById(id){ return STATE.templates.find(t=>t.id===id); }
+function templateFor(row){
+  if(row.template_id){ const t=templateById(row.template_id); if(t) return t; }
+  // fall back to archetype+trade match
+  return STATE.templates.find(t=>t.archetype===row.archetype && t.trade===row.trade)
+      || STATE.templates.find(t=>t.trade===row.trade);
+}
+function curveRoles(t){
+  const set={}; Object.keys(t.direct_curves||{}).forEach(k=>set[k]=1); Object.keys(t.indirect_curves||{}).forEach(k=>set[k]=1); return Object.keys(set);
+}
+function roleWeekFromTemplate(t, role, wInTemplate){
+  const d=(t.direct_curves||{})[role]||[]; const i=(t.indirect_curves||{})[role]||[];
+  return (d[wInTemplate]||0)+(i[wInTemplate]||0);
+}
+
+function runForecast(state){
+  const s=state.settings; const start=horizonStart(); const N=s.planning_horizon_weeks;
+  const weeks=[]; for(let w=0;w<N;w++){ const dt=addWeeks(start,w); weeks.push({index:w,start:dt,label:fmtShort(dt)}); }
+  const zero=()=>new Array(N).fill(0);
+  const demandAwarded={}, demandWeighted={}, supply={};
+  ROLE_KEYS.forEach(r=>{demandAwarded[r]=zero(); demandWeighted[r]=zero(); supply[r]=zero();});
+  const sources={}; // id -> {name,type,fteWeeks, roleWeek:{role:[..]}}
+
+  function addDemand(src, isAwarded, weightMul){
+    const t=templateFor(src); if(!t) return;
+    const startW=weekIndexOf(src.expected_start_date, start);
+    const dur=t.duration_weeks;
+    const rec = sources[src.__id] = sources[src.__id] || {name:src.__name, type:isAwarded?'awarded':'pursuit', fteWeeks:0, roleWeek:{}};
+    for(let k=0;k<dur;k++){
+      const w=startW+k; if(w<0||w>=N) continue;
+      curveRoles(t).forEach(role=>{
+        if(!ROLES[role]) return;
+        const base=roleWeekFromTemplate(t,role,k)*(src.manual_peak_adjustment||1);
+        const val=base*weightMul;
+        if(val<=0) return;
+        if(isAwarded) demandAwarded[role][w]+=val; else demandWeighted[role][w]+=val;
+        rec.fteWeeks+=val;
+        rec.roleWeek[role]=rec.roleWeek[role]||zero(); rec.roleWeek[role][w]+=val;
+      });
+    }
+  }
+  // awarded projects — 100%
+  state.projects.filter(p=>p.status!=='complete').forEach(p=>{ p.__id=p.id; p.__name=p.project_name; addDemand(p,true,1); });
+  // pipeline — probability × confidence weight
+  state.opportunities.filter(o=>o.include_flag).forEach(o=>{
+    o.__id=o.id; o.__name=o.project_name;
+    const mul=(o.probability_of_award||0)*confWeight(o.confidence_score);
+    addDemand(o,false,mul);
+  });
+
+  // SUPPLY — base roster (+ future hires via available_from) with attrition decay
+  const weeklyAttr = s.attrition_pct_annual>0 ? Math.pow(1-s.attrition_pct_annual, 1/52) : 1;
+  state.people.filter(p=>p.active_flag).forEach(p=>{
+    const role=p.role_canonical; if(!ROLES[role]) return;
+    const fte=(p.hours_per_week||0)/s.hours_per_fte_week;
+    const from = p.available_from?weekIndexOf(p.available_from,start):0;
+    const to   = p.available_to?weekIndexOf(p.available_to,start):N-1;
+    for(let w=Math.max(0,from); w<=Math.min(N-1,to); w++){
+      supply[role][w]+= fte*Math.pow(weeklyAttr,w);
+    }
+  });
+
+  // TOTALS + GAP
+  const gap={}; ROLE_KEYS.forEach(r=>gap[r]=zero());
+  const totals={demand:zero(),demandAwarded:zero(),demandWeighted:zero(),supply:zero(),gap:zero()};
+  ROLE_KEYS.forEach(r=>{ for(let w=0;w<N;w++){
+    const dem=demandAwarded[r][w]+demandWeighted[r][w];
+    gap[r][w]=dem-supply[r][w];
+    totals.demand[w]+=dem; totals.demandAwarded[w]+=demandAwarded[r][w];
+    totals.demandWeighted[w]+=demandWeighted[r][w]; totals.supply[w]+=supply[r][w]; totals.gap[w]+=gap[r][w];
+  }});
+
+  // ROLE SUMMARY
+  const rolesUsed=ROLE_KEYS.filter(r=> demandAwarded[r].some(x=>x>0)||demandWeighted[r].some(x=>x>0)||supply[r].some(x=>x>0));
+  const roleSummary=rolesUsed.map(r=>{
+    const g=gap[r]; const peakShort=Math.max(0,...g); const peakSurp=Math.max(0,...g.map(x=>-x));
+    const weeksShort=g.filter(x=>x>0.5).length; const weeksSurp=g.filter(x=>x<-0.5).length;
+    return {role:r, label:ROLES[r].label, peakShort:r1(peakShort), peakSurp:r1(peakSurp), weeksShort, weeksSurp};
+  }).sort((a,b)=>b.peakShort-a.peakShort);
+
+  // DRIVERS
+  const driverProjects=Object.values(sources).map(x=>({name:x.name,type:x.type,fteWeeks:r1(x.fteWeeks)}))
+    .sort((a,b)=>b.fteWeeks-a.fteWeeks);
+
+  const recommendations=buildRecommendations({state,start,N,gap,supply,demandAwarded,demandWeighted,sources,rolesUsed});
+
+  return {weeks,rolesUsed,demandAwarded,demandWeighted,supply,gap,totals,roleSummary,driverProjects,recommendations,start,N,sources};
+}
+
+// ============================================================================
+// RECOMMENDATION ENGINE (transparent business rules)
+// ============================================================================
+function contiguousRuns(arr, thresh){
+  const runs=[]; let cur=null;
+  for(let w=0;w<arr.length;w++){
+    if(arr[w]>thresh){ if(!cur){cur={from:w,to:w};} else cur.to=w; }
+    else { if(cur){runs.push(cur); cur=null;} }
+  }
+  if(cur) runs.push(cur); return runs;
+}
+function buildRecommendations(ctx){
+  const {state,start,N,gap,supply,demandAwarded,demandWeighted,sources,rolesUsed}=ctx;
+  const s=state.settings; const recs=[];
+  rolesUsed.forEach(role=>{
+    const runs=contiguousRuns(gap[role],0.5);
+    if(!runs.length) return;
+    const recurring=runs.length>=2;
+    runs.forEach(run=>{
+      let peak=0, peakW=run.from, awardSum=0, weightSum=0, lowConfSum=0;
+      for(let w=run.from;w<=run.to;w++){
+        if(gap[role][w]>peak){peak=gap[role][w];peakW=w;}
+        awardSum+=demandAwarded[role][w]; weightSum+=demandWeighted[role][w];
+      }
+      const dur=run.to-run.from+1;
+      const totalDem=awardSum+weightSum || 1;
+      const awardedShare=awardSum/totalDem;
+      const rosterAtPeak=supply[role][peakW];
+      const overtimeCap=rosterAtPeak*s.overtime_max_pct;
+      const outsideCap=s.outside_labor_enabled?s.outside_labor_fte:0;
+      // driver projects for this run/role
+      const drivers=Object.values(sources).map(src=>{
+        let f=0; const rw=src.roleWeek[role]; if(rw) for(let w=run.from;w<=run.to;w++) f+=rw[w]||0;
+        return {name:src.name,type:src.type,fte:r1(f)};
+      }).filter(d=>d.fte>0).sort((a,b)=>b.fte-a.fte).slice(0,4);
+
+      // confidence mix of the weighted portion (approx via drivers of type pursuit)
+      const weightedShare=weightSum/totalDem;
+      let action, qty=Math.ceil(peak), rationale, confLabel, endW=run.to;
+      if(peak<=overtimeCap+0.01 && dur<=4){
+        action='overtime'; qty=r1(peak);
+        rationale=`Short ${dur}-week gap of ~${r1(peak)} FTE, within your ${Math.round(s.overtime_max_pct*100)}% overtime allowance (${r1(overtimeCap)} FTE). Cover with overtime rather than hiring.`;
+        confLabel='high';
+      } else if(awardedShare>=0.6){
+        // Hire when the awarded shortage still exists after a new hire could onboard
+        // (extends past the hiring lead time) and lasts long enough to be worth it.
+        const canHire = run.to>=s.hiring_lead_time_weeks && dur>=6;
+        if(canHire){
+          action='hire'; qty=Math.max(1,Math.ceil(peak-overtimeCap));
+          const bridge = run.from<s.hiring_lead_time_weeks
+            ? ` The gap starts in ${run.from} wk — bridge the first weeks with overtime or outside labor until new hires are onboarded.` : '';
+          rationale=`Sustained ${dur}-week shortage peaking at ~${r1(peak)} FTE, mostly awarded work (${Math.round(awardedShare*100)}%). It runs past your ${s.hiring_lead_time_weeks}-wk hiring lead time, so hiring ~${qty} ${ROLES[role].label}(s) is justified.`+bridge;
+          confLabel='high';
+        } else {
+          action='outside_labor'; qty=r1(Math.min(peak,outsideCap||peak));
+          rationale=`Awarded-driven shortage of ~${r1(peak)} FTE, but it clears in ${dur} wk — before a new hire could onboard (${s.hiring_lead_time_weeks} wk). Cover with outside labor or overtime instead of hiring.`;
+          confLabel='high';
+        }
+      } else if(weightedShare>=0.6){
+        // driven by pursuits — confidence matters
+        const mostlyLow = weightSum>0 && (weightSum/ (weightSum+awardSum))>0.6 && awardedShare<0.3;
+        if(overtimeCap>=peak && dur<=6){ action='overtime'; qty=r1(peak); rationale=`Pipeline-driven gap of ~${r1(peak)} FTE that overtime can absorb — don't commit to a hire against work you haven't won.`; confLabel='medium'; }
+        else if(outsideCap>0){ action='outside_labor'; qty=r1(Math.min(peak,outsideCap)); rationale=`Shortage is driven by pipeline pursuits (${Math.round(weightedShare*100)}% of demand), not signed work. Line up outside labor / subcontract crews you can turn on only if these convert.`; confLabel='medium'; }
+        else { action='hold'; qty=r1(peak); rationale=`Projected demand exceeds capacity but it's driven by unwon pursuits (${Math.round(weightedShare*100)}%). Hold — revisit as awards firm up before adding cost.`; confLabel='low'; }
+      } else {
+        action='hold'; qty=r1(peak);
+        rationale=`Mixed-signal shortage of ~${r1(peak)} FTE. Hold and monitor; re-run as probabilities and dates firm up.`;
+        confLabel='medium';
+      }
+      let urgency = peak*2 + dur*0.3 + awardedShare*3 - run.from*0.15;
+      if(recurring) urgency+=2;
+      recs.push({
+        action_type:action, role, roleLabel:ROLES[role].label, quantity:qty,
+        start:fmtDate(addWeeks(start,run.from)), end:fmtDate(addWeeks(start,endW)),
+        startWeek:run.from, durWeeks:dur, peak:r1(peak),
+        awardedShare:Math.round(awardedShare*100), recurring,
+        urgency:r1(urgency), confidence:confLabel, rationale, drivers
+      });
+    });
+  });
+  return recs.sort((a,b)=>b.urgency-a.urgency);
+}
+
+// ============================================================================
+// DATA LAYER (Supabase in cloud mode, localStorage in demo mode)
+// ============================================================================
+const TABLES=['settings','people','templates','projects','opportunities','scenarios'];
+function persistLocal(){ if(MODE==='demo') localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }
+
+async function detectMode(){
+  if(!supabaseClient || !currentUser) return 'demo';
+  try{
+    const {error}=await supabaseClient.from('cap_settings').select('user_id').limit(1);
+    if(error){ if(error.code==='42P01'||/does not exist/i.test(error.message||'')) return 'demo'; return 'demo'; }
+    return 'cloud';
+  }catch(e){ return 'demo'; }
+}
+
+async function loadAll(){
+  if(MODE==='cloud'){
+    const uidv=currentUser.id;
+    const q=(t)=>supabaseClient.from('cap_'+t).select('*').eq('user_id',uidv);
+    const [set,ppl,tpl,prj,opp,scn]=await Promise.all([
+      supabaseClient.from('cap_settings').select('*').eq('user_id',uidv).maybeSingle(),
+      q('people'),q('templates'),q('projects'),q('opportunities'),q('scenarios')
+    ]);
+    STATE={
+      settings: set.data ? {...DEFAULT_SETTINGS,...set.data} : {...DEFAULT_SETTINGS},
+      people: ppl.data||[], templates: tpl.data||[], projects: prj.data||[],
+      opportunities: opp.data||[], scenarios: scn.data||[]
+    };
+    if(!STATE.templates.length && !STATE.people.length){ /* empty account — leave blank, user imports */ }
+  } else {
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw){ try{ STATE=JSON.parse(raw); STATE.settings={...DEFAULT_SETTINGS,...STATE.settings}; }catch(e){ STATE=null; } }
+    if(!STATE) loadDemo(false);
+  }
+}
+
+async function dbUpsert(table,row){
+  if(MODE==='cloud'){ row.user_id=currentUser.id; row.updated_at=new Date().toISOString();
+    const key = table==='settings'?'user_id':'id';
+    const {error}=await supabaseClient.from('cap_'+table).upsert(row,{onConflict:key}); if(error){ alert('Save failed: '+error.message); throw error; }
+  } else persistLocal();
+}
+async function dbDelete(table,id){
+  if(MODE==='cloud'){ const {error}=await supabaseClient.from('cap_'+table).delete().eq('id',id).eq('user_id',currentUser.id); if(error) alert('Delete failed: '+error.message); }
+  else persistLocal();
+}
+
+// ============================================================================
+// DEMO SEED
+// ============================================================================
+function trap(D,peak,up,down){ const a=[]; for(let w=0;w<D;w++){ let v; if(w<up) v=peak*(w+1)/(up+1); else if(w>=D-down) v=peak*(D-w)/(down+1); else v=peak; a.push(Math.round(v*10)/10);} return a; }
+function loadDemo(persist){
+  const s={...DEFAULT_SETTINGS, company_name:'Demo Flooring & Painting Co', home_metro:'Kansas City, MO'};
+  const T=(name,trade,arch,D,direct,indirect)=>({id:uid(),name,trade,archetype:arch,duration_weeks:D,direct_curves:direct,indirect_curves:indirect||{},version_number:1,source_type:'system',status:'active'});
+  const templates=[
+    T('Flooring — Commercial TI','flooring','commercial_ti',10,{installer:trap(10,4,2,2),foreman:new Array(10).fill(0.5)},{pm:new Array(10).fill(0.25),detailer:[1,1,0.5,0,0,0,0,0,0,0]}),
+    T('Flooring — Multifamily','flooring','new_multifamily',16,{installer:trap(16,6,3,3),foreman:new Array(16).fill(1),laborer:trap(16,2,3,3)},{pm:new Array(16).fill(0.4),detailer:[1,1,1,0.5,0,0,0,0,0,0,0,0,0,0,0,0]}),
+    T('Painting — Commercial TI','painting','commercial_ti',8,{painter:trap(8,4,2,2),foreman:new Array(8).fill(0.4)},{pm:new Array(8).fill(0.2)}),
+    T('Painting — Repaint','painting','repaint',6,{painter:trap(6,3,1,1),foreman:new Array(6).fill(0.3)},{pm:new Array(6).fill(0.15)}),
+  ];
+  const tid=(arch,trade)=>templates.find(t=>t.archetype===arch&&t.trade===trade).id;
+  const now=new Date();
+  const people=[
+    {id:uid(),name:'Carlos M.',role_canonical:'installer',trade:'flooring',employment_type:'employee',hours_per_week:40,active_flag:true},
+    {id:uid(),name:'Devon R.',role_canonical:'installer',trade:'flooring',employment_type:'employee',hours_per_week:40,active_flag:true},
+    {id:uid(),name:'Aaron P.',role_canonical:'installer',trade:'flooring',employment_type:'employee',hours_per_week:40,active_flag:true},
+    {id:uid(),name:'Leo S.',role_canonical:'installer',trade:'flooring',employment_type:'employee',hours_per_week:40,active_flag:true},
+    {id:uid(),name:'Marcus T.',role_canonical:'foreman',trade:'flooring',employment_type:'employee',hours_per_week:40,active_flag:true},
+    {id:uid(),name:'Priya N.',role_canonical:'pm',trade:'flooring',employment_type:'employee',hours_per_week:40,active_flag:true},
+    {id:uid(),name:'Sam W.',role_canonical:'painter',trade:'painting',employment_type:'employee',hours_per_week:40,active_flag:true},
+    {id:uid(),name:'Ivy L.',role_canonical:'painter',trade:'painting',employment_type:'employee',hours_per_week:40,active_flag:true},
+    {id:uid(),name:'Planned hire (installer)',role_canonical:'installer',trade:'flooring',employment_type:'employee',hours_per_week:40,active_flag:true,available_from:fmtDate(addWeeks(now,8))},
+  ];
+  const projects=[
+    {id:uid(),project_name:'Cedar Plaza TI',gc_name:'Turner',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),expected_start_date:fmtDate(addWeeks(now,1)),manual_peak_adjustment:1,status:'awarded'},
+    {id:uid(),project_name:'Rivergate Apartments',gc_name:'JE Dunn',trade:'flooring',archetype:'new_multifamily',template_id:tid('new_multifamily','flooring'),expected_start_date:fmtDate(addWeeks(now,3)),manual_peak_adjustment:1,status:'awarded'},
+    {id:uid(),project_name:'Midtown Offices Repaint',gc_name:'McCarthy',trade:'painting',archetype:'commercial_ti',template_id:tid('commercial_ti','painting'),expected_start_date:fmtDate(addWeeks(now,2)),manual_peak_adjustment:1,status:'awarded'},
+  ];
+  const opportunities=[
+    {id:uid(),project_name:'Airport Concourse Flooring',gc_name:'Turner',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),expected_start_date:fmtDate(addWeeks(now,6)),expected_award_date:fmtDate(addWeeks(now,3)),duration_weeks:10,probability_of_award:0.8,bidintell_score:82,confidence_score:0.9,include_flag:true},
+    {id:uid(),project_name:'Grandview Multifamily Ph2',gc_name:'JE Dunn',trade:'flooring',archetype:'new_multifamily',template_id:tid('new_multifamily','flooring'),expected_start_date:fmtDate(addWeeks(now,8)),expected_award_date:fmtDate(addWeeks(now,4)),duration_weeks:16,probability_of_award:0.5,bidintell_score:64,confidence_score:0.55,include_flag:true},
+    {id:uid(),project_name:'School District Repaint',gc_name:'Crossland',trade:'painting',archetype:'repaint',template_id:tid('repaint','painting'),expected_start_date:fmtDate(addWeeks(now,4)),expected_award_date:fmtDate(addWeeks(now,2)),duration_weeks:6,probability_of_award:0.6,bidintell_score:58,confidence_score:0.35,include_flag:true},
+    {id:uid(),project_name:'Warehouse Fit-out',gc_name:'Unknown GC',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),expected_start_date:fmtDate(addWeeks(now,10)),expected_award_date:fmtDate(addWeeks(now,6)),duration_weeks:10,probability_of_award:0.3,bidintell_score:41,confidence_score:0.3,include_flag:true},
+  ];
+  STATE={settings:s,people,templates,projects,opportunities,scenarios:[]};
+  persistLocal();
+  if(persist!==false){ runAndRender(); toast('Demo data loaded'); }
+}
+
+// ============================================================================
+// RENDER — shell / nav
+// ============================================================================
+function switchView(v){
+  document.querySelectorAll('.navlink').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active',s.id==='view-'+v));
+  if(v==='dashboard') renderDashboard();
+  if(v==='forecast') renderForecast();
+  if(v==='backlog'){ renderProjects(); renderOpps(); }
+  if(v==='people') renderPeople();
+  if(v==='templates') renderTemplates();
+  if(v==='scenarios') renderScenarios();
+  if(v==='settings') renderSettings();
+}
+function runAndRender(){ lastRun=runForecast(STATE); logEvent('forecast.run_completed',{roles:lastRun.rolesUsed.length}); const active=document.querySelector('.view.active').id.replace('view-',''); switchView(active); }
+
+// ---- Dashboard
+function renderDashboard(){
+  if(!lastRun) lastRun=runForecast(STATE);
+  const R=lastRun;
+  const peakShortRole=R.roleSummary[0];
+  const totalShortWeeks=R.totals.gap.filter(x=>x>0.5).length;
+  const totalShortFteWk=r1(R.totals.gap.filter(x=>x>0).reduce((a,b)=>a+b,0));
+  const hires=R.recommendations.filter(r=>r.action_type==='hire').reduce((a,r)=>a+(+r.quantity||0),0);
+  document.getElementById('kpiCards').innerHTML=[
+    kpi('Peak shortage role', peakShortRole&&peakShortRole.peakShort>0?peakShortRole.label:'None', peakShortRole&&peakShortRole.peakShort>0?`~${peakShortRole.peakShort} FTE short`:'Balanced', peakShortRole&&peakShortRole.peakShort>0?'bad':'ok'),
+    kpi('Weeks with a shortage', totalShortWeeks, `over ${R.N} wk horizon`, totalShortWeeks>0?'warn':'ok'),
+    kpi('Total shortage', totalShortFteWk, 'FTE-weeks of unmet demand', totalShortFteWk>0?'bad':'ok'),
+    kpi('Recommended hires', hires, R.recommendations.length+' actions total', hires>0?'warn':'ok'),
+  ].join('');
+  drawDashChart(R);
+  // role summary
+  document.getElementById('roleSummaryTable').innerHTML=
+    '<tr><th>Role</th><th class="num">Peak short</th><th class="num">Wks short</th><th class="num">Peak surplus</th></tr>'+
+    R.roleSummary.map(r=>`<tr><td>${esc(r.label)}</td>
+      <td class="num" style="color:${r.peakShort>0?'var(--bad)':'var(--muted)'}">${r.peakShort||'–'}</td>
+      <td class="num">${r.weeksShort||'–'}</td>
+      <td class="num" style="color:${r.peakSurp>0?'var(--ok)':'var(--muted)'}">${r.peakSurp||'–'}</td></tr>`).join('')
+    || '<tr><td class="muted">No demand yet — import backlog or load demo data.</td></tr>';
+  // drivers
+  document.getElementById('driverTable').innerHTML=
+    '<tr><th>Project</th><th>Type</th><th class="num">FTE-weeks</th></tr>'+
+    R.driverProjects.slice(0,8).map(d=>`<tr><td>${esc(d.name)}</td><td><span class="chip ${d.type}">${d.type}</span></td><td class="num">${d.fteWeeks}</td></tr>`).join('')
+    || '<tr><td class="muted">No projects.</td></tr>';
+  renderRecs(R.recommendations);
+}
+function kpi(label,val,hint,cls){ return `<div class="card kpi"><div class="label">${label}</div><div class="val ${cls||''}">${val}</div><div class="hint">${hint||''}</div></div>`; }
+
+function renderRecs(recs){
+  const el=document.getElementById('recList');
+  if(!recs.length){ el.innerHTML='<p class="muted small">No staffing actions — demand is within capacity across the horizon. 👍</p>'; return; }
+  el.innerHTML=recs.map(r=>{
+    const u=r.urgency>=8?'high':r.urgency>=4?'med':'low';
+    const drivers=r.drivers.map(d=>`<span class="tag">${esc(d.name)} · ${d.fte}</span>`).join('');
+    return `<div class="rec">
+      <div class="body">
+        <div class="title"><span class="chip ${r.action_type}">${r.action_type.replace('_',' ')}</span> ${r.quantity} · ${esc(r.roleLabel)}
+          ${r.recurring?'<span class="tag" style="background:#FEE2E2;color:#991B1B">recurring</span>':''}</div>
+        <div class="why">${esc(r.rationale)}</div>
+        <div class="meta">Window: ${r.start} → ${r.end} (${r.durWeeks} wk) · confidence: <b>${r.confidence}</b> · ${r.awardedShare}% awarded-driven</div>
+        <div style="margin-top:6px">${drivers}</div>
+      </div>
+      <div class="acts"><span class="urg ${u}">urgency ${r.urgency}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function drawDashChart(R){
+  const ctx=document.getElementById('dashChart'); if(dashChartObj) dashChartObj.destroy();
+  const step=Math.max(1,Math.round(R.N/52)); // thin labels for long horizons
+  const labels=R.weeks.map((w,i)=>w.label);
+  dashChartObj=new Chart(ctx,{type:'bar',data:{labels,datasets:[
+    {label:'Awarded demand',data:R.totals.demandAwarded,backgroundColor:'#4F46E5',stack:'d'},
+    {label:'Weighted pipeline',data:R.totals.demandWeighted,backgroundColor:'#C7D2FE',stack:'d'},
+    {label:'Capacity',type:'line',data:R.totals.supply,borderColor:'#0B0F14',backgroundColor:'#0B0F14',borderWidth:2,pointRadius:0,tension:.2},
+  ]},options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{x:{stacked:true,ticks:{maxTicksLimit:26,autoSkip:true}},y:{stacked:true,title:{display:true,text:'FTE'}}},plugins:{legend:{position:'bottom'}}}});
+}
+
+// ---- Forecast view
+function renderForecast(){
+  if(!lastRun) lastRun=runForecast(STATE);
+  const R=lastRun;
+  const sel=document.getElementById('roleFilter');
+  if(sel.options.length===0){ sel.innerHTML='<option value="__all">All roles (total)</option>'+R.rolesUsed.map(r=>`<option value="${r}">${ROLES[r].label}</option>`).join(''); }
+  const role=sel.value||'__all';
+  const ctx=document.getElementById('fcChart'); if(fcChartObj) fcChartObj.destroy();
+  let aw,we,su;
+  if(role==='__all'){ aw=R.totals.demandAwarded; we=R.totals.demandWeighted; su=R.totals.supply; }
+  else { aw=R.demandAwarded[role]; we=R.demandWeighted[role]; su=R.supply[role]; }
+  fcChartObj=new Chart(ctx,{type:'bar',data:{labels:R.weeks.map(w=>w.label),datasets:[
+    {label:'Awarded',data:aw,backgroundColor:'#4F46E5',stack:'d'},
+    {label:'Weighted pipeline',data:we,backgroundColor:'#F9A26C',stack:'d'},
+    {label:'Capacity',type:'line',data:su,borderColor:'#0B0F14',borderWidth:2,pointRadius:0,tension:.2},
+  ]},options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{x:{stacked:true,ticks:{maxTicksLimit:26,autoSkip:true}},y:{stacked:true,title:{display:true,text:'FTE'}}},plugins:{legend:{position:'bottom'}}}});
+  // gap grid (limit to first 26 weeks for readability)
+  const W=Math.min(R.N,26);
+  let html='<tr><th>Role</th>'+R.weeks.slice(0,W).map(w=>`<th class="weekcell num">${w.label}</th>`).join('')+'</tr>';
+  R.rolesUsed.forEach(r=>{
+    html+=`<tr><td><b>${ROLES[r].label}</b></td>`+R.weeks.slice(0,W).map((w,i)=>{
+      const g=R.gap[r][i]; const v=r1(g);
+      let bg='transparent',col='var(--muted)';
+      if(g>0.5){ bg=`rgba(220,38,38,${Math.min(.85,.15+g/8)})`; col='#fff'; }
+      else if(g<-0.5){ bg=`rgba(22,163,74,${Math.min(.7,.12+(-g)/8)})`; col='#fff'; }
+      return `<td class="heat" style="background:${bg};color:${col}">${v||''}</td>`;
+    }).join('')+'</tr>';
+  });
+  document.getElementById('gapGrid').innerHTML=html;
+}
+
+// ---- Projects / Opps / People / Templates tables
+function renderProjects(){
+  const rows=STATE.projects.map(p=>{
+    const t=templateFor(p);
+    return `<tr><td><b>${esc(p.project_name)}</b><div class="small muted">${esc(p.gc_name||'')}</div></td>
+      <td>${esc(p.trade)}</td><td>${t?esc(t.name):'<span class="chip pass">no template</span>'}</td>
+      <td>${fmtShort(p.expected_start_date)}</td><td><span class="chip awarded">${esc(p.status)}</span></td>
+      <td class="row-actions"><button class="btn sm" onclick="editProject('${p.id}')">Edit</button><button class="btn sm danger" onclick="delRow('projects','${p.id}')">Del</button></td></tr>`;
+  }).join('');
+  document.getElementById('projectsTable').innerHTML='<tr><th>Project</th><th>Trade</th><th>Template</th><th>Start</th><th>Status</th><th></th></tr>'+(rows||'<tr><td class="muted">No awarded projects.</td></tr>');
+}
+function renderOpps(){
+  const rows=STATE.opportunities.map(o=>{
+    const band=confBand(o.confidence_score); const w=r1((o.probability_of_award||0)*confWeight(o.confidence_score)*100);
+    return `<tr><td><b>${esc(o.project_name)}</b><div class="small muted">${esc(o.gc_name||'')}</div></td>
+      <td>${esc(o.trade)}</td><td class="num">${Math.round((o.probability_of_award||0)*100)}%</td>
+      <td><span class="chip ${band}">${band}</span></td><td class="num">${w}%</td>
+      <td>${fmtShort(o.expected_start_date)}</td>
+      <td>${o.include_flag?'✓':'<span class="muted">off</span>'}</td>
+      <td class="row-actions"><button class="btn sm" onclick="editOpportunity('${o.id}')">Edit</button><button class="btn sm danger" onclick="delRow('opportunities','${o.id}')">Del</button></td></tr>`;
+  }).join('');
+  document.getElementById('oppsTable').innerHTML='<tr><th>Opportunity</th><th>Trade</th><th class="num">Win %</th><th>Doc conf.</th><th class="num">Weight</th><th>Start</th><th>In</th><th></th></tr>'+(rows||'<tr><td class="muted">No pipeline opportunities.</td></tr>');
+}
+function renderPeople(){
+  const rows=STATE.people.map(p=>`<tr>
+    <td><b>${esc(p.name)}</b></td><td>${ROLES[p.role_canonical]?ROLES[p.role_canonical].label:esc(p.role_canonical)}</td>
+    <td>${esc(p.trade||'')}</td><td>${esc(p.employment_type)}</td><td class="num">${p.hours_per_week}</td>
+    <td>${p.available_from?fmtShort(p.available_from):'now'}</td><td>${p.active_flag?'✓':'<span class="muted">inactive</span>'}</td>
+    <td class="row-actions"><button class="btn sm" onclick="editPerson('${p.id}')">Edit</button><button class="btn sm danger" onclick="delRow('people','${p.id}')">Del</button></td></tr>`).join('');
+  document.getElementById('peopleTable').innerHTML='<tr><th>Name</th><th>Role</th><th>Trade</th><th>Type</th><th class="num">Hrs/wk</th><th>Available</th><th>Active</th><th></th></tr>'+(rows||'<tr><td class="muted">No people yet.</td></tr>');
+}
+function renderTemplates(){
+  const rows=STATE.templates.map(t=>{
+    const roles=curveRoles(t).map(r=>ROLES[r]?ROLES[r].label:r).join(', ');
+    return `<tr><td><b>${esc(t.name)}</b></td><td>${esc(t.trade)}</td><td>${esc(t.archetype)}</td><td class="num">${t.duration_weeks} wk</td>
+    <td class="small">${esc(roles)}</td>
+    <td class="row-actions"><button class="btn sm" onclick="editTemplate('${t.id}')">Edit</button><button class="btn sm danger" onclick="delRow('templates','${t.id}')">Del</button></td></tr>`;
+  }).join('');
+  document.getElementById('templatesTable').innerHTML='<tr><th>Template</th><th>Trade</th><th>Archetype</th><th>Duration</th><th>Roles</th><th></th></tr>'+(rows||'<tr><td class="muted">No templates. Load demo data or create one.</td></tr>');
+}
+
+async function delRow(table,id){
+  if(!confirm('Delete this record?')) return;
+  STATE[table]=STATE[table].filter(r=>r.id!==id);
+  await dbDelete(table,id); runAndRender();
+}
+
+// ============================================================================
+// MODAL FORMS
+// ============================================================================
+function openModal(title,bodyHtml,onSave){ document.getElementById('modalTitle').textContent=title; document.getElementById('modalBody').innerHTML=bodyHtml; modalSaveHandler=onSave; document.getElementById('modal').classList.remove('hidden'); }
+function closeModal(){ document.getElementById('modal').classList.add('hidden'); modalSaveHandler=null; }
+document.getElementById('modalSave').onclick=()=>{ if(modalSaveHandler) modalSaveHandler(); };
+function mval(id){ const e=document.getElementById(id); return e?e.value:''; }
+function fld(label,id,val,type,hint){ return `<div class="field"><label>${label}</label>${type==='textarea'?`<textarea id="${id}">${esc(val||'')}</textarea>`:`<input id="${id}" type="${type||'text'}" value="${esc(val==null?'':val)}">`}${hint?`<span class="fh">${hint}</span>`:''}</div>`; }
+function selField(label,id,val,opts){ return `<div class="field"><label>${label}</label><select id="${id}">${opts.map(o=>`<option value="${o.v}" ${o.v===val?'selected':''}>${o.t}</option>`).join('')}</select></div>`; }
+function tradeOpts(){ return ['flooring','painting'].map(t=>({v:t,t:t})); }
+function templateOpts(){ return [{v:'',t:'— auto by archetype —'}].concat(STATE.templates.map(t=>({v:t.id,t:t.name}))); }
+
+function editPerson(id){
+  const p=id?STATE.people.find(x=>x.id===id):{};
+  openModal(id?'Edit person':'Add person',
+    `<div class="form-grid">
+      ${fld('Name','p_name',p.name)}
+      ${selField('Role','p_role',p.role_canonical||'installer',ROLE_KEYS.map(r=>({v:r,t:ROLES[r].label})))}
+      ${selField('Trade','p_trade',p.trade||'flooring',tradeOpts())}
+      ${selField('Employment','p_emp',p.employment_type||'employee',[{v:'employee',t:'Employee'},{v:'temp',t:'Temp'},{v:'subcontract',t:'Subcontract'}])}
+      ${fld('Hours / week','p_hrs',p.hours_per_week==null?40:p.hours_per_week,'number')}
+      ${fld('Available from','p_from',fmtDate(p.available_from),'date','Blank = now. A future date models a planned hire.')}
+      ${fld('Available to','p_to',fmtDate(p.available_to),'date','Blank = ongoing.')}
+      ${selField('Active','p_active',p.active_flag===false?'false':'true',[{v:'true',t:'Active'},{v:'false',t:'Inactive'}])}
+    </div>`,
+    async()=>{ const row={id:p.id||uid(),name:mval('p_name'),role_canonical:mval('p_role'),trade:mval('p_trade'),employment_type:mval('p_emp'),hours_per_week:+mval('p_hrs')||0,available_from:mval('p_from')||null,available_to:mval('p_to')||null,active_flag:mval('p_active')==='true'};
+      upsertLocal('people',row); await dbUpsert('people',row); closeModal(); runAndRender(); });
+}
+function editProject(id){
+  const p=id?STATE.projects.find(x=>x.id===id):{};
+  openModal(id?'Edit project':'Add awarded project',
+    `<div class="form-grid">
+      ${fld('Project name','pr_name',p.project_name)}
+      ${fld('GC / client','pr_gc',p.gc_name)}
+      ${selField('Trade','pr_trade',p.trade||'flooring',tradeOpts())}
+      ${fld('Archetype','pr_arch',p.archetype||'commercial_ti','text','Matches a template if no template selected.')}
+      ${selField('Template','pr_tpl',p.template_id||'',templateOpts())}
+      ${fld('Expected start','pr_start',fmtDate(p.expected_start_date),'date')}
+      ${fld('Peak adjustment','pr_adj',p.manual_peak_adjustment==null?1:p.manual_peak_adjustment,'number','Multiplier on the template curve (1.0 = as-is).')}
+      ${selField('Status','pr_status',p.status||'awarded',[{v:'awarded',t:'Awarded'},{v:'active',t:'Active'},{v:'complete',t:'Complete'}])}
+    </div>`,
+    async()=>{ const row={id:p.id||uid(),project_name:mval('pr_name'),gc_name:mval('pr_gc'),trade:mval('pr_trade'),archetype:mval('pr_arch'),template_id:mval('pr_tpl')||null,expected_start_date:mval('pr_start'),manual_peak_adjustment:+mval('pr_adj')||1,status:mval('pr_status')};
+      upsertLocal('projects',row); await dbUpsert('projects',row); closeModal(); runAndRender(); });
+}
+function editOpportunity(id){
+  const o=id?STATE.opportunities.find(x=>x.id===id):{};
+  openModal(id?'Edit opportunity':'Add opportunity',
+    `<div class="form-grid">
+      ${fld('Project name','op_name',o.project_name)}
+      ${fld('GC / client','op_gc',o.gc_name)}
+      ${selField('Trade','op_trade',o.trade||'flooring',tradeOpts())}
+      ${fld('Archetype','op_arch',o.archetype||'commercial_ti')}
+      ${selField('Template','op_tpl',o.template_id||'',templateOpts())}
+      ${fld('Expected start','op_start',fmtDate(o.expected_start_date),'date')}
+      ${fld('Win probability (0–1)','op_prob',o.probability_of_award==null?0.5:o.probability_of_award,'number')}
+      ${fld('Document confidence (0–1)','op_conf',o.confidence_score==null?0.5:o.confidence_score,'number','< '+DEFAULT_SETTINGS.conf_invite_max+' invite-only · < '+DEFAULT_SETTINGS.conf_partial_max+' partial · else full')}
+      ${fld('BidIndex score','op_score',o.bidintell_score,'number')}
+      ${selField('Include in forecast','op_inc',o.include_flag===false?'false':'true',[{v:'true',t:'Yes'},{v:'false',t:'No'}])}
+    </div>`,
+    async()=>{ const row={id:o.id||uid(),project_name:mval('op_name'),gc_name:mval('op_gc'),trade:mval('op_trade'),archetype:mval('op_arch'),template_id:mval('op_tpl')||null,expected_start_date:mval('op_start'),probability_of_award:clamp01(+mval('op_prob')),confidence_score:clamp01(+mval('op_conf')),bidintell_score:mval('op_score')?+mval('op_score'):null,include_flag:mval('op_inc')==='true'};
+      upsertLocal('opportunities',row); await dbUpsert('opportunities',row); closeModal(); runAndRender(); });
+}
+function clamp01(n){ n=+n||0; return Math.max(0,Math.min(1,n)); }
+
+function editTemplate(id){
+  const t=id?STATE.templates.find(x=>x.id===id):{duration_weeks:8,direct_curves:{},indirect_curves:{},trade:'flooring',archetype:'commercial_ti'};
+  const D=t.duration_weeks||8;
+  function curveRows(kind,curves){
+    return ROLE_KEYS.filter(r=>ROLES[r].type===kind).map(r=>{
+      const arr=(curves||{})[r]||[];
+      return `<tr data-role="${r}" data-kind="${kind}"><td class="small"><b>${ROLES[r].label}</b></td>`+
+        Array.from({length:D}).map((_,w)=>`<td><input class="curve-input" data-w="${w}" value="${arr[w]!=null?arr[w]:''}"></td>`).join('')+'</tr>';
+    }).join('');
+  }
+  const head='<tr><th>Role</th>'+Array.from({length:D}).map((_,w)=>`<th class="num">W${w+1}</th>`).join('')+'</tr>';
+  openModal(id?'Edit template':'New template',
+    `<div class="form-grid">
+      ${fld('Name','t_name',t.name)}
+      ${selField('Trade','t_trade',t.trade,tradeOpts())}
+      ${fld('Archetype','t_arch',t.archetype,'text','e.g. commercial_ti, new_multifamily, repaint')}
+      ${fld('Duration (weeks)','t_dur',D,'number','Change &amp; reopen to resize the grid.')}
+    </div>
+    <p class="small muted" style="margin:16px 0 6px"><b>Direct field labor</b> — crew headcount (FTE) per week</p>
+    <div class="scroll-x"><table id="t_direct">${head}${curveRows('direct',t.direct_curves)}</table></div>
+    <p class="small muted" style="margin:16px 0 6px"><b>Indirect labor</b> (PM, detailer) — FTE per week</p>
+    <div class="scroll-x"><table id="t_indirect">${head}${curveRows('indirect',t.indirect_curves)}</table></div>`,
+    async()=>{
+      const dur=+mval('t_dur')||D;
+      if(dur!==D){ // resize: persist name/meta first, reopen
+        const stub={id:t.id||uid(),name:mval('t_name'),trade:mval('t_trade'),archetype:mval('t_arch'),duration_weeks:dur,direct_curves:t.direct_curves||{},indirect_curves:t.indirect_curves||{},version_number:(t.version_number||0)+1,source_type:t.source_type||'customer',status:'active'};
+        upsertLocal('templates',stub); await dbUpsert('templates',stub); closeModal(); editTemplate(stub.id); return;
+      }
+      const read=(tid)=>{ const c={}; document.querySelectorAll('#'+tid+' tr[data-role]').forEach(tr=>{ const role=tr.dataset.role; const arr=[]; tr.querySelectorAll('.curve-input').forEach(inp=>arr.push(+inp.value||0)); if(arr.some(x=>x>0)) c[role]=arr; }); return c; };
+      const row={id:t.id||uid(),name:mval('t_name'),trade:mval('t_trade'),archetype:mval('t_arch'),duration_weeks:dur,direct_curves:read('t_direct'),indirect_curves:read('t_indirect'),version_number:(t.version_number||0)+1,source_type:t.source_type||'customer',status:'active'};
+      upsertLocal('templates',row); await dbUpsert('templates',row); closeModal(); runAndRender(); toast('Template saved');
+    });
+}
+function upsertLocal(table,row){ const i=STATE[table].findIndex(r=>r.id===row.id); if(i>=0) STATE[table][i]={...STATE[table][i],...row}; else STATE[table].push(row); persistLocal(); }
+
+// ============================================================================
+// SETTINGS
+// ============================================================================
+function renderSettings(){
+  const s=STATE.settings;
+  document.getElementById('settingsForm').innerHTML=
+    fld('Company name','s_company',s.company_name)+
+    fld('Home metro','s_metro',s.home_metro,'text','Used for future metro benchmarking.')+
+    fld('Planning horizon (weeks)','s_horizon',s.planning_horizon_weeks,'number','90 / 180 / 365 typical.')+
+    fld('Hours per FTE / week','s_hrs',s.hours_per_fte_week,'number')+
+    fld('Hiring lead time (weeks)','s_lead',s.hiring_lead_time_weeks,'number','How long to hire &amp; onboard. Shortages sooner than this cannot be hired for.')+
+    fld('Annual attrition %','s_attr',s.attrition_pct_annual,'number','0.08 = 8%/yr. Decays supply over the horizon.')+
+    fld('Max overtime %','s_ot',s.overtime_max_pct,'number','0.15 = crews can absorb +15% via overtime.')+
+    fld('Outside labor available (FTE)','s_out',s.outside_labor_fte,'number','Subcontract / temp crews you can turn on.')+
+    fld('Utilization target','s_util',s.utilization_target,'number')+
+    fld('Invite-only conf. ceiling','s_ci',s.conf_invite_max,'number','Doc-confidence below this = invite-only.')+
+    fld('Partial-docs conf. ceiling','s_cp',s.conf_partial_max,'number')+
+    fld('Weight: invite-only','s_wi',s.conf_weight_invite,'number','Multiplier on invite-only pursuit demand.')+
+    fld('Weight: partial docs','s_wp',s.conf_weight_partial,'number')+
+    fld('Weight: full package','s_wf',s.conf_weight_full,'number');
+}
+async function saveSettings(){
+  const s=STATE.settings;
+  s.company_name=mval('s_company'); s.home_metro=mval('s_metro');
+  s.planning_horizon_weeks=+mval('s_horizon')||180; s.hours_per_fte_week=+mval('s_hrs')||40;
+  s.hiring_lead_time_weeks=+mval('s_lead')||0; s.attrition_pct_annual=+mval('s_attr')||0;
+  s.overtime_max_pct=+mval('s_ot')||0; s.outside_labor_fte=+mval('s_out')||0; s.utilization_target=+mval('s_util')||0.9;
+  s.conf_invite_max=+mval('s_ci')||0.4; s.conf_partial_max=+mval('s_cp')||0.7;
+  s.conf_weight_invite=+mval('s_wi')||0.5; s.conf_weight_partial=+mval('s_wp')||0.8; s.conf_weight_full=+mval('s_wf')||1;
+  const row={...s}; if(MODE==='cloud') row.user_id=currentUser.id;
+  upsertSettingsLocal(); await dbUpsert('settings',row); runAndRender(); toast('Settings saved'); switchView('settings');
+}
+function upsertSettingsLocal(){ persistLocal(); }
+
+// ============================================================================
+// SCENARIOS
+// ============================================================================
+function renderScenarios(){
+  if(!lastRun) lastRun=runForecast(STATE);
+  const projOpts=STATE.projects.map(p=>`<option value="${p.id}">${esc(p.project_name)}</option>`).join('');
+  const oppOpts=STATE.opportunities.map(o=>`<option value="${o.id}">${esc(o.project_name)}</option>`).join('');
+  document.getElementById('scenarioBuilder').innerHTML=`
+    <div class="form-grid">
+      <div class="field"><label>Delay a project</label><select id="sc_proj"><option value="">— none —</option>${projOpts}</select></div>
+      ${fld('…by weeks','sc_delay',0,'number')}
+      <div class="field"><label>Win an opportunity (treat as awarded)</label><select id="sc_win"><option value="">— none —</option>${oppOpts}</select></div>
+      ${selField('Add planned hires — role','sc_hire_role','',[{v:'',t:'— none —'}].concat(ROLE_KEYS.map(r=>({v:r,t:ROLES[r].label}))))}
+      ${fld('# hires','sc_hire_n',0,'number')}
+      ${fld('starting in (weeks)','sc_hire_when',6,'number')}
+      ${fld('Extra outside labor (FTE)','sc_out',0,'number')}
+      ${fld('Overtime % override','sc_ot','','number','Blank = keep current.')}
+    </div>
+    <div style="margin-top:14px"><button class="btn primary" onclick="runScenario()">Compare scenario</button></div>`;
+  document.getElementById('scenarioCompare').innerHTML='<tr><td class="muted">Build a scenario above and hit compare.</td></tr>';
+}
+function runScenario(){
+  const base=runForecast(STATE);
+  const clone=JSON.parse(JSON.stringify(STATE));
+  const delayId=mval('sc_proj'), delayN=+mval('sc_delay')||0;
+  if(delayId&&delayN){ const p=clone.projects.find(x=>x.id===delayId); if(p) p.expected_start_date=fmtDate(addWeeks(p.expected_start_date,delayN)); }
+  const winId=mval('sc_win');
+  if(winId){ const o=clone.opportunities.find(x=>x.id===winId); if(o){ clone.opportunities=clone.opportunities.filter(x=>x.id!==winId);
+    clone.projects.push({id:uid(),project_name:o.project_name+' (won)',gc_name:o.gc_name,trade:o.trade,archetype:o.archetype,template_id:o.template_id,expected_start_date:o.expected_start_date,manual_peak_adjustment:1,status:'awarded'}); } }
+  const hr=mval('sc_hire_role'), hn=+mval('sc_hire_n')||0, hw=+mval('sc_hire_when')||0;
+  if(hr&&hn){ for(let i=0;i<hn;i++) clone.people.push({id:uid(),name:'Scenario hire '+(i+1),role_canonical:hr,trade:STATE.settings.trades[0]||'flooring',employment_type:'employee',hours_per_week:clone.settings.hours_per_fte_week,active_flag:true,available_from:fmtDate(addWeeks(new Date(),hw))}); }
+  const extraOut=+mval('sc_out')||0; if(extraOut) clone.settings.outside_labor_fte+=extraOut;
+  const otov=mval('sc_ot'); if(otov!=='') clone.settings.overtime_max_pct=+otov;
+  const scn=runForecast(clone);
+  const m=(R)=>({peak:r1(Math.max(0,...R.totals.gap)), shortWk:R.totals.gap.filter(x=>x>0.5).length, shortFte:r1(R.totals.gap.filter(x=>x>0).reduce((a,b)=>a+b,0)), hires:R.recommendations.filter(r=>r.action_type==='hire').reduce((a,r)=>a+(+r.quantity||0),0), acts:R.recommendations.length});
+  const b=m(base), s=m(scn);
+  const row=(label,bv,sv,lowerBetter)=>{ const better=lowerBetter?(sv<bv):(sv>bv); const worse=lowerBetter?(sv>bv):(sv<bv); return `<tr><td>${label}</td><td class="num">${bv}</td><td class="num ${better?'better':worse?'worse':''}">${sv}</td></tr>`; };
+  document.getElementById('scenarioCompare').innerHTML=
+    '<tr><th>Metric</th><th class="num">Base</th><th class="num">Scenario</th></tr>'+
+    row('Peak shortage (FTE)',b.peak,s.peak,true)+
+    row('Weeks with shortage',b.shortWk,s.shortWk,true)+
+    row('Total shortage (FTE-wk)',b.shortFte,s.shortFte,true)+
+    row('Recommended hires',b.hires,s.hires,true)+
+    row('Total staffing actions',b.acts,s.acts,true);
+}
+
+// ============================================================================
+// CSV IMPORT / EXPORT
+// ============================================================================
+const CSV_COLS={
+  people:['employee_id','name','role','trade','office_or_region','employment_type','hours_per_week','available_from','available_to','active_flag'],
+  projects:['project_id','project_name','customer','gc_name','trade','archetype','contract_value','expected_start_date','expected_end_date','template_id','manual_peak_adjustment','status'],
+  opportunities:['opportunity_id','project_name','source','gc_name','trade','archetype','bid_due_date','expected_award_date','expected_start_date','duration_weeks','probability_of_award','bidintell_score','confidence_score','template_id','include_flag'],
+};
+function downloadTemplate(kind){
+  const cols=CSV_COLS[kind]; const csv=cols.join(',')+'\n';
+  const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=`bidintell-capacity-${kind}.csv`; a.click();
+}
+function bool(v){ return String(v).toLowerCase()==='true'||v==='1'||String(v).toLowerCase()==='yes'; }
+function matchTemplateId(row){ if(row.template_id){ if(STATE.templates.find(t=>t.id===row.template_id)) return row.template_id; const byName=STATE.templates.find(t=>t.name===row.template_id||t.archetype===row.template_id); if(byName) return byName.id; } const byArch=STATE.templates.find(t=>t.archetype===row.archetype&&t.trade===row.trade); return byArch?byArch.id:null; }
+function importCsv(kind,input){
+  const file=input.files[0]; if(!file) return;
+  Papa.parse(file,{header:true,skipEmptyLines:true,complete:async(res)=>{
+    let n=0,skip=0; const errs=[];
+    for(const raw of res.data){
+      try{
+        if(kind==='people'){ if(!raw.name) {skip++;continue;} const row={id:uid(),employee_ref:raw.employee_id||null,name:raw.name,role_canonical:(raw.role||'').toLowerCase().trim()||'installer',role_raw:raw.role,trade:(raw.trade||'').toLowerCase().trim(),office_or_region:raw.office_or_region,employment_type:(raw.employment_type||'employee').toLowerCase(),hours_per_week:+raw.hours_per_week||40,available_from:raw.available_from||null,available_to:raw.available_to||null,active_flag:raw.active_flag==null?true:bool(raw.active_flag)}; upsertLocal('people',row); await dbUpsert('people',row); n++; }
+        else if(kind==='projects'){ if(!raw.project_name){skip++;continue;} const row={id:uid(),project_ref:raw.project_id,project_name:raw.project_name,customer_name:raw.customer,gc_name:raw.gc_name,trade:(raw.trade||'').toLowerCase().trim(),archetype:raw.archetype,contract_value:raw.contract_value?+raw.contract_value:null,expected_start_date:raw.expected_start_date,expected_end_date:raw.expected_end_date||null,manual_peak_adjustment:+raw.manual_peak_adjustment||1,status:(raw.status||'awarded').toLowerCase()}; row.template_id=matchTemplateId(row); upsertLocal('projects',row); await dbUpsert('projects',row); n++; }
+        else if(kind==='opportunities'){ if(!raw.project_name){skip++;continue;} const row={id:uid(),opportunity_ref:raw.opportunity_id,project_name:raw.project_name,source_channel:raw.source,gc_name:raw.gc_name,trade:(raw.trade||'').toLowerCase().trim(),archetype:raw.archetype,bid_due_date:raw.bid_due_date||null,expected_award_date:raw.expected_award_date||null,expected_start_date:raw.expected_start_date,duration_weeks:raw.duration_weeks?+raw.duration_weeks:null,probability_of_award:clamp01(+raw.probability_of_award),bidintell_score:raw.bidintell_score?+raw.bidintell_score:null,confidence_score:clamp01(raw.confidence_score==null?0.5:+raw.confidence_score),include_flag:raw.include_flag==null?true:bool(raw.include_flag)}; row.template_id=matchTemplateId(row); upsertLocal('opportunities',row); await dbUpsert('opportunities',row); n++; }
+      }catch(e){ errs.push(e.message); }
+    }
+    input.value='';
+    document.getElementById('importLog').innerHTML=`Imported <b>${n}</b> ${kind} row(s)${skip?`, skipped ${skip} (missing required field)`:''}.${errs.length?` ${errs.length} error(s).`:''}`;
+    runAndRender(); toast(`Imported ${n} ${kind}`);
+  }});
+}
+
+async function clearAll(){
+  if(!confirm('Clear ALL capacity data (people, projects, opportunities, templates, scenarios)? This cannot be undone.')) return;
+  if(MODE==='cloud'){ for(const t of ['people','templates','projects','opportunities','scenarios']){ await supabaseClient.from('cap_'+t).delete().eq('user_id',currentUser.id); } }
+  STATE.people=[];STATE.templates=[];STATE.projects=[];STATE.opportunities=[];STATE.scenarios=[]; persistLocal(); runAndRender(); toast('Cleared');
+}
+
+// ============================================================================
+// EVENTS / MISC
+// ============================================================================
+async function logEvent(name,payload){ if(MODE!=='cloud') return; try{ await supabaseClient.from('cap_events').insert({user_id:currentUser.id,event_name:name,payload:payload||{}}); }catch(e){} }
+let toastT=null;
+function toast(msg){ let el=document.getElementById('toast'); if(!el){ el=document.createElement('div'); el.id='toast'; el.style.cssText='position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#0B0F14;color:#fff;padding:11px 18px;border-radius:10px;font-weight:600;font-size:14px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.25)'; document.body.appendChild(el);} el.textContent=msg; el.style.opacity='1'; clearTimeout(toastT); toastT=setTimeout(()=>el.style.opacity='0',1800); }
+
+function setBanner(){
+  const el=document.getElementById('modeBanner');
+  if(MODE==='cloud'){ el.innerHTML=`<div class="banner cloud">☁ Cloud sync on — data saved to your BidIntell account.</div>`; }
+  else { el.innerHTML=`<div class="banner demo">⚑ Demo mode — data is saved in this browser only. Apply the <code>20260716_capacity_module.sql</code> migration and sign in to enable cloud sync.</div>`; }
+}
+
+// ============================================================================
+// BOOT
+// ============================================================================
+document.querySelectorAll('.navlink').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+
+async function boot(){
+  try{ if(typeof supabase!=='undefined'){ supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    const {data}=await supabaseClient.auth.getSession(); currentUser=data&&data.session?data.session.user:null; } }catch(e){ console.warn('supabase init',e); }
+  MODE=await detectMode();
+  document.getElementById('whoami').textContent = currentUser?currentUser.email:'Not signed in (demo)';
+  await loadAll();
+  setBanner();
+  document.getElementById('boot').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  runAndRender();
+}
+boot();
+</script>
+</body>
+</html>
