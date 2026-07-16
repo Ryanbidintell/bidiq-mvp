@@ -41,19 +41,25 @@
     Now in early access · Built only for subcontractors
   </div>
 
-  <!-- nav -->
+  <!-- nav (matches site header) -->
   <nav style="position:sticky;top:0;z-index:50;background:rgba(244,241,234,0.88);backdrop-filter:blur(12px);border-bottom:1px solid #D8D1C2;">
-    <div style="max-width:1120px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:24px;">
+    <div style="max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:24px;">
       <a href="/" style="display:flex;align-items:center;gap:11px;">
         <div style="width:30px;height:30px;background:#E4562A;color:#F4F1EA;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-weight:900;font-size:15px;border-radius:5px;">BI</div>
         <span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:18px;letter-spacing:-0.02em;color:#17130E;">BidIntell</span>
       </a>
-      <div class="bi-navlinks" style="display:none;align-items:center;gap:28px;font-size:14px;font-weight:500;">
-        <a href="/#how" class="navlink">How BidIndex Works</a>
-        <a href="/#pricing" class="navlink">Pricing</a>
-        <a href="#how" class="navlink">How Capacity Works</a>
+      <div style="display:none;align-items:center;gap:28px;font-size:14px;font-weight:500;color:#3A342B;" class="bi-navlinks">
+        <a href="/#how" class="navlink" style="color:#3A342B;">How It Works</a>
+        <a href="/#features" class="navlink" style="color:#3A342B;">Features</a>
+        <a href="/#scoring" class="navlink" style="color:#3A342B;">BidIndex</a>
+        <a href="/takeoff/" class="navlink" style="color:#3A342B;">Take-Off</a>
+        <a href="/capacity-planning.html" class="navlink" style="color:#E4562A;font-weight:700;">Capacity</a>
+        <a href="/#pricing" class="navlink" style="color:#3A342B;">Pricing</a>
       </div>
-      <a href="#waitlist" class="btn-orange" style="background:#E4562A;color:#F4F1EA;font-weight:700;font-size:14px;padding:10px 18px;border-radius:6px;">Get early access</a>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <a href="/app?utm_source=website&utm_medium=nav&utm_campaign=capacity" class="navlink" style="font-size:14px;font-weight:600;color:#17130E;">Sign In</a>
+        <a href="#waitlist" class="btn-orange" style="background:#E4562A;color:#F4F1EA;font-weight:700;font-size:14px;padding:10px 18px;border-radius:6px;">Get early access</a>
+      </div>
     </div>
   </nav>
 
@@ -171,16 +177,22 @@
     </div>
   </section>
 
-  <!-- footer -->
-  <footer style="border-top:1px solid #2E2921;background:#17130E;color:#8A8072;">
-    <div style="max-width:1120px;margin:0 auto;padding:26px 24px;display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:center;font-size:13px;">
-      <span class="mono" style="font-size:11.5px;letter-spacing:0.08em;">© BidIntell</span>
-      <div style="display:flex;gap:20px;">
-        <a href="/" style="color:#8A8072;">Home</a>
-        <a href="/#pricing" style="color:#8A8072;">Pricing</a>
-        <a href="/legal" style="color:#8A8072;">Privacy &amp; Terms</a>
+  <!-- footer (matches site) -->
+  <footer style="background:#0F0C08;color:#8A8072;">
+    <div style="max-width:1200px;margin:0 auto;padding:44px 24px;display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between;align-items:center;">
+      <div style="display:flex;align-items:center;gap:11px;">
+        <div style="width:28px;height:28px;background:#E4562A;color:#F4F1EA;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-weight:900;font-size:13px;border-radius:5px;">BI</div>
+        <span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:16px;color:#F4F1EA;">BidIntell</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:22px;font-size:13.5px;">
+        <a href="/legal#privacy" style="color:#8A8072;">Privacy</a>
+        <a href="/legal#terms" style="color:#8A8072;">Terms</a>
+        <a href="/contact" style="color:#8A8072;">Contact</a>
+        <a href="/bid-no-bid-checklist" style="color:#8A8072;">Bid/No-Bid Checklist</a>
+        <a href="/works-with-plan-rooms" style="color:#8A8072;">Plan Rooms</a>
       </div>
     </div>
+    <div style="border-top:1px solid #1E1913;padding:20px 24px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#544C41;">© 2026 BidIntell · Built by the industry, for the industry.</div>
   </footer>
 
 <script>
