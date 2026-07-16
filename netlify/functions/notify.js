@@ -179,6 +179,56 @@ exports.handler = async function(event, context) {
             return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
         }
 
+        // ── Capacity early-access waitlist ───────────────────────────────────
+        if (emailType === 'capacity_waitlist') {
+            const { userEmail, company, trade } = body;
+            if (!userEmail || !/.+@.+\..+/.test(String(userEmail))) {
+                return { statusCode: 400, headers, body: JSON.stringify({ error: 'A valid email is required' }) };
+            }
+
+            // Confirmation to the requester
+            await sendEmail({
+                to: userEmail,
+                subject: `You're on the BidIntell Capacity early-access list`,
+                htmlBody: `
+                    <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; color: #17130E;">
+                        <h2 style="color: #E4562A;">You're on the list.</h2>
+                        <p>Thanks for your interest in <strong>BidIntell Capacity</strong> — the labor-planning layer that turns your awarded backlog and weighted pipeline into a weekly, role-by-role staffing forecast, and tells you whether your gross margin can actually carry the team.</p>
+                        <p>It's in early access now. I'm onboarding subcontractors a few at a time so I can set it up with you personally — I'll reach out shortly with next steps.</p>
+                        <p style="margin-top: 28px;">— Ryan<br><em>Founder, BidIntell</em></p>
+                        <hr style="margin: 28px 0; border: none; border-top: 1px solid #eee;">
+                        <p style="font-size: 12px; color: #888;">BidIntell · <a href="https://bidintell.ai">bidintell.ai</a></p>
+                    </div>
+                `
+            });
+
+            // Internal notification
+            await sendEmail({
+                to: 'ryan@bidintell.ai',
+                subject: `🔔 Capacity early-access request: ${userEmail}`,
+                htmlBody: `<h2>New Capacity early-access request</h2>
+                    <p><strong>Email:</strong> <a href="mailto:${userEmail}">${userEmail}</a></p>
+                    <p><strong>Company:</strong> ${company || '—'}</p>
+                    <p><strong>Trade:</strong> ${trade || '—'}</p>
+                    <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>`
+            });
+
+            // Log to admin_events for the founder dashboard (MUST await in serverless)
+            const sbUrl = process.env.SUPABASE_URL || 'https://szifhqmrddmdkgschkkw.supabase.co';
+            const sbKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+            if (sbKey) {
+                try {
+                    await fetch(`${sbUrl}/rest/v1/admin_events`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'apikey': sbKey, 'Authorization': `Bearer ${sbKey}`, 'Prefer': 'return=minimal' },
+                        body: JSON.stringify({ event_type: 'capacity_waitlist', user_id: null, event_data: { email: userEmail, company: company || null, trade: trade || null } })
+                    });
+                } catch (err) { console.warn('capacity_waitlist event log failed:', err); }
+            }
+
+            return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
+        }
+
         // ── Contact form submission ──────────────────────────────────────────
         if (emailType === 'contact_form') {
             const { fullName, userEmail, company, subject, message } = body;
