@@ -145,6 +145,7 @@
     </div>
     <button class="navlink active" data-view="dashboard"><span class="ic">▤</span> Dashboard</button>
     <button class="navlink" data-view="forecast"><span class="ic">◔</span> Forecast</button>
+    <button class="navlink" data-view="margin"><span class="ic">$</span> Margin coverage</button>
     <button class="navlink" data-view="backlog"><span class="ic">≣</span> Backlog &amp; Pipeline</button>
     <button class="navlink" data-view="people"><span class="ic">◍</span> People</button>
     <button class="navlink" data-view="templates"><span class="ic">◫</span> Templates</button>
@@ -173,6 +174,7 @@
         <button class="btn primary" onclick="runAndRender()">↻ Run forecast</button>
       </div>
       <div class="cards" id="kpiCards"></div>
+      <div id="dashCoverage"></div>
       <div class="panel">
         <div class="panel-head">
           <div><h2>Demand vs capacity</h2><p class="ph">Stacked awarded + weighted pipeline (FTE) with your capacity line, by week.</p></div>
@@ -207,6 +209,23 @@
       <div class="panel">
         <h2>Weekly gap by role (FTE)</h2><p class="ph">Red = shortage, green = surplus. Demand is awarded at 100% + pipeline discounted by win probability × document confidence.</p>
         <div class="scroll-x"><table id="gapGrid"></table></div>
+      </div>
+    </section>
+
+    <!-- MARGIN COVERAGE -->
+    <section class="view" id="view-margin">
+      <div class="topbar"><div><h1>Margin coverage</h1><div class="desc"><b>Can you afford this labor base?</b> Monthly gross margin from awarded + weighted work vs your (mostly fixed) labor carry. GM is recognized as the work is performed.</div></div>
+        <button class="btn primary" onclick="runAndRender()">↻ Run</button></div>
+      <div class="cards" id="marginKpis"></div>
+      <div class="panel" id="coverageSummaryPanel"></div>
+      <div class="panel">
+        <div class="panel-head"><div><h2>Monthly gross margin vs labor carry</h2><p class="ph">Bars = GM generated (awarded + weighted pipeline). Line = total monthly labor cost; dashed = the fixed + semi-fixed nut you owe regardless of workload.</p></div></div>
+        <canvas id="marginChart" height="110"></canvas>
+      </div>
+      <div class="panel">
+        <h2>Month by month</h2>
+        <div class="scroll-x"><table id="marginTable"></table></div>
+        <p class="small muted" style="margin-top:10px">Fully-burdened labor (base wage × burden). Assumptions live in <a href="#" onclick="switchView('settings');return false">Settings</a>; gross margin % is per project/opportunity (falls back to your default).</p>
       </div>
     </section>
 
@@ -314,14 +333,18 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const LS_KEY = 'bidintell_capacity_v1';
 
 const ROLES = {
-  installer: {label:'Installer', type:'direct'},
-  painter:   {label:'Painter',   type:'direct'},
-  foreman:   {label:'Foreman',   type:'direct'},
-  laborer:   {label:'Laborer',   type:'direct'},
-  pm:        {label:'Project Manager', type:'indirect'},
-  detailer:  {label:'Detailer / Estimator', type:'indirect'},
+  installer: {label:'Installer', type:'direct',   costClass:'variable'},
+  painter:   {label:'Painter',   type:'direct',   costClass:'variable'},
+  foreman:   {label:'Foreman',   type:'direct',   costClass:'semi_fixed'},
+  laborer:   {label:'Laborer',   type:'direct',   costClass:'variable'},
+  pm:        {label:'Project Manager', type:'indirect', costClass:'semi_fixed'},
+  detailer:  {label:'Detailer / Estimator', type:'indirect', costClass:'fixed'},
 };
 const ROLE_KEYS = Object.keys(ROLES);
+// Default fully-*un*burdened annual wage per role — used to cost NEW hires that
+// have no wage row yet (the affordability gate). Burden % is applied on top.
+const DEFAULT_ROLE_WAGE = { installer:58240, painter:54080, foreman:79040, laborer:43680, pm:85000, detailer:68000 };
+const COST_CLASS_LABEL = { variable:'Variable (field)', semi_fixed:'Semi-fixed (ops)', fixed:'Fixed (support)' };
 const DEFAULT_SETTINGS = {
   company_name:'', trades:['flooring','painting'], home_metro:'',
   planning_horizon_weeks:180, hours_per_fte_week:40, hiring_lead_time_weeks:6,
@@ -329,6 +352,8 @@ const DEFAULT_SETTINGS = {
   outside_labor_fte:3, utilization_target:0.90,
   conf_invite_max:0.40, conf_partial_max:0.70,
   conf_weight_invite:0.50, conf_weight_partial:0.80, conf_weight_full:1.00,
+  // margin-coverage layer
+  default_gm_pct:0.28, labor_burden_pct:0.32, monthly_fixed_overhead:0, coverage_cushion_pct:0.15,
 };
 
 let supabaseClient=null, currentUser=null, MODE='demo';
@@ -387,7 +412,10 @@ function runForecast(state){
     const t=templateFor(src); if(!t) return;
     const startW=weekIndexOf(src.expected_start_date, start);
     const dur=t.duration_weeks;
-    const rec = sources[src.__id] = sources[src.__id] || {name:src.__name, type:isAwarded?'awarded':'pursuit', fteWeeks:0, roleWeek:{}};
+    const gmPct = (src.gross_margin_pct!=null && src.gross_margin_pct!=='') ? +src.gross_margin_pct : s.default_gm_pct;
+    const gmFull = (+src.contract_value||0) * gmPct;
+    const rec = sources[src.__id] = sources[src.__id] || {name:src.__name, type:isAwarded?'awarded':'pursuit', isAwarded, mul:weightMul, gmFull, fteWeeks:0, roleWeek:{}, weekLabor:zero()};
+    rec.weekLaborTotal = rec.weekLaborTotal||0;
     for(let k=0;k<dur;k++){
       const w=startW+k; if(w<0||w>=N) continue;
       curveRoles(t).forEach(role=>{
@@ -398,6 +426,7 @@ function runForecast(state){
         if(isAwarded) demandAwarded[role][w]+=val; else demandWeighted[role][w]+=val;
         rec.fteWeeks+=val;
         rec.roleWeek[role]=rec.roleWeek[role]||zero(); rec.roleWeek[role][w]+=val;
+        rec.weekLabor[w]+=val; rec.weekLaborTotal+=val;
       });
     }
   }
@@ -444,10 +473,67 @@ function runForecast(state){
   const driverProjects=Object.values(sources).map(x=>({name:x.name,type:x.type,fteWeeks:r1(x.fteWeeks)}))
     .sort((a,b)=>b.fteWeeks-a.fteWeeks);
 
-  const recommendations=buildRecommendations({state,start,N,gap,supply,demandAwarded,demandWeighted,sources,rolesUsed});
+  // ---- MONEY LAYER: gross-margin recognition + labor carry, weekly then monthly
+  const gmAwardedWk=zero(), gmWeightedWk=zero();
+  Object.values(sources).forEach(rec=>{
+    if(rec.weekLaborTotal<=0 || !rec.gmFull) return;
+    for(let w=0;w<N;w++){ const share=rec.weekLabor[w]/rec.weekLaborTotal; if(!share) continue;
+      if(rec.isAwarded) gmAwardedWk[w]+= rec.gmFull*share; else gmWeightedWk[w]+= rec.gmFull*rec.mul*share; }
+  });
+  const costVarWk=zero(), costSemiWk=zero(), costFixedWk=zero();
+  state.people.filter(p=>p.active_flag).forEach(p=>{
+    const cw=burdenedWeeklyCost(p,s); if(cw<=0) return;
+    const cls=p.cost_class || (ROLES[p.role_canonical]?ROLES[p.role_canonical].costClass:'variable');
+    const from=p.available_from?weekIndexOf(p.available_from,start):0;
+    const to=p.available_to?weekIndexOf(p.available_to,start):N-1;
+    for(let w=Math.max(0,from);w<=Math.min(N-1,to);w++){
+      if(cls==='fixed') costFixedWk[w]+=cw; else if(cls==='semi_fixed') costSemiWk[w]+=cw; else costVarWk[w]+=cw;
+    }
+  });
+  const ohWk=(s.monthly_fixed_overhead||0)*12/52; for(let w=0;w<N;w++) costFixedWk[w]+=ohWk;
+  // monthly rollup
+  const monthMap={};
+  for(let w=0;w<N;w++){ const d=weeks[w].start; const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const m=monthMap[key]||(monthMap[key]={key,label:d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}),gmA:0,gmW:0,cV:0,cS:0,cF:0});
+    m.gmA+=gmAwardedWk[w]; m.gmW+=gmWeightedWk[w]; m.cV+=costVarWk[w]; m.cS+=costSemiWk[w]; m.cF+=costFixedWk[w];
+  }
+  const monthsAll=Object.values(monthMap).map(m=>{ const cost=m.cV+m.cS+m.cF; const gm=m.gmA+m.gmW;
+    return {...m, cost, gm, nut:m.cS+m.cF, net:gm-cost, netAwarded:m.gmA-cost, ratio:cost>0?gm/cost:null}; });
+  const avg=(arr,f)=>arr.length?arr.reduce((a,x)=>a+f(x),0)/arr.length:0;
+  // Representative monthly carry = avg of the "full" months (drop the partial first/last).
+  const fullMonths = monthsAll.length>2 ? monthsAll.slice(1,monthsAll.length-1) : monthsAll;
+  const repCost = r0(avg(fullMonths.length?fullMonths:monthsAll, m=>m.cost));
+  const repNut  = r0(avg(fullMonths.length?fullMonths:monthsAll, m=>m.nut));
+  // Booked/likely GM = total across horizon (lumpy), expressed as MONTHS of carry covered.
+  const totalGmAwarded = monthsAll.reduce((a,m)=>a+m.gmA,0);
+  const totalGmWeighted= monthsAll.reduce((a,m)=>a+m.gmW,0);
+  const monthsCoveredA = repCost>0 ? totalGmAwarded/repCost : 0;
+  const monthsCoveredT = repCost>0 ? (totalGmAwarded+totalGmWeighted)/repCost : 0;
+  const addMonths=(base,n)=>{ const d=new Date(base); d.setMonth(d.getMonth()+Math.floor(n)); return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}); };
+  const months = monthsAll.slice(0, Math.min(monthsAll.length, 15)); // near-term window for the coverage view
+  const money={ months, monthsAll,
+    monthlyLaborCost:repCost, monthlyNut:repNut,
+    monthlyGmAwarded:r0(totalGmAwarded/Math.max(1,monthsAll.length)), monthlyGmWeighted:r0(totalGmWeighted/Math.max(1,monthsAll.length)),
+    totalGmAwarded:r0(totalGmAwarded), totalGmWeighted:r0(totalGmWeighted),
+    monthsCoveredAwarded:Math.round(monthsCoveredA*10)/10, monthsCoveredWeighted:Math.round(monthsCoveredT*10)/10,
+    coverageAwarded: monthsCoveredA>=0.3 ? addMonths(start, monthsCoveredA) : null,
+    coverageWeighted: monthsCoveredT>=0.3 ? addMonths(start, monthsCoveredT) : null,
+    burden:s.labor_burden_pct, defaultGm:s.default_gm_pct };
 
-  return {weeks,rolesUsed,demandAwarded,demandWeighted,supply,gap,totals,roleSummary,driverProjects,recommendations,start,N,sources};
+  const recommendations=buildRecommendations({state,start,N,gap,supply,demandAwarded,demandWeighted,sources,rolesUsed,months:monthsAll});
+
+  return {weeks,rolesUsed,demandAwarded,demandWeighted,supply,gap,totals,roleSummary,driverProjects,recommendations,start,N,sources,money};
 }
+// fully-burdened weekly cost of a person
+function burdenedWeeklyCost(p,s){
+  const burden=1+(s.labor_burden_pct||0); const w=+p.wage||0; if(w<=0) return 0;
+  if(p.wage_basis==='annual') return w*burden/52;
+  return w*(p.hours_per_week||0)*burden; // hourly
+}
+// burdened monthly cost of ONE new hire of a role (no wage row yet)
+function defaultHireMonthlyCost(role,s){ const base=DEFAULT_ROLE_WAGE[role]||55000; return base*(1+(s.labor_burden_pct||0))/12; }
+function r0(n){ return Math.round(n); }
+function money$(n){ if(n==null) return '—'; const a=Math.abs(n); const sign=n<0?'-':''; if(a>=1000) return sign+'$'+(a/1000).toFixed(a>=10000?0:1)+'k'; return sign+'$'+Math.round(a); }
 
 // ============================================================================
 // RECOMMENDATION ENGINE (transparent business rules)
@@ -463,6 +549,10 @@ function contiguousRuns(arr, thresh){
 function buildRecommendations(ctx){
   const {state,start,N,gap,supply,demandAwarded,demandWeighted,sources,rolesUsed}=ctx;
   const s=state.settings; const recs=[];
+  const monthByKey={}; (ctx.months||[]).forEach(m=>monthByKey[m.key]=m);
+  const keyForWeek=(w)=>{ const d=addWeeks(start,w); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); };
+  const monthsForRun=(run)=>{ const set={}; for(let w=run.from;w<=run.to;w++){ const k=keyForWeek(w); if(monthByKey[k]) set[k]=monthByKey[k]; } return Object.values(set); };
+  const avgOf=(arr,f)=>arr.length?arr.reduce((a,x)=>a+f(x),0)/arr.length:0;
   rolesUsed.forEach(role=>{
     const runs=contiguousRuns(gap[role],0.5);
     if(!runs.length) return;
@@ -518,6 +608,27 @@ function buildRecommendations(ctx){
         rationale=`Mixed-signal shortage of ~${r1(peak)} FTE. Hold and monitor; re-run as probabilities and dates firm up.`;
         confLabel='medium';
       }
+      // ---- AFFORDABILITY GATE (margin-coverage layer) ----
+      let addedMonthlyCost=0, affordability=null, coverageNote='';
+      const span=monthsForRun(run);
+      const avgCost=avgOf(span,m=>m.cost), avgGmA=avgOf(span,m=>m.gmA), avgGm=avgOf(span,m=>m.gm);
+      const cushionA=avgGmA-avgCost, cushionT=avgGm-avgCost;
+      if(action==='hire'){
+        addedMonthlyCost=qty*defaultHireMonthlyCost(role,s);
+        const need=addedMonthlyCost*(1+(s.coverage_cushion_pct||0));
+        if(cushionA>=need){ affordability='affordable';
+          coverageNote=`Affordable: awarded gross margin in this window (~${money$(avgGmA)}/mo) carries the ~${money$(addedMonthlyCost)}/mo burdened cost of this hire with cushion.`; }
+        else if(cushionT>=need){ affordability='contingent';
+          coverageNote=`Conditional: awarded GM covers ~${money$(Math.max(0,cushionA))}/mo of the ~${money$(addedMonthlyCost)}/mo cost; the rest depends on weighted pipeline converting. Don't commit until those wins firm.`; }
+        else { affordability='unfunded';
+          const hireCost=money$(addedMonthlyCost), shortBy=money$(Math.max(0,need-cushionT));
+          if(awardedShare>=0.6){ action='outside_labor'; qty=r1(Math.min(peak,outsideCap||peak)); confLabel='medium';
+            rationale=`The work driving this shortage is awarded, but your gross margin during this window doesn't yet cover the ~${hireCost}/mo burdened cost of ${Math.ceil(peak)} permanent ${ROLES[role].label}(s) (short ~${shortBy}/mo). Staff it with outside labor or overtime instead of adding payroll you can't carry — the Facility Systems trap.`; }
+          else { action='hold'; confLabel='low';
+            rationale=`Real FTE shortage, but it's pipeline-driven and unfunded — awarded + weighted GM is ~${shortBy}/mo short of the ~${hireCost}/mo these hires would cost. Hold: don't add payroll against unwon work.`; }
+          addedMonthlyCost=0; // not a hire anymore; cost referenced in rationale
+        }
+      }
       let urgency = peak*2 + dur*0.3 + awardedShare*3 - run.from*0.15;
       if(recurring) urgency+=2;
       recs.push({
@@ -525,7 +636,8 @@ function buildRecommendations(ctx){
         start:fmtDate(addWeeks(start,run.from)), end:fmtDate(addWeeks(start,endW)),
         startWeek:run.from, durWeeks:dur, peak:r1(peak),
         awardedShare:Math.round(awardedShare*100), recurring,
-        urgency:r1(urgency), confidence:confLabel, rationale, drivers
+        urgency:r1(urgency), confidence:confLabel, rationale, drivers,
+        addedMonthlyCost:r0(addedMonthlyCost), affordability, coverageNote
       });
     });
   });
@@ -584,7 +696,7 @@ async function dbDelete(table,id){
 // ============================================================================
 function trap(D,peak,up,down){ const a=[]; for(let w=0;w<D;w++){ let v; if(w<up) v=peak*(w+1)/(up+1); else if(w>=D-down) v=peak*(D-w)/(down+1); else v=peak; a.push(Math.round(v*10)/10);} return a; }
 function loadDemo(persist){
-  const s={...DEFAULT_SETTINGS, company_name:'Demo Flooring & Painting Co', home_metro:'Kansas City, MO'};
+  const s={...DEFAULT_SETTINGS, company_name:'Demo Flooring & Painting Co', home_metro:'Kansas City, MO', monthly_fixed_overhead:9000, labor_burden_pct:0.32, default_gm_pct:0.28};
   const T=(name,trade,arch,D,direct,indirect)=>({id:uid(),name,trade,archetype:arch,duration_weeks:D,direct_curves:direct,indirect_curves:indirect||{},version_number:1,source_type:'system',status:'active'});
   const templates=[
     T('Flooring — Commercial TI','flooring','commercial_ti',10,{installer:trap(10,4,2,2),foreman:new Array(10).fill(0.5)},{pm:new Array(10).fill(0.25),detailer:[1,1,0.5,0,0,0,0,0,0,0]}),
@@ -594,27 +706,29 @@ function loadDemo(persist){
   ];
   const tid=(arch,trade)=>templates.find(t=>t.archetype===arch&&t.trade===trade).id;
   const now=new Date();
+  const P=(name,role,trade,wage,basis,cls,extra)=>Object.assign({id:uid(),name,role_canonical:role,trade,employment_type:'employee',hours_per_week:40,active_flag:true,wage,wage_basis:basis,cost_class:cls},extra||{});
   const people=[
-    {id:uid(),name:'Carlos M.',role_canonical:'installer',trade:'flooring',employment_type:'employee',hours_per_week:40,active_flag:true},
-    {id:uid(),name:'Devon R.',role_canonical:'installer',trade:'flooring',employment_type:'employee',hours_per_week:40,active_flag:true},
-    {id:uid(),name:'Aaron P.',role_canonical:'installer',trade:'flooring',employment_type:'employee',hours_per_week:40,active_flag:true},
-    {id:uid(),name:'Leo S.',role_canonical:'installer',trade:'flooring',employment_type:'employee',hours_per_week:40,active_flag:true},
-    {id:uid(),name:'Marcus T.',role_canonical:'foreman',trade:'flooring',employment_type:'employee',hours_per_week:40,active_flag:true},
-    {id:uid(),name:'Priya N.',role_canonical:'pm',trade:'flooring',employment_type:'employee',hours_per_week:40,active_flag:true},
-    {id:uid(),name:'Sam W.',role_canonical:'painter',trade:'painting',employment_type:'employee',hours_per_week:40,active_flag:true},
-    {id:uid(),name:'Ivy L.',role_canonical:'painter',trade:'painting',employment_type:'employee',hours_per_week:40,active_flag:true},
-    {id:uid(),name:'Planned hire (installer)',role_canonical:'installer',trade:'flooring',employment_type:'employee',hours_per_week:40,active_flag:true,available_from:fmtDate(addWeeks(now,8))},
+    P('Carlos M.','installer','flooring',28,'hourly','variable'),
+    P('Devon R.','installer','flooring',27,'hourly','variable'),
+    P('Aaron P.','installer','flooring',29,'hourly','variable'),
+    P('Leo S.','installer','flooring',26,'hourly','variable'),
+    P('Marcus T.','foreman','flooring',38,'hourly','semi_fixed'),
+    P('Priya N.','pm','flooring',88000,'annual','semi_fixed'),
+    P('Sam W.','painter','painting',26,'hourly','variable'),
+    P('Ivy L.','painter','painting',25,'hourly','variable'),
+    P('Dana K.','detailer','flooring',62000,'annual','fixed'),
+    P('Planned hire (installer)','installer','flooring',28,'hourly','variable',{available_from:fmtDate(addWeeks(now,8))}),
   ];
   const projects=[
-    {id:uid(),project_name:'Cedar Plaza TI',gc_name:'Turner',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),expected_start_date:fmtDate(addWeeks(now,1)),manual_peak_adjustment:1,status:'awarded'},
-    {id:uid(),project_name:'Rivergate Apartments',gc_name:'JE Dunn',trade:'flooring',archetype:'new_multifamily',template_id:tid('new_multifamily','flooring'),expected_start_date:fmtDate(addWeeks(now,3)),manual_peak_adjustment:1,status:'awarded'},
-    {id:uid(),project_name:'Midtown Offices Repaint',gc_name:'McCarthy',trade:'painting',archetype:'commercial_ti',template_id:tid('commercial_ti','painting'),expected_start_date:fmtDate(addWeeks(now,2)),manual_peak_adjustment:1,status:'awarded'},
+    {id:uid(),project_name:'Cedar Plaza TI',gc_name:'Turner',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),expected_start_date:fmtDate(addWeeks(now,1)),manual_peak_adjustment:1,status:'awarded',contract_value:185000,gross_margin_pct:0.28},
+    {id:uid(),project_name:'Rivergate Apartments',gc_name:'JE Dunn',trade:'flooring',archetype:'new_multifamily',template_id:tid('new_multifamily','flooring'),expected_start_date:fmtDate(addWeeks(now,3)),manual_peak_adjustment:1,status:'awarded',contract_value:640000,gross_margin_pct:0.24},
+    {id:uid(),project_name:'Midtown Offices Repaint',gc_name:'McCarthy',trade:'painting',archetype:'commercial_ti',template_id:tid('commercial_ti','painting'),expected_start_date:fmtDate(addWeeks(now,2)),manual_peak_adjustment:1,status:'awarded',contract_value:98000,gross_margin_pct:0.30},
   ];
   const opportunities=[
-    {id:uid(),project_name:'Airport Concourse Flooring',gc_name:'Turner',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),expected_start_date:fmtDate(addWeeks(now,6)),expected_award_date:fmtDate(addWeeks(now,3)),duration_weeks:10,probability_of_award:0.8,bidintell_score:82,confidence_score:0.9,include_flag:true},
-    {id:uid(),project_name:'Grandview Multifamily Ph2',gc_name:'JE Dunn',trade:'flooring',archetype:'new_multifamily',template_id:tid('new_multifamily','flooring'),expected_start_date:fmtDate(addWeeks(now,8)),expected_award_date:fmtDate(addWeeks(now,4)),duration_weeks:16,probability_of_award:0.5,bidintell_score:64,confidence_score:0.55,include_flag:true},
-    {id:uid(),project_name:'School District Repaint',gc_name:'Crossland',trade:'painting',archetype:'repaint',template_id:tid('repaint','painting'),expected_start_date:fmtDate(addWeeks(now,4)),expected_award_date:fmtDate(addWeeks(now,2)),duration_weeks:6,probability_of_award:0.6,bidintell_score:58,confidence_score:0.35,include_flag:true},
-    {id:uid(),project_name:'Warehouse Fit-out',gc_name:'Unknown GC',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),expected_start_date:fmtDate(addWeeks(now,10)),expected_award_date:fmtDate(addWeeks(now,6)),duration_weeks:10,probability_of_award:0.3,bidintell_score:41,confidence_score:0.3,include_flag:true},
+    {id:uid(),project_name:'Airport Concourse Flooring',gc_name:'Turner',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),expected_start_date:fmtDate(addWeeks(now,6)),expected_award_date:fmtDate(addWeeks(now,3)),duration_weeks:10,probability_of_award:0.8,bidintell_score:82,confidence_score:0.9,include_flag:true,contract_value:250000,gross_margin_pct:0.27},
+    {id:uid(),project_name:'Grandview Multifamily Ph2',gc_name:'JE Dunn',trade:'flooring',archetype:'new_multifamily',template_id:tid('new_multifamily','flooring'),expected_start_date:fmtDate(addWeeks(now,8)),expected_award_date:fmtDate(addWeeks(now,4)),duration_weeks:16,probability_of_award:0.5,bidintell_score:64,confidence_score:0.55,include_flag:true,contract_value:560000,gross_margin_pct:0.24},
+    {id:uid(),project_name:'School District Repaint',gc_name:'Crossland',trade:'painting',archetype:'repaint',template_id:tid('repaint','painting'),expected_start_date:fmtDate(addWeeks(now,4)),expected_award_date:fmtDate(addWeeks(now,2)),duration_weeks:6,probability_of_award:0.6,bidintell_score:58,confidence_score:0.35,include_flag:true,contract_value:72000,gross_margin_pct:0.30},
+    {id:uid(),project_name:'Warehouse Fit-out',gc_name:'Unknown GC',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),expected_start_date:fmtDate(addWeeks(now,10)),expected_award_date:fmtDate(addWeeks(now,6)),duration_weeks:10,probability_of_award:0.3,bidintell_score:41,confidence_score:0.3,include_flag:true,contract_value:165000,gross_margin_pct:0.26},
   ];
   STATE={settings:s,people,templates,projects,opportunities,scenarios:[]};
   persistLocal();
@@ -629,6 +743,7 @@ function switchView(v){
   document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active',s.id==='view-'+v));
   if(v==='dashboard') renderDashboard();
   if(v==='forecast') renderForecast();
+  if(v==='margin') renderMargin();
   if(v==='backlog'){ renderProjects(); renderOpps(); }
   if(v==='people') renderPeople();
   if(v==='templates') renderTemplates();
@@ -651,6 +766,16 @@ function renderDashboard(){
     kpi('Total shortage', totalShortFteWk, 'FTE-weeks of unmet demand', totalShortFteWk>0?'bad':'ok'),
     kpi('Recommended hires', hires, R.recommendations.length+' actions total', hires>0?'warn':'ok'),
   ].join('');
+  // coverage callout — the owner-level answer up front
+  const M=R.money; const covEl=document.getElementById('dashCoverage');
+  if(M && M.totalGmAwarded>0){
+    const covA=M.monthsCoveredAwarded;
+    let msg, cls;
+    if(covA>=6){ cls='cloud'; msg=`✓ Booked work covers ~<b>${covA} months</b> of your ~${money$(M.monthlyLaborCost)}/mo labor carry` + (M.coverageAwarded?` (through ~${M.coverageAwarded})`:'') + `.`; }
+    else if(covA>=3){ cls='demo'; msg=`Booked work covers ~<b>${covA} months</b> of labor carry (through ~${M.coverageAwarded}). Keep the pipeline converting to extend it.`; }
+    else { cls='demo'; msg=`⚠ Only ~<b>${covA} months</b> of labor carry is covered by booked work (~${money$(M.monthlyLaborCost)}/mo carry). Win more work or hold new hires.`; }
+    covEl.innerHTML=`<div class="banner ${cls}" style="cursor:pointer" onclick="switchView('margin')">${msg} <span style="margin-left:auto;font-weight:700">Margin coverage →</span></div>`;
+  } else covEl.innerHTML='';
   drawDashChart(R);
   // role summary
   document.getElementById('roleSummaryTable').innerHTML=
@@ -675,12 +800,16 @@ function renderRecs(recs){
   el.innerHTML=recs.map(r=>{
     const u=r.urgency>=8?'high':r.urgency>=4?'med':'low';
     const drivers=r.drivers.map(d=>`<span class="tag">${esc(d.name)} · ${d.fte}</span>`).join('');
+    const affChip = r.affordability==='affordable'?'<span class="tag" style="background:var(--ok-dim);color:var(--ok)">✓ affordable</span>'
+      : r.affordability==='contingent'?'<span class="tag" style="background:var(--warn-dim);color:var(--warn)">contingent on pipeline</span>'
+      : r.affordability==='unfunded'?'<span class="tag" style="background:var(--bad-dim);color:var(--bad)">not yet funded</span>':'';
     return `<div class="rec">
       <div class="body">
         <div class="title"><span class="chip ${r.action_type}">${r.action_type.replace('_',' ')}</span> ${r.quantity} · ${esc(r.roleLabel)}
-          ${r.recurring?'<span class="tag" style="background:#FEE2E2;color:#991B1B">recurring</span>':''}</div>
+          ${affChip}${r.recurring?'<span class="tag" style="background:var(--bad-dim);color:var(--bad)">recurring</span>':''}</div>
         <div class="why">${esc(r.rationale)}</div>
-        <div class="meta">Window: ${r.start} → ${r.end} (${r.durWeeks} wk) · confidence: <b>${r.confidence}</b> · ${r.awardedShare}% awarded-driven</div>
+        ${r.coverageNote?`<div class="why" style="color:var(--muted);margin-top:4px">💵 ${esc(r.coverageNote)}</div>`:''}
+        <div class="meta">Window: ${r.start} → ${r.end} (${r.durWeeks} wk) · confidence: <b>${r.confidence}</b> · ${r.awardedShare}% awarded-driven${r.addedMonthlyCost?` · +${money$(r.addedMonthlyCost)}/mo burdened`:''}</div>
         <div style="margin-top:6px">${drivers}</div>
       </div>
       <div class="acts"><span class="urg ${u}">urgency ${r.urgency}</span></div>
@@ -697,6 +826,50 @@ function drawDashChart(R){
     {label:'Weighted pipeline',data:R.totals.demandWeighted,backgroundColor:'rgba(228,86,42,0.35)',stack:'d'},
     {label:'Capacity',type:'line',data:R.totals.supply,borderColor:'#F8FAFC',backgroundColor:'#F8FAFC',borderWidth:2,pointRadius:0,tension:.2},
   ]},options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{x:{stacked:true,grid:{color:'rgba(255,255,255,.05)'},ticks:{maxTicksLimit:26,autoSkip:true}},y:{stacked:true,grid:{color:'rgba(255,255,255,.05)'},title:{display:true,text:'FTE'}}},plugins:{legend:{position:'bottom'}}}});
+}
+
+// ---- Margin coverage view
+let marginChartObj=null;
+function renderMargin(){
+  if(!lastRun) lastRun=runForecast(STATE);
+  const R=lastRun, M=R.money;
+  const kEl=document.getElementById('marginKpis'), sEl=document.getElementById('coverageSummaryPanel');
+  if(!M || !M.months.length){ kEl.innerHTML=''; sEl.innerHTML='<p class="muted small">No cost or contract-value data yet. Add wages in People and contract values on projects/opportunities (or load demo data).</p>'; document.getElementById('marginTable').innerHTML=''; if(marginChartObj) marginChartObj.destroy(); return; }
+  const carry=M.monthlyLaborCost, covA=M.monthsCoveredAwarded, covT=M.monthsCoveredWeighted;
+  const covCls = covA>=6?'ok':covA>=3?'warn':'bad';
+  kEl.innerHTML=[
+    kpi('Monthly labor carry', money$(carry), 'fully burdened + overhead', 'warn'),
+    kpi('Fixed + semi-fixed nut', money$(M.monthlyNut), 'owed regardless of workload', 'bad'),
+    kpi('Booked backlog GM', money$(M.totalGmAwarded), `≈ ${covA} mo of carry`, covCls),
+    kpi('Coverage', covA+' mo', M.coverageAwarded?`awarded, through ~${M.coverageAwarded}`:'awarded work', covCls),
+  ].join('');
+  // owner summary + break-even
+  const newWorkPerMo = r0(carry/(M.defaultGm||0.28));   // signed contract value/mo to sustain the carry
+  const extraMonths = Math.round((covT-covA)*10)/10;
+  let lines=[];
+  if(M.coverageAwarded) lines.push(`Your booked (awarded) work throws off ~<b>${money$(M.totalGmAwarded)}</b> of gross margin — about <b>${covA} months</b> of your ~${money$(carry)}/mo labor carry, covering you through <b>~${M.coverageAwarded}</b>.` + (extraMonths>0?` Weighted pipeline adds ~${extraMonths} more months, into <b>~${M.coverageWeighted}</b>.`:` Your weighted pipeline adds little beyond that.`));
+  else lines.push(`Your booked work generates only ~<b>${money$(M.totalGmAwarded)}</b> of gross margin — less than a month of your ~${money$(carry)}/mo labor carry. This team is not covered by signed work.`);
+  lines.push(`To <b>sustain</b> this labor base you need to keep ~<b>${money$(carry)}/mo</b> of gross margin coming in — roughly <b>${money$(newWorkPerMo)}/mo</b> of newly signed contract value at your ${Math.round((M.defaultGm||0.28)*100)}% margin. That's the target BidIndex + outreach have to hit; Capacity is telling you the number.`);
+  if(covA<3) lines.push(`⚠ With under 3 months of coverage, <b>hold new fixed hires</b> and bridge shortages with overtime/outside labor until more work is signed — this is exactly the gross-margin-vs-labor-nut trap that sinks profitable-looking shops.`);
+  sEl.innerHTML=`<h2>What this means</h2>`+lines.map(l=>`<p style="margin:8px 0;font-size:14.5px">${l}</p>`).join('');
+  drawMarginChart(M);
+  // table
+  document.getElementById('marginTable').innerHTML=
+    '<tr><th>Month</th><th class="num">GM awarded</th><th class="num">GM weighted</th><th class="num">Labor cost</th><th class="num">Net (awarded)</th><th class="num">Coverage</th></tr>'+
+    M.months.map(m=>{ const netA=m.gmA-m.cost; return `<tr><td>${esc(m.label)}</td>
+      <td class="num">${money$(m.gmA)}</td><td class="num" style="color:var(--muted)">${money$(m.gmW)}</td>
+      <td class="num">${money$(m.cost)}</td>
+      <td class="num" style="color:${netA>=0?'var(--ok)':'var(--bad)'}">${money$(netA)}</td>
+      <td class="num">${m.ratio!=null?Math.round(m.ratio*100)+'%':'–'}</td></tr>`; }).join('');
+}
+function drawMarginChart(M){
+  const ctx=document.getElementById('marginChart'); if(marginChartObj) marginChartObj.destroy();
+  marginChartObj=new Chart(ctx,{data:{labels:M.months.map(m=>m.label),datasets:[
+    {type:'bar',label:'GM — awarded',data:M.months.map(m=>Math.round(m.gmA)),backgroundColor:'#E4562A',stack:'g'},
+    {type:'bar',label:'GM — weighted pipeline',data:M.months.map(m=>Math.round(m.gmW)),backgroundColor:'rgba(228,86,42,0.35)',stack:'g'},
+    {type:'line',label:'Labor carry',data:M.months.map(m=>Math.round(m.cost)),borderColor:'#F8FAFC',borderWidth:2,pointRadius:0,tension:.2},
+    {type:'line',label:'Fixed + semi nut',data:M.months.map(m=>Math.round(m.nut)),borderColor:'#94A3B8',borderDash:[5,4],borderWidth:1.5,pointRadius:0,tension:.2},
+  ]},options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{x:{stacked:true,grid:{color:'rgba(255,255,255,.05)'}},y:{stacked:true,grid:{color:'rgba(255,255,255,.05)'},ticks:{callback:v=>money$(v)}}},plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.label+': '+money$(c.parsed.y)}}}}});
 }
 
 // ---- Forecast view
@@ -754,12 +927,19 @@ function renderOpps(){
   document.getElementById('oppsTable').innerHTML='<tr><th>Opportunity</th><th>Trade</th><th class="num">Win %</th><th>Doc conf.</th><th class="num">Weight</th><th>Start</th><th>In</th><th></th></tr>'+(rows||'<tr><td class="muted">No pipeline opportunities.</td></tr>');
 }
 function renderPeople(){
-  const rows=STATE.people.map(p=>`<tr>
+  const s=STATE.settings;
+  const rows=STATE.people.map(p=>{
+    const cls=p.cost_class||(ROLES[p.role_canonical]||{}).costClass||'variable';
+    const mo=burdenedWeeklyCost(p,s)*52/12;
+    return `<tr>
     <td><b>${esc(p.name)}</b></td><td>${ROLES[p.role_canonical]?ROLES[p.role_canonical].label:esc(p.role_canonical)}</td>
-    <td>${esc(p.trade||'')}</td><td>${esc(p.employment_type)}</td><td class="num">${p.hours_per_week}</td>
+    <td>${esc(p.trade||'')}</td>
+    <td><span class="tag">${COST_CLASS_LABEL[cls]||cls}</span></td>
+    <td class="num">${mo>0?money$(mo)+'/mo':'<span class="muted">—</span>'}</td>
     <td>${p.available_from?fmtShort(p.available_from):'now'}</td><td>${p.active_flag?'✓':'<span class="muted">inactive</span>'}</td>
-    <td class="row-actions"><button class="btn sm" onclick="editPerson('${p.id}')">Edit</button><button class="btn sm danger" onclick="delRow('people','${p.id}')">Del</button></td></tr>`).join('');
-  document.getElementById('peopleTable').innerHTML='<tr><th>Name</th><th>Role</th><th>Trade</th><th>Type</th><th class="num">Hrs/wk</th><th>Available</th><th>Active</th><th></th></tr>'+(rows||'<tr><td class="muted">No people yet.</td></tr>');
+    <td class="row-actions"><button class="btn sm" onclick="editPerson('${p.id}')">Edit</button><button class="btn sm danger" onclick="delRow('people','${p.id}')">Del</button></td></tr>`;
+  }).join('');
+  document.getElementById('peopleTable').innerHTML='<tr><th>Name</th><th>Role</th><th>Trade</th><th>Cost class</th><th class="num">Burdened cost</th><th>Available</th><th>Active</th><th></th></tr>'+(rows||'<tr><td class="muted">No people yet.</td></tr>');
 }
 function renderTemplates(){
   const rows=STATE.templates.map(t=>{
@@ -801,8 +981,11 @@ function editPerson(id){
       ${fld('Available from','p_from',fmtDate(p.available_from),'date','Blank = now. A future date models a planned hire.')}
       ${fld('Available to','p_to',fmtDate(p.available_to),'date','Blank = ongoing.')}
       ${selField('Active','p_active',p.active_flag===false?'false':'true',[{v:'true',t:'Active'},{v:'false',t:'Inactive'}])}
+      ${fld('Base wage','p_wage',p.wage,'number','Pre-burden. Fully-burdened cost = wage × (1 + burden %).')}
+      ${selField('Wage basis','p_wbasis',p.wage_basis||'hourly',[{v:'hourly',t:'Hourly'},{v:'annual',t:'Annual salary'}])}
+      ${selField('Cost class','p_class',p.cost_class||(ROLES[p.role_canonical||'installer']||{}).costClass||'variable',[{v:'variable',t:'Variable — field labor (flexes with work)'},{v:'semi_fixed',t:'Semi-fixed — PM / foreman'},{v:'fixed',t:'Fixed — support / overhead'}])}
     </div>`,
-    async()=>{ const row={id:p.id||uid(),name:mval('p_name'),role_canonical:mval('p_role'),trade:mval('p_trade'),employment_type:mval('p_emp'),hours_per_week:+mval('p_hrs')||0,available_from:mval('p_from')||null,available_to:mval('p_to')||null,active_flag:mval('p_active')==='true'};
+    async()=>{ const row={id:p.id||uid(),name:mval('p_name'),role_canonical:mval('p_role'),trade:mval('p_trade'),employment_type:mval('p_emp'),hours_per_week:+mval('p_hrs')||0,available_from:mval('p_from')||null,available_to:mval('p_to')||null,active_flag:mval('p_active')==='true',wage:mval('p_wage')?+mval('p_wage'):null,wage_basis:mval('p_wbasis'),cost_class:mval('p_class')};
       upsertLocal('people',row); await dbUpsert('people',row); closeModal(); runAndRender(); });
 }
 function editProject(id){
@@ -817,8 +1000,10 @@ function editProject(id){
       ${fld('Expected start','pr_start',fmtDate(p.expected_start_date),'date')}
       ${fld('Peak adjustment','pr_adj',p.manual_peak_adjustment==null?1:p.manual_peak_adjustment,'number','Multiplier on the template curve (1.0 = as-is).')}
       ${selField('Status','pr_status',p.status||'awarded',[{v:'awarded',t:'Awarded'},{v:'active',t:'Active'},{v:'complete',t:'Complete'}])}
+      ${fld('Contract value ($)','pr_cv',p.contract_value,'number','Drives gross-margin coverage.')}
+      ${fld('Gross margin %','pr_gm',p.gross_margin_pct,'number','0.28 = 28%. Blank = company default.')}
     </div>`,
-    async()=>{ const row={id:p.id||uid(),project_name:mval('pr_name'),gc_name:mval('pr_gc'),trade:mval('pr_trade'),archetype:mval('pr_arch'),template_id:mval('pr_tpl')||null,expected_start_date:mval('pr_start'),manual_peak_adjustment:+mval('pr_adj')||1,status:mval('pr_status')};
+    async()=>{ const row={id:p.id||uid(),project_name:mval('pr_name'),gc_name:mval('pr_gc'),trade:mval('pr_trade'),archetype:mval('pr_arch'),template_id:mval('pr_tpl')||null,expected_start_date:mval('pr_start'),manual_peak_adjustment:+mval('pr_adj')||1,status:mval('pr_status'),contract_value:mval('pr_cv')?+mval('pr_cv'):null,gross_margin_pct:mval('pr_gm')?+mval('pr_gm'):null};
       upsertLocal('projects',row); await dbUpsert('projects',row); closeModal(); runAndRender(); });
 }
 function editOpportunity(id){
@@ -834,9 +1019,11 @@ function editOpportunity(id){
       ${fld('Win probability (0–1)','op_prob',o.probability_of_award==null?0.5:o.probability_of_award,'number')}
       ${fld('Document confidence (0–1)','op_conf',o.confidence_score==null?0.5:o.confidence_score,'number','< '+DEFAULT_SETTINGS.conf_invite_max+' invite-only · < '+DEFAULT_SETTINGS.conf_partial_max+' partial · else full')}
       ${fld('BidIndex score','op_score',o.bidintell_score,'number')}
+      ${fld('Contract value ($)','op_cv',o.contract_value,'number','Weighted GM = value × margin × win% × confidence.')}
+      ${fld('Gross margin %','op_gm',o.gross_margin_pct,'number','0.28 = 28%. Blank = company default.')}
       ${selField('Include in forecast','op_inc',o.include_flag===false?'false':'true',[{v:'true',t:'Yes'},{v:'false',t:'No'}])}
     </div>`,
-    async()=>{ const row={id:o.id||uid(),project_name:mval('op_name'),gc_name:mval('op_gc'),trade:mval('op_trade'),archetype:mval('op_arch'),template_id:mval('op_tpl')||null,expected_start_date:mval('op_start'),probability_of_award:clamp01(+mval('op_prob')),confidence_score:clamp01(+mval('op_conf')),bidintell_score:mval('op_score')?+mval('op_score'):null,include_flag:mval('op_inc')==='true'};
+    async()=>{ const row={id:o.id||uid(),project_name:mval('op_name'),gc_name:mval('op_gc'),trade:mval('op_trade'),archetype:mval('op_arch'),template_id:mval('op_tpl')||null,expected_start_date:mval('op_start'),probability_of_award:clamp01(+mval('op_prob')),confidence_score:clamp01(+mval('op_conf')),bidintell_score:mval('op_score')?+mval('op_score'):null,include_flag:mval('op_inc')==='true',contract_value:mval('op_cv')?+mval('op_cv'):null,gross_margin_pct:mval('op_gm')?+mval('op_gm'):null};
       upsertLocal('opportunities',row); await dbUpsert('opportunities',row); closeModal(); runAndRender(); });
 }
 function clamp01(n){ n=+n||0; return Math.max(0,Math.min(1,n)); }
@@ -895,7 +1082,11 @@ function renderSettings(){
     fld('Partial-docs conf. ceiling','s_cp',s.conf_partial_max,'number')+
     fld('Weight: invite-only','s_wi',s.conf_weight_invite,'number','Multiplier on invite-only pursuit demand.')+
     fld('Weight: partial docs','s_wp',s.conf_weight_partial,'number')+
-    fld('Weight: full package','s_wf',s.conf_weight_full,'number');
+    fld('Weight: full package','s_wf',s.conf_weight_full,'number')+
+    fld('Default gross margin %','s_gm',s.default_gm_pct,'number','0.28 = 28%. Used when a job has no margin set.')+
+    fld('Labor burden %','s_burden',s.labor_burden_pct,'number','0.32 = +32% on base wage (taxes, comp, insurance, benefits).')+
+    fld('Monthly fixed overhead ($)','s_oh',s.monthly_fixed_overhead,'number','Support/admin/estimating cost not tied to a person row.')+
+    fld('Coverage cushion %','s_cushion',s.coverage_cushion_pct,'number','0.15 = margin must exceed the added hire cost by 15% before a HIRE fires.');
 }
 async function saveSettings(){
   const s=STATE.settings;
@@ -905,6 +1096,7 @@ async function saveSettings(){
   s.overtime_max_pct=+mval('s_ot')||0; s.outside_labor_fte=+mval('s_out')||0; s.utilization_target=+mval('s_util')||0.9;
   s.conf_invite_max=+mval('s_ci')||0.4; s.conf_partial_max=+mval('s_cp')||0.7;
   s.conf_weight_invite=+mval('s_wi')||0.5; s.conf_weight_partial=+mval('s_wp')||0.8; s.conf_weight_full=+mval('s_wf')||1;
+  s.default_gm_pct=+mval('s_gm')||0.28; s.labor_burden_pct=+mval('s_burden')||0; s.monthly_fixed_overhead=+mval('s_oh')||0; s.coverage_cushion_pct=+mval('s_cushion')||0;
   const row={...s}; if(MODE==='cloud') row.user_id=currentUser.id;
   upsertSettingsLocal(); await dbUpsert('settings',row); runAndRender(); toast('Settings saved'); switchView('settings');
 }
@@ -938,31 +1130,35 @@ function runScenario(){
   if(delayId&&delayN){ const p=clone.projects.find(x=>x.id===delayId); if(p) p.expected_start_date=fmtDate(addWeeks(p.expected_start_date,delayN)); }
   const winId=mval('sc_win');
   if(winId){ const o=clone.opportunities.find(x=>x.id===winId); if(o){ clone.opportunities=clone.opportunities.filter(x=>x.id!==winId);
-    clone.projects.push({id:uid(),project_name:o.project_name+' (won)',gc_name:o.gc_name,trade:o.trade,archetype:o.archetype,template_id:o.template_id,expected_start_date:o.expected_start_date,manual_peak_adjustment:1,status:'awarded'}); } }
+    clone.projects.push({id:uid(),project_name:o.project_name+' (won)',gc_name:o.gc_name,trade:o.trade,archetype:o.archetype,template_id:o.template_id,expected_start_date:o.expected_start_date,manual_peak_adjustment:1,status:'awarded',contract_value:o.contract_value,gross_margin_pct:o.gross_margin_pct}); } }
   const hr=mval('sc_hire_role'), hn=+mval('sc_hire_n')||0, hw=+mval('sc_hire_when')||0;
-  if(hr&&hn){ for(let i=0;i<hn;i++) clone.people.push({id:uid(),name:'Scenario hire '+(i+1),role_canonical:hr,trade:STATE.settings.trades[0]||'flooring',employment_type:'employee',hours_per_week:clone.settings.hours_per_fte_week,active_flag:true,available_from:fmtDate(addWeeks(new Date(),hw))}); }
+  if(hr&&hn){ for(let i=0;i<hn;i++) clone.people.push({id:uid(),name:'Scenario hire '+(i+1),role_canonical:hr,trade:STATE.settings.trades[0]||'flooring',employment_type:'employee',hours_per_week:clone.settings.hours_per_fte_week,active_flag:true,available_from:fmtDate(addWeeks(new Date(),hw)),wage:DEFAULT_ROLE_WAGE[hr]||55000,wage_basis:'annual',cost_class:(ROLES[hr]||{}).costClass||'variable'}); }
   const extraOut=+mval('sc_out')||0; if(extraOut) clone.settings.outside_labor_fte+=extraOut;
   const otov=mval('sc_ot'); if(otov!=='') clone.settings.overtime_max_pct=+otov;
   const scn=runForecast(clone);
-  const m=(R)=>({peak:r1(Math.max(0,...R.totals.gap)), shortWk:R.totals.gap.filter(x=>x>0.5).length, shortFte:r1(R.totals.gap.filter(x=>x>0).reduce((a,b)=>a+b,0)), hires:R.recommendations.filter(r=>r.action_type==='hire').reduce((a,r)=>a+(+r.quantity||0),0), acts:R.recommendations.length});
+  const avgOf=(arr,f)=>arr.length?arr.reduce((a,x)=>a+f(x),0)/arr.length:0;
+  const m=(R)=>({peak:r1(Math.max(0,...R.totals.gap)), shortWk:R.totals.gap.filter(x=>x>0.5).length, shortFte:r1(R.totals.gap.filter(x=>x>0).reduce((a,b)=>a+b,0)), hires:R.recommendations.filter(r=>r.action_type==='hire').reduce((a,r)=>a+(+r.quantity||0),0), acts:R.recommendations.length,
+    carry:R.money?R.money.monthlyLaborCost:0, gmA:R.money?R.money.monthlyGmAwarded:0, covGap:R.money?r0(R.money.monthlyLaborCost-R.money.monthlyGmAwarded):0});
   const b=m(base), s=m(scn);
-  const row=(label,bv,sv,lowerBetter)=>{ const better=lowerBetter?(sv<bv):(sv>bv); const worse=lowerBetter?(sv>bv):(sv<bv); return `<tr><td>${label}</td><td class="num">${bv}</td><td class="num ${better?'better':worse?'worse':''}">${sv}</td></tr>`; };
+  const row=(label,bv,sv,lowerBetter,fmt)=>{ const f=fmt||(x=>x); const better=lowerBetter?(sv<bv):(sv>bv); const worse=lowerBetter?(sv>bv):(sv<bv); return `<tr><td>${label}</td><td class="num">${f(bv)}</td><td class="num ${better?'better':worse?'worse':''}">${f(sv)}</td></tr>`; };
   document.getElementById('scenarioCompare').innerHTML=
     '<tr><th>Metric</th><th class="num">Base</th><th class="num">Scenario</th></tr>'+
     row('Peak shortage (FTE)',b.peak,s.peak,true)+
     row('Weeks with shortage',b.shortWk,s.shortWk,true)+
     row('Total shortage (FTE-wk)',b.shortFte,s.shortFte,true)+
     row('Recommended hires',b.hires,s.hires,true)+
-    row('Total staffing actions',b.acts,s.acts,true);
+    row('Total staffing actions',b.acts,s.acts,true)+
+    row('Awarded GM / mo',b.gmA,s.gmA,false,money$)+
+    row('Coverage gap / mo',b.covGap,s.covGap,true,money$);
 }
 
 // ============================================================================
 // CSV IMPORT / EXPORT
 // ============================================================================
 const CSV_COLS={
-  people:['employee_id','name','role','trade','office_or_region','employment_type','hours_per_week','available_from','available_to','active_flag'],
-  projects:['project_id','project_name','customer','gc_name','trade','archetype','contract_value','expected_start_date','expected_end_date','template_id','manual_peak_adjustment','status'],
-  opportunities:['opportunity_id','project_name','source','gc_name','trade','archetype','bid_due_date','expected_award_date','expected_start_date','duration_weeks','probability_of_award','bidintell_score','confidence_score','template_id','include_flag'],
+  people:['employee_id','name','role','trade','office_or_region','employment_type','hours_per_week','available_from','available_to','active_flag','wage','wage_basis','cost_class'],
+  projects:['project_id','project_name','customer','gc_name','trade','archetype','contract_value','gross_margin_pct','expected_start_date','expected_end_date','template_id','manual_peak_adjustment','status'],
+  opportunities:['opportunity_id','project_name','source','gc_name','trade','archetype','bid_due_date','expected_award_date','expected_start_date','duration_weeks','probability_of_award','bidintell_score','confidence_score','contract_value','gross_margin_pct','template_id','include_flag'],
 };
 function downloadTemplate(kind){
   const cols=CSV_COLS[kind]; const csv=cols.join(',')+'\n';
@@ -977,9 +1173,9 @@ function importCsv(kind,input){
     let n=0,skip=0; const errs=[];
     for(const raw of res.data){
       try{
-        if(kind==='people'){ if(!raw.name) {skip++;continue;} const row={id:uid(),employee_ref:raw.employee_id||null,name:raw.name,role_canonical:(raw.role||'').toLowerCase().trim()||'installer',role_raw:raw.role,trade:(raw.trade||'').toLowerCase().trim(),office_or_region:raw.office_or_region,employment_type:(raw.employment_type||'employee').toLowerCase(),hours_per_week:+raw.hours_per_week||40,available_from:raw.available_from||null,available_to:raw.available_to||null,active_flag:raw.active_flag==null?true:bool(raw.active_flag)}; upsertLocal('people',row); await dbUpsert('people',row); n++; }
-        else if(kind==='projects'){ if(!raw.project_name){skip++;continue;} const row={id:uid(),project_ref:raw.project_id,project_name:raw.project_name,customer_name:raw.customer,gc_name:raw.gc_name,trade:(raw.trade||'').toLowerCase().trim(),archetype:raw.archetype,contract_value:raw.contract_value?+raw.contract_value:null,expected_start_date:raw.expected_start_date,expected_end_date:raw.expected_end_date||null,manual_peak_adjustment:+raw.manual_peak_adjustment||1,status:(raw.status||'awarded').toLowerCase()}; row.template_id=matchTemplateId(row); upsertLocal('projects',row); await dbUpsert('projects',row); n++; }
-        else if(kind==='opportunities'){ if(!raw.project_name){skip++;continue;} const row={id:uid(),opportunity_ref:raw.opportunity_id,project_name:raw.project_name,source_channel:raw.source,gc_name:raw.gc_name,trade:(raw.trade||'').toLowerCase().trim(),archetype:raw.archetype,bid_due_date:raw.bid_due_date||null,expected_award_date:raw.expected_award_date||null,expected_start_date:raw.expected_start_date,duration_weeks:raw.duration_weeks?+raw.duration_weeks:null,probability_of_award:clamp01(+raw.probability_of_award),bidintell_score:raw.bidintell_score?+raw.bidintell_score:null,confidence_score:clamp01(raw.confidence_score==null?0.5:+raw.confidence_score),include_flag:raw.include_flag==null?true:bool(raw.include_flag)}; row.template_id=matchTemplateId(row); upsertLocal('opportunities',row); await dbUpsert('opportunities',row); n++; }
+        if(kind==='people'){ if(!raw.name) {skip++;continue;} const row={id:uid(),employee_ref:raw.employee_id||null,name:raw.name,role_canonical:(raw.role||'').toLowerCase().trim()||'installer',role_raw:raw.role,trade:(raw.trade||'').toLowerCase().trim(),office_or_region:raw.office_or_region,employment_type:(raw.employment_type||'employee').toLowerCase(),hours_per_week:+raw.hours_per_week||40,available_from:raw.available_from||null,available_to:raw.available_to||null,active_flag:raw.active_flag==null?true:bool(raw.active_flag),wage:raw.wage?+raw.wage:null,wage_basis:(raw.wage_basis||'hourly').toLowerCase(),cost_class:(raw.cost_class||'').toLowerCase()||undefined}; upsertLocal('people',row); await dbUpsert('people',row); n++; }
+        else if(kind==='projects'){ if(!raw.project_name){skip++;continue;} const row={id:uid(),project_ref:raw.project_id,project_name:raw.project_name,customer_name:raw.customer,gc_name:raw.gc_name,trade:(raw.trade||'').toLowerCase().trim(),archetype:raw.archetype,contract_value:raw.contract_value?+raw.contract_value:null,gross_margin_pct:raw.gross_margin_pct?+raw.gross_margin_pct:null,expected_start_date:raw.expected_start_date,expected_end_date:raw.expected_end_date||null,manual_peak_adjustment:+raw.manual_peak_adjustment||1,status:(raw.status||'awarded').toLowerCase()}; row.template_id=matchTemplateId(row); upsertLocal('projects',row); await dbUpsert('projects',row); n++; }
+        else if(kind==='opportunities'){ if(!raw.project_name){skip++;continue;} const row={id:uid(),opportunity_ref:raw.opportunity_id,project_name:raw.project_name,source_channel:raw.source,gc_name:raw.gc_name,trade:(raw.trade||'').toLowerCase().trim(),archetype:raw.archetype,bid_due_date:raw.bid_due_date||null,expected_award_date:raw.expected_award_date||null,expected_start_date:raw.expected_start_date,duration_weeks:raw.duration_weeks?+raw.duration_weeks:null,probability_of_award:clamp01(+raw.probability_of_award),bidintell_score:raw.bidintell_score?+raw.bidintell_score:null,confidence_score:clamp01(raw.confidence_score==null?0.5:+raw.confidence_score),contract_value:raw.contract_value?+raw.contract_value:null,gross_margin_pct:raw.gross_margin_pct?+raw.gross_margin_pct:null,include_flag:raw.include_flag==null?true:bool(raw.include_flag)}; row.template_id=matchTemplateId(row); upsertLocal('opportunities',row); await dbUpsert('opportunities',row); n++; }
       }catch(e){ errs.push(e.message); }
     }
     input.value='';

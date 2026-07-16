@@ -318,6 +318,24 @@ DO $$ BEGIN
 END $$;
 
 -- ============================================================================
--- Done. 10 cap_* tables, all RLS-protected to the owning user.
--- Next: apply via MCP apply_migration, then flip capacity.html out of demo mode.
+-- 11. Margin-coverage layer — cost structure + gross-margin inputs
+-- ============================================================================
+-- Turns the FTE forecast into an affordability model: does awarded + weighted
+-- gross margin cover the (mostly fixed) monthly labor carry? Three-tier cost:
+-- variable field labor / semi-fixed ops (PM, foreman) / fixed support+overhead.
+ALTER TABLE cap_settings  ADD COLUMN IF NOT EXISTS default_gm_pct         NUMERIC NOT NULL DEFAULT 0.28;
+ALTER TABLE cap_settings  ADD COLUMN IF NOT EXISTS labor_burden_pct       NUMERIC NOT NULL DEFAULT 0.32;
+ALTER TABLE cap_settings  ADD COLUMN IF NOT EXISTS monthly_fixed_overhead NUMERIC NOT NULL DEFAULT 0;
+ALTER TABLE cap_settings  ADD COLUMN IF NOT EXISTS coverage_cushion_pct   NUMERIC NOT NULL DEFAULT 0.15;
+
+ALTER TABLE cap_people    ADD COLUMN IF NOT EXISTS wage        NUMERIC;                 -- base, pre-burden
+ALTER TABLE cap_people    ADD COLUMN IF NOT EXISTS wage_basis  TEXT DEFAULT 'hourly';   -- hourly | annual
+ALTER TABLE cap_people    ADD COLUMN IF NOT EXISTS cost_class  TEXT DEFAULT 'variable'; -- variable | semi_fixed | fixed
+
+ALTER TABLE cap_projects      ADD COLUMN IF NOT EXISTS gross_margin_pct NUMERIC;
+ALTER TABLE cap_opportunities ADD COLUMN IF NOT EXISTS contract_value   NUMERIC;
+ALTER TABLE cap_opportunities ADD COLUMN IF NOT EXISTS gross_margin_pct NUMERIC;
+
+-- ============================================================================
+-- Done. 10 cap_* tables + margin layer, all RLS-protected to the owning user.
 -- ============================================================================
