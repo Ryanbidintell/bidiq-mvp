@@ -120,7 +120,8 @@
   .urg.high{background:#FEE2E2;color:#991B1B} .urg.med{background:#FEF3C7;color:#92400E} .urg.low{background:#F1F5F9;color:#475569}
 
   .row-actions{display:flex;gap:6px;justify-content:flex-end}
-  .muted{color:var(--muted)} .small{font-size:12.5px}
+  .muted{color:var(--muted)} .small{font-size:12.5px} .mono{font-family:var(--mono)}
+  #view-guide h3{color:var(--ink)} #view-guide p{line-height:1.55}
   .tag{display:inline-block;background:rgba(255,255,255,.05);color:var(--slate);border-radius:6px;padding:1px 7px;font-size:11.5px;font-weight:600;margin-right:4px}
   .split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .compare td.better{color:var(--ok);font-weight:700} .compare td.worse{color:var(--bad);font-weight:700}
@@ -152,6 +153,7 @@
     <button class="navlink" data-view="scenarios"><span class="ic">⑂</span> Scenarios</button>
     <button class="navlink" data-view="data"><span class="ic">⇪</span> Import Data</button>
     <button class="navlink" data-view="settings"><span class="ic">⚙</span> Settings</button>
+    <button class="navlink" data-view="guide"><span class="ic">?</span> How it works</button>
     <div class="spacer"></div>
     <div class="whoami">
       <span class="muted">Signed in as</span>
@@ -180,6 +182,7 @@
           <div><h2>Demand vs capacity</h2><p class="ph">Stacked awarded + weighted pipeline (FTE) with your capacity line, by week.</p></div>
         </div>
         <canvas id="dashChart" height="110"></canvas>
+        <div class="small muted" id="dashChartCap" style="text-align:center;margin-top:8px"></div>
       </div>
       <div class="split">
         <div class="panel">
@@ -205,7 +208,7 @@
           <button class="btn primary" onclick="runAndRender()">↻ Run</button>
         </div>
       </div>
-      <div class="panel"><canvas id="fcChart" height="110"></canvas></div>
+      <div class="panel"><canvas id="fcChart" height="110"></canvas><div class="small muted" id="fcChartCap" style="text-align:center;margin-top:8px"></div></div>
       <div class="panel">
         <h2>Weekly gap by role (FTE)</h2><p class="ph">Red = shortage, green = surplus. Demand is awarded at 100% + pipeline discounted by win probability × document confidence.</p>
         <div class="scroll-x"><table id="gapGrid"></table></div>
@@ -305,6 +308,70 @@
       <div class="topbar"><div><h1>Company assumptions</h1><div class="desc">These drive supply, confidence weighting, and recommendations.</div></div>
         <button class="btn primary" onclick="saveSettings()">Save</button></div>
       <div class="panel"><div class="form-grid" id="settingsForm"></div></div>
+    </section>
+
+    <!-- GUIDE / HOW IT WORKS -->
+    <section class="view" id="view-guide">
+      <div class="topbar"><div><h1>How it works</h1><div class="desc">What to enter, and how Capacity turns it into staffing and affordability calls. Plain-English, no jargon.</div></div>
+        <button class="btn" onclick="loadDemo(true)">↺ Load demo data to explore</button></div>
+
+      <div class="panel">
+        <h2>The two questions</h2>
+        <p class="ph">BidIntell Capacity sits downstream of your bid scoring.</p>
+        <div class="split">
+          <div class="card"><div class="kpi"><div class="label">BidIndex asks</div></div><p style="margin:8px 0 0;font-size:14.5px">“<b>Should I chase this bid?</b>” — scope fit, geography, client, contract risk.</p></div>
+          <div class="card"><div class="kpi"><div class="label">Capacity asks</div></div><p style="margin:8px 0 0;font-size:14.5px">“<b>If it lands, can I staff it — and afford it?</b>” — weekly labor by role vs your bench, and whether gross margin covers the team.</p></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Set it up (about 10 minutes)</h2>
+        <p class="ph">Enter these on the matching screens. Start with the two that matter most: <b>People</b> and <b>Templates</b>. You can also <b>Import a CSV</b> on each, or hit <b>Sync to Capacity</b> inside the main BidIntell app to pull your scored bids in automatically.</p>
+        <table>
+          <tr><th>Step</th><th>Screen</th><th>What to enter</th></tr>
+          <tr><td><span class="step-n" style="color:var(--accent);font-family:var(--mono);font-weight:700">1</span></td><td><b>People</b></td><td>Your crew and salaried staff. For each: role, hours/week, and — for the money view — a <b>base wage</b> and a <b>cost class</b> (variable field / semi-fixed PM-foreman / fixed support). A future “available from” date = a planned hire.</td></tr>
+          <tr><td><span class="step-n" style="color:var(--accent);font-family:var(--mono);font-weight:700">2</span></td><td><b>Templates</b></td><td>A reusable <b>crew curve</b> per job type — how many installers/foremen/PMs each week over the job’s duration. Build one per common archetype (e.g. “Flooring – Commercial TI, 10 wk”). This is what turns a job into a week-by-week labor shape.</td></tr>
+          <tr><td><span class="step-n" style="color:var(--accent);font-family:var(--mono);font-weight:700">3</span></td><td><b>Backlog &amp; Pipeline → Projects</b></td><td>Jobs you’ve <b>won</b>. Each needs a start date + a template. Add contract value + margin % to power the money view.</td></tr>
+          <tr><td><span class="step-n" style="color:var(--accent);font-family:var(--mono);font-weight:700">4</span></td><td><b>Backlog &amp; Pipeline → Opportunities</b></td><td>Bids you’re <b>chasing</b>. Same fields plus <b>win probability</b> (0–1) and <b>document confidence</b> (0–1). These weight how much the pursuit counts.</td></tr>
+          <tr><td><span class="step-n" style="color:var(--accent);font-family:var(--mono);font-weight:700">5</span></td><td><b>Settings</b></td><td>Company assumptions: planning horizon, hiring lead time, overtime %, outside-labor availability, labor burden %, default margin %, and monthly fixed overhead. Defaults are sensible — adjust to your shop.</td></tr>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h2>How the numbers work</h2>
+        <p class="ph">Deterministic and inspectable — no black box. Everything below is just arithmetic on what you entered.</p>
+
+        <h3 style="font-size:15px;margin:14px 0 4px">1 · Demand (the work you need to staff)</h3>
+        <p style="font-size:14px;color:var(--slate);margin:0 0 12px">Each job’s template lays its crew curve onto the calendar from its start date. <b>Awarded jobs count 100%.</b> A <b>pursuit counts partially</b> — discounted by <span class="mono" style="font-size:12.5px">win&nbsp;probability × document&nbsp;confidence</span>. An invite-only tease with a 30% chance moves your plan far less than a full, reviewed package you’ll likely win. Add it all up per role per week.</p>
+
+        <h3 style="font-size:15px;margin:14px 0 4px">2 · Supply (the crew you have)</h3>
+        <p style="font-size:14px;color:var(--slate);margin:0 0 12px">Your active roster, converted to full-time equivalents, plus any planned hires from their start date, minus normal attrition over time.</p>
+
+        <h3 style="font-size:15px;margin:14px 0 4px">3 · Gap = demand − supply</h3>
+        <p style="font-size:14px;color:var(--slate);margin:0 0 12px">Per role, per week. <span style="color:var(--bad)">Positive = shortage</span> (not enough people). <span style="color:var(--ok)">Negative = bench</span> (idle capacity). This is the weekly grid on the <b>Forecast</b> screen.</p>
+
+        <h3 style="font-size:15px;margin:14px 0 4px">4 · Recommendations</h3>
+        <p style="font-size:14px;color:var(--slate);margin:0 0 8px">Each shortage becomes a call, gated by two things — <b>how long it lasts vs your hiring lead time</b>, and <b>whether gross margin can carry it</b>:</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+          <span class="chip hire">hire</span><span class="chip overtime">overtime</span><span class="chip outside_labor">outside labor</span><span class="chip hold">hold</span><span class="chip pass">pass</span>
+        </div>
+        <p style="font-size:14px;color:var(--slate);margin:0">A <b>hire</b> only fires when the work is sustained <em>and</em> gross margin covers the fully-burdened cost with cushion. Awarded work you can’t yet afford says “<b>bridge with outside labor</b>,” not “add payroll.” Pipeline-driven gaps say “<b>hold</b>” until the wins firm up.</p>
+
+        <h3 style="font-size:15px;margin:14px 0 4px">5 · Margin coverage (can you afford the team?)</h3>
+        <p style="font-size:14px;color:var(--slate);margin:0">Each job also throws off <b>gross margin</b> (contract value × margin %), recognized as the work gets done. Capacity stacks that against your <b>fully-burdened monthly labor cost</b> and tells you how many <b>months of payroll your booked work covers</b> — plus the break-even: how much new signed work per month you need to sustain the team.</p>
+      </div>
+
+      <div class="panel">
+        <h2>Reading each screen</h2>
+        <table>
+          <tr><th>Screen</th><th>What it answers</th></tr>
+          <tr><td><b>Dashboard</b></td><td>The one-glance summary — peak shortage role, coverage banner, demand-vs-capacity chart, and the staffing-action queue.</td></tr>
+          <tr><td><b>Forecast</b></td><td>The portfolio labor curve + a week-by-week gap grid by role (<span style="color:var(--bad)">red = short</span>, <span style="color:var(--ok)">green = bench</span>).</td></tr>
+          <tr><td><b>Margin coverage</b></td><td>The money view — monthly gross margin vs labor carry, months of coverage, and the break-even target.</td></tr>
+          <tr><td><b>Scenarios</b></td><td>“What if?” — delay a job, win an opportunity, add hires, and compare against your base plan before committing.</td></tr>
+        </table>
+        <p class="small muted" style="margin-top:12px">Tip: hit <b>↺ Run forecast</b> after any change. Nothing is committed to your live plan from Scenarios — it’s a sandbox.</p>
+      </div>
     </section>
   </main>
 </div>
@@ -833,6 +900,7 @@ function drawDashChart(R){
     {label:'Weighted pipeline',data:sl(R.totals.demandWeighted),backgroundColor:'rgba(228,86,42,0.35)',stack:'d'},
     {label:'Capacity',type:'line',data:sl(R.totals.supply),borderColor:'#F8FAFC',backgroundColor:'#F8FAFC',borderWidth:2,pointRadius:0,tension:.2},
   ]},options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{x:{stacked:true,grid:{color:'rgba(255,255,255,.05)'},ticks:{maxTicksLimit:18,autoSkip:true}},y:{stacked:true,grid:{color:'rgba(255,255,255,.05)'},title:{display:true,text:'FTE'}}},plugins:{legend:{position:'bottom'}}}});
+  const cap=document.getElementById('dashChartCap'); if(cap) cap.textContent = W<R.N ? `Showing the next ${W} weeks with demand · ${R.N}-week planning horizon` : `Full ${R.N}-week horizon`;
 }
 
 // ---- Margin coverage view
@@ -896,6 +964,7 @@ function renderForecast(){
     {label:'Weighted pipeline',data:sl(we),backgroundColor:'rgba(228,86,42,0.35)',stack:'d'},
     {label:'Capacity',type:'line',data:sl(su),borderColor:'#F8FAFC',borderWidth:2,pointRadius:0,tension:.2},
   ]},options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{x:{stacked:true,grid:{color:'rgba(255,255,255,.05)'},ticks:{maxTicksLimit:18,autoSkip:true}},y:{stacked:true,grid:{color:'rgba(255,255,255,.05)'},title:{display:true,text:'FTE'}}},plugins:{legend:{position:'bottom'}}}});
+  const fcap=document.getElementById('fcChartCap'); if(fcap) fcap.textContent = W<R.N ? `Showing the next ${W} weeks with demand · ${R.N}-week planning horizon · gap grid below shows first 26 weeks` : `Full ${R.N}-week horizon`;
   // gap grid (limit to first 26 weeks for readability)
   const GW=Math.min(R.N,26);
   let html='<tr><th>Role</th>'+R.weeks.slice(0,GW).map(w=>`<th class="weekcell num">${w.label}</th>`).join('')+'</tr>';
@@ -903,8 +972,8 @@ function renderForecast(){
     html+=`<tr><td><b>${ROLES[r].label}</b></td>`+R.weeks.slice(0,GW).map((w,i)=>{
       const g=R.gap[r][i]; const v=r1(g);
       let bg='transparent',col='var(--muted)';
-      if(g>0.5){ bg=`rgba(220,38,38,${Math.min(.85,.15+g/8)})`; col='#fff'; }
-      else if(g<-0.5){ bg=`rgba(22,163,74,${Math.min(.7,.12+(-g)/8)})`; col='#fff'; }
+      if(g>0.5){ bg=`rgba(239,68,68,${Math.min(.9,.3+g/8)})`; col='#fff'; }
+      else if(g<-0.5){ bg=`rgba(34,197,94,${Math.min(.82,.28+(-g)/8)})`; col='#fff'; }
       return `<td class="heat" style="background:${bg};color:${col}">${v||''}</td>`;
     }).join('')+'</tr>';
   });
