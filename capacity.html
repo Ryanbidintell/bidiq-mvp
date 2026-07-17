@@ -817,15 +817,22 @@ function renderRecs(recs){
   }).join('');
 }
 
+// Cap the chart to the meaningful demand window so the manpower curve fills the
+// chart instead of being crushed into the far left by a long (e.g. 180-wk) horizon.
+// The gap grid + engine keep the full horizon; this is display-only.
+function chartWindow(R, demandTotal){
+  let last=0; for(let w=0;w<R.N;w++){ if(demandTotal[w]>0.05) last=w; }
+  return Math.min(R.N, Math.max(26, last+8)); // buffer, min 26 wk
+}
 function drawDashChart(R){
   const ctx=document.getElementById('dashChart'); if(dashChartObj) dashChartObj.destroy();
-  const step=Math.max(1,Math.round(R.N/52)); // thin labels for long horizons
-  const labels=R.weeks.map((w,i)=>w.label);
-  dashChartObj=new Chart(ctx,{type:'bar',data:{labels,datasets:[
-    {label:'Awarded demand',data:R.totals.demandAwarded,backgroundColor:'#E4562A',stack:'d'},
-    {label:'Weighted pipeline',data:R.totals.demandWeighted,backgroundColor:'rgba(228,86,42,0.35)',stack:'d'},
-    {label:'Capacity',type:'line',data:R.totals.supply,borderColor:'#F8FAFC',backgroundColor:'#F8FAFC',borderWidth:2,pointRadius:0,tension:.2},
-  ]},options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{x:{stacked:true,grid:{color:'rgba(255,255,255,.05)'},ticks:{maxTicksLimit:26,autoSkip:true}},y:{stacked:true,grid:{color:'rgba(255,255,255,.05)'},title:{display:true,text:'FTE'}}},plugins:{legend:{position:'bottom'}}}});
+  const W=chartWindow(R, R.totals.demand);
+  const sl=a=>a.slice(0,W);
+  dashChartObj=new Chart(ctx,{type:'bar',data:{labels:R.weeks.slice(0,W).map(w=>w.label),datasets:[
+    {label:'Awarded demand',data:sl(R.totals.demandAwarded),backgroundColor:'#E4562A',stack:'d'},
+    {label:'Weighted pipeline',data:sl(R.totals.demandWeighted),backgroundColor:'rgba(228,86,42,0.35)',stack:'d'},
+    {label:'Capacity',type:'line',data:sl(R.totals.supply),borderColor:'#F8FAFC',backgroundColor:'#F8FAFC',borderWidth:2,pointRadius:0,tension:.2},
+  ]},options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{x:{stacked:true,grid:{color:'rgba(255,255,255,.05)'},ticks:{maxTicksLimit:18,autoSkip:true}},y:{stacked:true,grid:{color:'rgba(255,255,255,.05)'},title:{display:true,text:'FTE'}}},plugins:{legend:{position:'bottom'}}}});
 }
 
 // ---- Margin coverage view
@@ -883,16 +890,17 @@ function renderForecast(){
   let aw,we,su;
   if(role==='__all'){ aw=R.totals.demandAwarded; we=R.totals.demandWeighted; su=R.totals.supply; }
   else { aw=R.demandAwarded[role]; we=R.demandWeighted[role]; su=R.supply[role]; }
-  fcChartObj=new Chart(ctx,{type:'bar',data:{labels:R.weeks.map(w=>w.label),datasets:[
-    {label:'Awarded',data:aw,backgroundColor:'#E4562A',stack:'d'},
-    {label:'Weighted pipeline',data:we,backgroundColor:'rgba(228,86,42,0.35)',stack:'d'},
-    {label:'Capacity',type:'line',data:su,borderColor:'#F8FAFC',borderWidth:2,pointRadius:0,tension:.2},
-  ]},options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{x:{stacked:true,grid:{color:'rgba(255,255,255,.05)'},ticks:{maxTicksLimit:26,autoSkip:true}},y:{stacked:true,grid:{color:'rgba(255,255,255,.05)'},title:{display:true,text:'FTE'}}},plugins:{legend:{position:'bottom'}}}});
+  const dem=aw.map((v,i)=>v+we[i]); const W=chartWindow(R,dem); const sl=a=>a.slice(0,W);
+  fcChartObj=new Chart(ctx,{type:'bar',data:{labels:R.weeks.slice(0,W).map(w=>w.label),datasets:[
+    {label:'Awarded',data:sl(aw),backgroundColor:'#E4562A',stack:'d'},
+    {label:'Weighted pipeline',data:sl(we),backgroundColor:'rgba(228,86,42,0.35)',stack:'d'},
+    {label:'Capacity',type:'line',data:sl(su),borderColor:'#F8FAFC',borderWidth:2,pointRadius:0,tension:.2},
+  ]},options:{responsive:true,interaction:{mode:'index',intersect:false},scales:{x:{stacked:true,grid:{color:'rgba(255,255,255,.05)'},ticks:{maxTicksLimit:18,autoSkip:true}},y:{stacked:true,grid:{color:'rgba(255,255,255,.05)'},title:{display:true,text:'FTE'}}},plugins:{legend:{position:'bottom'}}}});
   // gap grid (limit to first 26 weeks for readability)
-  const W=Math.min(R.N,26);
-  let html='<tr><th>Role</th>'+R.weeks.slice(0,W).map(w=>`<th class="weekcell num">${w.label}</th>`).join('')+'</tr>';
+  const GW=Math.min(R.N,26);
+  let html='<tr><th>Role</th>'+R.weeks.slice(0,GW).map(w=>`<th class="weekcell num">${w.label}</th>`).join('')+'</tr>';
   R.rolesUsed.forEach(r=>{
-    html+=`<tr><td><b>${ROLES[r].label}</b></td>`+R.weeks.slice(0,W).map((w,i)=>{
+    html+=`<tr><td><b>${ROLES[r].label}</b></td>`+R.weeks.slice(0,GW).map((w,i)=>{
       const g=R.gap[r][i]; const v=r1(g);
       let bg='transparent',col='var(--muted)';
       if(g>0.5){ bg=`rgba(220,38,38,${Math.min(.85,.15+g/8)})`; col='#fff'; }
