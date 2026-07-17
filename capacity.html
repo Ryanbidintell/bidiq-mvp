@@ -907,7 +907,8 @@ function renderForecast(){
 function renderProjects(){
   const rows=STATE.projects.map(p=>{
     const t=templateFor(p);
-    return `<tr><td><b>${esc(p.project_name)}</b><div class="small muted">${esc(p.gc_name||'')}</div></td>
+    const src = (p.project_ref||'').indexOf('bidintell:')===0 ? ' <span class="tag" style="background:var(--accent-dim);color:var(--accent)">↳ BidIntell</span>' : '';
+    return `<tr><td><b>${esc(p.project_name)}</b>${src}<div class="small muted">${esc(p.gc_name||'')}</div></td>
       <td>${esc(p.trade)}</td><td>${t?esc(t.name):'<span class="chip pass">no template</span>'}</td>
       <td>${fmtShort(p.expected_start_date)}</td><td><span class="chip awarded">${esc(p.status)}</span></td>
       <td class="row-actions"><button class="btn sm" onclick="editProject('${p.id}')">Edit</button><button class="btn sm danger" onclick="delRow('projects','${p.id}')">Del</button></td></tr>`;
@@ -917,7 +918,8 @@ function renderProjects(){
 function renderOpps(){
   const rows=STATE.opportunities.map(o=>{
     const band=confBand(o.confidence_score); const w=r1((o.probability_of_award||0)*confWeight(o.confidence_score)*100);
-    return `<tr><td><b>${esc(o.project_name)}</b><div class="small muted">${esc(o.gc_name||'')}</div></td>
+    const src = (o.opportunity_ref||'').indexOf('bidintell:')===0 ? ' <span class="tag" style="background:var(--accent-dim);color:var(--accent)">↳ BidIntell</span>' : '';
+    return `<tr><td><b>${esc(o.project_name)}</b>${src}<div class="small muted">${esc(o.gc_name||'')}</div></td>
       <td>${esc(o.trade)}</td><td class="num">${Math.round((o.probability_of_award||0)*100)}%</td>
       <td><span class="chip ${band}">${band}</span></td><td class="num">${w}%</td>
       <td>${fmtShort(o.expected_start_date)}</td>

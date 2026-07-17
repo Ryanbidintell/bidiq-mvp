@@ -2645,6 +2645,7 @@
                                 <button class="btn btn-sm btn-secondary" onclick="showReuploadModal()" id="reuploadBtn">📤 Upload New Documents</button>
                                 <button class="btn btn-sm btn-secondary" onclick="showAddClientToProjectModal()">+ Add Client</button>
                                 <button class="btn btn-sm btn-secondary" onclick="showOutcomeFromReport()">+ Add Outcome</button>
+                                <button class="btn btn-sm btn-secondary" onclick="addOneToCapacity(document.getElementById('reportProjectId').value)" title="Add this bid to BidIntell Capacity — pipeline if open, backlog if won">📅 Add to Capacity</button>
                                 <button class="btn btn-sm btn-secondary" onclick="showOverrideModal()" id="overrideDecisionBtn" title="Record your decision when your judgment differs from the AI score. Won't change the score — tracks where you disagreed.">📝 Override Decision</button>
                                 <button class="btn btn-sm btn-secondary" onclick="printReport()">🖨 Print Report</button>
                                 <button class="btn btn-sm btn-primary" onclick="saveReportEdits()">💾 Save Changes</button>
@@ -13692,6 +13693,82 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
             applyProjectFilters();
         }
 
+        // ===== BidIntell Capacity sync — push scored bids into the Capacity module =====
+        // Pending bids → Capacity pipeline (cap_opportunities); won bids → backlog
+        // (cap_projects). Idempotent: linked by *_ref = "bidintell:<projectId>". Re-syncing
+        // skips already-linked bids and moves an opportunity → backlog when it's now won.
+        function _capMapProject(p) {
+            const ex = p.extracted_data || p.extracted || {};
+            const scores = p.scores || {};
+            const score = scores.final || scores.bidindex_score || null;
+            const outcome = p.outcome || 'pending';
+            if (['lost', 'ghost', 'declined', 'gc_lost', 'no_bid'].includes(outcome)) return null; // not relevant to capacity
+            const isWon = outcome === 'won';
+            const trade = (p.trades_found && p.trades_found[0]) ? String(p.trades_found[0]).toLowerCase() : (ex.trade ? String(ex.trade).toLowerCase() : 'general');
+            const gc = (p.gcs && p.gcs[0] && p.gcs[0].name) || p.gc_contact_name || '';
+            const cv = ex.contract_value || ex.value || ex.project_value || ex.bid_value || null;
+            const today = new Date().toISOString().slice(0, 10);
+            const common = {
+                user_id: currentUser.id,
+                project_name: ex.project_name || 'Untitled bid',
+                gc_name: gc,
+                trade: trade,
+                archetype: p.building_type || null,
+                metro: p.market_metro_area || null,
+                expected_start_date: today, // unknown from a bid — user sets the real install date in Capacity
+                contract_value: cv ? Number(cv) : null,
+            };
+            if (isWon) {
+                return { table: 'cap_projects', ref: 'bidintell:' + p.id, row: { ...common, project_ref: 'bidintell:' + p.id, status: 'awarded', manual_peak_adjustment: 1 } };
+            }
+            return { table: 'cap_opportunities', ref: 'bidintell:' + p.id, row: { ...common, opportunity_ref: 'bidintell:' + p.id,
+                bidintell_score: score, confidence_score: 0.6,
+                probability_of_award: score ? Math.max(0.1, Math.min(0.9, score / 100)) : 0.5,
+                include_flag: true } };
+        }
+
+        async function syncProjectsToCapacity(list, silent) {
+            if (!supabaseClient || !currentUser) { if (!silent) alert('Please sign in first.'); return; }
+            const mapped = (list || []).map(_capMapProject).filter(Boolean);
+            if (!mapped.length) { if (!silent) alert('No pending or won bids to sync.'); return; }
+            const [oppRes, prjRes] = await Promise.all([
+                supabaseClient.from('cap_opportunities').select('id,opportunity_ref').eq('user_id', currentUser.id).like('opportunity_ref', 'bidintell:%'),
+                supabaseClient.from('cap_projects').select('id,project_ref').eq('user_id', currentUser.id).like('project_ref', 'bidintell:%')
+            ]);
+            if (oppRes.error || prjRes.error) { if (!silent) alert('Capacity sync failed: ' + (oppRes.error || prjRes.error).message); return; }
+            const oppByRef = {}; (oppRes.data || []).forEach(r => oppByRef[r.opportunity_ref] = r.id);
+            const prjByRef = {}; (prjRes.data || []).forEach(r => prjByRef[r.project_ref] = r.id);
+            const oppInserts = [], prjInserts = []; let moved = 0, skipped = 0;
+            for (const m of mapped) {
+                const inOpp = oppByRef[m.ref], inPrj = prjByRef[m.ref];
+                if (m.table === 'cap_projects') {
+                    if (inPrj) { skipped++; continue; }
+                    if (inOpp) { await supabaseClient.from('cap_opportunities').delete().eq('id', inOpp); moved++; }
+                    prjInserts.push(m.row);
+                } else {
+                    if (inOpp || inPrj) { skipped++; continue; }
+                    oppInserts.push(m.row);
+                }
+            }
+            if (oppInserts.length) { const { error } = await supabaseClient.from('cap_opportunities').insert(oppInserts); if (error) { if (!silent) alert('Capacity sync error: ' + error.message); return; } }
+            if (prjInserts.length) { const { error } = await supabaseClient.from('cap_projects').insert(prjInserts); if (error) { if (!silent) alert('Capacity sync error: ' + error.message); return; } }
+            if (!silent) alert(`Synced to BidIntell Capacity:\n• ${oppInserts.length} → pipeline\n• ${prjInserts.length} → backlog${moved ? `\n• ${moved} moved (won → backlog)` : ''}${skipped ? `\n• ${skipped} already linked` : ''}\n\nOpen Capacity to set install start dates and labor templates.`);
+            return { added: oppInserts.length + prjInserts.length, moved, skipped };
+        }
+
+        async function syncAllToCapacity() {
+            if (!allProjectsCache || !allProjectsCache.length) { alert('No bids loaded yet.'); return; }
+            if (!confirm('Add your pending bids (→ pipeline) and won bids (→ backlog) to BidIntell Capacity?\n\nAlready-linked bids are skipped, so this is safe to run anytime.')) return;
+            await syncProjectsToCapacity(allProjectsCache);
+        }
+
+        async function addOneToCapacity(id) {
+            const p = (allProjectsCache || []).find(x => x.id === id);
+            if (!p) { alert('Bid not found.'); return; }
+            const r = await syncProjectsToCapacity([p]);
+            if (r && r.added === 0 && r.moved === 0) alert('This bid is already in Capacity (or was lost/declined).');
+        }
+
         function renderProjectsTable(projects) {
             if (!projects || projects.length === 0) {
                 document.getElementById('projectsList').innerHTML = '<div class="empty-state" style="padding:40px;"><h3>No matching projects</h3><p>Try adjusting your filters</p></div>';
@@ -13717,6 +13794,8 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                         <span style="font-size: 13px; color: var(--text-secondary);">Select All</span>
                     </label>
                     <button class="btn btn-sm" onclick="deleteSelectedProjects()" style="background:var(--danger); color:white; display:none;" id="deleteSelectedBtn">🗑️ Delete Selected (<span id="selectedCount">0</span>)</button>
+                    <a href="/capacity.html" class="btn btn-sm" style="margin-left:auto; text-decoration:none;">📅 Open Capacity</a>
+                    <button class="btn btn-sm" onclick="syncAllToCapacity()" title="Add pending bids to your Capacity pipeline and won bids to your backlog">⚡ Sync to Capacity</button>
                 </div>
                 <table class="projects-table">
                     <thead>
