@@ -1,6 +1,8 @@
 # Dependencies
 node_modules/
-package-lock.json
+# package-lock.json is COMMITTED so Netlify uses deterministic `npm ci`.
+# (Leaving it un-tracked made cloud builds run `npm install`, which re-resolved
+#  ^ ranges and broke when a transitive dep published a bad version — Jul 2026.)
 
 # Environment variables
 .env
