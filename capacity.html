@@ -96,7 +96,7 @@
   .chip.hire{background:var(--accent-dim);color:var(--accent)} .chip.overtime{background:var(--warn-dim);color:var(--warn)}
   .chip.outside_labor{background:var(--info-dim);color:var(--info)} .chip.hold{background:rgba(148,163,184,.14);color:var(--slate)}
   .chip.pass{background:var(--bad-dim);color:var(--bad)} .chip.escalate{background:var(--bad-dim);color:var(--bad)}
-  .chip.awarded{background:var(--ok-dim);color:var(--ok)} .chip.pursuit{background:var(--accent-dim);color:var(--accent)}
+  .chip.awarded{background:var(--ok-dim);color:var(--ok)} .chip.pursuit{background:var(--accent-dim);color:var(--accent)} .chip.estimating{background:var(--info-dim);color:var(--info)}
   .chip.full{background:var(--ok-dim);color:var(--ok)} .chip.partial{background:var(--warn-dim);color:var(--warn)} .chip.invite{background:var(--bad-dim);color:var(--bad)}
 
   .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
@@ -329,7 +329,7 @@
         <p class="ph">Enter these on the matching screens. Start with the two that matter most: <b>People</b> and <b>Templates</b>. You can also <b>Import a CSV</b> on each, or hit <b>Sync to Capacity</b> inside the main BidIntell app to pull your scored bids in automatically.</p>
         <table>
           <tr><th>Step</th><th>Screen</th><th>What to enter</th></tr>
-          <tr><td><span class="step-n" style="color:var(--accent);font-family:var(--mono);font-weight:700">1</span></td><td><b>People</b></td><td>Your crew and salaried staff. For each: role, hours/week, and — for the money view — a <b>base wage</b> and a <b>cost class</b> (variable field / semi-fixed PM-foreman / fixed support). A future “available from” date = a planned hire.</td></tr>
+          <tr><td><span class="step-n" style="color:var(--accent);font-family:var(--mono);font-weight:700">1</span></td><td><b>People</b></td><td>Your crew and salaried staff (installers, foremen, PMs, <b>estimators</b>, support). For each: role, hours/week, base wage, and a <b>labor bucket</b> — <b>direct</b> (field production, flexes with work) or <b>management</b> (PM / foreman / estimator / support). A future “available from” date = a planned hire. Set your <b>owner salary</b> in Settings so profit is measured after paying yourself.</td></tr>
           <tr><td><span class="step-n" style="color:var(--accent);font-family:var(--mono);font-weight:700">2</span></td><td><b>Templates</b></td><td>A reusable <b>crew curve</b> per job type — how many installers/foremen/PMs each week over the job’s duration. Build one per common archetype (e.g. “Flooring – Commercial TI, 10 wk”). This is what turns a job into a week-by-week labor shape.</td></tr>
           <tr><td><span class="step-n" style="color:var(--accent);font-family:var(--mono);font-weight:700">3</span></td><td><b>Backlog &amp; Pipeline → Projects</b></td><td>Jobs you’ve <b>won</b>. Each needs a start date + a template. Add contract value + margin % to power the money view.</td></tr>
           <tr><td><span class="step-n" style="color:var(--accent);font-family:var(--mono);font-weight:700">4</span></td><td><b>Backlog &amp; Pipeline → Opportunities</b></td><td>Bids you’re <b>chasing</b>. Same fields plus <b>win probability</b> (0–1) and <b>document confidence</b> (0–1). These weight how much the pursuit counts.</td></tr>
@@ -357,8 +357,13 @@
         </div>
         <p style="font-size:14px;color:var(--slate);margin:0">A <b>hire</b> only fires when the work is sustained <em>and</em> gross margin covers the fully-burdened cost with cushion. Awarded work you can’t yet afford says “<b>bridge with outside labor</b>,” not “add payroll.” Pipeline-driven gaps say “<b>hold</b>” until the wins firm up.</p>
 
-        <h3 style="font-size:15px;margin:14px 0 4px">5 · Margin coverage (can you afford the team?)</h3>
-        <p style="font-size:14px;color:var(--slate);margin:0">Each job also throws off <b>gross margin</b> (contract value × margin %), recognized as the work gets done. Capacity stacks that against your <b>fully-burdened monthly labor cost</b> and tells you how many <b>months of payroll your booked work covers</b> — plus the break-even: how much new signed work per month you need to sustain the team.</p>
+        <h3 style="font-size:15px;margin:14px 0 4px">5 · The money (can you afford the team?)</h3>
+        <p style="font-size:14px;color:var(--slate);margin:0 0 8px">Each job throws off <b>gross margin</b> (contract value × margin %), recognized as the work gets done. Capacity runs a full waterfall: <b>revenue → gross margin → contribution margin (after field labor) → operating income (after management labor, incl. a market-rate owner salary) → pretax profit (after non-labor overhead).</b></p>
+        <p style="font-size:14px;color:var(--slate);margin:0 0 8px">Two <b>labor efficiency ratios</b> tell you if the team is the right size: <b>Direct LER</b> = gross margin per $1 of field labor (target ~$2.00), <b>Management LER</b> = contribution margin per $1 of management labor (target ~$3.00). A hire only fires if it keeps efficiency at target and coverage above your floor — otherwise Capacity says bridge, not hire.</p>
+        <p style="font-size:14px;color:var(--slate);margin:0">You also get <b>months of coverage</b> (how long booked work carries payroll) and the <b>profit-target number</b>: how much signed work per month you need to hit your target margin — the number BidIndex and outreach have to feed.</p>
+
+        <h3 style="font-size:15px;margin:14px 0 4px">6 · Estimators (pricing capacity)</h3>
+        <p style="font-size:14px;color:var(--slate);margin:0">Estimators work the other direction: their demand comes from <b>bids you're chasing</b>, front-loaded into the pricing days before each bid's <b>due date</b> (win or lose — no discount). Awarded jobs create no estimating demand. When estimating hours outrun your estimators, Capacity says <b>triage harder</b> (tighten bid selection with BidIndex) → <b>outsource takeoff</b> → <b>hire</b> (only if the crunch is sustained and management efficiency holds).</p>
       </div>
 
       <div class="panel">
@@ -399,19 +404,25 @@ const SUPABASE_URL = 'https://szifhqmrddmdkgschkkw.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6aWZocW1yZGRtZGtnc2Noa2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwOTkyMDUsImV4cCI6MjA4NDY3NTIwNX0.XSStBZABbfJRMkGqwG-uh2X6nco7GqtiIxUg_0HHlZE';
 const LS_KEY = 'bidintell_capacity_v1';
 
+// bucket = labor-efficiency classification: 'direct' (field production, variable)
+// vs 'management' (PMs, foremen, estimators, support + owner comp, semi-fixed).
+// pursuit:true = demand comes from the bid pipeline (estimators price before award),
+// not from awarded job crew curves. unit 'hours' roles are sized in hours not FTE.
 const ROLES = {
-  installer: {label:'Installer', type:'direct',   costClass:'variable'},
-  painter:   {label:'Painter',   type:'direct',   costClass:'variable'},
-  foreman:   {label:'Foreman',   type:'direct',   costClass:'semi_fixed'},
-  laborer:   {label:'Laborer',   type:'direct',   costClass:'variable'},
-  pm:        {label:'Project Manager', type:'indirect', costClass:'semi_fixed'},
-  detailer:  {label:'Detailer / Estimator', type:'indirect', costClass:'fixed'},
+  installer: {label:'Installer', type:'direct',   costClass:'variable',  bucket:'direct'},
+  painter:   {label:'Painter',   type:'direct',   costClass:'variable',  bucket:'direct'},
+  foreman:   {label:'Foreman',   type:'direct',   costClass:'semi_fixed', bucket:'management'},
+  laborer:   {label:'Laborer',   type:'direct',   costClass:'variable',  bucket:'direct'},
+  pm:        {label:'Project Manager', type:'indirect', costClass:'semi_fixed', bucket:'management'},
+  detailer:  {label:'Detailer',  type:'indirect', costClass:'fixed',     bucket:'management'},
+  estimator: {label:'Estimator', type:'indirect', costClass:'fixed',     bucket:'management', pursuit:true, unit:'hours'},
 };
 const ROLE_KEYS = Object.keys(ROLES);
-// Default fully-*un*burdened annual wage per role — used to cost NEW hires that
-// have no wage row yet (the affordability gate). Burden % is applied on top.
-const DEFAULT_ROLE_WAGE = { installer:58240, painter:54080, foreman:79040, laborer:43680, pm:85000, detailer:68000 };
-const COST_CLASS_LABEL = { variable:'Variable (field)', semi_fixed:'Semi-fixed (ops)', fixed:'Fixed (support)' };
+function roleBucket(role){ return (ROLES[role]&&ROLES[role].bucket) || 'management'; }
+function laborBucketOf(p){ return p.labor_bucket || (ROLES[p.role_canonical]&&ROLES[p.role_canonical].bucket) || (p.cost_class==='variable'?'direct':'management'); }
+// Default fully-*un*burdened annual wage per role — used to cost NEW hires with no wage row.
+const DEFAULT_ROLE_WAGE = { installer:58240, painter:54080, foreman:79040, laborer:43680, pm:85000, detailer:68000, estimator:72000 };
+const BUCKET_LABEL = { direct:'Direct (field production)', management:'Management (PM / foreman / estimator / support)' };
 const DEFAULT_SETTINGS = {
   company_name:'', trades:['flooring','painting'], home_metro:'',
   planning_horizon_weeks:180, hours_per_fte_week:40, hiring_lead_time_weeks:6,
@@ -419,8 +430,17 @@ const DEFAULT_SETTINGS = {
   outside_labor_fte:3, utilization_target:0.90,
   conf_invite_max:0.40, conf_partial_max:0.70,
   conf_weight_invite:0.50, conf_weight_partial:0.80, conf_weight_full:1.00,
-  // margin-coverage layer
-  default_gm_pct:0.28, labor_burden_pct:0.32, monthly_fixed_overhead:0, coverage_cushion_pct:0.15,
+  // financial model (labor-efficiency waterfall)
+  default_gm_pct:0.28, labor_burden_pct:0.32, coverage_cushion_pct:0.15,
+  monthly_fixed_overhead:0,          // repurposed: NON-LABOR operating expenses / month
+  owner_comp_annual:0,               // market-rate owner salary → management labor
+  gm_basis:'before',                 // is default_gm_pct stated 'before' or 'after' field labor
+  profit_target_pct:0.10,            // pretax profit target
+  direct_ler_target:2.0, mgmt_ler_target:3.0,
+  coverage_floor_months:2,
+  // estimating (pursuit-side labor)
+  estimating_window_weeks:2,
+  estimating_templates:[],           // [{trade,size_band,doc_band,hours,window_weeks}]
 };
 
 let supabaseClient=null, currentUser=null, MODE='demo';
@@ -480,8 +500,9 @@ function runForecast(state){
     const startW=weekIndexOf(src.expected_start_date, start);
     const dur=t.duration_weeks;
     const gmPct = (src.gross_margin_pct!=null && src.gross_margin_pct!=='') ? +src.gross_margin_pct : s.default_gm_pct;
-    const gmFull = (+src.contract_value||0) * gmPct;
-    const rec = sources[src.__id] = sources[src.__id] || {name:src.__name, type:isAwarded?'awarded':'pursuit', isAwarded, mul:weightMul, gmFull, fteWeeks:0, roleWeek:{}, weekLabor:zero()};
+    const contractFull = (+src.contract_value||0);
+    const gmFull = contractFull * gmPct;
+    const rec = sources[src.__id] = sources[src.__id] || {name:src.__name, type:isAwarded?'awarded':'pursuit', isAwarded, mul:weightMul, gmFull, contractFull, fteWeeks:0, roleWeek:{}, weekLabor:zero()};
     rec.weekLaborTotal = rec.weekLaborTotal||0;
     for(let k=0;k<dur;k++){
       const w=startW+k; if(w<0||w>=N) continue;
@@ -504,6 +525,24 @@ function runForecast(state){
     o.__id=o.id; o.__name=o.project_name;
     const mul=(o.probability_of_award||0)*confWeight(o.confidence_score);
     addDemand(o,false,mul);
+  });
+
+  // ESTIMATOR pursuit demand — hours to price each pipeline bid, front-loaded into
+  // the window ending at the bid due date. No win-prob discount (hours spent win or
+  // lose) → counts at 100% in the awarded (certain) track. Awarded jobs create none.
+  const hpf = s.hours_per_fte_week||40;
+  state.opportunities.filter(o=>o.include_flag && o.bid_due_date).forEach(o=>{
+    const hours = estimatingHoursFor(o,s); if(hours<=0) return;
+    const win = Math.max(1, o.pricing_window_weeks || s.estimating_window_weeks || 2);
+    const dueW = weekIndexOf(o.bid_due_date,start);
+    let tot=0; const wgt=[]; for(let k=0;k<win;k++){ const g=win-k; wgt.push(g); tot+=g; } // front-loaded
+    const rec = sources['est:'+o.id] = {name:o.project_name+' (pricing)', type:'estimating', isAwarded:true, mul:1, gmFull:0, contractFull:0, fteWeeks:0, roleWeek:{estimator:zero()}, weekLabor:zero(), weekLaborTotal:0};
+    for(let k=0;k<win;k++){
+      const w = dueW-(win-1)+k; if(w<0||w>=N) continue;
+      const fte = (hours*(wgt[k]/tot))/hpf;
+      demandAwarded['estimator'][w]+=fte;
+      rec.roleWeek.estimator[w]+=fte; rec.fteWeeks+=fte; rec.weekLabor[w]+=fte; rec.weekLaborTotal+=fte;
+    }
   });
 
   // SUPPLY — base roster (+ future hires via available_from) with attrition decay
@@ -540,54 +579,79 @@ function runForecast(state){
   const driverProjects=Object.values(sources).map(x=>({name:x.name,type:x.type,fteWeeks:r1(x.fteWeeks)}))
     .sort((a,b)=>b.fteWeeks-a.fteWeeks);
 
-  // ---- MONEY LAYER: gross-margin recognition + labor carry, weekly then monthly
-  const gmAwardedWk=zero(), gmWeightedWk=zero();
+  // ---- FINANCIAL MODEL: labor-efficiency waterfall (revenue → GM → contribution → pretax)
+  const gmAwardedWk=zero(), gmWeightedWk=zero(), revAwardedWk=zero(), revWeightedWk=zero();
   Object.values(sources).forEach(rec=>{
-    if(rec.weekLaborTotal<=0 || !rec.gmFull) return;
+    if(rec.weekLaborTotal<=0) return;
     for(let w=0;w<N;w++){ const share=rec.weekLabor[w]/rec.weekLaborTotal; if(!share) continue;
-      if(rec.isAwarded) gmAwardedWk[w]+= rec.gmFull*share; else gmWeightedWk[w]+= rec.gmFull*rec.mul*share; }
+      if(rec.isAwarded){ gmAwardedWk[w]+=(rec.gmFull||0)*share; revAwardedWk[w]+=(rec.contractFull||0)*share; }
+      else { gmWeightedWk[w]+=(rec.gmFull||0)*rec.mul*share; revWeightedWk[w]+=(rec.contractFull||0)*rec.mul*share; } }
   });
-  const costVarWk=zero(), costSemiWk=zero(), costFixedWk=zero();
+  // labor split: DIRECT (field production) vs MANAGEMENT (PM/foreman/estimator/support + owner comp)
+  const costDirectWk=zero(), costMgmtWk=zero();
   state.people.filter(p=>p.active_flag).forEach(p=>{
     const cw=burdenedWeeklyCost(p,s); if(cw<=0) return;
-    const cls=p.cost_class || (ROLES[p.role_canonical]?ROLES[p.role_canonical].costClass:'variable');
+    const bucket=laborBucketOf(p);
     const from=p.available_from?weekIndexOf(p.available_from,start):0;
     const to=p.available_to?weekIndexOf(p.available_to,start):N-1;
-    for(let w=Math.max(0,from);w<=Math.min(N-1,to);w++){
-      if(cls==='fixed') costFixedWk[w]+=cw; else if(cls==='semi_fixed') costSemiWk[w]+=cw; else costVarWk[w]+=cw;
-    }
+    for(let w=Math.max(0,from);w<=Math.min(N-1,to);w++){ if(bucket==='direct') costDirectWk[w]+=cw; else costMgmtWk[w]+=cw; }
   });
-  const ohWk=(s.monthly_fixed_overhead||0)*12/52; for(let w=0;w<N;w++) costFixedWk[w]+=ohWk;
-  // monthly rollup
+  const ownerWk=(s.owner_comp_annual||0)/52; for(let w=0;w<N;w++) costMgmtWk[w]+=ownerWk; // owner comp = management labor
+  const opexMonthly=s.monthly_fixed_overhead||0;                 // NON-LABOR operating expenses / month
+  const before=(s.gm_basis||'before')!=='after';
   const monthMap={};
   for(let w=0;w<N;w++){ const d=weeks[w].start; const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-    const m=monthMap[key]||(monthMap[key]={key,label:d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}),gmA:0,gmW:0,cV:0,cS:0,cF:0});
-    m.gmA+=gmAwardedWk[w]; m.gmW+=gmWeightedWk[w]; m.cV+=costVarWk[w]; m.cS+=costSemiWk[w]; m.cF+=costFixedWk[w];
+    const m=monthMap[key]||(monthMap[key]={key,label:d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}),gmA:0,gmW:0,revA:0,revW:0,dL:0,mL:0});
+    m.gmA+=gmAwardedWk[w]; m.gmW+=gmWeightedWk[w]; m.revA+=revAwardedWk[w]; m.revW+=revWeightedWk[w]; m.dL+=costDirectWk[w]; m.mL+=costMgmtWk[w];
   }
-  const monthsAll=Object.values(monthMap).map(m=>{ const cost=m.cV+m.cS+m.cF; const gm=m.gmA+m.gmW;
-    return {...m, cost, gm, nut:m.cS+m.cF, net:gm-cost, netAwarded:m.gmA-cost, ratio:cost>0?gm/cost:null}; });
-  const avg=(arr,f)=>arr.length?arr.reduce((a,x)=>a+f(x),0)/arr.length:0;
-  // Representative monthly carry = avg of the "full" months (drop the partial first/last).
+  const monthsAll=Object.values(monthMap).map(m=>{
+    const gm=m.gmA+m.gmW, directLabor=m.dL, mgmt=m.mL, opex=opexMonthly;
+    const cost=directLabor+mgmt+opex;
+    const GM=before?gm:gm+directLabor, CM=before?gm-directLabor:gm;
+    const opInc=CM-mgmt, pretax=opInc-opex;
+    return {...m, gm, rev:m.revA+m.revW, directLabor, mgmt, opex, cost, GM, CM, opInc, pretax, nut:mgmt+opex,
+            net:gm-cost, netAwarded:m.gmA-cost, ratio:cost>0?gm/cost:null};
+  });
+  const avg=(a,f)=>a.length?a.reduce((s2,x)=>s2+f(x),0)/a.length:0, sum=(a,f)=>a.reduce((s2,x)=>s2+f(x),0);
   const fullMonths = monthsAll.length>2 ? monthsAll.slice(1,monthsAll.length-1) : monthsAll;
-  const repCost = r0(avg(fullMonths.length?fullMonths:monthsAll, m=>m.cost));
-  const repNut  = r0(avg(fullMonths.length?fullMonths:monthsAll, m=>m.nut));
-  // Booked/likely GM = total across horizon (lumpy), expressed as MONTHS of carry covered.
-  const totalGmAwarded = monthsAll.reduce((a,m)=>a+m.gmA,0);
-  const totalGmWeighted= monthsAll.reduce((a,m)=>a+m.gmW,0);
-  const monthsCoveredA = repCost>0 ? totalGmAwarded/repCost : 0;
-  const monthsCoveredT = repCost>0 ? (totalGmAwarded+totalGmWeighted)/repCost : 0;
+  const repMonths = fullMonths.length?fullMonths:monthsAll;
+  const repCost=r0(avg(repMonths,m=>m.cost)), repNut=r0(avg(repMonths,m=>m.nut));
+  const repMgmt=avg(repMonths,m=>m.mgmt), repDirect=avg(repMonths,m=>m.directLabor);
+  // active window (up to last month with GM) → fair LER numerator/denominator
+  let lastGm=0; monthsAll.forEach((m,i)=>{ if((m.gmA+m.gmW)>1) lastGm=i; });
+  const active=monthsAll.slice(0,Math.max(3,lastGm+1));
+  const aGMa=sum(active,m=>m.gmA), aGMt=sum(active,m=>m.gmA+m.gmW), aDir=sum(active,m=>m.directLabor), aMgmt=sum(active,m=>m.mgmt), aRev=sum(active,m=>m.rev);
+  const GMa=before?aGMa:aGMa+aDir, GMt=before?aGMt:aGMt+aDir, CMa=before?aGMa-aDir:aGMa, CMt=before?aGMt-aDir:aGMt;
+  const lerDirect={target:s.direct_ler_target||2, trailing:aDir>0?GMa/aDir:null, forecast:aDir>0?GMt/aDir:null};
+  const lerMgmt  ={target:s.mgmt_ler_target||3,  trailing:aMgmt>0?CMa/aMgmt:null, forecast:aMgmt>0?CMt/aMgmt:null};
+  const gmPct=s.default_gm_pct||0.28;
+  const dLaborRate = aRev>0 ? aDir/aRev : gmPct/(s.direct_ler_target||2);
+  const cmPctEff = before ? Math.max(0, gmPct - dLaborRate) : gmPct;   // contribution margin as % of revenue
+  const F = repMgmt + opexMonthly;                                     // fixed monthly (mgmt labor incl owner + opex)
+  const tgt=s.profit_target_pct||0.10;
+  const targetRevenue = cmPctEff>tgt ? F/(cmPctEff-tgt) : null;        // signed work/mo to hit profit target
+  const breakevenRevenue = cmPctEff>0 ? F/cmPctEff : null;            // survival number
+  const totalGmAwarded=sum(monthsAll,m=>m.gmA), totalGmWeighted=sum(monthsAll,m=>m.gmW);
+  const monthsCoveredA=repCost>0?totalGmAwarded/repCost:0, monthsCoveredT=repCost>0?(totalGmAwarded+totalGmWeighted)/repCost:0;
   const addMonths=(base,n)=>{ const d=new Date(base); d.setMonth(d.getMonth()+Math.floor(n)); return d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}); };
-  const months = monthsAll.slice(0, Math.min(monthsAll.length, 15)); // near-term window for the coverage view
+  const months=monthsAll.slice(0,Math.min(monthsAll.length,15));
+  const wf={ revenue:r0(avg(active,m=>m.rev)), gm:r0(avg(active,m=>m.GM)), cogs:r0(avg(active,m=>m.rev-m.GM)),
+    directLabor:r0(avg(active,m=>m.directLabor)), cm:r0(avg(active,m=>m.CM)), mgmt:r0(avg(active,m=>m.mgmt)),
+    opInc:r0(avg(active,m=>m.opInc)), opex:opexMonthly, pretax:r0(avg(active,m=>m.pretax)), ownerComp:r0((s.owner_comp_annual||0)/12) };
+  wf.pretaxPct = wf.revenue>0 ? wf.pretax/wf.revenue : null;
   const money={ months, monthsAll,
-    monthlyLaborCost:repCost, monthlyNut:repNut,
+    monthlyLaborCost:repCost, monthlyNut:repNut, monthlyDirect:r0(repDirect), monthlyMgmt:r0(repMgmt),
     monthlyGmAwarded:r0(totalGmAwarded/Math.max(1,monthsAll.length)), monthlyGmWeighted:r0(totalGmWeighted/Math.max(1,monthsAll.length)),
     totalGmAwarded:r0(totalGmAwarded), totalGmWeighted:r0(totalGmWeighted),
     monthsCoveredAwarded:Math.round(monthsCoveredA*10)/10, monthsCoveredWeighted:Math.round(monthsCoveredT*10)/10,
     coverageAwarded: monthsCoveredA>=0.3 ? addMonths(start, monthsCoveredA) : null,
     coverageWeighted: monthsCoveredT>=0.3 ? addMonths(start, monthsCoveredT) : null,
-    burden:s.labor_burden_pct, defaultGm:s.default_gm_pct };
+    burden:s.labor_burden_pct, defaultGm:gmPct, gmBasis:before?'before':'after',
+    waterfall:wf, lerDirect, lerMgmt, cmPct:cmPctEff,
+    targetRevenue:targetRevenue!=null?r0(targetRevenue):null, breakevenRevenue:breakevenRevenue!=null?r0(breakevenRevenue):null,
+    profitTargetPct:tgt, ownerComp:s.owner_comp_annual||0, coverageFloor:s.coverage_floor_months||2 };
 
-  const recommendations=buildRecommendations({state,start,N,gap,supply,demandAwarded,demandWeighted,sources,rolesUsed,months:monthsAll});
+  const recommendations=buildRecommendations({state,start,N,gap,supply,demandAwarded,demandWeighted,sources,rolesUsed,months:monthsAll,money});
 
   return {weeks,rolesUsed,demandAwarded,demandWeighted,supply,gap,totals,roleSummary,driverProjects,recommendations,start,N,sources,money};
 }
@@ -601,6 +665,18 @@ function burdenedWeeklyCost(p,s){
 function defaultHireMonthlyCost(role,s){ const base=DEFAULT_ROLE_WAGE[role]||55000; return base*(1+(s.labor_burden_pct||0))/12; }
 function r0(n){ return Math.round(n); }
 function money$(n){ if(n==null) return '—'; const a=Math.abs(n); const sign=n<0?'-':''; if(a>=1000) return sign+'$'+(a/1000).toFixed(a>=10000?0:1)+'k'; return sign+'$'+Math.round(a); }
+function pct(n){ return (n==null||!isFinite(n))?'—':Math.round(n*100)+'%'; }
+function ratio(n){ return (n==null||!isFinite(n))?'—':(Math.round(n*100)/100).toFixed(2)+'×'; }
+// Estimating pricing hours per bid, by size band × document completeness.
+const DEFAULT_ESTIMATING = { invite:{small:3,medium:5,large:8}, partial:{small:8,medium:16,large:28}, full:{small:14,medium:30,large:55} };
+function sizeBand(cv){ cv=+cv||0; return cv>=500000?'large':cv>=150000?'medium':'small'; }
+function estimatingHoursFor(o,s){
+  if(o.estimating_hours!=null && o.estimating_hours!=='') return +o.estimating_hours||0;
+  const band=sizeBand(o.contract_value), doc=confBand(o.confidence_score,s); // invite|partial|full
+  const t=(s.estimating_templates||[]).find(x=>(!x.trade||x.trade===o.trade)&&x.size_band===band&&x.doc_band===doc);
+  if(t) return +t.hours||0;
+  return (DEFAULT_ESTIMATING[doc]&&DEFAULT_ESTIMATING[doc][band])||0;
+}
 
 // ============================================================================
 // RECOMMENDATION ENGINE (transparent business rules)
@@ -613,99 +689,89 @@ function contiguousRuns(arr, thresh){
   }
   if(cur) runs.push(cur); return runs;
 }
+// Post-hire labor-efficiency gate: a hire is OK only if the forecast LER for its
+// labor class stays at/above target AND coverage stays above the floor.
+function hireGate(role, addedMonthlyCost, money, s){
+  const bucket=roleBucket(role);
+  const ler = bucket==='direct'?money.lerDirect:money.lerMgmt;
+  const curLabor = bucket==='direct'?(money.monthlyDirect||0):(money.monthlyMgmt||0);
+  let postLER;
+  if(curLabor>0 && ler.forecast!=null) postLER = ler.forecast*curLabor/(curLabor+addedMonthlyCost);
+  else { const num = bucket==='direct'?money.waterfall.gm:money.waterfall.cm; postLER = addedMonthlyCost>0? num/addedMonthlyCost : null; }
+  const totalGM=(money.totalGmAwarded||0)+(money.totalGmWeighted||0);
+  const denom=(money.monthlyLaborCost||0)+addedMonthlyCost;
+  const postCoverage = denom>0? totalGM/denom : 0;
+  const floor=money.coverageFloor||2, target=ler.target;
+  return {ok:(postLER!=null&&postLER>=target)&&postCoverage>=floor, bucket, postLER, target, postCoverage, floor};
+}
 function buildRecommendations(ctx){
-  const {state,start,N,gap,supply,demandAwarded,demandWeighted,sources,rolesUsed}=ctx;
+  const {state,start,N,gap,supply,demandAwarded,demandWeighted,sources,rolesUsed,money}=ctx;
   const s=state.settings; const recs=[];
-  const monthByKey={}; (ctx.months||[]).forEach(m=>monthByKey[m.key]=m);
-  const keyForWeek=(w)=>{ const d=addWeeks(start,w); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); };
-  const monthsForRun=(run)=>{ const set={}; for(let w=run.from;w<=run.to;w++){ const k=keyForWeek(w); if(monthByKey[k]) set[k]=monthByKey[k]; } return Object.values(set); };
-  const avgOf=(arr,f)=>arr.length?arr.reduce((a,x)=>a+f(x),0)/arr.length:0;
   rolesUsed.forEach(role=>{
     const runs=contiguousRuns(gap[role],0.5);
     if(!runs.length) return;
     const recurring=runs.length>=2;
+    const pursuit = ROLES[role] && ROLES[role].pursuit;
     runs.forEach(run=>{
-      let peak=0, peakW=run.from, awardSum=0, weightSum=0, lowConfSum=0;
-      for(let w=run.from;w<=run.to;w++){
-        if(gap[role][w]>peak){peak=gap[role][w];peakW=w;}
-        awardSum+=demandAwarded[role][w]; weightSum+=demandWeighted[role][w];
-      }
-      const dur=run.to-run.from+1;
-      const totalDem=awardSum+weightSum || 1;
-      const awardedShare=awardSum/totalDem;
-      const rosterAtPeak=supply[role][peakW];
-      const overtimeCap=rosterAtPeak*s.overtime_max_pct;
-      const outsideCap=s.outside_labor_enabled?s.outside_labor_fte:0;
-      // driver projects for this run/role
-      const drivers=Object.values(sources).map(src=>{
-        let f=0; const rw=src.roleWeek[role]; if(rw) for(let w=run.from;w<=run.to;w++) f+=rw[w]||0;
-        return {name:src.name,type:src.type,fte:r1(f)};
-      }).filter(d=>d.fte>0).sort((a,b)=>b.fte-a.fte).slice(0,4);
+      let peak=0,peakW=run.from,awardSum=0,weightSum=0;
+      for(let w=run.from;w<=run.to;w++){ if(gap[role][w]>peak){peak=gap[role][w];peakW=w;} awardSum+=demandAwarded[role][w]; weightSum+=demandWeighted[role][w]; }
+      const dur=run.to-run.from+1, totalDem=awardSum+weightSum||1, awardedShare=awardSum/totalDem, weightedShare=weightSum/totalDem, endW=run.to;
+      const rosterAtPeak=supply[role][peakW], overtimeCap=rosterAtPeak*s.overtime_max_pct, outsideCap=s.outside_labor_enabled?s.outside_labor_fte:0;
+      const drivers=Object.values(sources).map(src=>{ let f=0; const rw=src.roleWeek[role]; if(rw) for(let w=run.from;w<=run.to;w++) f+=rw[w]||0; return {name:src.name,type:src.type,fte:r1(f)}; }).filter(d=>d.fte>0).sort((a,b)=>b.fte-a.fte).slice(0,4);
+      let action, qty=Math.ceil(peak), rationale, confLabel='medium', addedMonthlyCost=0, affordability=null, coverageNote='', lerNote='';
 
-      // confidence mix of the weighted portion (approx via drivers of type pursuit)
-      const weightedShare=weightSum/totalDem;
-      let action, qty=Math.ceil(peak), rationale, confLabel, endW=run.to;
-      if(peak<=overtimeCap+0.01 && dur<=4){
-        action='overtime'; qty=r1(peak);
-        rationale=`Short ${dur}-week gap of ~${r1(peak)} FTE, within your ${Math.round(s.overtime_max_pct*100)}% overtime allowance (${r1(overtimeCap)} FTE). Cover with overtime rather than hiring.`;
-        confLabel='high';
-      } else if(awardedShare>=0.6){
-        // Hire when the awarded shortage still exists after a new hire could onboard
-        // (extends past the hiring lead time) and lasts long enough to be worth it.
-        const canHire = run.to>=s.hiring_lead_time_weeks && dur>=6;
-        if(canHire){
-          action='hire'; qty=Math.max(1,Math.ceil(peak-overtimeCap));
-          const bridge = run.from<s.hiring_lead_time_weeks
-            ? ` The gap starts in ${run.from} wk — bridge the first weeks with overtime or outside labor until new hires are onboarded.` : '';
-          rationale=`Sustained ${dur}-week shortage peaking at ~${r1(peak)} FTE, mostly awarded work (${Math.round(awardedShare*100)}%). It runs past your ${s.hiring_lead_time_weeks}-wk hiring lead time, so hiring ~${qty} ${ROLES[role].label}(s) is justified.`+bridge;
-          confLabel='high';
-        } else {
-          action='outside_labor'; qty=r1(Math.min(peak,outsideCap||peak));
-          rationale=`Awarded-driven shortage of ~${r1(peak)} FTE, but it clears in ${dur} wk — before a new hire could onboard (${s.hiring_lead_time_weeks} wk). Cover with outside labor or overtime instead of hiring.`;
-          confLabel='high';
-        }
-      } else if(weightedShare>=0.6){
-        // driven by pursuits — confidence matters
-        const mostlyLow = weightSum>0 && (weightSum/ (weightSum+awardSum))>0.6 && awardedShare<0.3;
-        if(overtimeCap>=peak && dur<=6){ action='overtime'; qty=r1(peak); rationale=`Pipeline-driven gap of ~${r1(peak)} FTE that overtime can absorb — don't commit to a hire against work you haven't won.`; confLabel='medium'; }
-        else if(outsideCap>0){ action='outside_labor'; qty=r1(Math.min(peak,outsideCap)); rationale=`Shortage is driven by pipeline pursuits (${Math.round(weightedShare*100)}% of demand), not signed work. Line up outside labor / subcontract crews you can turn on only if these convert.`; confLabel='medium'; }
-        else { action='hold'; qty=r1(peak); rationale=`Projected demand exceeds capacity but it's driven by unwon pursuits (${Math.round(weightedShare*100)}%). Hold — revisit as awards firm up before adding cost.`; confLabel='low'; }
-      } else {
-        action='hold'; qty=r1(peak);
-        rationale=`Mixed-signal shortage of ~${r1(peak)} FTE. Hold and monitor; re-run as probabilities and dates firm up.`;
-        confLabel='medium';
+      if(pursuit){
+        // ESTIMATOR — pursuit-side. Order: triage → outsource → hire (LER-gated). Never field logic.
+        const addCost=Math.max(1,Math.ceil(peak))*defaultHireMonthlyCost(role,s);
+        const g=hireGate(role,addCost,money,s);
+        lerNote=`Post-hire management LER ${ratio(g.postLER)} vs target ${ratio(g.target)} · coverage ${g.postCoverage.toFixed(1)} mo (floor ${g.floor}).`;
+        if(dur>=6 && g.ok){ action='hire'; qty=Math.max(1,Math.ceil(peak)); addedMonthlyCost=r0(addCost); affordability='affordable'; confLabel='high';
+          rationale=`Estimating demand runs ~${r1(peak)} estimator short for ${dur} wk, and adding one keeps management labor efficiency at target. Hire an estimator — bench time = capacity to price more work.`; }
+        else if(dur>=6){ action='hold'; qty=r1(peak); affordability='unfunded'; confLabel='medium';
+          rationale=`Estimating demand exceeds your hours by ~${r1(peak)} estimator for ${dur} wk. Triage harder first — use BidIndex to price only the bids worth pricing — and outsource takeoff overflow. Don't hire: it would drop management labor efficiency below target (${ratio(g.postLER)} vs ${ratio(g.target)}).`; }
+        else { action='outside_labor'; qty=r1(peak); confLabel='medium';
+          rationale=`Short ${dur}-wk estimating crunch of ~${r1(peak)} estimator before a bid due date. Triage lower-BidIndex pursuits and outsource takeoff to bridge it — too brief to hire against.`; }
+        let urgency=peak*2+dur*0.3+2 - run.from*0.15; if(recurring) urgency+=2;
+        recs.push({action_type:action,role,roleLabel:ROLES[role].label,quantity:qty,start:fmtDate(addWeeks(start,run.from)),end:fmtDate(addWeeks(start,endW)),
+          startWeek:run.from,durWeeks:dur,peak:r1(peak),awardedShare:100,recurring,urgency:r1(urgency),confidence:confLabel,rationale,drivers,addedMonthlyCost,affordability,coverageNote,lerNote});
+        return;
       }
-      // ---- AFFORDABILITY GATE (margin-coverage layer) ----
-      let addedMonthlyCost=0, affordability=null, coverageNote='';
-      const span=monthsForRun(run);
-      const avgCost=avgOf(span,m=>m.cost), avgGmA=avgOf(span,m=>m.gmA), avgGm=avgOf(span,m=>m.gm);
-      const cushionA=avgGmA-avgCost, cushionT=avgGm-avgCost;
+
+      // FIELD / MANAGEMENT roles
+      if(peak<=overtimeCap+0.01 && dur<=4){ action='overtime'; qty=r1(peak); confLabel='high';
+        rationale=`Short ${dur}-week gap of ~${r1(peak)} FTE, within your ${Math.round(s.overtime_max_pct*100)}% overtime allowance (${r1(overtimeCap)} FTE). Cover with overtime rather than hiring.`; }
+      else if(awardedShare>=0.6){
+        const canHire = run.to>=s.hiring_lead_time_weeks && dur>=6;
+        if(canHire){ action='hire'; qty=Math.max(1,Math.ceil(peak-overtimeCap)); confLabel='high';
+          const bridge = run.from<s.hiring_lead_time_weeks?` The gap starts in ${run.from} wk — bridge the first weeks with overtime or outside labor until onboarded.`:'';
+          rationale=`Sustained ${dur}-week shortage peaking at ~${r1(peak)} FTE, mostly awarded (${Math.round(awardedShare*100)}%), running past your ${s.hiring_lead_time_weeks}-wk lead time. Hire ~${Math.max(1,Math.ceil(peak-overtimeCap))} ${ROLES[role].label}(s).`+bridge; }
+        else { action='outside_labor'; qty=r1(Math.min(peak,outsideCap||peak)); confLabel='high';
+          rationale=`Awarded-driven shortage of ~${r1(peak)} FTE, but it clears in ${dur} wk — before a hire could onboard (${s.hiring_lead_time_weeks} wk). Cover with outside labor or overtime.`; }
+      }
+      else if(weightedShare>=0.6){
+        if(overtimeCap>=peak && dur<=6){ action='overtime'; qty=r1(peak); confLabel='medium'; rationale=`Pipeline-driven gap of ~${r1(peak)} FTE that overtime can absorb — don't commit to a hire against work you haven't won.`; }
+        else if(outsideCap>0){ action='outside_labor'; qty=r1(Math.min(peak,outsideCap)); confLabel='medium'; rationale=`Shortage is driven by pipeline pursuits (${Math.round(weightedShare*100)}% of demand), not signed work. Line up outside labor you can turn on only if these convert.`; }
+        else { action='hold'; qty=r1(peak); confLabel='low'; rationale=`Projected demand exceeds capacity but it's driven by unwon pursuits (${Math.round(weightedShare*100)}%). Hold — revisit as awards firm up.`; }
+      }
+      else { action='hold'; qty=r1(peak); confLabel='medium'; rationale=`Mixed-signal shortage of ~${r1(peak)} FTE. Hold and monitor.`; }
+
+      // ---- LER HIRE GATE (replaces the old margin-cushion gate) ----
       if(action==='hire'){
         addedMonthlyCost=qty*defaultHireMonthlyCost(role,s);
-        const need=addedMonthlyCost*(1+(s.coverage_cushion_pct||0));
-        if(cushionA>=need){ affordability='affordable';
-          coverageNote=`Affordable: awarded gross margin in this window (~${money$(avgGmA)}/mo) carries the ~${money$(addedMonthlyCost)}/mo burdened cost of this hire with cushion.`; }
-        else if(cushionT>=need){ affordability='contingent';
-          coverageNote=`Conditional: awarded GM covers ~${money$(Math.max(0,cushionA))}/mo of the ~${money$(addedMonthlyCost)}/mo cost; the rest depends on weighted pipeline converting. Don't commit until those wins firm.`; }
+        const g=hireGate(role,addedMonthlyCost,money,s);
+        lerNote=`Post-hire ${g.bucket} LER ${ratio(g.postLER)} vs target ${ratio(g.target)} · coverage ${g.postCoverage.toFixed(1)} mo (floor ${g.floor}).`;
+        if(g.ok){ affordability='affordable'; coverageNote=`Efficient: keeps ${g.bucket} labor efficiency at/above target and coverage above the ${g.floor}-month floor.`; }
         else { affordability='unfunded';
-          const hireCost=money$(addedMonthlyCost), shortBy=money$(Math.max(0,need-cushionT));
           if(awardedShare>=0.6){ action='outside_labor'; qty=r1(Math.min(peak,outsideCap||peak)); confLabel='medium';
-            rationale=`The work driving this shortage is awarded, but your gross margin during this window doesn't yet cover the ~${hireCost}/mo burdened cost of ${Math.ceil(peak)} permanent ${ROLES[role].label}(s) (short ~${shortBy}/mo). Staff it with outside labor or overtime instead of adding payroll you can't carry — the Facility Systems trap.`; }
+            rationale=`Work is there and mostly awarded, but this hire would drop your ${g.bucket==='direct'?'field':'management'} labor efficiency below target (${ratio(g.postLER)} vs ${ratio(g.target)}) or coverage below ${g.floor} mo. Bridge it with outside labor / overtime instead of adding payroll.`; }
           else { action='hold'; confLabel='low';
-            rationale=`Real FTE shortage, but it's pipeline-driven and unfunded — awarded + weighted GM is ~${shortBy}/mo short of the ~${hireCost}/mo these hires would cost. Hold: don't add payroll against unwon work.`; }
-          addedMonthlyCost=0; // not a hire anymore; cost referenced in rationale
+            rationale=`Shortage is pipeline-driven and a hire would push labor efficiency below target (${ratio(g.postLER)} vs ${ratio(g.target)}). Hold until the work firms up.`; }
+          addedMonthlyCost=0;
         }
       }
-      let urgency = peak*2 + dur*0.3 + awardedShare*3 - run.from*0.15;
-      if(recurring) urgency+=2;
-      recs.push({
-        action_type:action, role, roleLabel:ROLES[role].label, quantity:qty,
-        start:fmtDate(addWeeks(start,run.from)), end:fmtDate(addWeeks(start,endW)),
-        startWeek:run.from, durWeeks:dur, peak:r1(peak),
-        awardedShare:Math.round(awardedShare*100), recurring,
-        urgency:r1(urgency), confidence:confLabel, rationale, drivers,
-        addedMonthlyCost:r0(addedMonthlyCost), affordability, coverageNote
-      });
+      let urgency=peak*2+dur*0.3+awardedShare*3 - run.from*0.15; if(recurring) urgency+=2;
+      recs.push({action_type:action,role,roleLabel:ROLES[role].label,quantity:qty,start:fmtDate(addWeeks(start,run.from)),end:fmtDate(addWeeks(start,endW)),
+        startWeek:run.from,durWeeks:dur,peak:r1(peak),awardedShare:Math.round(awardedShare*100),recurring,urgency:r1(urgency),confidence:confLabel,rationale,drivers,addedMonthlyCost:r0(addedMonthlyCost),affordability,coverageNote,lerNote});
     });
   });
   return recs.sort((a,b)=>b.urgency-a.urgency);
@@ -763,7 +829,9 @@ async function dbDelete(table,id){
 // ============================================================================
 function trap(D,peak,up,down){ const a=[]; for(let w=0;w<D;w++){ let v; if(w<up) v=peak*(w+1)/(up+1); else if(w>=D-down) v=peak*(D-w)/(down+1); else v=peak; a.push(Math.round(v*10)/10);} return a; }
 function loadDemo(persist){
-  const s={...DEFAULT_SETTINGS, company_name:'Demo Flooring & Painting Co', home_metro:'Kansas City, MO', monthly_fixed_overhead:9000, labor_burden_pct:0.32, default_gm_pct:0.28};
+  const s={...DEFAULT_SETTINGS, company_name:'Demo Flooring & Painting Co', home_metro:'Kansas City, MO',
+    monthly_fixed_overhead:9000, labor_burden_pct:0.32, default_gm_pct:0.30, gm_basis:'before',
+    owner_comp_annual:96000, profit_target_pct:0.10, direct_ler_target:2.0, mgmt_ler_target:3.0, coverage_floor_months:2, estimating_window_weeks:2};
   const T=(name,trade,arch,D,direct,indirect)=>({id:uid(),name,trade,archetype:arch,duration_weeks:D,direct_curves:direct,indirect_curves:indirect||{},version_number:1,source_type:'system',status:'active'});
   const templates=[
     T('Flooring — Commercial TI','flooring','commercial_ti',10,{installer:trap(10,4,2,2),foreman:new Array(10).fill(0.5)},{pm:new Array(10).fill(0.25),detailer:[1,1,0.5,0,0,0,0,0,0,0]}),
@@ -773,29 +841,31 @@ function loadDemo(persist){
   ];
   const tid=(arch,trade)=>templates.find(t=>t.archetype===arch&&t.trade===trade).id;
   const now=new Date();
-  const P=(name,role,trade,wage,basis,cls,extra)=>Object.assign({id:uid(),name,role_canonical:role,trade,employment_type:'employee',hours_per_week:40,active_flag:true,wage,wage_basis:basis,cost_class:cls},extra||{});
+  const P=(name,role,trade,wage,basis,bucket,extra)=>Object.assign({id:uid(),name,role_canonical:role,trade,employment_type:'employee',hours_per_week:40,active_flag:true,wage,wage_basis:basis,labor_bucket:bucket,cost_class:bucket==='direct'?'variable':'semi_fixed'},extra||{});
   const people=[
-    P('Carlos M.','installer','flooring',28,'hourly','variable'),
-    P('Devon R.','installer','flooring',27,'hourly','variable'),
-    P('Aaron P.','installer','flooring',29,'hourly','variable'),
-    P('Leo S.','installer','flooring',26,'hourly','variable'),
-    P('Marcus T.','foreman','flooring',38,'hourly','semi_fixed'),
-    P('Priya N.','pm','flooring',88000,'annual','semi_fixed'),
-    P('Sam W.','painter','painting',26,'hourly','variable'),
-    P('Ivy L.','painter','painting',25,'hourly','variable'),
-    P('Dana K.','detailer','flooring',62000,'annual','fixed'),
-    P('Planned hire (installer)','installer','flooring',28,'hourly','variable',{available_from:fmtDate(addWeeks(now,8))}),
+    P('Carlos M.','installer','flooring',30,'hourly','direct'),
+    P('Devon R.','installer','flooring',29,'hourly','direct'),
+    P('Aaron P.','installer','flooring',31,'hourly','direct'),
+    P('Leo S.','installer','flooring',28,'hourly','direct'),
+    P('Marcus T.','foreman','flooring',40,'hourly','management'),
+    P('Priya N.','pm','flooring',90000,'annual','management'),
+    P('Sam W.','painter','painting',28,'hourly','direct'),
+    P('Ivy L.','painter','painting',27,'hourly','direct'),
+    P('Nina R.','estimator','flooring',76000,'annual','management'),
+    P('Planned hire (installer)','installer','flooring',30,'hourly','direct',{available_from:fmtDate(addWeeks(now,8))}),
   ];
   const projects=[
-    {id:uid(),project_name:'Cedar Plaza TI',gc_name:'Turner',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),expected_start_date:fmtDate(addWeeks(now,1)),manual_peak_adjustment:1,status:'awarded',contract_value:185000,gross_margin_pct:0.28},
-    {id:uid(),project_name:'Rivergate Apartments',gc_name:'JE Dunn',trade:'flooring',archetype:'new_multifamily',template_id:tid('new_multifamily','flooring'),expected_start_date:fmtDate(addWeeks(now,3)),manual_peak_adjustment:1,status:'awarded',contract_value:640000,gross_margin_pct:0.24},
-    {id:uid(),project_name:'Midtown Offices Repaint',gc_name:'McCarthy',trade:'painting',archetype:'commercial_ti',template_id:tid('commercial_ti','painting'),expected_start_date:fmtDate(addWeeks(now,2)),manual_peak_adjustment:1,status:'awarded',contract_value:98000,gross_margin_pct:0.30},
+    {id:uid(),project_name:'Cedar Plaza TI',gc_name:'Turner',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),expected_start_date:fmtDate(addWeeks(now,1)),manual_peak_adjustment:1,status:'awarded',contract_value:210000,gross_margin_pct:0.31},
+    {id:uid(),project_name:'Rivergate Apartments',gc_name:'JE Dunn',trade:'flooring',archetype:'new_multifamily',template_id:tid('new_multifamily','flooring'),expected_start_date:fmtDate(addWeeks(now,3)),manual_peak_adjustment:1,status:'awarded',contract_value:720000,gross_margin_pct:0.27},
+    {id:uid(),project_name:'Midtown Offices Repaint',gc_name:'McCarthy',trade:'painting',archetype:'commercial_ti',template_id:tid('commercial_ti','painting'),expected_start_date:fmtDate(addWeeks(now,2)),manual_peak_adjustment:1,status:'awarded',contract_value:120000,gross_margin_pct:0.33},
   ];
   const opportunities=[
-    {id:uid(),project_name:'Airport Concourse Flooring',gc_name:'Turner',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),expected_start_date:fmtDate(addWeeks(now,6)),expected_award_date:fmtDate(addWeeks(now,3)),duration_weeks:10,probability_of_award:0.8,bidintell_score:82,confidence_score:0.9,include_flag:true,contract_value:250000,gross_margin_pct:0.27},
-    {id:uid(),project_name:'Grandview Multifamily Ph2',gc_name:'JE Dunn',trade:'flooring',archetype:'new_multifamily',template_id:tid('new_multifamily','flooring'),expected_start_date:fmtDate(addWeeks(now,8)),expected_award_date:fmtDate(addWeeks(now,4)),duration_weeks:16,probability_of_award:0.5,bidintell_score:64,confidence_score:0.55,include_flag:true,contract_value:560000,gross_margin_pct:0.24},
-    {id:uid(),project_name:'School District Repaint',gc_name:'Crossland',trade:'painting',archetype:'repaint',template_id:tid('repaint','painting'),expected_start_date:fmtDate(addWeeks(now,4)),expected_award_date:fmtDate(addWeeks(now,2)),duration_weeks:6,probability_of_award:0.6,bidintell_score:58,confidence_score:0.35,include_flag:true,contract_value:72000,gross_margin_pct:0.30},
-    {id:uid(),project_name:'Warehouse Fit-out',gc_name:'Unknown GC',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),expected_start_date:fmtDate(addWeeks(now,10)),expected_award_date:fmtDate(addWeeks(now,6)),duration_weeks:10,probability_of_award:0.3,bidintell_score:41,confidence_score:0.3,include_flag:true,contract_value:165000,gross_margin_pct:0.26},
+    {id:uid(),project_name:'Airport Concourse Flooring',gc_name:'Turner',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),bid_due_date:fmtDate(addWeeks(now,3)),expected_start_date:fmtDate(addWeeks(now,6)),expected_award_date:fmtDate(addWeeks(now,3)),duration_weeks:10,probability_of_award:0.8,bidintell_score:82,confidence_score:0.9,include_flag:true,contract_value:250000,gross_margin_pct:0.29},
+    {id:uid(),project_name:'Grandview Multifamily Ph2',gc_name:'JE Dunn',trade:'flooring',archetype:'new_multifamily',template_id:tid('new_multifamily','flooring'),bid_due_date:fmtDate(addWeeks(now,4)),expected_start_date:fmtDate(addWeeks(now,8)),expected_award_date:fmtDate(addWeeks(now,4)),duration_weeks:16,probability_of_award:0.5,bidintell_score:64,confidence_score:0.55,include_flag:true,contract_value:560000,gross_margin_pct:0.26},
+    {id:uid(),project_name:'School District Repaint',gc_name:'Crossland',trade:'painting',archetype:'repaint',template_id:tid('repaint','painting'),bid_due_date:fmtDate(addWeeks(now,2)),expected_start_date:fmtDate(addWeeks(now,4)),expected_award_date:fmtDate(addWeeks(now,2)),duration_weeks:6,probability_of_award:0.6,bidintell_score:58,confidence_score:0.35,include_flag:true,contract_value:72000,gross_margin_pct:0.32},
+    {id:uid(),project_name:'Warehouse Fit-out',gc_name:'Unknown GC',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),bid_due_date:fmtDate(addWeeks(now,3)),expected_start_date:fmtDate(addWeeks(now,10)),expected_award_date:fmtDate(addWeeks(now,6)),duration_weeks:10,probability_of_award:0.3,bidintell_score:41,confidence_score:0.3,include_flag:true,contract_value:165000,gross_margin_pct:0.28},
+    {id:uid(),project_name:'Regional Hospital Wing',gc_name:'JE Dunn',trade:'flooring',archetype:'new_multifamily',template_id:tid('new_multifamily','flooring'),bid_due_date:fmtDate(addWeeks(now,3)),expected_start_date:fmtDate(addWeeks(now,12)),expected_award_date:fmtDate(addWeeks(now,5)),duration_weeks:16,probability_of_award:0.55,bidintell_score:71,confidence_score:0.85,include_flag:true,contract_value:640000,gross_margin_pct:0.28},
+    {id:uid(),project_name:'Retail Rollout (6 stores)',gc_name:'McCarthy',trade:'flooring',archetype:'commercial_ti',template_id:tid('commercial_ti','flooring'),bid_due_date:fmtDate(addWeeks(now,2)),expected_start_date:fmtDate(addWeeks(now,7)),expected_award_date:fmtDate(addWeeks(now,4)),duration_weeks:12,probability_of_award:0.6,bidintell_score:69,confidence_score:0.8,include_flag:true,contract_value:340000,gross_margin_pct:0.29},
   ];
   STATE={settings:s,people,templates,projects,opportunities,scenarios:[]};
   persistLocal();
@@ -841,7 +911,9 @@ function renderDashboard(){
     if(covA>=6){ cls='cloud'; msg=`✓ Booked work covers ~<b>${covA} months</b> of your ~${money$(M.monthlyLaborCost)}/mo labor carry` + (M.coverageAwarded?` (through ~${M.coverageAwarded})`:'') + `.`; }
     else if(covA>=3){ cls='demo'; msg=`Booked work covers ~<b>${covA} months</b> of labor carry (through ~${M.coverageAwarded}). Keep the pipeline converting to extend it.`; }
     else { cls='demo'; msg=`⚠ Only ~<b>${covA} months</b> of labor carry is covered by booked work (~${money$(M.monthlyLaborCost)}/mo carry). Win more work or hold new hires.`; }
-    covEl.innerHTML=`<div class="banner ${cls}" style="cursor:pointer" onclick="switchView('margin')">${msg} <span style="margin-left:auto;font-weight:700">Margin coverage →</span></div>`;
+    const dl=M.lerDirect, ml=M.lerMgmt;
+    const lerBit = (dl&&dl.forecast!=null) ? `<div class="small" style="margin-top:6px;font-weight:600;opacity:.85">Labor efficiency — field ${ratio(dl.forecast)} / mgmt ${ratio(ml.forecast)} (targets ${ratio(dl.target)} / ${ratio(ml.target)}) · pretax ${money$(M.waterfall.pretax)}/mo</div>` : '';
+    covEl.innerHTML=`<div class="banner ${cls}" style="cursor:pointer;flex-direction:column;align-items:flex-start" onclick="switchView('margin')"><div style="display:flex;width:100%;align-items:center">${msg} <span style="margin-left:auto;font-weight:700">Margin coverage →</span></div>${lerBit}</div>`;
   } else covEl.innerHTML='';
   drawDashChart(R);
   // role summary
@@ -876,7 +948,8 @@ function renderRecs(recs){
           ${affChip}${r.recurring?'<span class="tag" style="background:var(--bad-dim);color:var(--bad)">recurring</span>':''}</div>
         <div class="why">${esc(r.rationale)}</div>
         ${r.coverageNote?`<div class="why" style="color:var(--muted);margin-top:4px">💵 ${esc(r.coverageNote)}</div>`:''}
-        <div class="meta">Window: ${r.start} → ${r.end} (${r.durWeeks} wk) · confidence: <b>${r.confidence}</b> · ${r.awardedShare}% awarded-driven${r.addedMonthlyCost?` · +${money$(r.addedMonthlyCost)}/mo burdened`:''}</div>
+        ${r.lerNote?`<div class="why" style="color:var(--muted);margin-top:4px">📈 ${esc(r.lerNote)}</div>`:''}
+        <div class="meta">Window: ${r.start} → ${r.end} (${r.durWeeks} wk) · confidence: <b>${r.confidence}</b>${r.action_type!=='hire'&&!ROLES[r.role].pursuit?` · ${r.awardedShare}% awarded-driven`:''}${r.addedMonthlyCost?` · +${money$(r.addedMonthlyCost)}/mo burdened`:''}</div>
         <div style="margin-top:6px">${drivers}</div>
       </div>
       <div class="acts"><span class="urg ${u}">urgency ${r.urgency}</span></div>
@@ -910,23 +983,42 @@ function renderMargin(){
   const R=lastRun, M=R.money;
   const kEl=document.getElementById('marginKpis'), sEl=document.getElementById('coverageSummaryPanel');
   if(!M || !M.months.length){ kEl.innerHTML=''; sEl.innerHTML='<p class="muted small">No cost or contract-value data yet. Add wages in People and contract values on projects/opportunities (or load demo data).</p>'; document.getElementById('marginTable').innerHTML=''; if(marginChartObj) marginChartObj.destroy(); return; }
-  const carry=M.monthlyLaborCost, covA=M.monthsCoveredAwarded, covT=M.monthsCoveredWeighted;
+  const wf=M.waterfall, covA=M.monthsCoveredAwarded, covT=M.monthsCoveredWeighted;
+  const dL=M.lerDirect, mL=M.lerMgmt;
+  const lerCls=(v,t)=> v==null?'':(v>=t?'ok':v>=t*0.85?'warn':'bad');
   const covCls = covA>=6?'ok':covA>=3?'warn':'bad';
   kEl.innerHTML=[
-    kpi('Monthly labor carry', money$(carry), 'fully burdened + overhead', 'warn'),
-    kpi('Fixed + semi-fixed nut', money$(M.monthlyNut), 'owed regardless of workload', 'bad'),
-    kpi('Booked backlog GM', money$(M.totalGmAwarded), `≈ ${covA} mo of carry`, covCls),
-    kpi('Coverage', covA+' mo', M.coverageAwarded?`awarded, through ~${M.coverageAwarded}`:'awarded work', covCls),
+    kpi('Direct LER (field)', ratio(dL.forecast), `target ${ratio(dL.target)}`, lerCls(dL.forecast,dL.target)),
+    kpi('Management LER', ratio(mL.forecast), `target ${ratio(mL.target)}`, lerCls(mL.forecast,mL.target)),
+    kpi('Pretax profit / mo', money$(wf.pretax), wf.pretaxPct!=null?`${pct(wf.pretaxPct)} of revenue`:'', wf.pretax>=0?'ok':'bad'),
+    kpi('Coverage', covA+' mo', M.coverageAwarded?`booked, through ~${M.coverageAwarded}`:'booked work', covCls),
   ].join('');
-  // owner summary + break-even
-  const newWorkPerMo = r0(carry/(M.defaultGm||0.28));   // signed contract value/mo to sustain the carry
-  const extraMonths = Math.round((covT-covA)*10)/10;
-  let lines=[];
-  if(M.coverageAwarded) lines.push(`Your booked (awarded) work throws off ~<b>${money$(M.totalGmAwarded)}</b> of gross margin — about <b>${covA} months</b> of your ~${money$(carry)}/mo labor carry, covering you through <b>~${M.coverageAwarded}</b>.` + (extraMonths>0?` Weighted pipeline adds ~${extraMonths} more months, into <b>~${M.coverageWeighted}</b>.`:` Your weighted pipeline adds little beyond that.`));
-  else lines.push(`Your booked work generates only ~<b>${money$(M.totalGmAwarded)}</b> of gross margin — less than a month of your ~${money$(carry)}/mo labor carry. This team is not covered by signed work.`);
-  lines.push(`To <b>sustain</b> this labor base you need to keep ~<b>${money$(carry)}/mo</b> of gross margin coming in — roughly <b>${money$(newWorkPerMo)}/mo</b> of newly signed contract value at your ${Math.round((M.defaultGm||0.28)*100)}% margin. That's the target BidIndex + outreach have to hit; Capacity is telling you the number.`);
-  if(covA<3) lines.push(`⚠ With under 3 months of coverage, <b>hold new fixed hires</b> and bridge shortages with overtime/outside labor until more work is signed — this is exactly the gross-margin-vs-labor-nut trap that sinks profitable-looking shops.`);
-  sEl.innerHTML=`<h2>What this means</h2>`+lines.map(l=>`<p style="margin:8px 0;font-size:14.5px">${l}</p>`).join('');
+  // ---- waterfall + LER + target-revenue ----
+  const wfRow=(label,val,opts)=>{ opts=opts||{}; const c=opts.sub?'var(--muted)':(opts.strong?'var(--ink)':'var(--slate)'); const sign=opts.minus?'− ':''; return `<tr><td style="padding:6px 10px;${opts.strong?'font-weight:700':''};color:${c}">${sign}${label}</td><td class="num" style="padding:6px 10px;${opts.strong?'font-weight:700;color:var(--ink)':''}">${money$(val)}</td></tr>`; };
+  const rule=`<tr><td colspan="2" style="border-top:1px solid var(--line);padding:0"></td></tr>`;
+  const lerLine=(name,l,unit,earns)=>{ const v=l.forecast, cls=lerCls(v,l.target); const c=cls==='ok'?'var(--ok)':cls==='bad'?'var(--bad)':'var(--warn)';
+    const vs = v==null?'—':'$'+v.toFixed(2);
+    return `<p style="margin:6px 0;font-size:14px"><b>${name}:</b> every $1 of ${unit} produces <b style="color:${c}">${vs}</b> of ${earns} — target $${l.target.toFixed(2)}. ${v==null?'':v>=l.target?'At or above target.':'Below target.'} <span class="muted">(booked-only: ${l.trailing==null?'—':'$'+l.trailing.toFixed(2)})</span></p>`; };
+  let money_html=`<h2>Profit waterfall <span class="small muted" style="font-weight:400">· monthly average over the active window</span></h2>
+    <table style="max-width:460px">
+      ${wfRow('Revenue (recognized)', wf.revenue, {strong:true})}
+      ${wfRow('Materials / subs / COGS', wf.cogs, {minus:true})}
+      ${wfRow('Gross margin', wf.gm, {strong:true})}
+      ${wfRow('Direct field labor', wf.directLabor, {minus:true})}
+      ${wfRow('Contribution margin', wf.cm, {strong:true})}
+      ${wfRow('Management labor'+(wf.ownerComp>0?` (incl. ${money$(wf.ownerComp)} owner)`:''), wf.mgmt, {minus:true})}
+      ${wfRow('Operating income', wf.opInc, {})}
+      ${wfRow('Non-labor operating expenses', wf.opex, {minus:true})}
+      ${rule}
+      ${wfRow('Pretax profit', wf.pretax, {strong:true})}
+    </table>
+    <div style="margin-top:14px">${lerLine('Direct labor efficiency', dL, 'field labor', 'gross margin')}${lerLine('Management labor efficiency', mL, 'management labor', 'contribution margin')}</div>`;
+  // target-revenue
+  const tgtPct=Math.round((M.profitTargetPct||0.1)*100);
+  if(M.targetRevenue!=null) money_html+=`<p style="margin:12px 0 4px;font-size:14.5px">To hit a <b>${tgtPct}% pretax profit</b>, keep about <b>${money$(M.targetRevenue)}/mo</b> of signed work coming in (contribution margin ${pct(M.cmPct)} of revenue). <span class="muted">Survival / breakeven: ${money$(M.breakevenRevenue)}/mo.</span></p>`;
+  else money_html+=`<p style="margin:12px 0 4px;font-size:14.5px;color:var(--warn)">Your contribution margin (${pct(M.cmPct)} of revenue) is at or below the ${tgtPct}% profit target — no revenue level reaches it. Raise margins, trim labor, or lower the target.</p>`;
+  if((M.ownerComp||0)<=0) money_html+=`<p class="small" style="color:var(--warn);margin-top:8px">⚠ Owner compensation is $0 — profit is overstated. Set a market-rate owner salary in Settings so this is a true profit number.</p>`;
+  sEl.innerHTML=money_html;
   drawMarginChart(M);
   // table
   document.getElementById('marginTable').innerHTML=
@@ -1008,17 +1100,17 @@ function renderOpps(){
 function renderPeople(){
   const s=STATE.settings;
   const rows=STATE.people.map(p=>{
-    const cls=p.cost_class||(ROLES[p.role_canonical]||{}).costClass||'variable';
+    const bucket=laborBucketOf(p);
     const mo=burdenedWeeklyCost(p,s)*52/12;
     return `<tr>
     <td><b>${esc(p.name)}</b></td><td>${ROLES[p.role_canonical]?ROLES[p.role_canonical].label:esc(p.role_canonical)}</td>
     <td>${esc(p.trade||'')}</td>
-    <td><span class="tag">${COST_CLASS_LABEL[cls]||cls}</span></td>
+    <td><span class="tag" style="${bucket==='direct'?'background:var(--accent-dim);color:var(--accent)':'background:rgba(148,163,184,.14);color:var(--slate)'}">${bucket==='direct'?'Direct (field)':'Management'}</span></td>
     <td class="num">${mo>0?money$(mo)+'/mo':'<span class="muted">—</span>'}</td>
     <td>${p.available_from?fmtShort(p.available_from):'now'}</td><td>${p.active_flag?'✓':'<span class="muted">inactive</span>'}</td>
     <td class="row-actions"><button class="btn sm" onclick="editPerson('${p.id}')">Edit</button><button class="btn sm danger" onclick="delRow('people','${p.id}')">Del</button></td></tr>`;
   }).join('');
-  document.getElementById('peopleTable').innerHTML='<tr><th>Name</th><th>Role</th><th>Trade</th><th>Cost class</th><th class="num">Burdened cost</th><th>Available</th><th>Active</th><th></th></tr>'+(rows||'<tr><td class="muted">No people yet.</td></tr>');
+  document.getElementById('peopleTable').innerHTML='<tr><th>Name</th><th>Role</th><th>Trade</th><th>Labor bucket</th><th class="num">Burdened cost</th><th>Available</th><th>Active</th><th></th></tr>'+(rows||'<tr><td class="muted">No people yet.</td></tr>');
 }
 function renderTemplates(){
   const rows=STATE.templates.map(t=>{
@@ -1062,9 +1154,9 @@ function editPerson(id){
       ${selField('Active','p_active',p.active_flag===false?'false':'true',[{v:'true',t:'Active'},{v:'false',t:'Inactive'}])}
       ${fld('Base wage','p_wage',p.wage,'number','Pre-burden. Fully-burdened cost = wage × (1 + burden %).')}
       ${selField('Wage basis','p_wbasis',p.wage_basis||'hourly',[{v:'hourly',t:'Hourly'},{v:'annual',t:'Annual salary'}])}
-      ${selField('Cost class','p_class',p.cost_class||(ROLES[p.role_canonical||'installer']||{}).costClass||'variable',[{v:'variable',t:'Variable — field labor (flexes with work)'},{v:'semi_fixed',t:'Semi-fixed — PM / foreman'},{v:'fixed',t:'Fixed — support / overhead'}])}
+      ${selField('Labor bucket','p_bucket', laborBucketOf(p.role_canonical?p:{role_canonical:'installer'}),[{v:'direct',t:'Direct — field production (variable with work)'},{v:'management',t:'Management — PM / foreman / estimator / support'}])}
     </div>`,
-    async()=>{ const row={id:p.id||uid(),name:mval('p_name'),role_canonical:mval('p_role'),trade:mval('p_trade'),employment_type:mval('p_emp'),hours_per_week:+mval('p_hrs')||0,available_from:mval('p_from')||null,available_to:mval('p_to')||null,active_flag:mval('p_active')==='true',wage:mval('p_wage')?+mval('p_wage'):null,wage_basis:mval('p_wbasis'),cost_class:mval('p_class')};
+    async()=>{ const bucket=mval('p_bucket'); const row={id:p.id||uid(),name:mval('p_name'),role_canonical:mval('p_role'),trade:mval('p_trade'),employment_type:mval('p_emp'),hours_per_week:+mval('p_hrs')||0,available_from:mval('p_from')||null,available_to:mval('p_to')||null,active_flag:mval('p_active')==='true',wage:mval('p_wage')?+mval('p_wage'):null,wage_basis:mval('p_wbasis'),labor_bucket:bucket,cost_class:bucket==='direct'?'variable':'semi_fixed'};
       upsertLocal('people',row); await dbUpsert('people',row); closeModal(); runAndRender(); });
 }
 function editProject(id){
@@ -1094,15 +1186,17 @@ function editOpportunity(id){
       ${selField('Trade','op_trade',o.trade||'flooring',tradeOpts())}
       ${fld('Archetype','op_arch',o.archetype||'commercial_ti')}
       ${selField('Template','op_tpl',o.template_id||'',templateOpts())}
+      ${fld('Bid due date','op_due',fmtDate(o.bid_due_date),'date','Drives estimator pricing demand (hours land in the weeks before this).')}
       ${fld('Expected start','op_start',fmtDate(o.expected_start_date),'date')}
       ${fld('Win probability (0–1)','op_prob',o.probability_of_award==null?0.5:o.probability_of_award,'number')}
       ${fld('Document confidence (0–1)','op_conf',o.confidence_score==null?0.5:o.confidence_score,'number','< '+DEFAULT_SETTINGS.conf_invite_max+' invite-only · < '+DEFAULT_SETTINGS.conf_partial_max+' partial · else full')}
       ${fld('BidIndex score','op_score',o.bidintell_score,'number')}
       ${fld('Contract value ($)','op_cv',o.contract_value,'number','Weighted GM = value × margin × win% × confidence.')}
       ${fld('Gross margin %','op_gm',o.gross_margin_pct,'number','0.28 = 28%. Blank = company default.')}
+      ${fld('Estimating hours (override)','op_esth',o.estimating_hours,'number','Blank = auto from size × doc completeness.')}
       ${selField('Include in forecast','op_inc',o.include_flag===false?'false':'true',[{v:'true',t:'Yes'},{v:'false',t:'No'}])}
     </div>`,
-    async()=>{ const row={id:o.id||uid(),project_name:mval('op_name'),gc_name:mval('op_gc'),trade:mval('op_trade'),archetype:mval('op_arch'),template_id:mval('op_tpl')||null,expected_start_date:mval('op_start'),probability_of_award:clamp01(+mval('op_prob')),confidence_score:clamp01(+mval('op_conf')),bidintell_score:mval('op_score')?+mval('op_score'):null,include_flag:mval('op_inc')==='true',contract_value:mval('op_cv')?+mval('op_cv'):null,gross_margin_pct:mval('op_gm')?+mval('op_gm'):null};
+    async()=>{ const row={id:o.id||uid(),project_name:mval('op_name'),gc_name:mval('op_gc'),trade:mval('op_trade'),archetype:mval('op_arch'),template_id:mval('op_tpl')||null,bid_due_date:mval('op_due')||null,expected_start_date:mval('op_start'),probability_of_award:clamp01(+mval('op_prob')),confidence_score:clamp01(+mval('op_conf')),bidintell_score:mval('op_score')?+mval('op_score'):null,include_flag:mval('op_inc')==='true',contract_value:mval('op_cv')?+mval('op_cv'):null,gross_margin_pct:mval('op_gm')?+mval('op_gm'):null,estimating_hours:mval('op_esth')?+mval('op_esth'):null};
       upsertLocal('opportunities',row); await dbUpsert('opportunities',row); closeModal(); runAndRender(); });
 }
 function clamp01(n){ n=+n||0; return Math.max(0,Math.min(1,n)); }
@@ -1163,9 +1257,15 @@ function renderSettings(){
     fld('Weight: partial docs','s_wp',s.conf_weight_partial,'number')+
     fld('Weight: full package','s_wf',s.conf_weight_full,'number')+
     fld('Default gross margin %','s_gm',s.default_gm_pct,'number','0.28 = 28%. Used when a job has no margin set.')+
+    selField('My margin % is stated…','s_gmbasis',s.gm_basis||'before',[{v:'before',t:'Before field labor (typical)'},{v:'after',t:'After field labor'}])+
+    fld('Owner compensation ($/yr)','s_owner',s.owner_comp_annual,'number','Market rate — what you would pay someone else to do your job, not what you currently take. Counts as management labor so profit is after a fair owner wage.')+
     fld('Labor burden %','s_burden',s.labor_burden_pct,'number','0.32 = +32% on base wage (taxes, comp, insurance, benefits).')+
-    fld('Monthly fixed overhead ($)','s_oh',s.monthly_fixed_overhead,'number','Support/admin/estimating cost not tied to a person row.')+
-    fld('Coverage cushion %','s_cushion',s.coverage_cushion_pct,'number','0.15 = margin must exceed the added hire cost by 15% before a HIRE fires.');
+    fld('Non-labor operating expenses ($/mo)','s_oh',s.monthly_fixed_overhead,'number','Rent, insurance, vehicles, software — everything below management labor. NOT wages.')+
+    fld('Pretax profit target %','s_ptgt',s.profit_target_pct,'number','0.10 = 10%. Sets the required-signed-work number.')+
+    fld('Direct LER target','s_dler',s.direct_ler_target,'number','$ of gross margin per $1 of field labor. 2.0 typical.')+
+    fld('Management LER target','s_mler',s.mgmt_ler_target,'number','$ of contribution margin per $1 of management labor. 3.0 typical.')+
+    fld('Coverage floor (months)','s_cfloor',s.coverage_floor_months,'number','A hire will not fire if it drops coverage below this.')+
+    fld('Estimating window (weeks)','s_estwin',s.estimating_window_weeks,'number','Pricing time before a bid due date that estimator hours spread across.');
 }
 async function saveSettings(){
   const s=STATE.settings;
@@ -1175,7 +1275,10 @@ async function saveSettings(){
   s.overtime_max_pct=+mval('s_ot')||0; s.outside_labor_fte=+mval('s_out')||0; s.utilization_target=+mval('s_util')||0.9;
   s.conf_invite_max=+mval('s_ci')||0.4; s.conf_partial_max=+mval('s_cp')||0.7;
   s.conf_weight_invite=+mval('s_wi')||0.5; s.conf_weight_partial=+mval('s_wp')||0.8; s.conf_weight_full=+mval('s_wf')||1;
-  s.default_gm_pct=+mval('s_gm')||0.28; s.labor_burden_pct=+mval('s_burden')||0; s.monthly_fixed_overhead=+mval('s_oh')||0; s.coverage_cushion_pct=+mval('s_cushion')||0;
+  s.default_gm_pct=+mval('s_gm')||0.28; s.labor_burden_pct=+mval('s_burden')||0; s.monthly_fixed_overhead=+mval('s_oh')||0;
+  s.gm_basis=mval('s_gmbasis')||'before'; s.owner_comp_annual=+mval('s_owner')||0;
+  s.profit_target_pct=+mval('s_ptgt')||0.10; s.direct_ler_target=+mval('s_dler')||2.0; s.mgmt_ler_target=+mval('s_mler')||3.0;
+  s.coverage_floor_months=+mval('s_cfloor')||2; s.estimating_window_weeks=+mval('s_estwin')||2;
   const row={...s}; if(MODE==='cloud') row.user_id=currentUser.id;
   upsertSettingsLocal(); await dbUpsert('settings',row); runAndRender(); toast('Settings saved'); switchView('settings');
 }
@@ -1211,33 +1314,32 @@ function runScenario(){
   if(winId){ const o=clone.opportunities.find(x=>x.id===winId); if(o){ clone.opportunities=clone.opportunities.filter(x=>x.id!==winId);
     clone.projects.push({id:uid(),project_name:o.project_name+' (won)',gc_name:o.gc_name,trade:o.trade,archetype:o.archetype,template_id:o.template_id,expected_start_date:o.expected_start_date,manual_peak_adjustment:1,status:'awarded',contract_value:o.contract_value,gross_margin_pct:o.gross_margin_pct}); } }
   const hr=mval('sc_hire_role'), hn=+mval('sc_hire_n')||0, hw=+mval('sc_hire_when')||0;
-  if(hr&&hn){ for(let i=0;i<hn;i++) clone.people.push({id:uid(),name:'Scenario hire '+(i+1),role_canonical:hr,trade:STATE.settings.trades[0]||'flooring',employment_type:'employee',hours_per_week:clone.settings.hours_per_fte_week,active_flag:true,available_from:fmtDate(addWeeks(new Date(),hw)),wage:DEFAULT_ROLE_WAGE[hr]||55000,wage_basis:'annual',cost_class:(ROLES[hr]||{}).costClass||'variable'}); }
+  if(hr&&hn){ const bkt=roleBucket(hr); for(let i=0;i<hn;i++) clone.people.push({id:uid(),name:'Scenario hire '+(i+1),role_canonical:hr,trade:STATE.settings.trades[0]||'flooring',employment_type:'employee',hours_per_week:clone.settings.hours_per_fte_week,active_flag:true,available_from:fmtDate(addWeeks(new Date(),hw)),wage:DEFAULT_ROLE_WAGE[hr]||55000,wage_basis:'annual',labor_bucket:bkt,cost_class:bkt==='direct'?'variable':'semi_fixed'}); }
   const extraOut=+mval('sc_out')||0; if(extraOut) clone.settings.outside_labor_fte+=extraOut;
   const otov=mval('sc_ot'); if(otov!=='') clone.settings.overtime_max_pct=+otov;
   const scn=runForecast(clone);
-  const avgOf=(arr,f)=>arr.length?arr.reduce((a,x)=>a+f(x),0)/arr.length:0;
-  const m=(R)=>({peak:r1(Math.max(0,...R.totals.gap)), shortWk:R.totals.gap.filter(x=>x>0.5).length, shortFte:r1(R.totals.gap.filter(x=>x>0).reduce((a,b)=>a+b,0)), hires:R.recommendations.filter(r=>r.action_type==='hire').reduce((a,r)=>a+(+r.quantity||0),0), acts:R.recommendations.length,
-    carry:R.money?R.money.monthlyLaborCost:0, gmA:R.money?R.money.monthlyGmAwarded:0, covGap:R.money?r0(R.money.monthlyLaborCost-R.money.monthlyGmAwarded):0});
+  const m=(R)=>{ const M=R.money||{}; return {peak:r1(Math.max(0,...R.totals.gap)), shortWk:R.totals.gap.filter(x=>x>0.5).length, shortFte:r1(R.totals.gap.filter(x=>x>0).reduce((a,b)=>a+b,0)), hires:R.recommendations.filter(r=>r.action_type==='hire').reduce((a,r)=>a+(+r.quantity||0),0), acts:R.recommendations.length,
+    cov:M.monthsCoveredAwarded||0, dLER:M.lerDirect?M.lerDirect.forecast:null, mLER:M.lerMgmt?M.lerMgmt.forecast:null, pretax:M.waterfall?M.waterfall.pretax:0}; };
   const b=m(base), s=m(scn);
   const row=(label,bv,sv,lowerBetter,fmt)=>{ const f=fmt||(x=>x); const better=lowerBetter?(sv<bv):(sv>bv); const worse=lowerBetter?(sv>bv):(sv<bv); return `<tr><td>${label}</td><td class="num">${f(bv)}</td><td class="num ${better?'better':worse?'worse':''}">${f(sv)}</td></tr>`; };
   document.getElementById('scenarioCompare').innerHTML=
     '<tr><th>Metric</th><th class="num">Base</th><th class="num">Scenario</th></tr>'+
     row('Peak shortage (FTE)',b.peak,s.peak,true)+
     row('Weeks with shortage',b.shortWk,s.shortWk,true)+
-    row('Total shortage (FTE-wk)',b.shortFte,s.shortFte,true)+
     row('Recommended hires',b.hires,s.hires,true)+
-    row('Total staffing actions',b.acts,s.acts,true)+
-    row('Awarded GM / mo',b.gmA,s.gmA,false,money$)+
-    row('Coverage gap / mo',b.covGap,s.covGap,true,money$);
+    row('Coverage (months)',b.cov,s.cov,false)+
+    row('Direct LER',b.dLER,s.dLER,false,ratio)+
+    row('Management LER',b.mLER,s.mLER,false,ratio)+
+    row('Pretax profit / mo',b.pretax,s.pretax,false,money$);
 }
 
 // ============================================================================
 // CSV IMPORT / EXPORT
 // ============================================================================
 const CSV_COLS={
-  people:['employee_id','name','role','trade','office_or_region','employment_type','hours_per_week','available_from','available_to','active_flag','wage','wage_basis','cost_class'],
+  people:['employee_id','name','role','trade','office_or_region','employment_type','hours_per_week','available_from','available_to','active_flag','wage','wage_basis','labor_bucket'],
   projects:['project_id','project_name','customer','gc_name','trade','archetype','contract_value','gross_margin_pct','expected_start_date','expected_end_date','template_id','manual_peak_adjustment','status'],
-  opportunities:['opportunity_id','project_name','source','gc_name','trade','archetype','bid_due_date','expected_award_date','expected_start_date','duration_weeks','probability_of_award','bidintell_score','confidence_score','contract_value','gross_margin_pct','template_id','include_flag'],
+  opportunities:['opportunity_id','project_name','source','gc_name','trade','archetype','bid_due_date','expected_award_date','expected_start_date','duration_weeks','probability_of_award','bidintell_score','confidence_score','contract_value','gross_margin_pct','estimating_hours','template_id','include_flag'],
 };
 function downloadTemplate(kind){
   const cols=CSV_COLS[kind]; const csv=cols.join(',')+'\n';
@@ -1252,9 +1354,9 @@ function importCsv(kind,input){
     let n=0,skip=0; const errs=[];
     for(const raw of res.data){
       try{
-        if(kind==='people'){ if(!raw.name) {skip++;continue;} const row={id:uid(),employee_ref:raw.employee_id||null,name:raw.name,role_canonical:(raw.role||'').toLowerCase().trim()||'installer',role_raw:raw.role,trade:(raw.trade||'').toLowerCase().trim(),office_or_region:raw.office_or_region,employment_type:(raw.employment_type||'employee').toLowerCase(),hours_per_week:+raw.hours_per_week||40,available_from:raw.available_from||null,available_to:raw.available_to||null,active_flag:raw.active_flag==null?true:bool(raw.active_flag),wage:raw.wage?+raw.wage:null,wage_basis:(raw.wage_basis||'hourly').toLowerCase(),cost_class:(raw.cost_class||'').toLowerCase()||undefined}; upsertLocal('people',row); await dbUpsert('people',row); n++; }
+        if(kind==='people'){ if(!raw.name) {skip++;continue;} const row={id:uid(),employee_ref:raw.employee_id||null,name:raw.name,role_canonical:(raw.role||'').toLowerCase().trim()||'installer',role_raw:raw.role,trade:(raw.trade||'').toLowerCase().trim(),office_or_region:raw.office_or_region,employment_type:(raw.employment_type||'employee').toLowerCase(),hours_per_week:+raw.hours_per_week||40,available_from:raw.available_from||null,available_to:raw.available_to||null,active_flag:raw.active_flag==null?true:bool(raw.active_flag),wage:raw.wage?+raw.wage:null,wage_basis:(raw.wage_basis||'hourly').toLowerCase()}; const lb=(raw.labor_bucket||'').toLowerCase(); row.labor_bucket = (lb==='direct'||lb==='management')?lb:(roleBucket(row.role_canonical)); row.cost_class = row.labor_bucket==='direct'?'variable':'semi_fixed'; upsertLocal('people',row); await dbUpsert('people',row); n++; }
         else if(kind==='projects'){ if(!raw.project_name){skip++;continue;} const row={id:uid(),project_ref:raw.project_id,project_name:raw.project_name,customer_name:raw.customer,gc_name:raw.gc_name,trade:(raw.trade||'').toLowerCase().trim(),archetype:raw.archetype,contract_value:raw.contract_value?+raw.contract_value:null,gross_margin_pct:raw.gross_margin_pct?+raw.gross_margin_pct:null,expected_start_date:raw.expected_start_date,expected_end_date:raw.expected_end_date||null,manual_peak_adjustment:+raw.manual_peak_adjustment||1,status:(raw.status||'awarded').toLowerCase()}; row.template_id=matchTemplateId(row); upsertLocal('projects',row); await dbUpsert('projects',row); n++; }
-        else if(kind==='opportunities'){ if(!raw.project_name){skip++;continue;} const row={id:uid(),opportunity_ref:raw.opportunity_id,project_name:raw.project_name,source_channel:raw.source,gc_name:raw.gc_name,trade:(raw.trade||'').toLowerCase().trim(),archetype:raw.archetype,bid_due_date:raw.bid_due_date||null,expected_award_date:raw.expected_award_date||null,expected_start_date:raw.expected_start_date,duration_weeks:raw.duration_weeks?+raw.duration_weeks:null,probability_of_award:clamp01(+raw.probability_of_award),bidintell_score:raw.bidintell_score?+raw.bidintell_score:null,confidence_score:clamp01(raw.confidence_score==null?0.5:+raw.confidence_score),contract_value:raw.contract_value?+raw.contract_value:null,gross_margin_pct:raw.gross_margin_pct?+raw.gross_margin_pct:null,include_flag:raw.include_flag==null?true:bool(raw.include_flag)}; row.template_id=matchTemplateId(row); upsertLocal('opportunities',row); await dbUpsert('opportunities',row); n++; }
+        else if(kind==='opportunities'){ if(!raw.project_name){skip++;continue;} const row={id:uid(),opportunity_ref:raw.opportunity_id,project_name:raw.project_name,source_channel:raw.source,gc_name:raw.gc_name,trade:(raw.trade||'').toLowerCase().trim(),archetype:raw.archetype,bid_due_date:raw.bid_due_date||null,expected_award_date:raw.expected_award_date||null,expected_start_date:raw.expected_start_date,duration_weeks:raw.duration_weeks?+raw.duration_weeks:null,probability_of_award:clamp01(+raw.probability_of_award),bidintell_score:raw.bidintell_score?+raw.bidintell_score:null,confidence_score:clamp01(raw.confidence_score==null?0.5:+raw.confidence_score),contract_value:raw.contract_value?+raw.contract_value:null,gross_margin_pct:raw.gross_margin_pct?+raw.gross_margin_pct:null,estimating_hours:raw.estimating_hours?+raw.estimating_hours:null,include_flag:raw.include_flag==null?true:bool(raw.include_flag)}; row.template_id=matchTemplateId(row); upsertLocal('opportunities',row); await dbUpsert('opportunities',row); n++; }
       }catch(e){ errs.push(e.message); }
     }
     input.value='';
@@ -1291,6 +1393,14 @@ async function boot(){
   if(window.Chart){ Chart.defaults.color='#94A3B8'; Chart.defaults.borderColor='rgba(255,255,255,.06)'; Chart.defaults.font.family="'Plus Jakarta Sans',sans-serif"; }
   try{ if(typeof supabase!=='undefined'){ supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
     const {data}=await supabaseClient.auth.getSession(); currentUser=data&&data.session?data.session.user:null; } }catch(e){ console.warn('supabase init',e); }
+  // Admin gate (v2 in verification): signed-in non-admins are held back; demo (no
+  // session) stays open for local testing. Remove once fully verified.
+  const email=(currentUser&&currentUser.email||'').toLowerCase();
+  const isAdmin = /@fsikc\.com$/.test(email) || email==='ryan@bidintell.ai';
+  if(currentUser && !isAdmin){
+    document.getElementById('boot').innerHTML='<div style="max-width:440px;text-align:center;padding:24px"><div style="font-family:var(--mono);color:var(--accent);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px">BidIntell Capacity</div><h2 style="margin:0 0 10px">Coming soon</h2><p class="muted" style="font-size:14px">Capacity is in early access with a few design partners. We\'ll open it to your account shortly. <a href="/capacity-planning.html">Get on the list →</a></p><p class="small muted" style="margin-top:16px"><a href="/app.html">← Back to BidIntell</a></p></div>';
+    return; // stay on the boot screen; do not reveal the app
+  }
   MODE=await detectMode();
   document.getElementById('whoami').textContent = currentUser?currentUser.email:'Not signed in (demo)';
   await loadAll();
