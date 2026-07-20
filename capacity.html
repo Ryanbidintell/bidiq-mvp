@@ -127,6 +127,8 @@
   .compare td.better{color:var(--ok);font-weight:700} .compare td.worse{color:var(--bad);font-weight:700}
   .curve-input{width:52px;padding:5px;text-align:center;font-size:12px}
   .loading{display:grid;place-items:center;height:100vh;color:var(--muted);font-weight:600}
+  #printArea{display:none}
+  @media print{ .shell,#boot,#modal{display:none !important} #printArea{display:block !important} body{background:#fff} @page{margin:14mm} }
   @media(max-width:900px){.shell{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;flex-wrap:wrap}.cards{grid-template-columns:repeat(2,1fr)}.form-grid,.split{grid-template-columns:1fr}}
 </style>
 </head>
@@ -218,7 +220,7 @@
     <!-- MARGIN COVERAGE -->
     <section class="view" id="view-margin">
       <div class="topbar"><div><h1>Margin coverage</h1><div class="desc"><b>Can you afford this labor base?</b> Monthly gross margin from awarded + weighted work vs your (mostly fixed) labor carry. GM is recognized as the work is performed.</div></div>
-        <button class="btn primary" onclick="runAndRender()">↻ Run</button></div>
+        <div style="display:flex;gap:8px"><button class="btn sm" onclick="exportResultsCsv()">⬇ CSV</button><button class="btn sm" onclick="printSummary()">🖨 Print summary</button><button class="btn primary" onclick="runAndRender()">↻ Run</button></div></div>
       <div class="cards" id="marginKpis"></div>
       <div class="panel" id="coverageSummaryPanel"></div>
       <div class="panel">
@@ -380,6 +382,9 @@
     </section>
   </main>
 </div>
+
+<!-- Print summary (light, print-only) -->
+<div id="printArea"></div>
 
 <!-- Modal -->
 <div id="modal" class="hidden" style="position:fixed;inset:0;background:rgba(11,15,20,.5);display:grid;place-items:center;padding:20px;z-index:50">
@@ -983,6 +988,56 @@ async function dismissRec(key){
   await persistPlan(); toast('Dismissed'); runAndRender();
 }
 async function resetActions(){ const ex=STATE.settings.extra=STATE.settings.extra||{}; ex.dismissed=[]; ex.accepted=[]; await persistPlan(); runAndRender(); }
+
+// ---- Reporting: print one-pager + CSV export of results ----
+function printSummary(){
+  if(!lastRun) lastRun=runForecast(STATE);
+  const R=lastRun, M=R.money, wf=M.waterfall, s=STATE.settings;
+  if(!wf){ toast('Add cost + contract data first'); return; }
+  const today=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const dl=M.lerDirect, ml=M.lerMgmt, tgtPct=Math.round((M.profitTargetPct||0.1)*100);
+  const wfRow=(label,val,minus,strong)=>`<tr><td style="padding:3px 0;${strong?'font-weight:700':''}">${minus?'− ':''}${label}</td><td style="padding:3px 0;text-align:right;${strong?'font-weight:700':''}">${money$(val)}</td></tr>`;
+  const lerRow=(name,l)=>`<tr><td style="padding:3px 6px 3px 0">${name}</td><td style="text-align:right">${l.forecast==null?'—':'$'+l.forecast.toFixed(2)}</td><td style="text-align:right">$${l.target.toFixed(2)}</td><td style="text-align:right;color:${l.forecast==null?'#666':(l.forecast>=l.target?'#137333':'#b3261e')}">${l.forecast==null?'—':(l.forecast>=l.target?'At/above':'Below')}</td></tr>`;
+  const acts=(R.recommendations||[]).slice(0,6).map(r=>`<li style="margin-bottom:5px"><b>${r.action_type.replace('_',' ')} ${r.quantity} · ${esc(r.roleLabel)}</b> — ${esc(r.rationale)}</li>`).join('')||'<li>No open staffing actions.</li>';
+  const kpi=(l,v,h)=>`<div style="flex:1;border:1px solid #ddd;border-radius:8px;padding:9px 11px"><div style="font-size:10.5px;color:#666;text-transform:uppercase;letter-spacing:.4px">${l}</div><div style="font-size:21px;font-weight:800">${v}</div><div style="font-size:10.5px;color:#666">${h||''}</div></div>`;
+  document.getElementById('printArea').innerHTML=`
+  <div style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#17130E;max-width:720px;margin:0 auto;font-size:13px;line-height:1.5">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #17130E;padding-bottom:10px;margin-bottom:16px">
+      <div><div style="font-weight:800;font-size:20px">${esc(s.company_name||'Capacity summary')}</div><div style="color:#555">Capacity &amp; margin summary</div></div>
+      <div style="text-align:right;color:#555;font-size:12px">${today}<br>BidIntell Capacity</div>
+    </div>
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      ${kpi('Coverage', M.monthsCoveredAwarded+' mo', 'booked'+(M.coverageAwarded?' · thru ~'+M.coverageAwarded:''))}
+      ${kpi('Direct LER', ratio(dl.forecast), 'target '+ratio(dl.target))}
+      ${kpi('Mgmt LER', ratio(ml.forecast), 'target '+ratio(ml.target))}
+      ${kpi('Pretax / mo', money$(wf.pretax), wf.pretaxPct!=null?pct(wf.pretaxPct)+' of rev':'')}
+    </div>
+    <h3 style="margin:0 0 6px;font-size:14px">Profit waterfall <span style="font-weight:400;color:#666;font-size:12px">· monthly average</span></h3>
+    <table style="width:340px;border-collapse:collapse;margin-bottom:16px">
+      ${wfRow('Revenue (recognized)',wf.revenue,false,true)}${wfRow('Materials / subs / COGS',wf.cogs,true)}${wfRow('Gross margin',wf.gm,false,true)}${wfRow('Direct field labor',wf.directLabor,true)}${wfRow('Contribution margin',wf.cm,false,true)}${wfRow('Management labor',wf.mgmt,true)}${wfRow('Operating income',wf.opInc)}${wfRow('Non-labor operating expenses',wf.opex,true)}${wfRow('Pretax profit',wf.pretax,false,true)}
+    </table>
+    <h3 style="margin:0 0 6px;font-size:14px">Labor efficiency</h3>
+    <table style="border-collapse:collapse;margin-bottom:16px;font-size:12.5px;min-width:380px">
+      <tr style="color:#666;text-align:left"><th style="padding-right:14px">Ratio</th><th style="text-align:right">Forecast</th><th style="text-align:right">Target</th><th style="text-align:right;padding-left:12px">Status</th></tr>
+      ${lerRow('Direct (GM ÷ field labor)',dl)}${lerRow('Management (CM ÷ mgmt labor)',ml)}
+    </table>
+    <p style="margin:0 0 16px">${M.targetRevenue!=null?`To hit a <b>${tgtPct}% pretax profit</b>, keep about <b>${money$(M.targetRevenue)}/mo</b> of newly signed work coming in. Survival / breakeven: ${money$(M.breakevenRevenue)}/mo.`:`Contribution margin (${pct(M.cmPct)}) is at or below the ${tgtPct}% target — raise margins or trim cost to reach it.`}</p>
+    <h3 style="margin:0 0 6px;font-size:14px">Staffing actions</h3>
+    <ol style="margin:0 0 16px;padding-left:18px">${acts}</ol>
+    <div style="border-top:1px solid #ddd;padding-top:8px;color:#888;font-size:11px">Rules-based capacity forecast from awarded backlog + weighted pipeline. Directional decision support, not accounting. Private — not for distribution to GCs.</div>
+  </div>`;
+  window.print();
+}
+function exportResultsCsv(){
+  if(!lastRun) lastRun=runForecast(STATE);
+  const M=lastRun.money; if(!M){ toast('Nothing to export yet'); return; }
+  const rows=[['month','revenue','gross_margin','contribution_margin','direct_labor','management_labor','non_labor_opex','pretax_profit','coverage_ratio']];
+  (M.monthsAll||[]).forEach(m=>rows.push([m.label, r0(m.rev), r0(m.GM), r0(m.CM), r0(m.directLabor), r0(m.mgmt), r0(m.opex), r0(m.pretax), m.ratio!=null?(Math.round(m.ratio*100)+'%'):'']));
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='bidintell-capacity-results.csv'; a.click();
+  toast('Exported monthly results CSV');
+}
 
 // Cap the chart to the meaningful demand window so the manpower curve fills the
 // chart instead of being crushed into the far left by a long (e.g. 180-wk) horizon.
