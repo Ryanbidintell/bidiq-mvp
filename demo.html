@@ -65,8 +65,8 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet"></noscript>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XGYJLV0E6G"></script>
@@ -79,25 +79,25 @@
 
   <style>
     :root {
-      --ink:          #0B0F14;
-      --ink-light:    #141A23;
-      --ink-mid:      #1C2533;
-      --slate:        #384254;
-      --slate-light:  #5A6A7E;
-      --fog:          #94A3B8;
-      --cloud:        #CBD5E1;
-      --white:        #F8FAFC;
-      --accent:       #F26522;
-      --accent-dark:  #D4551A;
+      --ink:          #F4F1EA;
+      --ink-light:    #ECE7DC;
+      --ink-mid:      #E3DCCC;
+      --slate:        #D8D1C2;
+      --slate-light:  #8A8072;
+      --fog:          #5A5247;
+      --cloud:        #3A342B;
+      --white:        #17130E;
+      --accent:       #E4562A;
+      --accent-dark:  #C8461F;
       --green:        #22C55E;
       --green-muted:  rgba(34,197,94,0.12);
       --red:          #EF4444;
       --red-muted:    rgba(239,68,68,0.10);
-      --border:       rgba(255,255,255,0.07);
+      --border:       rgba(23,19,14,0.10);
       --radius:       6px;
       --radius-lg:    10px;
-      --font:         'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      --mono:         'Space Mono', monospace;
+      --font:         'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --mono:         'IBM Plex Mono', monospace;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -119,7 +119,7 @@
       position: fixed;
       top: 0; left: 0; right: 0;
       z-index: 100;
-      background: rgba(11,15,20,0.85);
+      background: rgba(244,241,234,0.85);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
@@ -324,7 +324,7 @@
     input:focus, select:focus, textarea:focus {
       outline: none;
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(242,101,34,0.15);
+      box-shadow: 0 0 0 3px rgba(228,86,42,0.15);
     }
     input.invalid, select.invalid, textarea.invalid {
       border-color: var(--red);
@@ -378,7 +378,7 @@
 
     .spinner {
       width: 18px; height: 18px;
-      border: 2px solid rgba(255,255,255,0.3);
+      border: 2px solid rgba(23,19,14,0.10);
       border-top-color: #fff;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
@@ -448,6 +448,7 @@
       .timeline-row { grid-template-columns: 1fr; gap: 4px; }
     }
   </style>
+<style id="archivo-headings">/*ARCHIVO-HEADINGS*/ h1,h2,h3,h4,.footer-copy,.nav-logo,.logo-text{font-family:'Archivo',sans-serif}</style>
 </head>
 <body>
 
@@ -706,16 +707,16 @@
   <!-- Calendly inline widget -->
   <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
 
-  <footer style="padding:36px 0;border-top:1px solid rgba(255,255,255,0.06);margin-top:60px;">
+  <footer style="padding:36px 0;border-top:1px solid rgba(23,19,14,0.10);margin-top:60px;">
     <div style="max-width:960px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
       <span style="font-size:0.8rem;color:#64748b;">© 2026 BidIntell. Built by the industry, for the industry.</span>
       <ul style="display:flex;gap:24px;list-style:none;margin:0;padding:0;">
-        <li><a href="/legal#privacy" style="font-size:0.8rem;color:#94a3b8;text-decoration:none;">Privacy</a></li>
-        <li><a href="/legal#terms" style="font-size:0.8rem;color:#94a3b8;text-decoration:none;">Terms</a></li>
-        <li><a href="/contact" style="font-size:0.8rem;color:#94a3b8;text-decoration:none;">Contact</a></li>
-        <li><a href="/works-with-plan-rooms" style="font-size:0.8rem;color:#94a3b8;text-decoration:none;">Plan Rooms</a></li>
-        <li><a href="/works-with-estimating-tools" style="font-size:0.8rem;color:#94a3b8;text-decoration:none;">Estimating Tools</a></li>
-        <li><a href="/works-with-crm" style="font-size:0.8rem;color:#94a3b8;text-decoration:none;">CRMs</a></li>
+        <li><a href="/legal#privacy" style="font-size:0.8rem;color:#5A5247;text-decoration:none;">Privacy</a></li>
+        <li><a href="/legal#terms" style="font-size:0.8rem;color:#5A5247;text-decoration:none;">Terms</a></li>
+        <li><a href="/contact" style="font-size:0.8rem;color:#5A5247;text-decoration:none;">Contact</a></li>
+        <li><a href="/works-with-plan-rooms" style="font-size:0.8rem;color:#5A5247;text-decoration:none;">Plan Rooms</a></li>
+        <li><a href="/works-with-estimating-tools" style="font-size:0.8rem;color:#5A5247;text-decoration:none;">Estimating Tools</a></li>
+        <li><a href="/works-with-crm" style="font-size:0.8rem;color:#5A5247;text-decoration:none;">CRMs</a></li>
       </ul>
     </div>
   </footer>
