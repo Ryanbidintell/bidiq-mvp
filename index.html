@@ -114,6 +114,22 @@
     .bi-res, .bi-pricing, .bi-board { grid-template-columns: 1fr !important; }
   }
 </style>
+<style id="bi-canonical-nav">
+.bitn{position:sticky;top:0;z-index:60;background:rgba(244,241,234,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #D8D1C2}
+.bitn-in{max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:24px;font-family:'IBM Plex Sans',system-ui,sans-serif}
+.bitn-brand{display:flex;align-items:center;gap:11px;text-decoration:none}
+.bitn-mk{width:30px;height:30px;background:#E4562A;color:#F4F1EA;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-weight:900;font-size:15px;border-radius:5px}
+.bitn-nm{font-family:'Archivo',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.02em;color:#17130E}
+.bitn-links{display:none;align-items:center;gap:26px;font-size:14px;font-weight:500}
+.bitn-links a{color:#3A342B;text-decoration:none;white-space:nowrap}
+.bitn-links a:hover{color:#17130E}
+.bitn-links a.active{color:#E4562A;font-weight:700}
+.bitn-right{display:flex;align-items:center;gap:14px}
+.bitn-signin{font-size:14px;font-weight:600;color:#17130E;text-decoration:none;white-space:nowrap}
+.bitn-cta{background:#E4562A;color:#F4F1EA;font-weight:700;font-size:14px;padding:10px 18px;border-radius:6px;text-decoration:none;white-space:nowrap}
+.bitn-cta:hover{background:#C8461F}
+@media(min-width:920px){.bitn-links{display:flex}}
+</style>
 </head>
 <body>
 <div style="background:#F4F1EA;color:#17130E;font-family:'IBM Plex Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden;">
@@ -122,27 +138,22 @@
   <div style="background:#17130E;color:#F4F1EA;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:0.14em;text-transform:uppercase;padding:9px 20px;">
     <span style="color:#E4562A;">●</span>&nbsp; 7-day free trial &nbsp;·&nbsp; No credit card required &nbsp;·&nbsp; Setup in 5 minutes
   </div>
-  <nav style="position:sticky;top:0;z-index:50;background:rgba(244,241,234,0.88);backdrop-filter:blur(12px);border-bottom:1px solid #D8D1C2;">
-    <div style="max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:24px;">
-      <div style="display:flex;align-items:center;gap:11px;">
-        <div style="width:30px;height:30px;background:#E4562A;color:#F4F1EA;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-weight:900;font-size:15px;border-radius:5px;">BI</div>
-        <span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:18px;letter-spacing:-0.02em;">BidIntell</span>
-      </div>
-      <div style="display:none;align-items:center;gap:28px;font-size:14px;font-weight:500;color:#3A342B;" class="bi-navlinks">
-        <a href="#how" class="navlink" style="color:#3A342B;">How It Works</a>
-        <a href="#features" class="navlink" style="color:#3A342B;">Features</a>
-        <a href="#scoring" class="navlink" style="color:#3A342B;">BidIndex</a>
-        <a href="/takeoff/" class="navlink" style="color:#3A342B;">Take-Off</a>
-        <a href="/capacity-planning.html" class="navlink" style="color:#3A342B;">Capacity</a>
-        <a href="/diagnostic" class="navlink" style="color:#3A342B;">Free Diagnostic</a>
-        <a href="#pricing" class="navlink" style="color:#3A342B;">Pricing</a>
-      </div>
-      <div style="display:flex;align-items:center;gap:14px;">
-        <a href="/app?utm_source=website&utm_medium=nav&utm_campaign=redesign" class="navlink" style="font-size:14px;font-weight:600;color:#17130E;">Sign In</a>
-        <a href="/app?utm_source=website&utm_medium=landing_page&utm_campaign=redesign&utm_content=nav" onclick="if(typeof gtag==='function')gtag('event','cta_click',{cta_location:'nav',cta_text:'Start Free Trial'})" class="btn-orange" style="background:#E4562A;color:#F4F1EA;font-weight:700;font-size:14px;padding:10px 18px;border-radius:6px;">Start Free Trial</a>
-      </div>
-    </div>
-  </nav>
+  <nav class="bitn"><div class="bitn-in">
+<a class="bitn-brand" href="/"><span class="bitn-mk">BI</span><span class="bitn-nm">BidIntell</span></a>
+<div class="bitn-links">
+<a href="/#how">How It Works</a>
+<a href="/#features">Features</a>
+<a href="/#scoring">BidIndex</a>
+<a href="/takeoff/">Take-Off</a>
+<a href="/capacity-planning.html">Capacity</a>
+<a href="/diagnostic">Free Diagnostic</a>
+<a href="/#pricing">Pricing</a>
+</div>
+<div class="bitn-right">
+<a class="bitn-signin" href="/app?utm_source=website&utm_medium=nav">Sign In</a>
+<a class="bitn-cta" href="/app?utm_source=website&utm_medium=nav-cta">Start Free Trial</a>
+</div>
+</div></nav>
 
   <!-- ===== HERO ===== -->
   <section style="max-width:1200px;margin:0 auto;padding:72px 24px 60px;display:grid;grid-template-columns:1.05fr 0.95fr;gap:56px;align-items:center;" class="bi-hero">

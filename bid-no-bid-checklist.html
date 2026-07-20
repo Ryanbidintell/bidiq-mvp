@@ -718,32 +718,41 @@ blockquote.callout {
 }
 </style>
 <style id="archivo-headings">/*ARCHIVO-HEADINGS*/ h1,h2,h3,h4,.footer-copy,.nav-logo,.logo-text{font-family:'Archivo',sans-serif}</style>
+<style id="bi-canonical-nav">
+.bitn{position:sticky;top:0;z-index:60;background:rgba(244,241,234,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #D8D1C2}
+.bitn-in{max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:24px;font-family:'IBM Plex Sans',system-ui,sans-serif}
+.bitn-brand{display:flex;align-items:center;gap:11px;text-decoration:none}
+.bitn-mk{width:30px;height:30px;background:#E4562A;color:#F4F1EA;display:flex;align-items:center;justify-content:center;font-family:'Archivo',sans-serif;font-weight:900;font-size:15px;border-radius:5px}
+.bitn-nm{font-family:'Archivo',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.02em;color:#17130E}
+.bitn-links{display:none;align-items:center;gap:26px;font-size:14px;font-weight:500}
+.bitn-links a{color:#3A342B;text-decoration:none;white-space:nowrap}
+.bitn-links a:hover{color:#17130E}
+.bitn-links a.active{color:#E4562A;font-weight:700}
+.bitn-right{display:flex;align-items:center;gap:14px}
+.bitn-signin{font-size:14px;font-weight:600;color:#17130E;text-decoration:none;white-space:nowrap}
+.bitn-cta{background:#E4562A;color:#F4F1EA;font-weight:700;font-size:14px;padding:10px 18px;border-radius:6px;text-decoration:none;white-space:nowrap}
+.bitn-cta:hover{background:#C8461F}
+@media(min-width:920px){.bitn-links{display:flex}}
+</style>
 </head>
 <body>
 
-<nav class="nav">
-  <div class="nav-inner">
-    <a href="/" class="nav-logo">
-      <div class="logo-mark">BI</div>
-      BidIntell
-    </a>
-    <ul class="nav-links">
-      <li><a href="/#how">How It Works</a></li>
-      <li><a href="/#features">Features</a></li>
-      <li><a href="/#who">Who It's For</a></li>
-      <li><a href="/#pricing">Pricing</a></li>
-      <li><a href="/takeoff/">Take-Off</a></li>
-      <li><a href="/diagnostic">Diagnostic</a></li>
-      <li><a href="/app?utm_source=website&utm_medium=content&utm_campaign=bid-no-bid" style="color: var(--cloud);">Sign In</a></li>
-      <li><a href="/demo" class="nav-cta">Schedule a Demo</a></li>
-    </ul>
-    <button class="mobile-menu-btn" aria-label="Menu">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M3 12h18M3 6h18M3 18h18"/>
-      </svg>
-    </button>
-  </div>
-</nav>
+<nav class="bitn"><div class="bitn-in">
+<a class="bitn-brand" href="/"><span class="bitn-mk">BI</span><span class="bitn-nm">BidIntell</span></a>
+<div class="bitn-links">
+<a href="/#how">How It Works</a>
+<a href="/#features">Features</a>
+<a href="/#scoring">BidIndex</a>
+<a href="/takeoff/">Take-Off</a>
+<a href="/capacity-planning.html">Capacity</a>
+<a href="/diagnostic">Free Diagnostic</a>
+<a href="/#pricing">Pricing</a>
+</div>
+<div class="bitn-right">
+<a class="bitn-signin" href="/app?utm_source=website&utm_medium=nav">Sign In</a>
+<a class="bitn-cta" href="/app?utm_source=website&utm_medium=nav-cta">Start Free Trial</a>
+</div>
+</div></nav>
 
 <section class="page-hero">
   <div class="container">
