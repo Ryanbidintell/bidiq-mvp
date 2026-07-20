@@ -441,6 +441,7 @@ const DEFAULT_SETTINGS = {
   // estimating (pursuit-side labor)
   estimating_window_weeks:2,
   estimating_templates:[],           // [{trade,size_band,doc_band,hours,window_weeks}]
+  extra:{},                          // accepted/dismissed staffing-action keys
 };
 
 let supabaseClient=null, currentUser=null, MODE='demo';
@@ -933,15 +934,23 @@ function renderDashboard(){
 }
 function kpi(label,val,hint,cls){ return `<div class="card kpi"><div class="label">${label}</div><div class="val ${cls||''}">${val}</div><div class="hint">${hint||''}</div></div>`; }
 
+function recKey(r){ return r.action_type+':'+r.role+':'+r.startWeek; }
 function renderRecs(recs){
   const el=document.getElementById('recList');
-  if(!recs.length){ el.innerHTML='<p class="muted small">No staffing actions — demand is within capacity across the horizon. 👍</p>'; return; }
-  el.innerHTML=recs.map(r=>{
+  const ex=(STATE.settings.extra=STATE.settings.extra||{}); const dismissed=ex.dismissed||[], accepted=ex.accepted||[];
+  const vis=recs.filter(r=>!dismissed.includes(recKey(r)));
+  if(!vis.length){ el.innerHTML='<p class="muted small">No open staffing actions — demand is within capacity, or every action is handled. 👍'+(dismissed.length||accepted.length?` <a href="#" onclick="resetActions();return false" style="margin-left:6px">reset accepted/dismissed</a>`:'')+'</p>'; return; }
+  el.innerHTML=vis.map(r=>{
+    const key=recKey(r), isAcc=accepted.includes(key);
     const u=r.urgency>=8?'high':r.urgency>=4?'med':'low';
     const drivers=r.drivers.map(d=>`<span class="tag">${esc(d.name)} · ${d.fte}</span>`).join('');
     const affChip = r.affordability==='affordable'?'<span class="tag" style="background:var(--ok-dim);color:var(--ok)">✓ affordable</span>'
       : r.affordability==='contingent'?'<span class="tag" style="background:var(--warn-dim);color:var(--warn)">contingent on pipeline</span>'
       : r.affordability==='unfunded'?'<span class="tag" style="background:var(--bad-dim);color:var(--bad)">not yet funded</span>':'';
+    const acceptLabel = r.action_type==='hire'?'✓ Add hire to plan':'✓ Accept';
+    const acts = isAcc
+      ? `<span class="tag" style="background:var(--ok-dim);color:var(--ok)">✓ in plan</span><button class="btn sm" onclick="dismissRec('${key}')">Remove</button>`
+      : `<button class="btn sm primary" onclick="acceptRec('${key}')">${acceptLabel}</button><button class="btn sm" onclick="dismissRec('${key}')">Dismiss</button>`;
     return `<div class="rec">
       <div class="body">
         <div class="title"><span class="chip ${r.action_type}">${r.action_type.replace('_',' ')}</span> ${r.quantity} · ${esc(r.roleLabel)}
@@ -952,10 +961,28 @@ function renderRecs(recs){
         <div class="meta">Window: ${r.start} → ${r.end} (${r.durWeeks} wk) · confidence: <b>${r.confidence}</b>${r.action_type!=='hire'&&!ROLES[r.role].pursuit?` · ${r.awardedShare}% awarded-driven`:''}${r.addedMonthlyCost?` · +${money$(r.addedMonthlyCost)}/mo burdened`:''}</div>
         <div style="margin-top:6px">${drivers}</div>
       </div>
-      <div class="acts"><span class="urg ${u}">urgency ${r.urgency}</span></div>
+      <div class="acts"><span class="urg ${u}">urgency ${r.urgency}</span>${acts}</div>
     </div>`;
   }).join('');
 }
+async function persistPlan(){ if(MODE==='cloud'){ await dbUpsert('settings',{...STATE.settings}); } else persistLocal(); }
+async function acceptRec(key){
+  const r=(lastRun&&lastRun.recommendations||[]).find(x=>recKey(x)===key); if(!r) return;
+  const ex=STATE.settings.extra=STATE.settings.extra||{}; ex.accepted=ex.accepted||[]; if(!ex.accepted.includes(key)) ex.accepted.push(key);
+  ex.dismissed=(ex.dismissed||[]).filter(k=>k!==key);
+  if(r.action_type==='hire'){
+    const n=Math.max(1,Math.round(+r.quantity||1)); const bkt=roleBucket(r.role);
+    for(let i=0;i<n;i++){ const row={id:uid(),name:'Planned '+r.roleLabel+(n>1?' '+(i+1):''),role_canonical:r.role,trade:STATE.settings.trades[0]||'flooring',employment_type:'employee',hours_per_week:STATE.settings.hours_per_fte_week||40,active_flag:true,available_from:r.start,wage:DEFAULT_ROLE_WAGE[r.role]||60000,wage_basis:'annual',labor_bucket:bkt,cost_class:bkt==='direct'?'variable':'semi_fixed'}; upsertLocal('people',row); await dbUpsert('people',row); }
+    toast(`Added ${n} ${r.roleLabel} hire${n>1?'s':''} to People (from ${r.start})`);
+  } else { toast('Accepted — logged in your plan'); }
+  await persistPlan(); runAndRender();
+}
+async function dismissRec(key){
+  const ex=STATE.settings.extra=STATE.settings.extra||{}; ex.dismissed=ex.dismissed||[]; if(!ex.dismissed.includes(key)) ex.dismissed.push(key);
+  ex.accepted=(ex.accepted||[]).filter(k=>k!==key);
+  await persistPlan(); toast('Dismissed'); runAndRender();
+}
+async function resetActions(){ const ex=STATE.settings.extra=STATE.settings.extra||{}; ex.dismissed=[]; ex.accepted=[]; await persistPlan(); runAndRender(); }
 
 // Cap the chart to the meaningful demand window so the manpower curve fills the
 // chart instead of being crushed into the far left by a long (e.g. 180-wk) horizon.
@@ -1006,7 +1033,7 @@ function renderMargin(){
       ${wfRow('Gross margin', wf.gm, {strong:true})}
       ${wfRow('Direct field labor', wf.directLabor, {minus:true})}
       ${wfRow('Contribution margin', wf.cm, {strong:true})}
-      ${wfRow('Management labor'+(wf.ownerComp>0?` (incl. ${money$(wf.ownerComp)} owner)`:''), wf.mgmt, {minus:true})}
+      ${wfRow('Management labor', wf.mgmt, {minus:true})}
       ${wfRow('Operating income', wf.opInc, {})}
       ${wfRow('Non-labor operating expenses', wf.opex, {minus:true})}
       ${rule}
