@@ -122,6 +122,9 @@
   .row-actions{display:flex;gap:6px;justify-content:flex-end}
   .muted{color:var(--muted)} .small{font-size:12.5px} .mono{font-family:var(--mono)}
   #view-guide h3{color:var(--ink)} #view-guide p{line-height:1.55}
+  #settingsForm details>summary::-webkit-details-marker{display:none}
+  #settingsForm details[open]>summary{border-bottom:1px solid var(--line);margin-bottom:2px}
+  #settingsForm .panel{margin-bottom:14px} #settingsForm h2{margin:0 0 4px}
   .tag{display:inline-block;background:rgba(255,255,255,.05);color:var(--slate);border-radius:6px;padding:1px 7px;font-size:11.5px;font-weight:600;margin-right:4px}
   .split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .compare td.better{color:var(--ok);font-weight:700} .compare td.worse{color:var(--bad);font-weight:700}
@@ -309,7 +312,7 @@
     <section class="view" id="view-settings">
       <div class="topbar"><div><h1>Company assumptions</h1><div class="desc">These drive supply, confidence weighting, and recommendations.</div></div>
         <button class="btn primary" onclick="saveSettings()">Save</button></div>
-      <div class="panel"><div class="form-grid" id="settingsForm"></div></div>
+      <div id="settingsForm"></div>
     </section>
 
     <!-- GUIDE / HOW IT WORKS -->
@@ -1323,31 +1326,39 @@ function upsertLocal(table,row){ const i=STATE[table].findIndex(r=>r.id===row.id
 // ============================================================================
 function renderSettings(){
   const s=STATE.settings;
+  const grid=(inner)=>`<div class="form-grid">${inner}</div>`;
+  const sec=(title,sub,inner)=>`<div class="panel"><h2>${title}</h2>${sub?`<p class="ph">${sub}</p>`:''}${grid(inner)}</div>`;
+  const adv=(title,inner)=>`<details class="panel" style="padding:0"><summary style="cursor:pointer;font-weight:700;font-size:15px;padding:16px 18px;list-style:none">▸ ${title} <span class="small muted" style="font-weight:400">— sensible defaults; open only to tune</span></summary><div style="padding:0 18px 18px">${grid(inner)}</div></details>`;
   document.getElementById('settingsForm').innerHTML=
-    fld('Company name','s_company',s.company_name)+
-    fld('Home metro','s_metro',s.home_metro,'text','Used for future metro benchmarking.')+
-    fld('Planning horizon (weeks)','s_horizon',s.planning_horizon_weeks,'number','90 / 180 / 365 typical.')+
-    fld('Hours per FTE / week','s_hrs',s.hours_per_fte_week,'number')+
-    fld('Hiring lead time (weeks)','s_lead',s.hiring_lead_time_weeks,'number','How long to hire &amp; onboard. Shortages sooner than this cannot be hired for.')+
-    fld('Annual attrition %','s_attr',s.attrition_pct_annual,'number','0.08 = 8%/yr. Decays supply over the horizon.')+
-    fld('Max overtime %','s_ot',s.overtime_max_pct,'number','0.15 = crews can absorb +15% via overtime.')+
-    fld('Outside labor available (FTE)','s_out',s.outside_labor_fte,'number','Subcontract / temp crews you can turn on.')+
-    fld('Utilization target','s_util',s.utilization_target,'number')+
-    fld('Invite-only conf. ceiling','s_ci',s.conf_invite_max,'number','Doc-confidence below this = invite-only.')+
-    fld('Partial-docs conf. ceiling','s_cp',s.conf_partial_max,'number')+
-    fld('Weight: invite-only','s_wi',s.conf_weight_invite,'number','Multiplier on invite-only pursuit demand.')+
-    fld('Weight: partial docs','s_wp',s.conf_weight_partial,'number')+
-    fld('Weight: full package','s_wf',s.conf_weight_full,'number')+
-    fld('Default gross margin %','s_gm',s.default_gm_pct,'number','0.28 = 28%. Used when a job has no margin set.')+
-    selField('My margin % is stated…','s_gmbasis',s.gm_basis||'before',[{v:'before',t:'Before field labor (typical)'},{v:'after',t:'After field labor'}])+
-    fld('Owner compensation ($/yr)','s_owner',s.owner_comp_annual,'number','Market rate — what you would pay someone else to do your job, not what you currently take. Counts as management labor so profit is after a fair owner wage.')+
-    fld('Labor burden %','s_burden',s.labor_burden_pct,'number','0.32 = +32% on base wage (taxes, comp, insurance, benefits).')+
-    fld('Non-labor operating expenses ($/mo)','s_oh',s.monthly_fixed_overhead,'number','Rent, insurance, vehicles, software — everything below management labor. NOT wages.')+
-    fld('Pretax profit target %','s_ptgt',s.profit_target_pct,'number','0.10 = 10%. Sets the required-signed-work number.')+
-    fld('Direct LER target','s_dler',s.direct_ler_target,'number','$ of gross margin per $1 of field labor. 2.0 typical.')+
-    fld('Management LER target','s_mler',s.mgmt_ler_target,'number','$ of contribution margin per $1 of management labor. 3.0 typical.')+
-    fld('Coverage floor (months)','s_cfloor',s.coverage_floor_months,'number','A hire will not fire if it drops coverage below this.')+
-    fld('Estimating window (weeks)','s_estwin',s.estimating_window_weeks,'number','Pricing time before a bid due date that estimator hours spread across.');
+    sec('Company', null,
+      fld('Company name','s_company',s.company_name)+
+      fld('Home metro','s_metro',s.home_metro,'text','Used for future metro benchmarking.'))+
+    sec('Money &amp; profit', 'What drives the margin waterfall and your profit target.',
+      fld('Default gross margin %','s_gm',s.default_gm_pct,'number','0.28 = 28%. Used when a job has no margin set.')+
+      selField('My margin % is stated…','s_gmbasis',s.gm_basis||'before',[{v:'before',t:'Before field labor (typical)'},{v:'after',t:'After field labor'}])+
+      fld('Owner compensation ($/yr)','s_owner',s.owner_comp_annual,'number','Market rate — what you would pay someone else to do your job. Counts as management labor so profit is after a fair owner wage.')+
+      fld('Labor burden %','s_burden',s.labor_burden_pct,'number','0.32 = +32% on base wage (taxes, comp, insurance, benefits).')+
+      fld('Non-labor operating expenses ($/mo)','s_oh',s.monthly_fixed_overhead,'number','Rent, insurance, vehicles, software — NOT wages.')+
+      fld('Pretax profit target %','s_ptgt',s.profit_target_pct,'number','0.10 = 10%. Sets the required-signed-work number.'))+
+    sec('Crew &amp; hiring', 'How supply is modeled and when a hire is justified.',
+      fld('Planning horizon (weeks)','s_horizon',s.planning_horizon_weeks,'number','90 / 180 / 365 typical.')+
+      fld('Hours per FTE / week','s_hrs',s.hours_per_fte_week,'number')+
+      fld('Hiring lead time (weeks)','s_lead',s.hiring_lead_time_weeks,'number','How long to hire &amp; onboard. Shortages sooner than this cannot be hired for.')+
+      fld('Annual attrition %','s_attr',s.attrition_pct_annual,'number','0.08 = 8%/yr. Decays supply over the horizon.')+
+      fld('Max overtime %','s_ot',s.overtime_max_pct,'number','0.15 = crews can absorb +15% via overtime.')+
+      fld('Outside labor available (FTE)','s_out',s.outside_labor_fte,'number','Subcontract / temp crews you can turn on.')+
+      fld('Coverage floor (months)','s_cfloor',s.coverage_floor_months,'number','A hire will not fire if it drops coverage below this.'))+
+    adv('Labor-efficiency targets',
+      fld('Direct LER target','s_dler',s.direct_ler_target,'number','$ of gross margin per $1 of field labor. 2.0 typical.')+
+      fld('Management LER target','s_mler',s.mgmt_ler_target,'number','$ of contribution margin per $1 of management labor. 3.0 typical.'))+
+    adv('Pipeline confidence &amp; estimating',
+      fld('Invite-only conf. ceiling','s_ci',s.conf_invite_max,'number','Doc-confidence below this = invite-only.')+
+      fld('Partial-docs conf. ceiling','s_cp',s.conf_partial_max,'number')+
+      fld('Weight: invite-only','s_wi',s.conf_weight_invite,'number','Multiplier on invite-only pursuit demand.')+
+      fld('Weight: partial docs','s_wp',s.conf_weight_partial,'number')+
+      fld('Weight: full package','s_wf',s.conf_weight_full,'number')+
+      fld('Utilization target','s_util',s.utilization_target,'number')+
+      fld('Estimating window (weeks)','s_estwin',s.estimating_window_weeks,'number','Pricing time before a bid due date that estimator hours spread across.'));
 }
 async function saveSettings(){
   const s=STATE.settings;
