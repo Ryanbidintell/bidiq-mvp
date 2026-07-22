@@ -5497,7 +5497,9 @@ ${fullText.substring(0, 40000)}`;
                     // Bid Risk detection fields
                     multiple_bidders_expected: project.extracted.multiple_bidders_expected || false,
                     bid_shopping_language: project.extracted.bid_shopping_language || false,
-                    vague_scope: project.extracted.vague_scope || false
+                    vague_scope: project.extracted.vague_scope || false,
+                    prevailing_wage: project.extracted.prevailing_wage || 'no',
+                    prevailing_wage_evidence: project.extracted.prevailing_wage_evidence || null
                 };
 
                 // Generate fingerprint for duplicate detection
@@ -9366,7 +9368,11 @@ Rules:
 
   "bid_shopping_language": "Boolean. True if document contains bid shopping risk language: 'reserve the right to negotiate', 'best and final', 'revised bids', 'post-bid clarifications'. Return true or false.",
 
-  "vague_scope": "Boolean. True if the document contains significant undefined scope: multiple instances of 'TBD', 'by others', 'NIC', 'not in contract', 'specifications to follow', 'drawings not yet issued', or 'scope to be determined'. Return true or false."
+  "vague_scope": "Boolean. True if the document contains significant undefined scope: multiple instances of 'TBD', 'by others', 'NIC', 'not in contract', 'specifications to follow', 'drawings not yet issued', or 'scope to be determined'. Return true or false.",
+
+  "prevailing_wage": "Classify prevailing-wage / union-scale wage requirements as ONE of: 'yes', 'no', 'uncertain'. Return 'yes' ONLY if the documents explicitly require prevailing wages, certified payroll, the Davis-Bacon Act, wage determinations, or a state prevailing-wage act (e.g. Missouri Prevailing Wage Law, Kansas). Return 'uncertain' if there are indirect signals (public / government / school / municipal owner, publicly funded) but no explicit wage language. Return 'no' if none found.",
+
+  "prevailing_wage_evidence": "If prevailing_wage is 'yes' or 'uncertain', the exact short phrase or spec section that triggered it (e.g. 'Davis-Bacon wage rates apply', 'certified payroll required', 'Section 00 73 00'). Otherwise null."
 }
 
 IMPORTANT RULES:
@@ -9380,7 +9386,8 @@ IMPORTANT RULES:
 - For sheet_disciplines_found: Extract letter prefix from EVERY sheet number in the sheet index. 'M-101' → 'M', 'E-201' → 'E', 'FP-101' → 'FP'. Return unique codes. If drawings are image-only with no text, return [].
 - For scope_of_work_trades: Combine sheet_disciplines_found + spec_divisions_found + explicit scope text.
 - For project_size_sf: Search EVERYWHERE — cover page, title block, project data table, Section 01, General Notes, Drawing Index. Look for any number followed by SF/sq ft/sqft/square feet, or labels like Total Building Area, Gross Floor Area, GFA, BGSF, Building SF. Sum floor-by-floor areas if listed individually. Digits only, no commas. Return null only if truly absent.
-- For contract_risk_clauses: Only mark true if explicitly present. If no contract language exists, mark all as false.`
+- For contract_risk_clauses: Only mark true if explicitly present. If no contract language exists, mark all as false.
+- For prevailing_wage: check the invitation, Section 00 (esp. 00 73 00 Supplementary Conditions), Section 01 general requirements, and special/general conditions. Government, public-school, municipal, and federally funded jobs commonly require it. Do NOT return 'yes' without explicit wage language — use 'uncertain' for indirect signals only.`
 
             try {
                 // Use backend API instead of direct OpenAI call
@@ -9436,7 +9443,9 @@ IMPORTANT RULES:
                     scope_summary: extracted.scope_summary || null,
                     multiple_bidders_expected: parseBool(extracted.multiple_bidders_expected),
                     bid_shopping_language: parseBool(extracted.bid_shopping_language),
-                    vague_scope: parseBool(extracted.vague_scope)
+                    vague_scope: parseBool(extracted.vague_scope),
+                    prevailing_wage: normPW(extracted.prevailing_wage),
+                    prevailing_wage_evidence: extracted.prevailing_wage_evidence || null
                 };
             } catch (e) {
                 console.error('OpenAI extraction failed:', e);
@@ -9597,6 +9606,40 @@ IMPORTANT RULES:
 
         // Compact chip strip showing detected contract clause types in the score header.
         // Gives subs a reason to open the Contract tab before committing estimating hours.
+        // Normalize the AI's prevailing-wage read to 'yes' | 'uncertain' | 'no'.
+        // Neutral flag only — NEVER fed into the BidIndex score.
+        function normPW(v) {
+            const s = String(v == null ? '' : v).toLowerCase().trim();
+            if (s === 'yes' || s === 'true' || s === 'required') return 'yes';
+            if (s === 'uncertain' || s === 'maybe' || s === 'possible' || s === 'likely') return 'uncertain';
+            return 'no';
+        }
+
+        // Prevailing-wage awareness flag — NEUTRAL, does not affect the score.
+        // Mindy Rocha / CJI ask (Jul 22 2026): surface right after the drawing read so the
+        // estimator can check funding offsets with the union hall before estimating begins.
+        function renderPrevailingWageFlag(extracted) {
+            const pw = normPW(extracted && extracted.prevailing_wage);
+            if (pw === 'no') return '';
+            const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const evidence = (extracted && extracted.prevailing_wage_evidence) ? esc(extracted.prevailing_wage_evidence) : '';
+            const isYes = pw === 'yes';
+            const title = isYes ? 'Prevailing wage required' : 'Possible prevailing wage';
+            const sub = isYes
+                ? 'Check funding offsets with the hall before you estimate.'
+                : 'No explicit wage language, but signals suggest it — verify before estimating.';
+            const accent = isYes ? '#2563eb' : '#64748b';
+            const bg = isYes ? '#eff6ff' : '#f1f5f9';
+            return `
+                <div style="display:flex;gap:10px;align-items:flex-start;background:${bg};border:1px solid ${accent}33;border-left:4px solid ${accent};border-radius:8px;padding:11px 13px;margin:12px 0 0;text-align:left;">
+                    <span style="font-size:18px;line-height:1.2;">🏛️</span>
+                    <div>
+                        <div style="font-size:13px;font-weight:700;color:${accent};">${title}</div>
+                        <div style="font-size:12.5px;line-height:1.5;color:#334155;margin-top:2px;">${sub}${evidence ? ` <span style="opacity:.85;">“${evidence}”</span>` : ''}</div>
+                    </div>
+                </div>`;
+        }
+
         function renderContractRiskChips(contractRisks) {
             if (!contractRisks?.risksDetected?.length) return '';
             const chips = contractRisks.risksDetected.map(r => {
@@ -10306,7 +10349,11 @@ IMPORTANT RULES:
 
   "bid_shopping_language": "Boolean. True if document contains bid shopping risk language: 'reserve the right to negotiate', 'best and final', 'revised bids', 'post-bid clarifications'. Return true or false.",
 
-  "vague_scope": "Boolean. True if the document contains significant undefined scope: multiple instances of 'TBD', 'by others', 'NIC', 'not in contract', 'specifications to follow', 'drawings not yet issued', or 'scope to be determined'. Return true or false."
+  "vague_scope": "Boolean. True if the document contains significant undefined scope: multiple instances of 'TBD', 'by others', 'NIC', 'not in contract', 'specifications to follow', 'drawings not yet issued', or 'scope to be determined'. Return true or false.",
+
+  "prevailing_wage": "Classify prevailing-wage / union-scale wage requirements as ONE of: 'yes', 'no', 'uncertain'. Return 'yes' ONLY if the documents explicitly require prevailing wages, certified payroll, the Davis-Bacon Act, wage determinations, or a state prevailing-wage act (e.g. Missouri Prevailing Wage Law, Kansas). Return 'uncertain' if there are indirect signals (public / government / school / municipal owner, publicly funded) but no explicit wage language. Return 'no' if none found.",
+
+  "prevailing_wage_evidence": "If prevailing_wage is 'yes' or 'uncertain', the exact short phrase or spec section that triggered it (e.g. 'Davis-Bacon wage rates apply', 'certified payroll required', 'Section 00 73 00'). Otherwise null."
 }
 
 IMPORTANT RULES:
@@ -10321,7 +10368,8 @@ IMPORTANT RULES:
 - For sheet_disciplines_found: Extract letter prefix from EVERY sheet number in the sheet index. 'M-101' → 'M', 'E-201' → 'E', 'FP-101' → 'FP'. Return unique codes. If drawings are image-only with no text, return [].
 - For scope_of_work_trades: Combine sheet_disciplines_found + spec_divisions_found + explicit scope text. Sheet codes: M → Mechanical/HVAC, P → Plumbing, E → Electrical, FP → Fire Protection/Sprinkler. Legacy CSI: Div 7 → Roofing, Div 8 → Openings, Div 9 → Finishes, Div 12 → Furnishings. Modern MasterFormat: Div 21 → Fire Suppression, Div 22 → Plumbing, Div 23 → HVAC, Div 26 → Electrical, Div 27 → Low Voltage/AV, Div 28 → Security, Div 31 → Earthwork, Div 32 → Site Paving, Div 33 → Site Utilities.
 - For project_size_sf: Search EVERYWHERE — cover page, title block, project data table, Section 01, General Notes, Drawing Index. Look for any number followed by SF/sq ft/sqft/square feet, or labels like Total Building Area, Gross Floor Area, GFA, BGSF, Building SF. Sum floor-by-floor areas if listed individually. Digits only, no commas. Return null only if truly absent.
-- For contract_risk_clauses: Only mark true if explicitly present. If no contract language exists, mark all as false.`
+- For contract_risk_clauses: Only mark true if explicitly present. If no contract language exists, mark all as false.
+- For prevailing_wage: check the invitation, Section 00 (esp. 00 73 00 Supplementary Conditions), Section 01 general requirements, and special/general conditions. Government, public-school, municipal, and federally funded jobs commonly require it. Do NOT return 'yes' without explicit wage language — use 'uncertain' for indirect signals only.`
 
             try {
                 // Use backend API instead of direct Claude call
@@ -10516,7 +10564,9 @@ IMPORTANT RULES:
                     scope_summary: extracted.scope_summary || null,
                     multiple_bidders_expected: parseBool(extracted.multiple_bidders_expected),
                     bid_shopping_language: parseBool(extracted.bid_shopping_language),
-                    vague_scope: parseBool(extracted.vague_scope)
+                    vague_scope: parseBool(extracted.vague_scope),
+                    prevailing_wage: normPW(extracted.prevailing_wage),
+                    prevailing_wage_evidence: extracted.prevailing_wage_evidence || null
                 };
             } catch (e) {
                 console.error('Claude extraction failed:', e);
@@ -11792,6 +11842,7 @@ IMPORTANT RULES:
                             ${deadlineChip}
                             ${analyzedChip}
                         </div>
+                        ${renderPrevailingWageFlag(analysis.extracted)}
                         ${renderTopFactorsHtml(buildTopFactors(analysis.scores, settings, analysis.extracted || {}))}
                         <details style="margin-top:12px;">
                             <summary style="font-size:12px;color:rgba(255,255,255,0.5);cursor:pointer;list-style:none;outline:none;user-select:none;">ℹ How is this score calculated?</summary>
@@ -14383,6 +14434,7 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                                 <div class="rec-pill ${recClassSaved}">${p.scores.recommendation}${recTextSaved ? ` — ${recTextSaved}` : ''}</div>
                             </div>
                             ${(locStrSaved || btSaved) ? `<div class="meta-chips-row">${locStrSaved ? `<span class="meta-chip">📍 ${locStrSaved}</span>` : ''}${btSaved ? `<span class="meta-chip">🏗️ ${btSaved}</span>` : ''}</div>` : ''}
+                            ${renderPrevailingWageFlag(p.extracted)}
                             ${renderTopFactorsHtml(buildTopFactors(p.scores, settings, p.extracted || {}))}
                             <details style="margin-top:12px;">
                                 <summary style="font-size:12px;color:rgba(255,255,255,0.5);cursor:pointer;list-style:none;outline:none;user-select:none;">ℹ How is this score calculated?</summary>
