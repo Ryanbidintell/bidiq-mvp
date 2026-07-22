@@ -2581,6 +2581,29 @@
                         </div>
                     </div>
 
+                    <!-- User Profiles (founder analysis) -->
+                    <div class="settings-card" id="userProfilesCard">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">📊 User Profiles</div>
+                            <div class="settings-card-description">Who's using BidIntell — company size, typical project size (revenue band), and the spec sections they configured. Captured at onboarding and in Settings.</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div style="overflow-x:auto;">
+                                <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                                    <thead>
+                                        <tr style="text-align:left;color:var(--text-muted);border-bottom:1px solid var(--border-color);">
+                                            <th style="padding:8px 10px;font-weight:600;">Company</th>
+                                            <th style="padding:8px 10px;font-weight:600;white-space:nowrap;">Company Size</th>
+                                            <th style="padding:8px 10px;font-weight:600;white-space:nowrap;">Typical Project Size</th>
+                                            <th style="padding:8px 10px;font-weight:600;">Spec Sections</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="userProfilesBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Beta Feedback Section -->
                     <div class="settings-card">
                         <div class="settings-card-header">
@@ -5990,6 +6013,7 @@ ${fullText.substring(0, 40000)}`;
             } else if (id === 'admin') {
                 await loadSystemStats();
                 await loadOutreach();
+                await loadUserProfiles();
             } else if (id === 'settings') {
                 dataCache.settings = null; // Force fresh read so post-onboarding data appears
                 await loadSettings();
@@ -22224,6 +22248,38 @@ Respond now:`;
             stalled:         { label: 'Stalled',         color: '#f59e0b' },
         };
         function escapeOA(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+        // ===== User Profiles (founder analysis — Operations tab, admin-only) =====
+        // Reads user_settings across all users (admin RLS "Admin users can read all
+        // user_settings") to show who's using the product: size, project-size/revenue
+        // band, and configured spec sections. Data captured at onboarding + Settings.
+        async function loadUserProfiles() {
+            const tbody = document.getElementById('userProfilesBody');
+            if (!tbody || !supabaseClient) return;
+            tbody.innerHTML = '<tr><td colspan="4" style="padding:12px;color:var(--text-muted);">Loading…</td></tr>';
+            const { data, error } = await supabaseClient
+                .from('user_settings')
+                .select('user_id, company_name, user_email, company_size, typical_project_size, preferred_csi_sections, updated_at')
+                .order('updated_at', { ascending: false });
+            if (error) { tbody.innerHTML = `<tr><td colspan="4" style="color:var(--danger);padding:12px;font-style:italic;">Could not load (${escapeOA(error.message)})</td></tr>`; return; }
+            const rows = (data || []).filter(r => r.company_name || r.user_email); // skip blank shells
+            if (!rows.length) { tbody.innerHTML = '<tr><td colspan="4" style="padding:12px;color:var(--text-muted);font-style:italic;">No user profiles yet.</td></tr>'; return; }
+            const cell = 'padding:8px 10px;border-bottom:1px solid var(--border-color);vertical-align:top;';
+            tbody.innerHTML = rows.map(r => {
+                const company = escapeOA(r.company_name || '—');
+                const email = r.user_email ? `<br><span style="color:var(--text-muted);font-size:12px;">${escapeOA(r.user_email)}</span>` : '';
+                const size = escapeOA(r.company_size || '—');
+                const proj = escapeOA(r.typical_project_size || '—');
+                const secs = Array.isArray(r.preferred_csi_sections) ? r.preferred_csi_sections : [];
+                const secStr = secs.length ? escapeOA(secs.join(', ')) : '<span style="color:var(--text-muted);">none</span>';
+                return `<tr>
+                    <td style="${cell}"><strong style="color:var(--text-primary);">${company}</strong>${email}</td>
+                    <td style="${cell}">${size}</td>
+                    <td style="${cell}">${proj}</td>
+                    <td style="${cell}">${secStr}</td>
+                </tr>`;
+            }).join('');
+        }
 
         async function loadOutreach() {
             const tbody = document.querySelector('#outreachTable tbody');
