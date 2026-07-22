@@ -1,6 +1,6 @@
 # 🤖 Claude Code Instructions for BidIntell Project
 
-**Last Updated:** April 28, 2026
+**Last Updated:** July 22, 2026
 
 This file contains mandatory rules Claude Code must follow when working on this project.
 
@@ -720,6 +720,20 @@ Full endpoint audit + hardening pass (see memory `bidintell-security-hardening.m
 - **Open-by-necessity endpoints** (magic_link login, public lead forms, pipedrive demo form) can't require auth → **rate-limit** instead (in-memory per IP+email+type).
 - **New env vars to set in prod to activate:** `CRON_SECRET` (Netlify), `INBOUND_PARSE_SECRET` (Supabase) + append `?key=` to the SendGrid Inbound Parse URL, `POSTMARK_PROSPECT_REPLY_TOKEN`. The inbound-email secret is opt-in (inert until set) so it can't break the live scoring path before SendGrid is reconfigured.
 - Edge function deploys separately from Netlify: `supabase functions deploy inbound-email`.
+
+### Settings Save — Form Values Must Match DB CHECK Constraints (Jul 22, 2026)
+
+Recurring "company info / settings won't save" bug root-caused + fixed (commit c273f30). The Typical Project Size dropdown submitted values (`1m-5m`, etc.) that didn't match the `user_settings_typical_project_size_check` constraint (`'$1M-$5M'`, …). One bad enum value made the ENTIRE `user_settings` upsert fail → company name + every other field lost together. `saveSettingsStorage` throws, so the user saw `❌ Error saving settings: … violates check constraint …` — easy to misread as a generic "won't save."
+
+**Lesson:** when a "field won't save" bug appears, get the exact error popup FIRST (it names the constraint). Keep every `<select>`/enum option `value=` in EXACT sync with its DB CHECK (`pg_get_constraintdef`) — case, `$`, dashes all matter. A single out-of-range column silently takes down the whole multi-column upsert.
+
+### Founder Tooling Consolidated + Estimator Attribution (Jul 22, 2026)
+
+- Operations + Metrics tabs merged into one **"🛠️ Founder"** tab (`#tab-admin`): metrics on top, then Outreach Pipeline / User Profiles / Beta Feedback / Alias Mgmt. `#tab-metrics` removed; `loadSystemStats` now unused (safe to delete later).
+- **Estimator attribution (Phase 1):** `user_settings.estimators` roster + `projects.estimator` tag + Pipeline-board dropdown + "Win Rate by Estimator" analytics card. NOT per-user logins (Phase 2, deferred).
+- **Prevailing-wage flag:** neutral (never fed into `calculateScores`) awareness flag on the report; extracted in both AI paths.
+- Company Size + Typical Project Size now captured at onboarding (office-address step, all tiers) and shown in the User Profiles founder view.
+- Extended trial = existing `is_comped` flag + admin.html "Comp" button (no new build needed).
 
 ---
 
