@@ -2632,6 +2632,8 @@
                     <p class="page-subtitle">Every invite as a pursuit board — invited through awarded. Move a card with its stage dropdown.</p>
                 </header>
                 <style>
+                    /* Pipeline board uses the full viewport width, not the 1500px reading cap */
+                    #tab-pipeline .page-content{max-width:none;}
                     #tab-pipeline .pl-board{display:flex;gap:12px;overflow-x:auto;padding:8px 4px 20px;}
                     #tab-pipeline .pl-col{flex:0 0 220px;background:var(--bg,#0f1520);border:1px solid var(--border,#243044);border-radius:10px;display:flex;flex-direction:column;max-height:calc(100vh - 240px);}
                     #tab-pipeline .pl-col-head{padding:10px 12px;font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;border-bottom:1px solid var(--border,#243044);display:flex;align-items:center;justify-content:space-between;color:var(--text-secondary,#cbd5e1);}
@@ -21055,8 +21057,13 @@ Respond now:`;
                             position: 'right',
                             onClick: () => {},
                             labels: {
-                                color: 'rgba(255,255,255,0.85)',
-                                font: { size: 12 },
+                                color: '#ffffff',
+                                font: { size: 14, weight: '600' },
+                                padding: 14,
+                                boxWidth: 12,
+                                boxHeight: 12,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
                                 generateLabels: function(chart) {
                                     const dataset = chart.data.datasets[0];
                                     const total = dataset.data.reduce((a, b) => a + b, 0);
@@ -21064,6 +21071,7 @@ Respond now:`;
                                         text: `${label}  ${((dataset.data[i] / total) * 100).toFixed(1)}%`,
                                         fillStyle: dataset.backgroundColor[i],
                                         strokeStyle: dataset.backgroundColor[i],
+                                        fontColor: '#ffffff',
                                         lineWidth: 0,
                                         hidden: false,
                                         index: i
