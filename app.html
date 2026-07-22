@@ -1351,11 +1351,7 @@
                 </a>
                 <div class="nav-item" data-tab="admin" id="adminOperationsNavItem" style="display: none;">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    🛠️ Operations
-                </div>
-                <div class="nav-item" data-tab="metrics" id="adminMetricsNavItem" style="display: none;">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                    📊 Metrics
+                    🛠️ Founder
                 </div>
             </nav>
             <div class="sidebar-footer">
@@ -2534,10 +2530,18 @@
             <!-- Admin Tab -->
             <div class="tab-content" id="tab-admin">
                 <header class="page-header">
-                    <h2 class="page-title">Admin Dashboard</h2>
-                    <p class="page-subtitle">Beta feedback and system management</p>
+                    <h2 class="page-title">Founder</h2>
+                    <p class="page-subtitle">Metrics, pipeline, users, and feedback — all in one place</p>
                 </header>
                 <div class="page-content">
+
+                    <!-- Founder Metrics (consolidated from the old Metrics tab) -->
+                    <div id="metrics-tab-body" style="margin-bottom:8px;">
+                        <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+                            <div class="spinner"></div>
+                            <div style="margin-top:12px;">Loading metrics...</div>
+                        </div>
+                    </div>
 
                     <!-- Outreach Pipeline -->
                     <div class="settings-card" id="outreachCard">
@@ -2641,35 +2645,7 @@
                         </div>
                     </div>
 
-                    <!-- System Stats -->
-                    <div class="settings-card">
-                        <div class="settings-card-header">
-                            <div class="settings-card-title">System Statistics</div>
-                            <div class="settings-card-description">Platform health and usage metrics</div>
-                        </div>
-                        <div class="settings-card-body">
-                            <div id="systemStats">
-                                <p style="color: var(--text-muted);">Loading...</p>
-                            </div>
-                        </div>
-                    </div>
 
-                </div>
-            </div>
-
-            <!-- Founder Metrics Tab -->
-            <div class="tab-content" id="tab-metrics">
-                <header class="page-header">
-                    <h2 class="page-title">Founder Metrics</h2>
-                    <p class="page-subtitle">Platform health, revenue, and activation data</p>
-                </header>
-                <div class="page-content">
-                    <div id="metrics-tab-body">
-                        <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
-                            <div class="spinner"></div>
-                            <div style="margin-top:12px;">Loading metrics...</div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -6008,10 +5984,8 @@ ${fullText.substring(0, 40000)}`;
                 await loadDashboard();
             } else if (id === 'analytics') {
                 await renderAnalytics();
-            } else if (id === 'metrics') {
-                await loadMetricsTab();
             } else if (id === 'admin') {
-                await loadSystemStats();
+                await loadMetricsTab();
                 await loadOutreach();
                 await loadUserProfiles();
             } else if (id === 'settings') {
@@ -22072,14 +22046,12 @@ Respond now:`;
                 // Show admin tabs for founders only
                 if (isAdmin()) {
                     document.getElementById('adminOperationsNavItem').style.display = 'flex';
-                    document.getElementById('adminMetricsNavItem').style.display = 'flex';
                     // Follow-Ups tab: admin-only until Week 10 soft launch
                     document.getElementById('followupsNavItem').style.display = 'flex';
                     // Pipeline board: admin-only during rollout
                     document.getElementById('pipelineNavItem').style.display = 'flex';
                 } else {
                     document.getElementById('adminOperationsNavItem').style.display = 'none';
-                    document.getElementById('adminMetricsNavItem').style.display = 'none';
                     document.getElementById('followupsNavItem').style.display = 'none';
                     document.getElementById('pipelineNavItem').style.display = 'none';
                 }
