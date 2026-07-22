@@ -44,9 +44,15 @@
     </url>
   <url>
     <loc>https://bidintell.ai/takeoff/</loc>
-    <lastmod>2026-07-14</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://bidintell.ai/takeoff/labor-capacity-planning-subcontractors/</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://bidintell.ai/takeoff/bid-history-most-valuable-asset/</loc>
