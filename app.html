@@ -6669,6 +6669,28 @@ ${fullText.substring(0, 40000)}`;
                 + '<option value="pm"' + optPM + '>Project Manager</option>'
                 + '</select>'
                 + '</div>'
+                + '<div class="form-group" style="margin-bottom:16px;">'
+                + '<label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">Company Size</label>'
+                + '<select class="form-input" id="onboarding_companySize" onchange="onboardingData.company_size = this.value || null;" style="font-size:15px;">'
+                + '<option value="">Prefer not to say</option>'
+                + '<option value="1-10"' + (onboardingData.company_size === '1-10' ? ' selected' : '') + '>1–10 employees</option>'
+                + '<option value="11-25"' + (onboardingData.company_size === '11-25' ? ' selected' : '') + '>11–25 employees</option>'
+                + '<option value="26-50"' + (onboardingData.company_size === '26-50' ? ' selected' : '') + '>26–50 employees</option>'
+                + '<option value="51-100"' + (onboardingData.company_size === '51-100' ? ' selected' : '') + '>51–100 employees</option>'
+                + '<option value="100+"' + (onboardingData.company_size === '100+' ? ' selected' : '') + '>100+ employees</option>'
+                + '</select>'
+                + '</div>'
+                + '<div class="form-group" style="margin-bottom:16px;">'
+                + '<label style="display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">Typical Project Size</label>'
+                + '<select class="form-input" id="onboarding_typicalProjectSize" onchange="onboardingData.typical_project_size = this.value || null;" style="font-size:15px;">'
+                + '<option value="">Prefer not to say</option>'
+                + '<option value="&lt;$250k"' + (onboardingData.typical_project_size === '<$250k' ? ' selected' : '') + '>Under $250K</option>'
+                + '<option value="$250k-$1M"' + (onboardingData.typical_project_size === '$250k-$1M' ? ' selected' : '') + '>$250K – $1M</option>'
+                + '<option value="$1M-$5M"' + (onboardingData.typical_project_size === '$1M-$5M' ? ' selected' : '') + '>$1M – $5M</option>'
+                + '<option value="$5M-$20M"' + (onboardingData.typical_project_size === '$5M-$20M' ? ' selected' : '') + '>$5M – $20M</option>'
+                + '<option value="$20M+"' + (onboardingData.typical_project_size === '$20M+' ? ' selected' : '') + '>$20M+</option>'
+                + '</select>'
+                + '</div>'
                 + '</div>'
                 + '</div>';
         }
@@ -7630,6 +7652,8 @@ ${fullText.substring(0, 40000)}`;
                 client_types: onboardingData.clientTypes,
                 risk_tolerance: onboardingData.riskTolerance,
                 capacity: onboardingData.capacity,
+                company_size: onboardingData.company_size || null,
+                typical_project_size: onboardingData.typical_project_size || null,
                 ai_advisor_name: onboardingData.aiAdvisorName,
                 ai_advisor_tone: onboardingData.aiAdvisorTone,
                 acquisition_source: onboardingData.acquisition_source || null,  // How user heard about BidIntell
