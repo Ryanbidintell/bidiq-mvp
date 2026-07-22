@@ -1760,6 +1760,17 @@
                         </div>
                     </div>
 
+                    <!-- Win Rate by Estimator -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Win Rate by Estimator</h3>
+                            <div class="form-hint">Who on your team wins most? Tag bids with an estimator on the Pipeline board. Shows once you have 3+ tagged outcomes.</div>
+                        </div>
+                        <div class="card-body">
+                            <div id="winRateByEstimator"></div>
+                        </div>
+                    </div>
+
                     <!-- Win Rate by Trade -->
                     <div class="card">
                         <div class="card-header">
@@ -2196,6 +2207,20 @@
                         <div class="settings-card-body">
                             <div id="tradesNudge" style="display:none; background: rgba(228,86,42,0.07); border: 1px solid rgba(228,86,42,0.2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;"><strong style="color: var(--accent);">No trades selected.</strong> Trade Match scores will default to neutral (50) for every bid until you pick your CSI sections below.</div>
                             <div class="checkbox-grid" id="tradesCheckboxes"></div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">Estimators (Team)</div>
+                            <div class="settings-card-description">Add the estimators on your team, then tag each bid with who owns it on the Pipeline board. Analytics will show win/loss by estimator. (Everyone shares this login for now — individual estimator logins are a later phase.)</div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div id="estimatorRosterList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"></div>
+                            <div style="display:flex;gap:8px;">
+                                <input type="text" id="estimatorNameInput" placeholder="Estimator name" style="flex:1;padding:8px 10px;border:1px solid var(--border-color);border-radius:var(--radius);background:var(--bg-secondary);color:var(--text-primary);font-size:14px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addEstimator();}">
+                                <button type="button" class="btn btn-secondary" onclick="addEstimator()" style="white-space:nowrap;">+ Add</button>
+                            </div>
                         </div>
                     </div>
 
@@ -5102,6 +5127,7 @@ ${fullText.substring(0, 40000)}`;
                     target_margin: data.target_margin || 15,
                     onboarding_completed: data.onboarding_completed === true,  // Explicit boolean check
                     plan_rooms: data.plan_rooms || [],
+                    estimators: data.estimators || [],
                     baseline_win_rate: data.baseline_win_rate || null,
                     email_alias: data.email_alias || null,
                     org_id: data.org_id || null
@@ -5163,6 +5189,7 @@ ${fullText.substring(0, 40000)}`;
                     onboarding_completed: s.onboarding_completed !== undefined ? s.onboarding_completed : false,
                     baseline_win_rate: s.baseline_win_rate || null,
                     plan_rooms: s.plan_rooms || [],
+                    estimators: s.estimators || [],
                     updated_at: new Date().toISOString()
                 }, { onConflict: 'user_id' });
 
@@ -5436,7 +5463,8 @@ ${fullText.substring(0, 40000)}`;
                     marketMetroArea: p.market_metro_area || null,
                     buildingType: p.building_type ? { type: p.building_type } : null,
                     // Module 1: Division tracking
-                    bid_divisions_submitted: p.bid_divisions_submitted || []
+                    bid_divisions_submitted: p.bid_divisions_submitted || [],
+                    estimator: p.estimator || null
                 }));
                 console.log('✅ Mapped projects:', dataCache.projects.length);
                 return dataCache.projects;
@@ -14053,7 +14081,7 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
             if (!currentUser) { board.innerHTML = '<div class="empty-state" style="padding:40px;"><h3>Not signed in</h3></div>'; return; }
             const { data, error } = await supabaseClient
                 .from('projects')
-                .select('id, extracted_data, scores, gcs, gc_bids, outcome, triage_status, created_at')
+                .select('id, extracted_data, scores, gcs, gc_bids, outcome, triage_status, estimator, created_at')
                 .eq('user_id', currentUser.id)
                 .order('created_at', { ascending: false });
             if (error) {
@@ -14062,6 +14090,7 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                 return;
             }
             pipelineCache = data || [];
+            try { const _s = await getSettings(); plEstimators = _s.estimators || []; } catch (e) { plEstimators = []; }
             drawPipelineBoard();
         }
 
@@ -14108,6 +14137,7 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                 <div class="pl-name" title="${plEsc(name)}">${plEsc(name)}</div>
                 <div class="pl-gc">${plEsc(gc)}</div>
                 <select class="pl-move" onchange="plChangeStage('${p.id}', this.value)" title="Move stage">${opts}</select>
+                ${plEstimators.length ? `<select class="pl-move" style="margin-top:6px;" onchange="plChangeEstimator('${p.id}', this.value)" title="Assign estimator"><option value="">— estimator —</option>${plEstimators.map(e => `<option value="${plEsc(e)}"${p.estimator === e ? ' selected' : ''}>${plEsc(e)}</option>`).join('')}</select>` : ''}
             </div>`;
         }
 
@@ -14117,6 +14147,49 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
             const row = pipelineCache.find(p => p.id === id);
             if (row) row.triage_status = stage;
             drawPipelineBoard();
+        }
+
+        // ── Estimator attribution (Phase 1) ─────────────────────────────────
+        // Team roster lives on user_settings.estimators; each bid tags
+        // projects.estimator. Neutral to scoring — analytics + attribution only.
+        let plEstimators = [];        // roster available to the pipeline board
+        let settingsEstimators = [];  // roster being edited in Settings
+
+        async function plChangeEstimator(id, name) {
+            const val = name || null;
+            const { error } = await supabaseClient.from('projects').update({ estimator: val }).eq('id', id);
+            if (error) { alert('Could not set estimator: ' + (error.message || 'unknown error')); return; }
+            const row = pipelineCache.find(p => p.id === id);
+            if (row) row.estimator = val;
+            drawPipelineBoard();
+        }
+
+        function renderEstimatorRoster() {
+            const el = document.getElementById('estimatorRosterList');
+            if (!el) return;
+            if (!settingsEstimators.length) {
+                el.innerHTML = '<span style="font-size:13px;color:var(--text-muted);">No estimators yet. Add your team below.</span>';
+                return;
+            }
+            el.innerHTML = settingsEstimators.map((name, i) =>
+                `<span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:999px;padding:5px 10px;font-size:13px;color:var(--text-primary);">${plEsc(name)}<span onclick="removeEstimator(${i})" style="cursor:pointer;color:var(--text-muted);font-weight:700;padding:0 2px;" title="Remove">&times;</span></span>`
+            ).join('');
+        }
+
+        function addEstimator() {
+            const input = document.getElementById('estimatorNameInput');
+            if (!input) return;
+            const name = (input.value || '').trim();
+            if (!name) return;
+            if (settingsEstimators.some(e => e.toLowerCase() === name.toLowerCase())) { input.value = ''; return; }
+            settingsEstimators.push(name);
+            input.value = '';
+            renderEstimatorRoster();
+        }
+
+        function removeEstimator(i) {
+            settingsEstimators.splice(i, 1);
+            renderEstimatorRoster();
         }
 
         // Export projects to CSV
@@ -18527,6 +18600,8 @@ Respond now:`;
             applyContractRiskDecoupleUX();
             initV2WeightsCard();
             initV2BuildingTypesCard();
+            settingsEstimators = s.estimators || [];
+            renderEstimatorRoster();
 
             // Render Trades or Product Lines based on company type
             const tradesContainer = document.getElementById('tradesCheckboxes');
@@ -20208,6 +20283,7 @@ Respond now:`;
                 weights,
                 onboarding_completed: currentSettings.onboarding_completed !== undefined ? currentSettings.onboarding_completed : false
             };
+            s.estimators = settingsEstimators;
 
             // Add trades or product lines based on company type
             if (currentSettings.companyType === 'subcontractor') {
@@ -21377,6 +21453,41 @@ Respond now:`;
             el.innerHTML = html;
         }
 
+        // Win rate by estimator (Phase 1 team attribution). Neutral to scoring.
+        function renderWinRateByEstimator(projects) {
+            const el = document.getElementById('winRateByEstimator');
+            if (!el) return;
+            const withOutcome = projects.filter(p => (p.outcome === 'won' || p.outcome === 'lost') && p.estimator);
+            if (withOutcome.length < 3) {
+                el.innerHTML = '<div class="help-text">Assign estimators to bids on the Pipeline board and log at least 3 outcomes to see win rate by estimator.</div>';
+                return;
+            }
+            const map = {};
+            withOutcome.forEach(p => {
+                const name = p.estimator || 'Unassigned';
+                if (!map[name]) map[name] = { won: 0, total: 0 };
+                map[name].total++;
+                if (p.outcome === 'won') map[name].won++;
+            });
+            const entries = Object.entries(map).sort((a, b) => (b[1].won / b[1].total) - (a[1].won / a[1].total));
+            let html = '';
+            entries.forEach(([label, v]) => {
+                const winRate = Math.round((v.won / v.total) * 100);
+                const color = winRate >= 50 ? '#22c55e' : winRate >= 25 ? '#eab308' : '#94a3b8';
+                html += `<div style="margin-bottom:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+                        <span style="font-size:13px;font-weight:600;color:var(--text-primary);">${plEsc(label)}</span>
+                        <span style="font-size:13px;color:var(--text-muted);">${v.won} won / ${v.total} total &mdash; <strong style="color:var(--text-primary);">${winRate}%</strong></span>
+                    </div>
+                    <div style="height:10px;background:var(--bg-tertiary);border-radius:5px;overflow:hidden;">
+                        <div style="height:100%;width:${winRate}%;background:${color};border-radius:5px;"></div>
+                    </div>
+                </div>`;
+            });
+            html += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Win rate by estimator, across bids you\'ve tagged with an outcome.</div>';
+            el.innerHTML = html;
+        }
+
         function renderWinRateByTrade(projects, settings) {
             const el = document.getElementById('winRateByTrade');
             if (!el) return;
@@ -21641,6 +21752,7 @@ Respond now:`;
                 document.getElementById('riskRewardScatter').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('scoreOutcomeChart').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('winRateByBuildingType').innerHTML = '<div class="help-text">No data available yet.</div>';
+                document.getElementById('winRateByEstimator').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('winRateByTrade').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('winRateBySize').innerHTML = '<div class="help-text">No data available yet.</div>';
                 document.getElementById('winRateByRegion').innerHTML = '<div class="help-text">No data available yet.</div>';
@@ -21660,6 +21772,7 @@ Respond now:`;
             renderRiskRewardScatter(filtered);
             renderScoreOutcomeChart(filtered);
             renderWinRateByBuildingType(filtered);
+            renderWinRateByEstimator(filtered);
             renderWinRateByTrade(filtered, settings);
             renderWinRateBySize(filtered);
             renderWinRateByRegion(filtered);
