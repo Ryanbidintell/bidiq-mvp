@@ -2072,6 +2072,15 @@
                                     </select>
                                     <div class="form-hint">The project range you usually bid.</div>
                                 </div>
+                                <div class="form-group">
+                                    <label class="form-label">Prevailing Wage / Davis-Bacon Work</label>
+                                    <select class="form-select" id="settingPrevailingWagePref">
+                                        <option value="neutral">No preference</option>
+                                        <option value="want">Prefer it — we're set up for prevailing-wage work</option>
+                                        <option value="avoid">Avoid it — not a fit for our shop</option>
+                                    </select>
+                                    <div class="form-hint">Tunes your BidIndex when a bid requires prevailing/union wages.</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -5118,6 +5127,7 @@ ${fullText.substring(0, 40000)}`;
                     capacity: data.capacity || 'steady',
                     company_size: data.company_size || null,
                     typical_project_size: data.typical_project_size || null,
+                    prevailing_wage_pref: data.prevailing_wage_pref || 'neutral',
                     ai_advisor_name: data.ai_advisor_name || 'Sam',
                     ai_advisor_tone: data.ai_advisor_tone || 'supportive',
                     weights: weights,
@@ -5179,6 +5189,7 @@ ${fullText.substring(0, 40000)}`;
                     capacity: capacity,
                     company_size: s.company_size || null,
                     typical_project_size: s.typical_project_size || null,
+                    prevailing_wage_pref: s.prevailing_wage_pref || 'neutral',
                     ai_advisor_name: s.ai_advisor_name || 'Sam',
                     ai_advisor_tone: s.ai_advisor_tone || 'supportive',
                     weights: s.weights,
@@ -9668,18 +9679,24 @@ IMPORTANT RULES:
         // Prevailing-wage awareness flag — NEUTRAL, does not affect the score.
         // Mindy Rocha / CJI ask (Jul 22 2026): surface right after the drawing read so the
         // estimator can check funding offsets with the union hall before estimating begins.
-        function renderPrevailingWageFlag(extracted) {
+        function renderPrevailingWageFlag(extracted, scores, settings) {
             const pw = normPW(extracted && extracted.prevailing_wage);
             if (pw === 'no') return '';
             const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             const evidence = (extracted && extracted.prevailing_wage_evidence) ? esc(extracted.prevailing_wage_evidence) : '';
             const isYes = pw === 'yes';
+            const pref = (settings && settings.prevailing_wage_pref) || 'neutral';
+            const mod = (scores && typeof scores.pwModifier === 'number') ? scores.pwModifier : 0;
             const title = isYes ? 'Prevailing wage required' : 'Possible prevailing wage';
-            const sub = isYes
+            let sub = isYes
                 ? 'Check funding offsets with the hall before you estimate.'
                 : 'No explicit wage language, but signals suggest it — verify before estimating.';
-            const accent = isYes ? '#2563eb' : '#64748b';
-            const bg = isYes ? '#eff6ff' : '#f1f5f9';
+            // Reflect the contractor's own preference in the score.
+            let accent = isYes ? '#2563eb' : '#64748b';
+            let bg = isYes ? '#eff6ff' : '#f1f5f9';
+            if (mod < 0) { accent = '#c2410c'; bg = '#fff7ed'; sub += ` <b>${mod} to your BidIndex</b> — you've set prevailing-wage work as a poor fit.`; }
+            else if (mod > 0) { accent = '#15803d'; bg = '#f0fdf4'; sub += ` <b>+${mod} to your BidIndex</b> — you've set this as work you want.`; }
+            else if (pref === 'neutral') { sub += ` Set a prevailing-wage preference in Settings to factor this into your score.`; }
             return `
                 <div style="display:flex;gap:10px;align-items:flex-start;background:${bg};border:1px solid ${accent}33;border-left:4px solid ${accent};border-radius:8px;padding:11px 13px;margin:12px 0 0;text-align:left;">
                     <span style="font-size:18px;line-height:1.2;">🏛️</span>
@@ -11605,6 +11622,18 @@ IMPORTANT RULES:
             const compPressure = await getCompetitivePressureScore(gcNames, extracted.building_type);
             components.competitive = { ...compPressure, weight: compPressure.weight };
 
+            // Prevailing-wage preference modifier — per-contractor fit (want/neutral/avoid).
+            // Unlike universal contract clauses (kept neutral/awareness-only), prevailing-wage
+            // FIT varies by shop, so it legitimately shifts THIS contractor's BidIndex when PW
+            // is detected on the bid. Bounded, inspectable, only fires when PW is present.
+            let pwMod = 0;
+            const pwPref = settings.prevailing_wage_pref || 'neutral';
+            const pwDetected = String(extracted.prevailing_wage || 'no').toLowerCase();
+            if (pwPref !== 'neutral' && (pwDetected === 'yes' || pwDetected === 'uncertain')) {
+                const mag = pwDetected === 'yes' ? 1 : 0.5; // half weight when only a possible signal
+                pwMod = pwPref === 'avoid' ? -Math.round(15 * mag) : Math.round(10 * mag);
+            }
+
             // Option B (admin-gated): consolidated model. Keywords become a capped ±10 modifier;
             // their weight redistributes to Trade Match (60%) + Client (40%). Trade owns scope.
             if (scopeModelConsolidated()) {
@@ -11623,9 +11652,9 @@ IMPORTANT RULES:
                     reason: `Your terms: ${kwMod >= 0 ? '+' : ''}${kwMod} (favorable/risk keywords)` };
                 let cf = 0;
                 for (const k of ['location', 'gc', 'trade', 'competitive']) if (components[k] && components[k].weight > 0) cf += components[k].score * (components[k].weight / 100);
-                cf = Math.max(0, Math.min(100, Math.round(cf + kwMod)));
+                cf = Math.max(0, Math.min(100, Math.round(cf + kwMod + pwMod)));
                 const crec = cf >= 80 ? 'GO' : cf >= 60 ? 'REVIEW' : 'PASS';
-                return { final: cf, recommendation: crec, components, weights };
+                return { final: cf, recommendation: crec, components, weights, pwModifier: pwMod };
             }
 
             // Final
@@ -11637,9 +11666,9 @@ IMPORTANT RULES:
             }
             let final = 0;
             for (const k of ['location', 'keywords', 'gc', 'trade', 'competitive']) if (components[k] && components[k].weight > 0) final += components[k].score * (components[k].weight / 100);
-            final = Math.round(final);
+            final = Math.max(0, Math.min(100, Math.round(final) + pwMod));
             const rec = final >= 80 ? 'GO' : final >= 60 ? 'REVIEW' : 'PASS';
-            return { final, recommendation: rec, components, weights };
+            return { final, recommendation: rec, components, weights, pwModifier: pwMod };
         }
 
         // Format contract risks for display — used in both renderResult and viewReport
@@ -11892,7 +11921,7 @@ IMPORTANT RULES:
                             ${deadlineChip}
                             ${analyzedChip}
                         </div>
-                        ${renderPrevailingWageFlag(analysis.extracted)}
+                        ${renderPrevailingWageFlag(analysis.extracted, analysis.scores, settings)}
                         ${renderTopFactorsHtml(buildTopFactors(analysis.scores, settings, analysis.extracted || {}))}
                         <details style="margin-top:12px;">
                             <summary style="font-size:12px;color:rgba(255,255,255,0.5);cursor:pointer;list-style:none;outline:none;user-select:none;">ℹ How is this score calculated?</summary>
@@ -14552,7 +14581,7 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                                 <div class="rec-pill ${recClassSaved}">${p.scores.recommendation}${recTextSaved ? ` — ${recTextSaved}` : ''}</div>
                             </div>
                             ${(locStrSaved || btSaved) ? `<div class="meta-chips-row">${locStrSaved ? `<span class="meta-chip">📍 ${locStrSaved}</span>` : ''}${btSaved ? `<span class="meta-chip">🏗️ ${btSaved}</span>` : ''}</div>` : ''}
-                            ${renderPrevailingWageFlag(p.extracted)}
+                            ${renderPrevailingWageFlag(p.extracted, p.scores, settings)}
                             ${renderTopFactorsHtml(buildTopFactors(p.scores, settings, p.extracted || {}))}
                             <details style="margin-top:12px;">
                                 <summary style="font-size:12px;color:rgba(255,255,255,0.5);cursor:pointer;list-style:none;outline:none;user-select:none;">ℹ How is this score calculated?</summary>
@@ -18601,6 +18630,7 @@ Respond now:`;
             document.getElementById('settingCapacity').value = s.capacity;
             if (document.getElementById('settingCompanySize')) document.getElementById('settingCompanySize').value = s.company_size || '';
             if (document.getElementById('settingTypicalProjectSize')) document.getElementById('settingTypicalProjectSize').value = s.typical_project_size || '';
+            if (document.getElementById('settingPrevailingWagePref')) document.getElementById('settingPrevailingWagePref').value = s.prevailing_wage_pref || 'neutral';
             document.getElementById('settingDecisionTime').value = s.decisionTime;
             document.getElementById('settingDefaultStars').value = s.defaultStars;
             if (document.getElementById('settingTargetMargin')) document.getElementById('settingTargetMargin').value = s.target_margin || 15;
@@ -20320,6 +20350,7 @@ Respond now:`;
                 capacity: document.getElementById('settingCapacity').value,
                 company_size: document.getElementById('settingCompanySize')?.value || null,
                 typical_project_size: document.getElementById('settingTypicalProjectSize')?.value || null,
+                prevailing_wage_pref: document.getElementById('settingPrevailingWagePref')?.value || 'neutral',
                 decisionTime: parseInt(document.getElementById('settingDecisionTime').value) || 45,
                 defaultStars: parseInt(document.getElementById('settingDefaultStars').value),
                 target_margin: parseFloat(document.getElementById('settingTargetMargin')?.value) || 15,

@@ -733,7 +733,7 @@ Recurring "company info / settings won't save" bug root-caused + fixed (commit c
 
 - Operations + Metrics tabs merged into one **"🛠️ Founder"** tab (`#tab-admin`): metrics on top, then Outreach Pipeline / User Profiles / Beta Feedback / Alias Mgmt. `#tab-metrics` removed; `loadSystemStats` now unused (safe to delete later).
 - **Estimator attribution (Phase 1):** `user_settings.estimators` roster + `projects.estimator` tag + Pipeline-board dropdown + "Win Rate by Estimator" analytics card. NOT per-user logins (Phase 2, deferred).
-- **Prevailing-wage flag:** neutral (never fed into `calculateScores`) awareness flag on the report; extracted in both AI paths.
+- **Prevailing-wage flag + preference:** extracted in both AI paths; awareness flag on the report. **Jul 23:** added per-contractor `prevailing_wage_pref` (want/neutral/avoid on user_settings, no CHECK) that DOES shift the BidIndex via a bounded modifier in `calculateScores` (`pwMod`: avoid −15 / want +10, halved on 'uncertain', only when PW is detected; applied in both the default and consolidated branches; returned as `scores.pwModifier`). Rationale: PW *fit* is contractor-specific (some shops want union/PW work, some avoid it), unlike universal contract clauses which stay neutral/awareness-only.
 - Company Size + Typical Project Size now captured at onboarding (office-address step, all tiers) and shown in the User Profiles founder view.
 - Extended trial = existing `is_comped` flag + admin.html "Comp" button (no new build needed).
 
