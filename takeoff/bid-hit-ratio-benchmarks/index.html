@@ -116,24 +116,27 @@ a:hover { color: var(--accent); }
 img { max-width: 100%; display: block; }
 .container { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
 
-/* NAV */
-.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(244,241,234,0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
-.nav-inner { max-width: 1160px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 24px; }
-.nav-logo { display: flex; align-items: center; gap: 11px; font-family: var(--display); font-weight: 800; font-size: 1.15rem; color: var(--ink); letter-spacing: -0.02em; }
+/* NAV — canonical site header (matches index.html #bi-canonical-nav) */
+.bitn-bar { background:#17130E; color:#F4F1EA; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:0.14em; text-transform:uppercase; padding:9px 20px; }
+.bitn { position:sticky; top:0; z-index:60; background:rgba(244,241,234,0.92); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-bottom:1px solid #D8D1C2; }
+.bitn-in { max-width:1200px; margin:0 auto; padding:14px 24px; display:flex; align-items:center; justify-content:space-between; gap:24px; font-family:'IBM Plex Sans',system-ui,sans-serif; }
+.bitn-brand { display:flex; align-items:center; gap:11px; text-decoration:none; }
+.bitn-mk { width:30px; height:30px; background:#E4562A; color:#F4F1EA; display:flex; align-items:center; justify-content:center; font-family:'Archivo',sans-serif; font-weight:900; font-size:15px; border-radius:5px; }
+.bitn-nm { font-family:'Archivo',sans-serif; font-weight:800; font-size:18px; letter-spacing:-.02em; color:#17130E; }
+.bitn-links { display:none; align-items:center; gap:26px; font-size:14px; font-weight:500; }
+.bitn-links a { color:#3A342B; text-decoration:none; white-space:nowrap; }
+.bitn-links a:hover { color:#17130E; }
+.bitn-links a.active { color:#E4562A; font-weight:700; }
+.bitn-right { display:flex; align-items:center; gap:14px; }
+.bitn-signin { font-size:14px; font-weight:600; color:#17130E; text-decoration:none; white-space:nowrap; }
+.bitn-cta { background:#E4562A; color:#F4F1EA; font-weight:700; font-size:14px; padding:10px 18px; border-radius:6px; text-decoration:none; white-space:nowrap; }
+.bitn-cta:hover { background:#C8461F; }
+@media(min-width:920px){ .bitn-links{ display:flex; } }
+/* logo-mark retained for footer */
 .logo-mark { width: 30px; height: 30px; background: var(--accent); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-family: var(--display); font-size: 0.9rem; font-weight: 900; color: #F4F1EA; letter-spacing: -0.02em; flex-shrink: 0; }
-.nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
-.nav-links a { font-size: 0.875rem; font-weight: 500; color: var(--ink-body-2); transition: color 0.2s; white-space: nowrap; }
-.nav-links a:hover { color: var(--accent); }
-.nav-links a.active { color: var(--ink); font-weight: 600; }
-.nav-actions { display: flex; align-items: center; gap: 14px; }
-.nav-signin { font-size: 0.875rem; font-weight: 600; color: var(--ink); white-space: nowrap; }
-.nav-signin:hover { color: var(--accent); }
-.nav-cta { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; background: var(--accent); color: #F4F1EA !important; border-radius: var(--radius); font-weight: 700; font-size: 0.875rem; transition: background 0.2s, transform 0.15s; white-space: nowrap; }
-.nav-cta:hover { background: var(--accent-dark); transform: translateY(-1px); }
-.mobile-menu-btn { display: none; background: none; border: none; color: var(--ink-body); cursor: pointer; padding: 8px; }
 
 /* HERO */
-.page-hero { padding: 150px 0 66px; position: relative; }
+.page-hero { padding: 64px 0 66px; position: relative; }
 .page-hero .container { position: relative; }
 .eyebrow { display: inline-flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 0.78rem; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 18px; }
 .page-hero h1 { font-family: var(--display); font-size: clamp(2rem, 4.4vw, 3.1rem); font-weight: 800; color: var(--ink); line-height: 1.05; letter-spacing: -0.03em; margin-bottom: 18px; max-width: 820px; }
@@ -160,7 +163,7 @@ img { max-width: 100%; display: block; }
 .related-heading { font-family: var(--display); font-size: 1.4rem; font-weight: 800; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 26px; }
 
 /* ARTICLE PAGE */
-.article-hero { padding: 130px 0 34px; position: relative; }
+.article-hero { padding: 48px 0 34px; position: relative; }
 .article-hero .container { position: relative; max-width: 760px; }
 .article-hero .breadcrumb { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-bottom: 18px; }
 .article-hero .breadcrumb a { color: var(--teal); }
@@ -223,28 +226,23 @@ img { max-width: 100%; display: block; }
 </style>
 </head>
 <body>
-  <nav class="nav">
-  <div class="nav-inner">
-    <a href="/" class="nav-logo">
-      <div class="logo-mark">BI</div>
-      BidIntell
-    </a>
-    <ul class="nav-links">
-      <li><a href="/#how">How It Works</a></li>
-      <li><a href="/#features">Features</a></li>
-      <li><a href="/#scoring">BidIndex</a></li>
-      <li><a href="/takeoff/" class="active">Take-Off</a></li>
-      <li><a href="/#pricing">Pricing</a></li>
-    </ul>
-    <div class="nav-actions">
-      <a href="/app?utm_source=website&utm_medium=takeoff&utm_campaign=nav" class="nav-signin">Sign In</a>
-      <a href="/app?utm_source=website&utm_medium=takeoff&utm_campaign=nav&utm_content=takeoff_nav" class="nav-cta">Start Free Trial</a>
-    </div>
-    <button class="mobile-menu-btn" aria-label="Menu">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-    </button>
+  <div class="bitn-bar"><span style="color:#E4562A;">●</span>&nbsp; 7-day free trial &nbsp;·&nbsp; No credit card required &nbsp;·&nbsp; Setup in 5 minutes</div>
+<nav class="bitn"><div class="bitn-in">
+  <a class="bitn-brand" href="/"><span class="bitn-mk">BI</span><span class="bitn-nm">BidIntell</span></a>
+  <div class="bitn-links">
+    <a href="/#how">How It Works</a>
+    <a href="/#features">Features</a>
+    <a href="/#scoring">BidIndex</a>
+    <a href="/takeoff/" class="active">Take-Off</a>
+    <a href="/capacity-planning.html">Capacity</a>
+    <a href="/diagnostic">Free Diagnostic</a>
+    <a href="/#pricing">Pricing</a>
   </div>
-</nav>
+  <div class="bitn-right">
+    <a class="bitn-signin" href="/app?utm_source=website&utm_medium=takeoff&utm_campaign=nav">Sign In</a>
+    <a class="bitn-cta" href="/app?utm_source=website&utm_medium=takeoff&utm_campaign=nav&utm_content=takeoff_nav">Start Free Trial</a>
+  </div>
+</div></nav>
 
   <section class="article-hero">
     <div class="container">
