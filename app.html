@@ -13831,6 +13831,29 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
         // Pending bids → Capacity pipeline (cap_opportunities); won bids → backlog
         // (cap_projects). Idempotent: linked by *_ref = "bidintell:<projectId>". Re-syncing
         // skips already-linked bids and moves an opportunity → backlog when it's now won.
+        // Auto-derive Capacity "document confidence" (0–1) from a scored bid, replacing the
+        // old hardcoded 0.6. Prefers the v2 engine's completeness (0–100) if it's been captured
+        // on the bid; otherwise derives it from how complete the extracted package is — an
+        // invite-only email tease has almost none of these signals; a full reviewed package
+        // (drawings + spec book + scope) has them all. Result lands in the module's
+        // invite (<0.40) / partial (<0.70) / full bands, which drive the pipeline weighting.
+        function _capDeriveConfidence(p) {
+            const scores = p.scores || {};
+            const compPct = (scores.v2 && scores.v2.completeness != null) ? scores.v2.completeness
+                : (scores.completeness != null ? scores.completeness : null);
+            if (compPct != null && !isNaN(compPct)) return Math.max(0.2, Math.min(0.95, Number(compPct) / 100));
+            const ex = p.extracted_data || p.extracted || {};
+            const has = v => Array.isArray(v) ? v.length > 0 : !!v;
+            let c = 0.2; // base — even a bare invite counts as a little
+            if (has(ex.sheet_disciplines_found)) c += 0.22; // drawings present
+            if (has(ex.spec_divisions_found))    c += 0.22; // spec book present
+            if (has(ex.scope_of_work_trades))    c += 0.16;
+            if (ex.project_size_sf)              c += 0.08;
+            if (ex.bid_deadline)                 c += 0.07;
+            if (ex.scope_summary)                c += 0.05;
+            return Math.max(0.2, Math.min(0.95, Math.round(c * 100) / 100));
+        }
+
         function _capMapProject(p) {
             const ex = p.extracted_data || p.extracted || {};
             const scores = p.scores || {};
@@ -13856,7 +13879,7 @@ h3.sec{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--
                 return { table: 'cap_projects', ref: 'bidintell:' + p.id, row: { ...common, project_ref: 'bidintell:' + p.id, status: 'awarded', manual_peak_adjustment: 1 } };
             }
             return { table: 'cap_opportunities', ref: 'bidintell:' + p.id, row: { ...common, opportunity_ref: 'bidintell:' + p.id,
-                bidintell_score: score, confidence_score: 0.6,
+                bidintell_score: score, confidence_score: _capDeriveConfidence(p),
                 probability_of_award: score ? Math.max(0.1, Math.min(0.9, score / 100)) : 0.5,
                 include_flag: true } };
         }
