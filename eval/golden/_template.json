@@ -1,0 +1,37 @@
+{
+  "id": "short-kebab-id",
+  "notes": "Who/what this bid is (trade, doc type: full plan set / thin invite email / image-only drawings), and where it came from. Keep it real.",
+  "labeled_by": "Ryan",
+  "labeled_at": "2026-07-24",
+
+  "expected": {
+    "project_name": "Hand-verified project name",
+    "building_type": "Healthcare | Office | Education | Government | Industrial | Multifamily | Retail | Religious | Higher Education | Mixed-Use | Infrastructure | Other",
+    "project_state": "KS",
+    "prevailing_wage": "yes | no | uncertain",
+    "bid_deadline_present": true,
+    "spec_divisions_found": ["22", "23", "26"],
+    "sheet_disciplines_found": ["M", "P", "E"],
+    "scope_of_work_trades": ["Mechanical/HVAC", "Plumbing"]
+  },
+
+  "extracted_snapshot": {
+    "_comment": "Paste EXACTLY what the app extracted for this bid (from the report or console). This is what gets graded against `expected`. Refresh it after a prompt/model change to catch regressions.",
+    "project_name": "",
+    "building_type": "",
+    "project_state": "",
+    "prevailing_wage": "",
+    "bid_deadline": "",
+    "spec_divisions_found": [],
+    "sheet_disciplines_found": [],
+    "scope_of_work_trades": []
+  },
+
+  "expected_recommendation": "GO | REVIEW | PASS",
+  "expected_score": 72,
+  "scored_snapshot": {
+    "_comment": "What the app scored this bid, for the profile it was scored against. Optional but recommended — enables recommendation-band + score-delta grading.",
+    "final": 0,
+    "recommendation": ""
+  }
+}

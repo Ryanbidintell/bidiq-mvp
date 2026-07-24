@@ -1,0 +1,33 @@
+{
+  "id": "example-thin-invite",
+  "notes": "EXAMPLE ONLY — delete once you have real bids. Demonstrates the report by including two deliberate extraction misses (building_type and prevailing_wage) and a partial spec-division match.",
+  "labeled_by": "example",
+  "labeled_at": "2026-07-24",
+
+  "expected": {
+    "project_name": "Cedar Hill ISD Transportation Facility",
+    "building_type": "Education",
+    "project_state": "TX",
+    "prevailing_wage": "yes",
+    "bid_deadline_present": true,
+    "spec_divisions_found": ["22", "23", "26"],
+    "sheet_disciplines_found": ["M", "P", "E"]
+  },
+
+  "extracted_snapshot": {
+    "project_name": "Cedar Hill ISD Transportation Facility",
+    "building_type": "Government",
+    "project_state": "TX",
+    "prevailing_wage": "no",
+    "bid_deadline": "August 14, 2026 2:00 PM",
+    "spec_divisions_found": ["22", "23"],
+    "sheet_disciplines_found": ["M", "P", "E"]
+  },
+
+  "expected_recommendation": "REVIEW",
+  "expected_score": 66,
+  "scored_snapshot": {
+    "final": 64,
+    "recommendation": "REVIEW"
+  }
+}
