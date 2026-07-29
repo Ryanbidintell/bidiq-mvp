@@ -3206,7 +3206,7 @@
             <!-- Progress Bar -->
             <div style="padding: 16px 24px 0; background: var(--bg-secondary);">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="font-size: 12px; color: var(--text-muted);">Step <span id="onboardingCurrentStep">1</span> of 13</span>
+                    <span style="font-size: 12px; color: var(--text-muted);">Step <span id="onboardingCurrentStep">1</span> of <span id="onboardingTotalSteps">5</span></span>
                     <span style="font-size: 12px; color: var(--text-muted);"><span id="onboardingProgress">8</span>% complete</span>
                 </div>
                 <div style="height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden;">
@@ -6698,6 +6698,33 @@ ${fullText.substring(0, 40000)}`;
                 + '</div>';
         }
 
+        // ── Onboarding flow ──────────────────────────────────────────────────
+        // Only the steps that actually change a BidIndex are in the default flow.
+        // Every step renderer below still exists and works; the ones not listed here
+        // are simply not visited, and their values fall back to defaults that stay
+        // editable in Settings.
+        //
+        // Why: the 13-step wizard was abandoned by 8 of the first 14 accounts, and 5
+        // of those entered nothing at all. Only three answers are needed to score a
+        // bid — company type, office address, and scope — so that is what we ask for.
+        //
+        // Skipped and defaulted:
+        //   2  plan_rooms       -> []
+        //   6  risk_tolerance   -> 'medium'
+        //   7  capacity         -> 'steady' (a recommendation modifier, not a weighted
+        //                         input, so a default here does not distort the score)
+        //   8  ai_advisor       -> 'Sam' / 'supportive' (cosmetic)
+        //   9  client_types     -> ['gcs'] (already the onboardingData default)
+        //   10 client_addition  -> clients are auto-created from bid documents anyway
+        //   11 email_alias      -> now handled by ensureEmailAlias()
+        //
+        // 4 acquisition_source is KEPT: it is a single tap that auto-advances, and it
+        // is the only channel-attribution signal the product collects.
+        //
+        // Order is company type first because it decides whether step 5 renders the
+        // CSI picker or the product-line picker.
+        const ONBOARDING_FLOW = [1, 3, 5, 4, 12];
+
         function renderOnboardingStep(step) {
             onboardingStep = step;
             // GA4: track which onboarding step was reached
@@ -6715,19 +6742,26 @@ ${fullText.substring(0, 40000)}`;
 
             const pendingTier = sessionStorage.getItem('bidintell_pending_tier');
             const isCompanyTier = pendingTier === 'team' || pendingTier === 'company';
-            const totalSteps = isCompanyTier ? 13 : 12;
-            const displayStep = isCompanyTier ? (step === 0 ? 1 : step + 1) : step;
+            // Progress is measured against ONBOARDING_FLOW, not the raw step ids, so
+            // skipped steps don't leave gaps in the counter.
+            const flowPos = ONBOARDING_FLOW.indexOf(step);
+            const orgOffset = isCompanyTier ? 1 : 0;
+            const totalSteps = ONBOARDING_FLOW.length + orgOffset;
+            const displayStep = step === 0 ? 1 : (flowPos >= 0 ? flowPos + 1 : 1) + orgOffset;
+            const isLastFlowStep = step === ONBOARDING_FLOW[ONBOARDING_FLOW.length - 1];
 
             // Update progress
             const progress = step === 0 ? 0 : Math.round((displayStep / totalSteps) * 100);
             document.getElementById('onboardingCurrentStep').textContent = displayStep;
+            const totalEl = document.getElementById('onboardingTotalSteps');
+            if (totalEl) totalEl.textContent = totalSteps;
             document.getElementById('onboardingProgress').textContent = progress;
             document.getElementById('onboardingProgressBar').style.width = progress + '%';
 
             // Show/hide back button
-            backBtn.style.display = (step === 1 && !isCompanyTier) || step === 0 ? 'none' : 'inline-flex';
-            skipBtn.style.display = step === 12 ? 'none' : 'inline-block';
-            nextBtn.textContent = step === 12 ? 'Complete Setup' : 'Continue';
+            backBtn.style.display = (flowPos === 0 && !isCompanyTier) || step === 0 ? 'none' : 'inline-flex';
+            skipBtn.style.display = isLastFlowStep ? 'none' : 'inline-block';
+            nextBtn.textContent = isLastFlowStep ? 'Complete Setup' : 'Continue';
             // Re-enable next button by default (step 2 plan rooms may override this below)
             nextBtn.disabled = false;
             nextBtn.style.opacity = '';
@@ -7253,11 +7287,19 @@ ${fullText.substring(0, 40000)}`;
                                     <div>Company Type: <strong>${companyTypeLabel}</strong></div>
                                     <div>Office: <strong>${(onboardingData.city || onboardingData.state) ? [onboardingData.city, onboardingData.state].filter(Boolean).join(', ') : '<span style="color:var(--warning)">Not set — add in Settings after setup</span>'}</strong></div>
                                     <div>${tradesOrProducts}</div>
-                                    <div>Client Types: <strong>${clientTypesText}</strong></div>
-                                    <div>Risk Tolerance: <strong>${onboardingData.riskTolerance}</strong></div>
-                                    <div>Capacity: <strong>${onboardingData.capacity}</strong></div>
-                                    <div>Recommendation Style: <strong>${advisorToneLabel}</strong></div>
-                                    <div>Clients Added: <strong>${onboardingData.gcsAdded}</strong></div>
+                                </div>
+                            </div>
+                            <!-- These are no longer asked during setup (see ONBOARDING_FLOW).
+                                 Listing them as things the user "configured" would be a lie,
+                                 so they're shown as defaults with a pointer to Settings. -->
+                            <div style="background: var(--bg-secondary); padding: 16px 20px; border-radius: var(--radius); margin-bottom: 20px;">
+                                <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; margin-bottom: 8px;">Defaults applied — change any of these in Settings</div>
+                                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.8;">
+                                    <div>Client types: <strong>${clientTypesText}</strong></div>
+                                    <div>Risk tolerance: <strong>${onboardingData.riskTolerance}</strong></div>
+                                    <div>Current workload: <strong>${onboardingData.capacity}</strong></div>
+                                    <div>Recommendation style: <strong>${advisorToneLabel}</strong></div>
+                                    <div>Score weights, service radius, and keywords: <strong>smart defaults</strong></div>
                                 </div>
                             </div>
                             <div style="background: var(--bg-secondary); padding: 16px 20px; border-radius: var(--radius); margin-bottom: 16px; border-left: 3px solid var(--accent);">
@@ -7388,8 +7430,14 @@ ${fullText.substring(0, 40000)}`;
                 }
             }
 
-            // Step 12: save email alias if user entered one
-            if (onboardingStep === 12) {
+            // Save the email alias if the user typed one. This checked step 12 (the
+            // summary screen), but #onboarding_aliasInput only exists while step 11 is
+            // rendered — so by the time this ran the element was gone, ?.value was
+            // undefined, and every alias a user typed was silently discarded. That is
+            // why 12 of the first 14 accounts had no alias.
+            // Step 11 is no longer in ONBOARDING_FLOW (ensureEmailAlias handles it), but
+            // the condition is corrected so this still works if the step is re-enabled.
+            if (onboardingStep === 11) {
                 const alias = document.getElementById('onboarding_aliasInput')?.value.trim();
                 if (alias) {
                     try {
@@ -7402,10 +7450,16 @@ ${fullText.substring(0, 40000)}`;
                 }
             }
 
-            // Move to next step or complete (step 13 is the summary/confirm screen)
-            if (onboardingStep === 12) {
+            // Advance along ONBOARDING_FLOW rather than incrementing, so skipped steps
+            // stay skipped and the last entry completes setup.
+            const nextFlowPos = ONBOARDING_FLOW.indexOf(onboardingStep);
+            if (nextFlowPos === ONBOARDING_FLOW.length - 1) {
                 await completeOnboarding();
+            } else if (nextFlowPos >= 0) {
+                renderOnboardingStep(ONBOARDING_FLOW[nextFlowPos + 1]);
             } else {
+                // Step isn't in the flow (only reachable if re-enabled by hand) — fall
+                // back to the old increment so it can't dead-end.
                 renderOnboardingStep(onboardingStep + 1);
             }
         }
@@ -7413,11 +7467,14 @@ ${fullText.substring(0, 40000)}`;
         function onboardingBack() {
             const pendingTier = sessionStorage.getItem('bidintell_pending_tier');
             const isCompanyTier = pendingTier === 'team' || pendingTier === 'company';
-            if (isCompanyTier && onboardingStep === 1) {
+            if (isCompanyTier && onboardingStep === ONBOARDING_FLOW[0]) {
                 renderOnboardingStep(0);
                 return;
             }
-            if (onboardingStep > 1) {
+            const backFlowPos = ONBOARDING_FLOW.indexOf(onboardingStep);
+            if (backFlowPos > 0) {
+                renderOnboardingStep(ONBOARDING_FLOW[backFlowPos - 1]);
+            } else if (backFlowPos < 0 && onboardingStep > 1) {
                 renderOnboardingStep(onboardingStep - 1);
             }
         }
@@ -7736,7 +7793,14 @@ ${fullText.substring(0, 40000)}`;
                 location_matters: onboardingData.locationImportance > 0,
                 trades: onboardingData.trades,
                 preferred_csi_sections: onboardingData.preferred_csi_sections,
-                client_types: onboardingData.clientTypes,
+                // The client_types step is no longer in ONBOARDING_FLOW. onboardingData
+                // already defaults to ['gcs'], so this only guards the case where the
+                // array is somehow empty. 'gcs' is the canonical value used by
+                // getSettings() and the client-type filters — not 'general_contractor',
+                // which is a clients.client_type value and would not match here.
+                client_types: (onboardingData.clientTypes && onboardingData.clientTypes.length)
+                    ? onboardingData.clientTypes
+                    : ['gcs'],
                 risk_tolerance: onboardingData.riskTolerance,
                 capacity: onboardingData.capacity,
                 company_size: onboardingData.company_size || null,
