@@ -35,14 +35,26 @@
       "@id": "https://bidintell.ai/#org",
       "name": "BidIntell",
       "url": "https://bidintell.ai",
-      "logo": { "@type": "ImageObject", "url": "https://bidintell.ai/og-image.png" }
+      "logo": { "@type": "ImageObject", "url": "https://bidintell.ai/logo.png" },
+      "description": "AI-powered bid scoring software for commercial construction subcontractors. The BidIndex algorithm rates every bid 0-100 based on location fit, contract terms, client history, and trade score.",
+      "foundingDate": "2024",
+      "sameAs": [
+        "https://www.linkedin.com/company/bidintell",
+        "https://twitter.com/bidintell",
+        "https://www.youtube.com/@bidintell"
+      ]
     },
     {
       "@type": "WebSite",
       "@id": "https://bidintell.ai/#website",
       "url": "https://bidintell.ai/",
       "name": "BidIntell",
-      "publisher": { "@id": "https://bidintell.ai/#org" }
+      "publisher": { "@id": "https://bidintell.ai/#org" },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://bidintell.ai/?s={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
     },
     {
       "@type": "SoftwareApplication",
@@ -51,7 +63,7 @@
       "operatingSystem": "Web",
       "url": "https://bidintell.ai/",
       "description": "AI bid scoring software for commercial construction subcontractors, distributors, and manufacturers' reps. The BidIndex algorithm scores every bid invitation 0-100 — personalized to your trade, region, and client history — so you decide GO, REVIEW, or PASS before estimating time is spent.",
-      "offers": { "@type": "Offer", "price": "49", "priceCurrency": "USD", "description": "From $49/mo. 7-day free trial, no credit card required." },
+      "offers": { "@type": "Offer", "price": "49", "priceCurrency": "USD", "description": "From $49/mo. 7-day free trial, no credit card required.", "priceSpecification": { "@type": "UnitPriceSpecification", "price": "49", "priceCurrency": "USD", "unitText": "MONTH" } },
       "featureList": [
         "BidIndex 0-100 fit scoring across location, scope & contract, client relationship, and trade — weighted the way you set them",
         "AI extraction of scope and contract terms from bid PDFs and forwarded invite emails",
