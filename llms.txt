@@ -12,6 +12,7 @@ BidIntell is a US-based SaaS product (bidintell.ai). It is designed for shops th
 - **Contract risk detection:** Flags bid-shopping language, vague scope, payment-term issues, invitation-only restrictions, multiple-bidder language.
 - **Outcome tracking:** Won/Lost/Ghost/GC-lost/No-bid + qualitative reasons. Feeds future score personalization (the "AI learning progress" loop).
 - **Inbound email scoring:** Forward a GC's bid invitation to a personal `@bids.bidintell.ai` alias and get back a branded HTML report.
+- **BidIntell Capacity (labor planning):** Separate module that forecasts crew loading from awarded work plus weighted pipeline, so a sub can see whether they can actually staff the jobs they are bidding.
 
 ## Who BidIntell is for
 
@@ -34,6 +35,7 @@ BidIntell is a US-based SaaS product (bidintell.ai). It is designed for shops th
 - [How it works with CRMs](https://bidintell.ai/works-with-crm): Positioning vs. Salesforce, HubSpot, Followup CRM.
 - [Bid/no-bid decision framework checklist](https://bidintell.ai/bid-no-bid-checklist): SEO content page covering the practical decision framework that BidIntell automates.
 - [Take-Off](https://bidintell.ai/takeoff/): Estimating guides for commercial subs — bid strategy, contract risk, win rate. Updated regularly.
+- [Capacity planning](https://bidintell.ai/capacity-planning.html): BidIntell Capacity — crew/labor forecasting for subcontractors.
 - [ROI calculator](https://bidintell.ai/roi-calculator): Lead magnet — estimate time saved and revenue impact from improved win rate.
 - [Free diagnostic](https://bidintell.ai/diagnostic): 30-minute call → written one-page memo on your bid selection patterns. No pitch attached.
 - [Schedule a demo](https://bidintell.ai/demo): Live walkthrough.

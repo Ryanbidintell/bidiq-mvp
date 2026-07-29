@@ -1,16 +1,14 @@
 # BidIntell robots.txt
-# Allow all crawlers
+#
+# IMPORTANT: robots.txt groups are NOT additive. A crawler that matches its own
+# User-agent group obeys ONLY that group and ignores "User-agent: *" entirely.
+# That means every named group below must repeat the Disallow rules — if you add
+# a bare "User-agent: GPTBot / Allow: /" group, that bot loses the admin-page
+# protections. Keep the Disallow block in sync across all groups.
 
+# --- Default: conventional search crawlers (Google, Bing, etc.) ---
 User-agent: *
 Allow: /
-
-# Sitemap location
-Sitemap: https://bidintell.ai/sitemap.xml
-
-# LLM-friendly site description (llmstxt.org)
-# Allow: /llms.txt
-
-# Disallow admin and internal pages
 Disallow: /app.html
 Disallow: /admin.html
 Disallow: /auth.html
@@ -18,3 +16,90 @@ Disallow: /.claude/
 Disallow: /supabase/
 Disallow: /scripts/
 Disallow: /migrations/
+
+# --- AI search / answer-engine crawlers ---
+# Explicitly welcomed so there is no ambiguity about crawl permission.
+# (User-agent: * already permitted these; the named groups make it explicit
+# and give us a place to set per-bot policy later.)
+
+# OpenAI — ChatGPT browsing + training
+User-agent: GPTBot
+Allow: /
+Disallow: /app.html
+Disallow: /admin.html
+Disallow: /auth.html
+Disallow: /.claude/
+Disallow: /supabase/
+Disallow: /scripts/
+Disallow: /migrations/
+
+# OpenAI — ChatGPT user-initiated fetches
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /app.html
+Disallow: /admin.html
+Disallow: /auth.html
+Disallow: /.claude/
+Disallow: /supabase/
+Disallow: /scripts/
+Disallow: /migrations/
+
+# Anthropic — Claude
+User-agent: ClaudeBot
+Allow: /
+Disallow: /app.html
+Disallow: /admin.html
+Disallow: /auth.html
+Disallow: /.claude/
+Disallow: /supabase/
+Disallow: /scripts/
+Disallow: /migrations/
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /app.html
+Disallow: /admin.html
+Disallow: /auth.html
+Disallow: /.claude/
+Disallow: /supabase/
+Disallow: /scripts/
+Disallow: /migrations/
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+Disallow: /app.html
+Disallow: /admin.html
+Disallow: /auth.html
+Disallow: /.claude/
+Disallow: /supabase/
+Disallow: /scripts/
+Disallow: /migrations/
+
+# Google — Gemini / AI Overviews grounding opt-in
+User-agent: Google-Extended
+Allow: /
+Disallow: /app.html
+Disallow: /admin.html
+Disallow: /auth.html
+Disallow: /.claude/
+Disallow: /supabase/
+Disallow: /scripts/
+Disallow: /migrations/
+
+# Amazon
+User-agent: Amazonbot
+Allow: /
+Disallow: /app.html
+Disallow: /admin.html
+Disallow: /auth.html
+Disallow: /.claude/
+Disallow: /supabase/
+Disallow: /scripts/
+Disallow: /migrations/
+
+# LLM-friendly site description (llmstxt.org) lives at /llms.txt.
+# No Allow directive needed — nothing above disallows it.
+
+# Sitemap location
+Sitemap: https://bidintell.ai/sitemap.xml
