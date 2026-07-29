@@ -5196,7 +5196,23 @@ ${fullText.substring(0, 40000)}`;
                     decision_time: s.decision_time || s.decisionTime,
                     default_stars: s.default_stars || s.defaultStars,
                     target_margin: s.target_margin || 15,
-                    onboarding_completed: s.onboarding_completed !== undefined ? s.onboarding_completed : false,
+                    // onboarding_completed is WRITE-ONCE-TRUE. Never send `false` here.
+                    // The Settings tab builds its payload from `currentSettings`, and
+                    // getSettings() falls back to DEFAULT_SETTINGS (flag = false) whenever
+                    // the fetch fails — so the old unconditional write silently
+                    // un-completed onboarding for users who had already finished it, which
+                    // then re-triggered the wizard on their next visit. Omitting the key
+                    // leaves any existing TRUE untouched (an omitted column isn't in the
+                    // ON CONFLICT SET list) and a fresh INSERT takes the column
+                    // default, which is false. Set it via completeOnboarding/skipOnboarding.
+                    ...(s.onboarding_completed === true ? { onboarding_completed: true } : {}),
+                    // Same omit-don't-clobber rule: these are captured during onboarding and
+                    // are absent from the Settings-tab payload. They were previously missing
+                    // from this upsert entirely, so acquisition_source (how the user heard
+                    // about BidIntell) was collected at onboarding and silently thrown away.
+                    ...(s.acquisition_source ? { acquisition_source: s.acquisition_source } : {}),
+                    ...(s.outcome_reminder_days !== undefined && s.outcome_reminder_days !== null
+                        ? { outcome_reminder_days: s.outcome_reminder_days } : {}),
                     baseline_win_rate: s.baseline_win_rate || null,
                     plan_rooms: s.plan_rooms || [],
                     estimators: s.estimators || [],
