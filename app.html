@@ -7685,6 +7685,28 @@ ${fullText.substring(0, 40000)}`;
             dataCache.settings = null;
         }
 
+        // Consumer mail providers. For these the domain says nothing about the company,
+        // so alias derivation falls through to the email local part instead.
+        const CONSUMER_EMAIL_DOMAINS = new Set([
+            'gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com', 'hotmail.com',
+            'outlook.com', 'live.com', 'msn.com', 'aol.com', 'icloud.com', 'me.com',
+            'mac.com', 'protonmail.com', 'proton.me', 'gmx.com', 'zoho.com',
+            'comcast.net', 'sbcglobal.net', 'att.net', 'verizon.net', 'cox.net',
+            'bellsouth.net', 'charter.net', 'earthlink.net'
+        ]);
+
+        // "ryan@jamarshall.com" -> "jamarshall". Returns '' for consumer providers so
+        // the caller can fall back to something more meaningful.
+        function companyFromEmailDomain(email) {
+            const domain = ((email || '').split('@')[1] || '').toLowerCase().trim();
+            if (!domain) return '';
+            const host = domain.replace(/^(www|mail)\./, '');
+            if (CONSUMER_EMAIL_DOMAINS.has(host)) return '';
+            const root = host.split('.')[0];
+            // Guard against a bare TLD-ish leftover producing a useless 1-2 char alias.
+            return root && root.length > 2 ? root : '';
+        }
+
         // Guarantee the user has an inbound bid-forwarding alias.
         //
         // Why: choosing an alias is step 11 of the 12-step wizard, so hardly anyone
@@ -7714,9 +7736,26 @@ ${fullText.substring(0, 40000)}`;
                 }
                 if (aliasRow && aliasRow.email_alias) return aliasRow.email_alias;
 
-                // Solo signups never enter a company name (only team/company tiers do),
-                // so fall back to the email local part, then a generic base.
-                let base = generateAliasSlug(companyName);
+                // Alias base, in order of preference:
+                //   1. Company name — but only if it fits in 30 chars without being cut.
+                //      "DB Flooring LLC dba Regents Flooring" truncates to
+                //      "db-flooring-llc-dba-regents-fl", which is worse than the domain.
+                //   2. Email domain. For a work address the domain IS the company:
+                //      ryan@jamarshall.com -> "jamarshall", not "ryan". Bare first names
+                //      are guessable, attract misdirected mail, and squat slugs another
+                //      account may want.
+                //   3. Truncated company name (better than nothing).
+                //   4. Email local part — the right answer for gmail/consumer addresses,
+                //      where the domain says nothing about the company.
+                //   5. 'bidder'.
+                const companySlugUncut = (companyName || '').toLowerCase().trim()
+                    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                const domainSlug = generateAliasSlug(companyFromEmailDomain(currentUser.email));
+
+                let base = '';
+                if (companySlugUncut && companySlugUncut.length <= 30) base = generateAliasSlug(companyName);
+                if (!base) base = domainSlug;
+                if (!base) base = generateAliasSlug(companyName);
                 if (!base) base = generateAliasSlug((currentUser.email || '').split('@')[0]);
                 if (!base) base = 'bidder';
 
