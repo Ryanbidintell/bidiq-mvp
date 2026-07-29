@@ -7596,7 +7596,10 @@ ${fullText.substring(0, 40000)}`;
                 .trim()
                 .replace(/[^a-z0-9]+/g, '-')
                 .replace(/^-|-$/g, '')
-                .substring(0, 30);
+                .substring(0, 30)
+                // Re-strip after truncating: a name longer than 30 chars can be cut
+                // right on a separator, leaving e.g. "a-very-long-company-name-here-".
+                .replace(/-+$/, '');
         }
 
         // NOTE: RLS limits user_settings SELECT to the authenticated user's own row.
@@ -7623,6 +7626,65 @@ ${fullText.substring(0, 40000)}`;
                 .eq('user_id', currentUser.id);
             if (error) throw error;
             dataCache.settings = null;
+        }
+
+        // Guarantee the user has an inbound bid-forwarding alias.
+        //
+        // Why: choosing an alias is step 11 of the 12-step wizard, so hardly anyone
+        // reached it — only 2 of the first 14 accounts ever got one. That left
+        // "forward a bid invite and get a score back" — the whole wedge — unusable
+        // for everyone else. Provision one automatically instead; the user can still
+        // change it in Settings.
+        //
+        // Never throws. This runs off the critical onboarding path and a failure to
+        // mint an alias must not stop someone from finishing setup.
+        async function ensureEmailAlias(companyName) {
+            try {
+                if (!supabaseClient || !currentUser) return null;
+
+                // Read the column directly rather than via getSettings(), which returns
+                // DEFAULT_SETTINGS on a fetch error — that would make an existing alias
+                // look absent and we'd mint a second one, breaking forwards already set
+                // up against the first. Fail CLOSED: if we can't confirm, don't provision.
+                const { data: aliasRow, error: aliasErr } = await supabaseClient
+                    .from('user_settings')
+                    .select('email_alias')
+                    .eq('user_id', currentUser.id)
+                    .maybeSingle();
+                if (aliasErr) {
+                    console.warn('📬 Could not read existing alias; skipping provisioning:', aliasErr);
+                    return null;
+                }
+                if (aliasRow && aliasRow.email_alias) return aliasRow.email_alias;
+
+                // Solo signups never enter a company name (only team/company tiers do),
+                // so fall back to the email local part, then a generic base.
+                let base = generateAliasSlug(companyName);
+                if (!base) base = generateAliasSlug((currentUser.email || '').split('@')[0]);
+                if (!base) base = 'bidder';
+
+                // RLS hides other users' rows from checkAliasAvailability, so the DB
+                // UNIQUE constraint is the real arbiter — retry on a duplicate error.
+                for (let attempt = 0; attempt < 5; attempt++) {
+                    const candidate = attempt === 0 ? base : base + '-' + (attempt + 1);
+                    const { available } = await checkAliasAvailability(candidate, currentUser.id);
+                    if (!available) continue;
+                    try {
+                        await saveEmailAlias(candidate);
+                        console.log('📬 Auto-provisioned inbound alias:', candidate);
+                        return candidate;
+                    } catch (e) {
+                        const dupe = e && (e.code === '23505' || /duplicate|unique/i.test(e.message || ''));
+                        if (dupe) continue;
+                        throw e;
+                    }
+                }
+                console.warn('📬 Could not auto-provision an alias for base:', base);
+                return null;
+            } catch (e) {
+                console.warn('📬 ensureEmailAlias failed (non-fatal):', e);
+                return null;
+            }
         }
 
         async function completeOnboarding() {
@@ -7731,6 +7793,10 @@ ${fullText.substring(0, 40000)}`;
                 }
 
                 gtag('event', 'onboarding_completed');
+
+                // Make sure the forward-a-bid path is actually usable (see ensureEmailAlias).
+                // No-op if the user already picked an alias at step 11.
+                await ensureEmailAlias(onboardingData.orgName || null);
 
                 // Create org if this is a team/company signup
                 const _pendingTier2 = sessionStorage.getItem('bidintell_pending_tier');
@@ -7903,6 +7969,10 @@ ${fullText.substring(0, 40000)}`;
 
                     console.log('💾 Saving settings with defaults:', settings);
                     await saveSettingsStorage(settings);
+
+                    // Users who skip setup are the ones who most need the forward-a-bid
+                    // path to just work, since they've configured nothing.
+                    await ensureEmailAlias(settings.company_name || null);
 
                     console.log('🔄 Clearing cache...');
                     dataCache.settings = null;
