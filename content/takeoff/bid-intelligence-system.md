@@ -1,6 +1,6 @@
 ---
 title: How to Set Up a Bid Intelligence System for Your Subcontracting Business in 2026
-seoTitle: Bid Intelligence System Setup for Subcontractors | BidIntell
+seoTitle: Bid Intelligence System Setup for Subcontractors
 excerpt: A step-by-step system for deciding which bid invitations are worth your estimating hours — before you price a single one.
 seoDescription: How to build a bid intelligence system: define your criteria, score every invite, flag contract risk, and track outcomes so you stop wasting estimating hours on bad-fit bids.
 category: Bid Strategy
