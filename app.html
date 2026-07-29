@@ -3853,6 +3853,8 @@
             productCategories: [],
             city: '',
             state: '',
+            company_name: '',      // pre-filled by enrich-company, confirmed by the user
+            enrichment: null,      // { found, confidence, trade_summary, ... } for the review banner
             trades: [],
             preferred_csi_sections: [],
             clientTypes: ['gcs'], // Types of clients the user works for
@@ -6698,6 +6700,77 @@ ${fullText.substring(0, 40000)}`;
                 + '</div>';
         }
 
+        // ── Onboarding AI pre-fill ───────────────────────────────────────────
+        // Looks up the user's own company from their email domain and pre-fills the
+        // fields we can verify, so a new account isn't staring at an empty form.
+        //
+        // Rules this follows deliberately:
+        //   - Pre-fills company name / city / state ONLY. It never touches CSI sections:
+        //     scope is the highest-leverage BidIndex input and a wrong guess there
+        //     manufactures false GO scores. The trade hint is shown as text for the human.
+        //   - Never overwrites something the user already typed.
+        //   - Always visible. The banner says what was found and how confident it is, so a
+        //     wrong lookup is something the user can see and correct, not silent bad data.
+        //   - Fails silently and completely. No key, gmail address, timeout, bad JSON — all
+        //     end with an ordinary empty form. Pre-fill must never block signup.
+        let onboardingPrefillDone = false;
+
+        async function prefillCompanyFromEmail() {
+            if (onboardingPrefillDone) return;
+            onboardingPrefillDone = true;                 // one attempt per session
+            try {
+                if (!supabaseClient || !currentUser) return;
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                const token = session && session.access_token;
+                if (!token) return;
+
+                const res = await fetch('/.netlify/functions/enrich-company', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data || !data.found) return;
+
+                onboardingData.enrichment = data;
+                // Only fill blanks — never clobber user input.
+                if (!onboardingData.company_name && data.company_name) onboardingData.company_name = data.company_name;
+                if (!onboardingData.city && data.city) onboardingData.city = data.city;
+                if (!onboardingData.state && data.state) onboardingData.state = data.state;
+                if (!onboardingData.fullAddress && data.city && data.state) {
+                    onboardingData.fullAddress = `${data.city}, ${data.state}`;
+                }
+                // company_type is a guess, so only adopt it on high confidence.
+                if (data.confidence === 'high' && data.company_type && data.company_type !== 'unknown') {
+                    onboardingData.companyType = data.company_type;
+                }
+
+                // Re-render the current step so the values appear immediately.
+                if (typeof onboardingStep === 'number') renderOnboardingStep(onboardingStep);
+            } catch (e) {
+                console.warn('Company pre-fill unavailable (non-fatal):', e.message);
+            }
+        }
+
+        /** Banner shown on pre-filled steps: says what we found and that it's editable. */
+        function renderPrefillBanner() {
+            const e = onboardingData.enrichment;
+            if (!e || !e.found) return '';
+            const conf = e.confidence === 'high' ? 'Looks right'
+                       : e.confidence === 'medium' ? 'Best guess' : 'Low confidence';
+            const bits = [e.company_name, [e.city, e.state].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
+            return `
+                <div style="margin-bottom:16px; padding:12px 14px; background:var(--accent-dim); border-left:3px solid var(--accent); border-radius:var(--radius);">
+                    <div style="font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">
+                        We filled this in from your email — ${conf.toLowerCase()}
+                    </div>
+                    <div style="font-size:13px; color:var(--text-secondary); line-height:1.5;">
+                        ${bits ? `<strong>${bits}</strong>. ` : ''}Check it and fix anything wrong — everything here is editable.
+                        ${e.trade_summary ? `<div style="margin-top:6px; color:var(--text-muted);">We think you do: ${e.trade_summary} You still pick your own scope on the next step.</div>` : ''}
+                    </div>
+                </div>`;
+        }
+
         // ── Onboarding flow ──────────────────────────────────────────────────
         // Only the steps that actually change a BidIndex are in the default flow.
         // Every step renderer below still exists and works; the ones not listed here
@@ -6856,6 +6929,11 @@ ${fullText.substring(0, 40000)}`;
                         <h3 style="color: var(--text-primary); margin-bottom: 10px; font-size: 20px;">Where is your office located?</h3>
                         <p style="color: var(--text-muted); margin-bottom: 32px; font-size: 14px;">Used to calculate distance to bid locations. You can update this anytime in Settings.</p>
                         <div style="max-width: 500px; margin: 0 auto;">
+                            <div style="text-align: left;">${renderPrefillBanner()}</div>
+                            <div class="form-group" style="text-align: left;">
+                                <label class="form-label">Company Name</label>
+                                <input type="text" class="form-input" id="onboarding_companyName" placeholder="e.g. Summit Sealants" value="${(onboardingData.company_name || '').replace(/"/g, '&quot;')}" oninput="onboardingData.company_name = this.value.trim();">
+                            </div>
                             <div class="form-group" style="text-align: left;">
                                 <label class="form-label">Office Address</label>
                                 <input type="text" class="form-input" id="onboarding_address" placeholder="123 Main St, Kansas City, MO 64106" value="${onboardingData.fullAddress || ''}">
@@ -7811,6 +7889,11 @@ ${fullText.substring(0, 40000)}`;
 
             const settings = {
                 company_type: onboardingData.companyType,
+                // company_name was missing from this object entirely, so onboarding always
+                // saved NULL over it — which is why several accounts that completed setup
+                // still have no company name. It now carries whatever the user confirmed
+                // (pre-filled by enrich-company where available).
+                company_name: onboardingData.company_name || null,
                 provides_installation: onboardingData.providesInstallation,
                 product_lines: onboardingData.productLines,
                 product_categories: onboardingData.productCategories,
@@ -22216,6 +22299,11 @@ Respond now:`;
                     const _isCompanyTier = _pendingTier === 'team' || _pendingTier === 'company';
                     renderOnboardingStep(_isCompanyTier ? 0 : 1);
                     document.getElementById('onboardingModal').classList.add('active');
+                    // Look up the user's company from their email domain in the background and
+                    // pre-fill what we can. Deliberately NOT awaited: the wizard is already on
+                    // screen and usable, and a slow or failed lookup must never delay it. The
+                    // step re-renders itself if something comes back.
+                    prefillCompanyFromEmail();
                     return; // Don't load other data until onboarding is complete
                 } else {
                     console.log('✅ Skipping onboarding - onboarding_completed:', settings.onboarding_completed, 'hasProjects:', hasProjects);
