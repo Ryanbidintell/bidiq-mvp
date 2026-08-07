@@ -43,3 +43,8 @@ OLD/
 BidIntell.ai/
 BidIntell_*.pdf
 BidIntell_*.docx
+
+# Deck binaries + render scratch (28MB+ each; rebuild from
+# PROCORE_BETTER_TOGETHER_DECK.md + Logos/bidintell-lockup-render.html)
+*.pptx
+_deck_imgs/

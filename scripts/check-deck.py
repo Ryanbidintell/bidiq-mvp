@@ -70,11 +70,30 @@ def audit(path):
         findings.append((slide_no, level, msg, excerpt[:110]))
 
     for i, slide in enumerate(prs.slides, start=1):
-        slide_text = ' '.join(t for _, t in blocks(slide)).lower()
-        in_joint_solution = SIX_WORD_SLIDE_HINT in slide_text
+        # The 6-word cap applies only to the Joint Solution list, so find that
+        # label's x-position and test only shapes at or right of it. Without this
+        # the Challenge bullets on the same slide get flagged too, and a checker
+        # that cries wolf gets ignored.
+        js_left = None
+        for shape in slide.shapes:
+            if not shape.has_text_frame:
+                continue
+            # Match the section LABEL exactly. A substring test also matches the
+            # slide title "Customer Challenge & Joint Solution", which sits at the
+            # far left and would then sweep every bullet on the slide into the rule.
+            norm = shape.text_frame.text.strip().lower().rstrip(':').strip()
+            if norm in ('joint solution', 'the joint solution'):
+                js_left = shape.left
+                break
 
-        for _, text in blocks(slide):
+        for shape in slide.shapes:
+            if not shape.has_text_frame:
+                continue
+            text = shape.text_frame.text.strip()
+            if not text:
+                continue
             low = text.lower()
+            in_joint_solution = js_left is not None and shape.left is not None and shape.left >= js_left
 
             for pattern, msg in BANNED_PATTERNS:
                 if re.search(pattern, low):
@@ -91,11 +110,16 @@ def audit(path):
             if PERCENT_RE.search(text) and not any(a in low for a in ATTRIBUTION_TERMS):
                 flag(i, 'WARN', "percentage with no attribution or benchmark label", text)
 
-            # Procore: 1-2 sentences per block.
-            if len(SENTENCE_RE.findall(text)) > MAX_SENTENCES_PER_BLOCK:
-                flag(i, 'WARN', "block runs past Procore's 1-2 sentence rule", text)
-            if len(text) > MAX_BLOCK_CHARS:
-                flag(i, 'WARN', f"block is {len(text)} chars — too long to read at a glance", text)
+            # Procore: 1-2 sentences per block. Measure PER PARAGRAPH — a shape
+            # holding four bullets is fine; a single 300-char bullet is not.
+            for para in shape.text_frame.paragraphs:
+                ptext = para.text.strip()
+                if not ptext:
+                    continue
+                if len(SENTENCE_RE.findall(ptext)) > MAX_SENTENCES_PER_BLOCK:
+                    flag(i, 'WARN', "bullet runs past Procore's 1-2 sentence rule", ptext)
+                if len(ptext) > MAX_BLOCK_CHARS:
+                    flag(i, 'WARN', f"bullet is {len(ptext)} chars — too long to read at a glance", ptext)
 
             # Joint Solution bullets are capped at 6 words.
             if in_joint_solution:
@@ -143,10 +167,22 @@ def self_test():
     prs = P()
     blank = prs.slide_layouts[6]
 
-    def add(text):
+    def add(text, left=0):
         s = prs.slides.add_slide(blank)
-        box = s.shapes.add_textbox(0, 0, 5000000, 3000000)
+        box = s.shapes.add_textbox(left, 0, 4000000, 3000000)
         box.text_frame.text = text
+        return s
+
+    def add_joint_solution(label_left, bullet_left, bullet):
+        """Label shape + bullets to its right, matching the real slide's layout."""
+        s = prs.slides.add_slide(blank)
+        lbl = s.shapes.add_textbox(label_left, 0, 2000000, 400000)
+        lbl.text_frame.text = 'The Joint Solution'
+        b = s.shapes.add_textbox(bullet_left, 500000, 3000000, 400000)
+        b.text_frame.text = bullet
+        # a Challenge-style bullet to the LEFT must NOT be flagged
+        c = s.shapes.add_textbox(0, 500000, 3000000, 400000)
+        c.text_frame.text = 'Subs receive far more invitations than they can evaluate.'
         return s
 
     add('Better Together: BidIntell + Procore')
@@ -154,7 +190,8 @@ def self_test():
     add('Subs win 20-25% of what they bid.')
     add('Includes team analytics for every estimator on your crew.')
     add('The integration is bi-directional and writes status back to Procore.')
-    add('Joint Solution\nEstimating hours land on the work you can actually win.')
+    add_joint_solution(3200000, 3600000,
+                       'Estimating hours land on the work you can actually win.')
     add('ConstructConnect puts hard-bid work at 10-20%.')
 
     tmp = os.path.join(tempfile.gettempdir(), '_deck_selftest.pptx')
@@ -173,6 +210,12 @@ def self_test():
         hit = any(n == slide_no and needle.lower() in m.lower() for n, m in got)
         print(f"  {'PASS' if hit else 'FAIL'}  slide {slide_no}: expected a finding matching {needle!r}")
         ok &= hit
+
+    # The Challenge bullet left of the label must NOT trip the 6-word rule.
+    no_left = not any(n == 6 and 'Subs receive far more' in e
+                      for n, lvl, m, e in findings if 'Joint Solution bullet' in m)
+    print(f"  {'PASS' if no_left else 'FAIL'}  slide 6: Challenge bullet (left of label) not flagged")
+    ok &= no_left
 
     # Slide 7 attributes its percentage, so it must NOT be flagged for attribution.
     clean = not any(n == 7 and 'attribution' in m.lower() for n, m in got)
