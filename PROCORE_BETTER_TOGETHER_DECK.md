@@ -1,0 +1,218 @@
+# Better Together: BidIntell + Procore — deck content
+
+**Deliverable for:** Procore Technology Partner — Technical Feasibility phase
+**Built to:** Procore's own 7-slide template and their AI-prompt spec (both fetched from the
+links in their Aug 7 email). Their format instructions govern; YC craft applies inside them.
+**Grounding:** every claim traceable to shipped product or `PROCORE_INTEGRATION_SPEC.md`.
+
+---
+
+## Where YC's rules apply — and where Procore overrides them
+
+| YC rule | Verdict here |
+|---|---|
+| 10-slide structure | ❌ Doesn't transfer. This is a partner co-selling deck, not an investor pitch — no Ask, no Business Model, no raise. Procore's 7 slides govern. |
+| **Legibility** — big, bold, high contrast | ✅ Apply. Procore also wants "readable at a glance." |
+| **Simplicity** — one idea per slide | ⚠️ Adapt. Procore explicitly asks for 3–4 bullets in most slides, so "one idea per *slide*" becomes **one idea per *bullet*** — and don't pad a box just because it exists. |
+| **Obviousness** — test on a stranger | ✅ Apply. Procore's own version: "Any construction leader should understand the integration in under 30 seconds." |
+| Front-load: decided by slide 3 | ✅ Apply. Slides 1–3 must carry the whole story. |
+| Don't bury the ask | ✅ Apply. **The ask is the joint pilot on slide 6.** Give it a number. |
+
+**Procore's own rules that override instinct:**
+- **The hero is BidIntell, not Procore.** Lead with our value; show Procore making it stronger.
+- **Grade 7 language.** Construction-first. Which matches how Ryan already writes.
+- **1–2 sentences per block, max.** No paragraphs, no speaker notes.
+- **Their crucial constraint:** *"Do not introduce any new facts, features, benefits, or metrics
+  that are not present in these partner inputs… If information is missing, state clearly that it
+  is missing instead of guessing."*
+
+---
+
+## 🚨 Before you write anything
+
+**1. We have no joint customers and no paying customers.** Procore anticipated this and sanctions
+the fix: *"If no joint customers are available, write one illustrative example and mark it
+clearly as illustrative."* Use exactly that. One, clearly labelled. Never an invented quote with
+a name on it.
+
+**2. The hero metrics are the weakest part of this deck.** Slide 5 wants numbers. We have no
+customer data, so everything is either a mechanism claim (defensible) or a labelled industry
+benchmark. ⚠️ **The ~20–25% sub win-rate figure used twice in the submitted application needs a
+real citation or must come out.** Find the source before it appears in a deck Procore circulates.
+
+**3. Do not claim team/per-estimator analytics.** Sold as "Team analytics," not built.
+
+**4. Deck must match the workflow diagram** — read-only v1, no bi-directional claim.
+
+---
+
+## Core Partner Data (Procore asks for this block first, to validate before slides)
+
+**Top 3 customer problems this joint solution solves**
+1. Subcontractors get more bid invitations than their estimators can properly evaluate, so they triage by gut feel.
+2. Judging whether a bid fits means reading drawings and specs — hours of work before any bid/no-bid decision.
+3. GCs wait on responses, and quiet subs weaken bid coverage.
+
+**Top 3 features most relevant to Procore**
+1. BidIndex — a 0–100 score with GO / REVIEW / PASS, personalised to each subcontractor.
+2. Document-level analysis — reads drawings and specs for scope match by CSI section and flags contract terms worth a second look.
+3. Outcome learning — logged wins and losses update that subcontractor's own scoring.
+
+**Top 3 benefits in customer language**
+1. Know which invitations are worth your time before you spend it.
+2. Put estimating hours on work you can actually win.
+3. Answer the GC faster, with a reason you can point to.
+
+**Hero metrics** — ⚠️ **thin, and honestly so.**
+- *Mechanism claim (defensible):* document review compressed from hours to minutes per invitation.
+- *Industry benchmark:* **needs sourcing before use.** Do not ship the 20–25% win-rate figure unattributed.
+- *Customer data:* **none.** State this rather than manufacture it.
+
+---
+
+## SLIDE 1 — Title & Logos
+
+> **Better Together: BidIntell + Procore**
+>
+> *Know which bids are worth your time — before you spend it.*
+
+Logos at equal visual weight. Delete Procore's instruction note before finalising.
+
+---
+
+## SLIDE 2 — Your Solution + Procore: Key Message
+
+**Power statement**
+
+> ## BidIntell tells a subcontractor which bids to chase — and with Procore, it happens the moment the GC hits send.
+
+**Who This Is For**
+- Owners and chief estimators at specialty subcontractors bidding to Procore GCs
+- Preconstruction leaders at subs already running Procore on awarded work
+- VP Operations and Project Executives at GCs whose bid coverage depends on sub response
+
+**Why It Matters**
+- Every invitation is scored automatically — no forwarding, no re-upload, no second login
+- The score reflects that sub's own trades, territory and client history, not a generic model
+- Read-only and permission-scoped — BidIntell sees only what the GC already shared with that bidder
+
+*Bullet 2 of "Who This Is For" is the §4a framing, and it's deliberate: it positions the joint
+customer as a sub already invested in Procore.*
+
+---
+
+## SLIDE 3 — Customer Challenge & Joint Solution
+
+**Intro sentence**
+
+> A subcontractor connects Procore once; BidIntell then reads each invitation and the bid
+> documents the GC shared, and returns a 0–100 score with GO, REVIEW or PASS.
+
+**The Challenge** *(1 short sentence each)*
+- Subs receive more invitations each week than their estimators can properly evaluate.
+- Judging fit means reading drawings and specs — hours of work before any decision.
+- GCs wait on answers, and quiet subs weaken bid coverage.
+
+**The Joint Solution** *(Procore's spec: **6 words or fewer**, outcome-led)*
+- Scored bids, minutes after invitation.
+- Estimating hours spent on winnable work.
+- Faster answers back to the GC.
+
+---
+
+## SLIDE 4 — Real-World Use Cases
+
+*Format per their spec: 3–5 word label, then 1–2 sentences in "when X happens, Y happens" form.*
+
+**New ITB triage**
+When a GC issues an ITB in Procore, BidIntell scores it within minutes — no forwarding, no manual upload.
+
+**Scope and risk check**
+When the package includes drawings and specs, BidIntell reads them for scope match by CSI section and flags contract terms worth a second look.
+
+**Learning from outcomes**
+When the sub logs a win or loss, BidIntell updates that GC relationship in their scoring, so the next recommendation reflects what actually happened.
+
+---
+
+## SLIDE 5 — Outcomes: ROI & Customer Proof ⚠️
+
+**Quantifiable Benefits** *(bold outcome first, then a short explanation)*
+- **Hours to minutes per invitation.** Document review that takes an estimator most of a morning completes in minutes.
+- **Every invitation triaged, not just some.** Scoring is automatic, so nothing gets skipped for lack of time.
+- **A decision you can defend.** Every score is broken down, explainable, and overridable with a logged reason.
+- **Faster response to the GC.** The benefit that lands directly on Procore's own customer.
+
+**Customer Proof Points**
+
+> **ILLUSTRATIVE — not a customer result.**
+> A 30-person drywall subcontractor receiving 25 invitations a week triages them the day they
+> arrive, and concentrates estimating time on the eight that fit their scope and service area.
+
+> **No joint customers yet.** We would rather fill this slide with real numbers from a Procore
+> pilot than with benchmarks. Proposed pilot on the next slide.
+
+*Procore's spec explicitly permits both of these moves — one clearly-marked illustrative example,
+and describing the benefit qualitatively while noting what would be needed to quantify it. Take
+the permission; don't invent a quote.*
+
+---
+
+## SLIDE 6 — Why We Win Together & What's Next
+
+**Competitive Differentiators**
+- The same project scores differently for two different subs, because the score is built from each customer's own trades, territory and client history.
+- Every logged outcome updates that customer's scoring — bid decisions tied to real results, per sub and per GC.
+- Read-only and permission-scoped, using Authorization Code auth, so there is no permission template to configure per customer after install.
+- Built by a 23-year commercial construction operator who ran a specialty subcontractor — this is the tool he needed and couldn't buy.
+
+**Call to Action — For Partners**
+- Run a joint pilot with **10 Procore-connected subcontractors**, measured on response rate and response speed
+- Refer subcontractor accounts where slow bid response is hurting a GC's coverage
+- Contact ryan@bidintell.ai — the founder builds and supports the integration, with no queue in between
+
+**Call to Action — For Customers**
+- Connect Procore from BidIntell in one click
+- Ask your company admin to install BidIntell once, for the company
+- Book a walkthrough at bidintell.ai
+
+*The pilot number is the milestone YC's list says never to omit. "Explore a pilot" is not an ask;
+"10 subs, measured on response speed" is.*
+
+---
+
+## SLIDE 7 — Resources & Contact
+
+**Key Links**
+- Partner website — bidintell.ai
+- Procore Marketplace listing — *(pending approval)*
+- How the BidIndex is calculated — bidintell.ai/takeoff/bidindex-methodology/
+- Capacity planning — bidintell.ai/capacity-planning
+
+**Get in Touch**
+- Ryan Elder, Founder — ryan@bidintell.ai
+- Procore Partnerships — techpartners@procore.com
+
+---
+
+## Appendix — demo video
+
+Their template has a slot, and this is the highest-value asset in the whole submission: it proves
+the product exists. Under 90 seconds, one bid scored end to end.
+
+⚠️ **Record the email-forward or upload path, which is live today.** Do not stage a Procore flow
+that isn't built — the workflow diagram already tells them that part is proposed.
+
+---
+
+## Final pass before submitting
+
+- [ ] Read slides 1–3 alone. Does the whole joint story land without 4–7?
+- [ ] Show slide 2 to someone who doesn't know BidIntell. Five seconds — can they say what it does?
+- [ ] Slide 3's Joint Solution bullets are genuinely ≤6 words
+- [ ] Every number is sourced, or labelled a benchmark, or removed
+- [ ] The one illustrative example is clearly marked as illustrative
+- [ ] No invented quotes, no named customers
+- [ ] No team/per-estimator analytics claim
+- [ ] Pilot ask has a number attached
+- [ ] Read-only throughout — matches the workflow diagram and the "No" on bi-directional
