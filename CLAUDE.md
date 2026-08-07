@@ -749,6 +749,23 @@ Recurring "company info / settings won't save" bug root-caused + fixed (commit c
 - Company Size + Typical Project Size now captured at onboarding (office-address step, all tiers) and shown in the User Profiles founder view.
 - Extended trial = existing `is_comped` flag + admin.html "Comp" button (no new build needed).
 
+### Netlify Redirects Need `force = true` To Beat A Real File (Aug 7, 2026)
+
+Netlify serves a matching **static file before it evaluates redirect rules**. So a
+rule whose `from` is a path that exists on disk — `/contact.html`, `/index.html` —
+is simply never reached without `force = true`. The first attempt at canonicalizing
+`.html` → extensionless shipped without it, deployed cleanly, and changed nothing:
+both URLs kept returning 200.
+
+**Rule:** if the `from` path corresponds to a real file in the publish dir, the rule
+needs `force = true`. If it doesn't (`/app`, `/demo`), it doesn't. And **verify the
+redirect live with `curl -o /dev/null -D -` after deploy** — a redirect that silently
+doesn't fire looks exactly like a successful deploy.
+
+Related: a `status = 200` rewrite (`/contact` → `/contact.html`) serves the file
+directly and is NOT re-evaluated against the redirect rules, so it does not loop
+with a forced 301 going the other way. Verified live on all 11 pages.
+
 ### MV3 Service Workers Lose All In-Memory State (Aug 7, 2026)
 
 A Chrome MV3 background service worker is terminated after ~30s idle and **every
