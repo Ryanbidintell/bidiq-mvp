@@ -179,10 +179,15 @@ customer. Size poll intervals against the total number of connected subs.
 ### 3g. States to draw as normal, not as errors
 
 - **Permissions:** Read Only or higher on the company's **Planroom** tool is required to
-  download bid documents; Planroom access is automatic once the bidder's company is added to
-  a bid package. ⏳ Open sub-question: whether **Bid Contact** designation (documented as
-  required to *submit* a proposal, separate from permission level) also gates *visibility* of
-  specific bids. If it does, onboarding needs an admin step — ask alongside §4.
+  download bid documents; Planroom access is automatic once the bidder's company is added to a
+  bid package. ✅ **Bid Contact almost certainly gates submission only, not visibility.** In the
+  free-account permissions matrix, *"Submit a Bid Proposal"* is the **single** action carrying
+  the Bid Contact requirement — every viewing and bid-management action is available to all
+  three roles without it. Since our integration reads and never submits, this is very likely a
+  non-issue. Caveat: that matrix describes free accounts and the UI, not paid accounts or API
+  behaviour, so it's still worth a one-line confirmation (§8 Q2). Note also that "assign bid
+  contacts" is itself a free-tier action, so even if it did gate visibility the customer could
+  self-serve it.
 - Some packages require the sub to **sign an NDA** before contents are viewable. A legitimate
   blocked state on the documents endpoint, not an auth error — must not page anyone.
 - A solicitor who **removes a bidder revokes visibility** — 403s and disappearing packages are
@@ -216,8 +221,50 @@ This one is commercial, not technical, and it sizes the opportunity.
   (§3e), so once installed there is no per-customer permission-template step. Worth stating in
   the Technical Assessment — it makes us cheaper to certify and cheaper for a customer to adopt.
 
-- **The tutorial never mentions account tiers**, which is consistent with the wider finding:
-  no Procore document states one way or the other. Hence the email.
+- **Capstone evidence — the free-account permissions matrix.** This is a *complete
+  enumeration*, and installing an app is not in it. Free accounts have three roles (Member /
+  Team Administrator / System Administrator) and exactly two action groups:
+
+  | Group | Actions |
+  |---|---|
+  | **General Account Management** | Accept/deny join requests · add, edit, deactivate users · **assign bid contacts** · cancel premium estimating subscription · edit personal and company information · log in, navigate to companies/projects · resend invitations · search/filter users · view projects and users |
+  | **Bid Board** | Add/edit estimates · add takeoffs · apply templates · configure columns and settings · copy/delete/rename takeoff groups · create/delete/edit projects · **manage bids** · upload documents · view estimates and projects |
+
+  No Directory tool, no Admin tool, no App Management, no apps, integrations, Marketplace,
+  service accounts, no API — none of it appears anywhere. The argument is therefore no longer
+  "free accounts lack the Directory tool"; it is **"the complete list of actions available to
+  the most privileged role in a free account does not include installing an app."** That is
+  the strongest form available from public documentation.
+
+  The matrix also confirms the other half: free accounts genuinely *do* get working Bid Board
+  — estimates, takeoffs, managing bids, viewing invited projects. **Tool access yes, install
+  and API no.**
+
+- **The tutorial and the FAQ never mention account tiers** in the install context — consistent
+  with every other Procore document. No explicit prohibition exists anywhere. Hence the email;
+  but plan against it.
+
+### 4a. If paid-only is confirmed, the ICP in the application needs a rewrite
+
+Worth settling **before** the Better Together deck, because Procore's team may spot it first.
+
+The application described the ideal joint customer as a $5M–$50M sub with a *"light software
+stack — plan-room accounts, an estimating/takeoff tool, spreadsheets."* If the integration
+requires a paid Procore seat, then the joint customer is by definition a sub who **already pays
+for Procore** — a heavier stack and probably a larger firm. Those two descriptions don't
+survive in the same deck.
+
+The honest reframing is coherent and arguably stronger: *the joint customer is the specialty
+sub who already runs Procore for project management on awarded work, and wants bid triage in
+the same place rather than in a separate inbox.* That's a real segment, it's a natural Procore
+upsell story, and it doesn't require pretending the free tier works.
+
+**And BidIntell still serves everyone else** — this is the part that de-risks the whole thing.
+A sub on a free Procore account who can't install the app still gets BidIntell through the
+universal floor: email forwarding, direct upload, and the Chrome extension
+(`extension/README.md`). So the Procore integration is an *upgrade path for Procore-paying
+subs*, not the only door. Say that plainly in the deck; it turns a limitation into a coherent
+product architecture rather than a gap to be talked around.
 
 **Working assumption: paid Procore account required.** This decides whether the addressable
 base is *all Procore-invited subs* or *only paying ones* — material, given our ICP ($5M–$50M
@@ -307,23 +354,25 @@ read the docs.** Ask narrowly — a vague version of question 1 gets a vague ans
 > there any supported path for such a company to authorize a third-party app for API access?**
 >
 > I ask because our users are specialty subcontractors, many of whom will be on free accounts.
-> Free accounts do have Bid Board. But your install tutorial lists the prerequisite as "'Admin'
-> level permissions on the Company level Directory tool," and free accounts have a Teams tool
-> rather than a Directory tool — so as far as I can tell nobody in a free-tier company can hold
-> the permission an install requires. Add the January deprecation of user-installs and it reads
-> as a hard no, but no document says so either way. I'd rather have it confirmed than design
-> around an inference: it determines how much of our user base we can actually serve.
+> Free accounts do have a working Bid Board, which is exactly where our value sits. But the
+> install tutorial lists the prerequisite as "'Admin' level permissions on the Company level
+> Directory tool," and free accounts have no Directory tool. The free-account permissions matrix
+> looks like a complete enumeration — General Account Management and Bid Board — and nothing in
+> either group is installing or authorizing an app, including for System Administrators. Add the
+> January deprecation of user-installs and it reads as a hard no, but I can't find a document
+> that says so either way.
 >
-> If the answer is that a paid seat is required, that's workable — I'd just want to know now so
-> we position the integration honestly rather than discovering it at launch.
+> If a paid seat is required, that's workable — I'd just rather know now and position the
+> integration honestly than discover it at launch.
 >
-> **2. Does Bid Contact designation affect *visibility* of bids via the API, or only the ability
-> to submit a proposal?**
+> **2. Does Bid Contact designation affect API *visibility* of bids, or only the ability to
+> submit a proposal?**
 >
-> The documentation ties Bid Contact to submitting a bid, separately from permission level. If
-> it also gates which bids appear in `companies/{company_id}/bids`, our onboarding needs an
-> admin step, and I'd like to know that before we design the flow. We're assuming Read Only or
-> higher on the company's Planroom tool is otherwise sufficient — please correct me if not.
+> In the free-account matrix, "Submit a Bid Proposal" is the only action carrying the Bid
+> Contact requirement, which suggests read visibility isn't gated by it. We only ever read —
+> we never submit — so I'd just like to confirm that reading `companies/{company_id}/bids` and
+> the planroom documents endpoint needs no Bid Contact designation, and that Read Only or higher
+> on the company's Planroom tool is sufficient.
 >
 > Thanks,
 > Ryan Elder
