@@ -91,11 +91,24 @@ sequenceDiagram
     end
 ```
 
-**Trigger is polling, not webhooks.** Procore does expose `Bids` as a webhook resource, but
-webhook subscriptions are created against a project and an invited bidder is not a project
-member — so bidder-side webhook eligibility is unconfirmed (open item O-2). The application
-said "API/webhooks"; **the diagram should say polling**, with webhooks noted as a future
-optimisation. Do not draw a webhook arrow you cannot defend.
+**Trigger is polling, and webhooks cannot replace it.** `Bids` *is* available as a
+**company-scoped** webhook resource — one row in Procore's webhook resources CSV: Project
+Management / Bidding / company / Bids / v2 / **`except: create,delete`**. Procore fires
+create, update and delete events; Bids excludes create and delete, leaving only `update`.
+
+A new invitation is a *create*. **The one event we need is the one that doesn't fire.**
+Webhooks may still be a useful supplement for change detection on bids we already know about
+(`invitation_last_sent_at`, `due_date`), but they cannot be the discovery mechanism. Two
+further nails: configuring company webhooks requires Admin on the company Admin tool — which
+inherits the free-tier problem in O-1 entirely — and webhook event history is retained only
+28 days, so they were never a backfill path either.
+
+The application said "API/webhooks." **The diagram says polling**, and that is now a defended
+position rather than an unverified one.
+
+**Rate budget:** 3,600 requests/hour per `client_id`, **shared across all tenants** — not
+per customer. Poll intervals must be sized against total connected subs, not per-user. Draw
+this as a design constraint; it's the kind of thing a platform reviewer looks for.
 
 **`s3_source` URLs expire.** Fetch bytes immediately; never persist the URL. On expiry,
 re-request the documents endpoint rather than retrying the stale link.
@@ -115,6 +128,13 @@ re-request the documents endpoint rather than retrying the stale link.
 
 **v1 is read-only across every object.** No creates, no updates, no deletes, no bulk export,
 no migration of Procore data to a separate system of record.
+
+**This matches the application exactly.** The submitted form answered **"No"** to *"Is the
+proposed integration Bi-Directional (reading data from Procore and writing data back)?"*
+(confirmed Aug 7 2026 via the Google Form "Edit response" view). The dashed phase-2 row is
+not a contradiction — the application's own narrative already disclosed it as *"Future scope
+(not in initial integration): Project Management — writing the sub's bid decision/status
+back."* Keep the label unambiguous so a reviewer never has to reconcile the two.
 
 **Phase 2** would write the sub's decision (`will_bid` / `will_not_bid`) back so the GC sees
 intent earlier — the outcome Procore's ecosystem actually benefits from. It reflects a
@@ -186,10 +206,10 @@ not a catch block that logs and continues.
 
 ## 8. Open items to resolve before or alongside submission
 
-| # | Item | Why it matters |
+| # | Item | Status |
 |---|---|---|
-| **O-1** | Can a **free-tier** Procore company install a Marketplace app? | Decides whether the reachable base is every Procore-invited sub or only paying ones. Question 1 in the spec §8 email. |
-| **O-2** | Can a **bidder** subscribe to `Bids` webhooks, or is polling the only trigger? | Determines the diagram's trigger arrow and whether the application's "API/webhooks" wording needs correcting. |
-| **O-3** | Required permission level for the authorizing user | Assumed Read Only or higher on Planroom / Bid Board; not documented on either reference page. |
-| **O-4** | Beta stability / GA timeline for both primary endpoints | Both are beta with fields added through 2026. Pin version headers. |
-| **O-5** | Confirm the radio answers in the submitted application | Especially "Is the integration Bi-Directional?" — this diagram says read-only v1, and the two must agree. |
+| **O-1** | Can a **free-tier** Procore company install a Marketplace app? | ⏳ **OPEN — the only real unknown left.** App Management is documented as a Company Admin tool feature; the free-account permission matrix has exactly two action groups (Bid Board, General Account Management) with no app/integration/API actions; user-installs were deprecated Jan 20 2026. Marketplace *approval* governs listing, not the tenant-side install gate. Evidence points one way — plan against it. Ask `apisupport@procore.com`, narrowly (spec §8). |
+| **O-2** | Webhooks vs polling | ✅ **RESOLVED — polling.** `Bids` is a company-scoped webhook resource but excludes `create`, so new invitations never fire an event. Useful only as a supplement for changes to known bids. Also requires company Admin (inherits O-1) and retains history 28 days. |
+| **O-3** | Required permission for the authorizing user | ✅ Mostly resolved: **Read Only or higher on the company's Planroom tool**; Planroom access is automatic once the bidder's company is added to a bid package. ⏳ **Sub-question still open:** whether **Bid Contact** designation (required to *submit* a proposal) also gates *visibility* of specific bids. If it does, onboarding needs an admin step. Worth asking alongside O-1. |
+| **O-4** | Beta stability / GA timeline | ✅ **RESOLVED, and not as expected — there is no GA track to wait for.** Procore's published API Lifecycle defines only Active / Deprecated / Sunset; "Beta" and "GA" appear nowhere in it. The BETA tag sits outside the documented lifecycle: no promotion criteria, no committed notice before in-version breaking changes. Only durable guarantee is 1 year of support after deprecation. See spec §3f for what this means for the build. |
+| **O-5** | Confirm the radio answers in the submitted application | ✅ **Bi-Directional = No** (confirmed Aug 7 2026). The diagram's read-only v1 agrees with the application. Remaining radios (bulk export, system-of-record migration) are almost certainly "No" too and consistent with this diagram — worth a glance, but nothing depends on them. |

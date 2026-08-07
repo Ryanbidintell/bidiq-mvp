@@ -143,15 +143,50 @@ Architecture: Authorization Code per subcontractor user; store refresh tokens pe
 `Procore-Company-Id` on every request (mandatory on both endpoints, and on `/me` and
 `/companies` under Multiple Procore Regions).
 
-### 3f. Diagram caveats — states to draw as normal, not as errors
+### 3f. "Beta" is outside Procore's documented lifecycle — build accordingly
 
-- Both primary endpoints are **BETA**, actively changing through 2026 (new response fields
-  Apr 2026, `project_id` added May 2026). Pin version headers; expect field additions.
-- Neither reference page documents a required-permissions field. Underlying UI requirement is
-  **Read Only or higher on the company's Planroom / Bid Board tool**.
-- Some packages require the sub to **sign an NDA** before contents are viewable.
+This is the finding worth restructuring around, and it is not what "beta" usually implies.
+
+**Procore's published API Lifecycle and Deprecation policy defines exactly three phases —
+Active, Deprecated, Sunset.** It never mentions Beta, Public Beta, or GA. So the BETA tag on
+`companies/{id}/bids` sits *outside* the documented lifecycle: there are no published
+promotion criteria, no GA milestone to wait for, and no committed notice period before
+breaking changes *within* a version. The only durable commitment anywhere is that a
+**deprecated** version is supported for one year after deprecation. "Active" explicitly
+permits "ongoing feature releases, bug fixes, and refinements."
+
+Observed behaviour matches: public beta Apr 22 2026, new response fields Apr 2026,
+`project_id` added May 2026 — all in-place additions, no version bump.
+
+**Therefore: waiting for GA is not a strategy. Detection speed is the only real protection.**
+
+| Don't depend on | Do this instead |
+|---|---|
+| Field presence | Parse defensively. Never fail a sync on an unknown or missing optional field. |
+| `bid_status` enum stability | Five values documented. Treat an unrecognised value as a passthrough state, never an error. |
+| `s3_source` URL durability | Explicitly time-limited. Never persist; re-request the documents endpoint and stream bytes immediately. |
+| Uniform pagination | `pdm_*` params page the PDM slice only, not drawings. Handle the two collections separately. |
+| Path stability across versions | Pin `v2.0` and `v1.0` explicitly. Subscribe to Developer Portal changelog notifications — Procore's stated notification channel. |
+
+**Build contract tests that assert the response shape and fail loudly in CI**, rather than
+silently in production. Given no notice commitment, that test suite *is* the early-warning
+system. This is the same lesson as the Jul 2026 silent-failure incident, arriving from a
+different direction.
+
+**Rate limit:** 3,600 requests/hour per `client_id`, **shared across all tenants** — not per
+customer. Size poll intervals against the total number of connected subs.
+
+### 3g. States to draw as normal, not as errors
+
+- **Permissions:** Read Only or higher on the company's **Planroom** tool is required to
+  download bid documents; Planroom access is automatic once the bidder's company is added to
+  a bid package. ⏳ Open sub-question: whether **Bid Contact** designation (documented as
+  required to *submit* a proposal, separate from permission level) also gates *visibility* of
+  specific bids. If it does, onboarding needs an admin step — ask alongside §4.
+- Some packages require the sub to **sign an NDA** before contents are viewable. A legitimate
+  blocked state on the documents endpoint, not an auth error — must not page anyone.
 - A solicitor who **removes a bidder revokes visibility** — 403s and disappearing packages are
-  normal states, not failures. Handle explicitly.
+  normal states.
 
 ## 4. ⏳ OPEN — free-tier API eligibility
 
@@ -226,50 +261,66 @@ The emailed receipt does not render which radio buttons were selected:
   — almost certainly **Discovery / Planning**. Ryan has a Procore developer account but has not
   created the app yet; that comes after the application phases. Confirm, since the diagram is
   framed as a *proposal* on that basis.
-- **Is the integration Bi-Directional?** Yes/No — narrative says read-only initially with
-  phase-two write-back, so the diagram must match whichever was ticked.
+- **Is the integration Bi-Directional?** ✅ **Answered: No** (confirmed Aug 7 2026 from the
+  "Edit response" view). The diagram's read-only v1 agrees. The dashed phase-2 write is not a
+  contradiction — the application's narrative already disclosed it as future scope.
 - **Bulk data export?** Yes/No
 - **Permanent migration to a separate System of Record?** Yes/No
 
-## 8. Draft — remaining question to techpartners@procore.com
+## 8. Draft — remaining questions to apisupport@procore.com
 
-Now narrow: §3 is answered, so this is only the commercial and stability questions. Omits any
-mention of Autodesk (Procore competes with them).
+**Send to `apisupport@procore.com`, not `techpartners@`.** API, auth and app-type questions are
+what that channel is for, and the free-tier install question is exactly that. `techpartners@`
+gets the Technical Assessment submission itself — no questions attached.
 
-> **Subject:** Technical Feasibility — two questions before we submit the workflow diagram
+Only two asks remain. §3's endpoint questions are answered, the webhook question is answered
+(polling, because Bids excludes `create`), and there is no GA timeline to ask about because
+Beta isn't in Procore's lifecycle at all. **Asking any of those now would signal we hadn't
+read the docs.** Ask narrowly — a vague version of question 1 gets a vague answer.
+
+> **Subject:** Free-tier app installation, and Bid Contact visibility
 >
 > Hi,
 >
-> Thanks for moving us forward. I've mapped the integration against the reference and the
-> bidder-side path is clear — `GET /rest/v2.0/companies/{company_id}/bids` for invitations
-> received, then `…/planroom/bid_packages/{id}/documents` for the shared bid documents, with
-> Authorization Code auth per subcontractor user. Two things I'd rather confirm than assume
-> before the diagram goes in.
+> I'm a Procore Technology Partner applicant (BidIntell), currently in Technical Feasibility.
+> Our integration is read-only on the bidder side: `GET /rest/v2.0/companies/{company_id}/bids`
+> for invitations received, then
+> `GET /rest/v1.0/companies/{company_id}/planroom/bid_packages/{bid_package_id}/documents`,
+> with Authorization Code auth per subcontractor user. Two questions I couldn't settle from the
+> documentation.
 >
-> **1. Free-tier accounts.** Our users are specialty subcontractors, and many will be on free
-> Procore accounts rather than paid subscriptions. Free accounts get Bid Board, but I can't
-> find a documented path for a free-tier company to install a Marketplace app — there's no
-> Company Admin tool, and app installation now requires an admin install. Can a free-tier
-> company install and authorize a Marketplace app, or is a paid subscription effectively
-> required for API access?
+> **1. Can a company on a free Procore account install a Marketplace or custom app, and is
+> there any supported path for such a company to authorize a third-party app for API access?**
 >
-> **2. Beta stability, and the trigger.** Both `companies/{id}/bids` (v2.0) and the planroom
-> documents endpoint are marked beta, and I can see fields added through 2026. Is there a GA
-> timeline, and anything you'd advise against depending on meanwhile? Related: I can see `Bids`
-> listed as a webhook resource, but subscriptions appear to be created against a project, and
-> our user is an invited bidder rather than a project member. Can a bidder subscribe to
-> invitation events, or should we plan on polling `companies/{id}/bids`?
+> I ask because our users are specialty subcontractors, many of whom will be on free accounts.
+> Free accounts have Bid Board, but App Management is documented as a Company Admin tool
+> feature, the free-account permission matrix lists only Bid Board and General Account
+> Management actions, and user-installs were deprecated in January. That reads as "no," but I'd
+> rather have it confirmed than design around an inference — it determines how much of our user
+> base we can actually serve.
 >
-> One smaller thing: neither reference page lists a required-permissions field. I'm assuming
-> Read Only or higher on Planroom / Bid Board for the authorizing user — please correct me if
-> that's wrong.
+> **2. Does Bid Contact designation affect *visibility* of bids via the API, or only the ability
+> to submit a proposal?**
 >
-> Happy to jump on a call if that's faster.
+> The documentation ties Bid Contact to submitting a bid, separately from permission level. If
+> it also gates which bids appear in `companies/{company_id}/bids`, our onboarding needs an
+> admin step, and I'd like to know that before we design the flow. We're assuming Read Only or
+> higher on the company's Planroom tool is otherwise sufficient — please correct me if not.
 >
 > Thanks,
 > Ryan Elder
 > Founder, BidIntell
 > ryan@bidintell.ai
+
+### Superseded draft (kept for reference — do not send)
+
+The earlier four-question draft to `techpartners@` asked about webhooks and a GA timeline.
+Both are now answered from the documentation, so sending it would read as not having done the
+homework.
+
+Now narrow: §3 is answered, so this is only the commercial and stability questions. Omits any
+mention of Autodesk (Procore competes with them).
+
 
 ## 9. Strategic note
 
