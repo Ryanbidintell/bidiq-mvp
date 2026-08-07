@@ -339,40 +339,31 @@ Only two asks remain. §3's endpoint questions are answered, the webhook questio
 Beta isn't in Procore's lifecycle at all. **Asking any of those now would signal we hadn't
 read the docs.** Ask narrowly — a vague version of question 1 gets a vague answer.
 
-> **Subject:** Free-tier app installation, and Bid Contact visibility
+> **To:** `apisupport@procore.com` · **CC:** `techpartners@procore.com`
+> **Subject:** Can a free-account company install a Marketplace app?
 >
 > Hi,
 >
-> I'm a Procore Technology Partner applicant (BidIntell), currently in Technical Feasibility.
-> Our integration is read-only on the bidder side: `GET /rest/v2.0/companies/{company_id}/bids`
-> for invitations received, then
-> `GET /rest/v1.0/companies/{company_id}/planroom/bid_packages/{bid_package_id}/documents`,
-> with Authorization Code auth per subcontractor user. Two questions I couldn't settle from the
-> documentation.
+> BidIntell is a Technology Partner applicant in Technical Feasibility. Ours is a read-only
+> bidder-side integration — we read a subcontractor's bid invitations and the documents shared
+> with them, using Authorization Code auth.
 >
-> **1. Can a company on a free Procore account install a Marketplace or custom app, and is
-> there any supported path for such a company to authorize a third-party app for API access?**
+> Two questions the documentation doesn't settle.
 >
-> I ask because our users are specialty subcontractors, many of whom will be on free accounts.
-> Free accounts do have a working Bid Board, which is exactly where our value sits. But the
-> install tutorial lists the prerequisite as "'Admin' level permissions on the Company level
-> Directory tool," and free accounts have no Directory tool. The free-account permissions matrix
-> looks like a complete enumeration — General Account Management and Bid Board — and nothing in
-> either group is installing or authorizing an app, including for System Administrators. Add the
-> January deprecation of user-installs and it reads as a hard no, but I can't find a document
-> that says so either way.
+> **1. Can a company on a free Procore account install a Marketplace app and authorize it for
+> API access?**
 >
-> If a paid seat is required, that's workable — I'd just rather know now and position the
-> integration honestly than discover it at launch.
+> Everything points to no: the install tutorial requires "'Admin' level permissions on the
+> Company level Directory tool" and free accounts have no Directory tool; the free-account
+> permissions matrix contains no app or API action for any role, System Administrator included;
+> and user-installs were deprecated in January. But nothing states it outright.
 >
-> **2. Does Bid Contact designation affect API *visibility* of bids, or only the ability to
-> submit a proposal?**
+> This decides how much of our user base we can serve — most specialty subs will be on free
+> accounts. If a paid seat is required, that's workable; I'd rather know now.
 >
-> In the free-account matrix, "Submit a Bid Proposal" is the only action carrying the Bid
-> Contact requirement, which suggests read visibility isn't gated by it. We only ever read —
-> we never submit — so I'd just like to confirm that reading `companies/{company_id}/bids` and
-> the planroom documents endpoint needs no Bid Contact designation, and that Read Only or higher
-> on the company's Planroom tool is sufficient.
+> **2. Bid Contact designation gates submitting a proposal, not read visibility — correct?**
+>
+> We only read, never submit. Assuming Read Only or higher on the Planroom tool is sufficient.
 >
 > Thanks,
 > Ryan Elder
