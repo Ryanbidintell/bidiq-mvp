@@ -384,30 +384,39 @@ Beta isn't in Procore's lifecycle at all. **Asking any of those now would signal
 read the docs.** Ask narrowly — a vague version of question 1 gets a vague answer.
 
 > **To:** `apisupport@procore.com` · **CC:** `techpartners@procore.com`
-> **Subject:** Can a free-account company install a Marketplace app?
+> **Subject:** Confirming today's call — app install and Bid Board visibility
 >
 > Hi,
 >
-> BidIntell is a Technology Partner applicant in Technical Feasibility. Ours is a read-only
-> bidder-side integration — we read a subcontractor's bid invitations and the documents shared
-> with them, using Authorization Code auth.
+> I spoke with someone at Procore today and want to confirm my understanding in writing, plus
+> two questions. BidIntell is a Technology Partner applicant in Technical Feasibility —
+> read-only, bidder-side.
 >
-> Two questions the documentation doesn't settle.
+> From the call: once an app is installed to a company account, any user on that account can
+> use it. Installation is company-level, not per-user. Correct me if that's wrong.
 >
-> **1. Can a company on a free Procore account install a Marketplace app and authorize it for
-> API access?**
+> **1. Does that hold for free Procore accounts?**
 >
-> Everything points to no: the install tutorial requires "'Admin' level permissions on the
-> Company level Directory tool" and free accounts have no Directory tool; the free-account
-> permissions matrix contains no app or API action for any role, System Administrator included;
-> and user-installs were deprecated in January. But nothing states it outright.
+> Most of our users are specialty subcontractors on free accounts. The free-account permissions
+> matrix lists no app-install action for any role, System Administrator included, and the
+> install tutorial requires Admin on the Company level Directory tool, which free accounts don't
+> have. Can a free-account company install a Marketplace app, or is a paid seat required? This
+> decides how much of our user base we can serve — if it's paid-only, that's workable, I'd
+> rather know now.
 >
-> This decides how much of our user base we can serve — most specialty subs will be on free
-> accounts. If a paid seat is required, that's workable; I'd rather know now.
+> **2. A possible contradiction in the Bid Board permissions docs — wanted to flag it and check
+> which is right.**
 >
-> **2. Bid Contact designation gates submitting a proposal, not read visibility — correct?**
+> The English permissions page says users with Read Only permissions can only access projects
+> where they're the assigned Estimator. The Japanese-language version of the same page reads as
+> Read Only *and* Standard, unless the permission template has "Can Access Projects for All
+> Users." I may be misreading one of them, but the difference matters for us, so I wanted to
+> raise it rather than guess.
 >
-> We only read, never submit. Assuming Read Only or higher on the Planroom tool is sufficient.
+> It decides what we ask customers to set up at connect. We need the authorizing user to see
+> their company's whole Bid Board — a filtered result looks the same as a small one from our
+> side, so we'd have no way to know we were missing bids. Would Admin on Bid Board, or "Can
+> Access Projects for All Users," be the right thing to have their admin enable?
 >
 > Thanks,
 > Ryan Elder
