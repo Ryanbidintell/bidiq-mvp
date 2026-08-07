@@ -172,20 +172,34 @@ When the sub logs a win or loss, BidIntell updates that GC relationship in their
 - **A decision you can defend.** Every score is broken down, explainable, and overridable with a logged reason.
 - **Faster response to the GC.** The benefit that lands directly on Procore's own customer.
 
-**Customer Proof Points**
+**Customer Proof Points** — real conversations, anonymized (Ryan confirmed we can use them)
 
-> **ILLUSTRATIVE — not a customer result.**
-> A 30-person drywall subcontractor receiving 25 invitations a week triages them the day they
-> arrive, and concentrates estimating time on the eight that fit their scope and service area.
+> **From diagnostic calls (anonymized):** a flooring contractor said they'd adopt bid scoring if
+> it lived where invitations already arrive — leaving their bid platform to check a score was the
+> blocker.
+>
+> **A drywall contractor put the bottleneck earlier than we had it:** not scoring accuracy, but
+> which invitations are worth opening at all.
+>
+> **No joint Procore customers yet** — a pilot would give us both real numbers.
+>
+> *(caption slot)* **What we would measure:** response rate and response speed.
 
-> **No joint customers yet.** We would rather fill this slide with real numbers from a Procore
-> pilot than with benchmarks. Proposed pilot on the next slide.
+**Why this beats the illustrative scenario it replaced.** The first point is the entire argument
+for this integration, and it came from a subcontractor rather than from us. A reviewer reads it
+as: a real sub already asked for this, and Procore is how it gets built. Nothing a benchmark
+could do.
 
-*Procore's spec explicitly permits both of these moves — one clearly-marked illustrative example,
-and describing the benefit qualitatively while noting what would be needed to quantify it. Take
-the permission; don't invent a quote.*
+**Two deliberate choices:**
+- **No quotation marks.** These are paraphrased findings from notes, not verbatim transcripts.
+  Attributed paraphrase is honest; quote marks around reconstructed wording would not be. If the
+  actual words exist in writing somewhere, real quotes would be stronger again.
+- **The flooring contractor's condition was specifically BuildingConnected**, generalised here to
+  "the platform where invitations arrive." That's accurate and it travels to Procore, but don't
+  let it drift into implying they named Procore.
 
----
+Sources (internal only, do not put in the deck): Regents Flooring — conditional yes gated on
+in-platform integration. Wallworks — drywall, validated inbox triage as the wedge.
 
 ## SLIDE 6 — Why We Win Together & What's Next
 
