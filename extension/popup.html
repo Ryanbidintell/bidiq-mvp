@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>BidIntell</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="hdr">
+    <span class="badge">BI</span>
+    <span class="wordmark">BidIntell</span>
+  </header>
+
+  <!-- Not connected -->
+  <section id="stateDisconnected" class="hidden">
+    <p class="lead">Connect your BidIntell account once, and downloaded bid packages can be scored in two clicks.</p>
+    <button id="connectBtn" class="btn primary">Connect account</button>
+  </section>
+
+  <!-- Connected, nothing pending -->
+  <section id="stateConnectedIdle" class="hidden">
+    <p class="lead"><span class="ok-dot"></span> Connected.</p>
+    <p class="muted">Download a bid package and I'll offer to score it. You can also send files right now.</p>
+    <button id="sendNowBtn" class="btn primary">Send files now</button>
+    <button id="disconnectBtn" class="btn ghost">Disconnect</button>
+  </section>
+
+  <!-- Review &amp; send -->
+  <section id="stateReview" class="hidden">
+    <h1 class="title">Send to BidIntell</h1>
+
+    <div id="detectedWrap">
+      <p class="muted">Just downloaded:</p>
+      <ul id="detectedList" class="detected"></ul>
+    </div>
+
+    <p class="muted">
+      Select those files below. Your browser can't hand them over automatically —
+      it only shares files you pick yourself.
+    </p>
+
+    <div id="dropZone" class="drop">
+      <label for="fileInput" id="dropZoneLabel" class="drop-label">Click to select files, or drag them here</label>
+      <input type="file" id="fileInput" accept="application/pdf,.pdf" multiple hidden>
+    </div>
+
+    <p id="selectedSummary" class="selected hidden"></p>
+    <p id="limitNote" class="note hidden"></p>
+
+    <button id="sendBtn" class="btn primary" disabled>Send for scoring</button>
+    <p id="sendStatus" class="status-line"></p>
+
+    <p class="fineprint">PDFs only, up to 3 files. Your report arrives by email; log in for the full breakdown.</p>
+  </section>
+
+  <script src="popup.js"></script>
+</body>
+</html>

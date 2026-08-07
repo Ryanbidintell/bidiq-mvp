@@ -51,6 +51,66 @@ function getSupabase() {
     });
 }
 
+// ── Chrome extension auth ─────────────────────────────────────────────────────
+// The extension posts the same payload shape SendGrid does, but authenticates
+// with a per-user token (netlify/functions/extension-token.js) instead of
+// arriving at a user's @bids.bidintell.ai alias. Resolving the token back to
+// that user's alias lets the ENTIRE existing pipeline below run unchanged —
+// extraction, contract risk, BidIndex v2, project save, merge detection, reply
+// email. One implementation, so extension scores can't drift from email scores.
+// Best-effort per-user throttle for the extension path. In-memory, so it is
+// per edge instance and not a hard global guarantee — but it's the cheap half
+// of the problem: the realistic risk is a stuck retry loop in one client
+// burning Claude spend, not a distributed attack. MAX_ATTACHMENTS caps the
+// per-request cost; this caps the request rate.
+const EXT_MAX_UPLOADS_PER_HOUR = 20;
+const extUploadHits = new Map<string, number[]>();
+
+function extRateLimitOk(userId: string): boolean {
+    const hourAgo = Date.now() - 3600000;
+    const hits = (extUploadHits.get(userId) || []).filter(t => t > hourAgo);
+    if (hits.length >= EXT_MAX_UPLOADS_PER_HOUR) return false;
+    hits.push(Date.now());
+    extUploadHits.set(userId, hits);
+    return true;
+}
+
+async function resolveExtensionAlias(rawToken: string): Promise<{ alias: string; userId: string } | null> {
+    if (!rawToken || !rawToken.startsWith('bix_')) return null;
+    const supabase = getSupabase();
+
+    const hashBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawToken));
+    const tokenHash = Array.from(new Uint8Array(hashBuf))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+
+    const { data: tok } = await supabase
+        .from('extension_tokens')
+        .select('id, user_id, revoked_at, expires_at')
+        .eq('token_hash', tokenHash)
+        .maybeSingle();
+
+    if (!tok || tok.revoked_at) return null;
+    if (tok.expires_at && new Date(tok.expires_at as string).getTime() < Date.now()) return null;
+
+    const { data: settings } = await supabase
+        .from('user_settings')
+        .select('email_alias')
+        .eq('user_id', tok.user_id)
+        .maybeSingle();
+
+    if (!settings?.email_alias) return null;
+
+    // Awaited, not fire-and-forget: this runs before the response is returned and
+    // unawaited I/O gets dropped when the runtime suspends.
+    const { error: touchErr } = await supabase
+        .from('extension_tokens')
+        .update({ last_used_at: new Date().toISOString() })
+        .eq('id', tok.id);
+    if (touchErr) console.warn('extension_tokens last_used_at update failed:', touchErr.message);
+
+    return { alias: settings.email_alias as string, userId: tok.user_id as string };
+}
+
 // ── Alert helper ──────────────────────────────────────────────────────────────
 // Reports failures to the alert.js monitoring endpoint (Netlify), which logs to
 // admin_events and emails ryan@bidintell.ai (throttled). Fire-and-forget; never
@@ -611,14 +671,19 @@ async function logAdminEvent(eventType: string, eventData: Record<string, unknow
 
 async function processEmail(payload: Record<string, unknown>) {
     const supabase = getSupabase();
-    const { To, From, Subject, TextBody, HtmlBody, Attachments } = payload as {
+    const { To, From, Subject, TextBody, HtmlBody, Attachments, SourceLabel } = payload as {
         To: string | Array<{ Email?: string }>;
         From: string;
         Subject: string;
         TextBody?: string;
         HtmlBody?: string;
         Attachments?: Array<{ ContentType: string; Content: string; Name: string }>;
+        SourceLabel?: string;
     };
+
+    // Where this bid came in from. Stamped onto scores/extracted_data/company_context
+    // so email-forward and extension bids stay distinguishable in analytics.
+    const sourceLabel = SourceLabel === 'chrome_extension' ? 'chrome_extension' : 'email_forward';
 
     // 1. Extract alias from To address
     const toRaw = Array.isArray(To) ? (To[0]?.Email || String(To[0] || '')) : String(To || '');
@@ -960,7 +1025,7 @@ async function processEmail(payload: Record<string, unknown>) {
             : (v1FinalScore >= 80 ? 'GO' : v1FinalScore >= 60 ? 'REVIEW CAREFULLY' : 'PASS'));
     const scoreLabel = inviteMode ? 'Invite Score' : 'BidIndex Score';
 
-    const scores = { final: finalScore, recommendation, components, source: 'email_forward', availability, completeness, engine: serveV2 ? 'v2' : 'v1', scoresV2: v2 };
+    const scores = { final: finalScore, recommendation, components, source: sourceLabel, availability, completeness, engine: serveV2 ? 'v2' : 'v1', scoresV2: v2 };
 
     // 10. Build gc_bid entry for this GC
     const gcBidEntry = {
@@ -970,7 +1035,7 @@ async function processEmail(payload: Record<string, unknown>) {
         contract_risks: contractRisks,
         bid_due_date:   extracted.bid_due_date || null,
         estimated_value: extracted.estimated_value || null,
-        source:         'email_forward',
+        source:         sourceLabel,
         outcome:        'pending',
         outcome_data:   {},
         email_from:     From || null,
@@ -1001,7 +1066,7 @@ async function processEmail(payload: Record<string, unknown>) {
                     bond_required:   extracted.bond_required || null,
                     building_type:   extracted.building_type || null,
                     project_type:    extracted.project_type || null,
-                    source:          'email_forward',
+                    source:          sourceLabel,
                     email_from:      From || null,
                     email_subject:   Subject || null
                 },
@@ -1021,7 +1086,7 @@ async function processEmail(payload: Record<string, unknown>) {
                     target_margin:        (userRow.target_margin as number) ?? null,
                     office_city:          (userRow.city as string) || null,
                     office_state:         (userRow.state as string) || null,
-                    source:               'email_forward'
+                    source:               sourceLabel
                 },
                 gc_bids:       [gcBidEntry],
                 gcs:           extracted.gc_name ? [{ name: extracted.gc_name }] : [],
@@ -1174,6 +1239,7 @@ async function processEmail(payload: Record<string, unknown>) {
     // when a forward scores oddly — attachment presence vs. body content)
     await logAdminEvent('email_forward_received', {
         alias,
+        source:                sourceLabel,
         gc_name:               gcName,
         score:                 finalScore,
         had_attachments:       hadAttachments,
@@ -1207,9 +1273,86 @@ async function processEmail(payload: Record<string, unknown>) {
 
 // ── Entry point ──────────────────────────────────────────────────────────────
 
+// The Chrome extension posts JSON with an Authorization header, which is a
+// preflighted cross-origin request. host_permissions in the extension manifest
+// normally exempts it from CORS, but answering the preflight explicitly means
+// the upload doesn't silently fail if that exemption ever changes.
+const CORS_HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+};
+
 Deno.serve(async (req) => {
+    if (req.method === 'OPTIONS') {
+        return new Response('ok', { status: 200, headers: CORS_HEADERS });
+    }
     if (req.method !== 'POST') {
         return new Response('ok', { status: 200 });
+    }
+
+    // ── Chrome extension path ────────────────────────────────────────────────
+    // Authenticated by a per-user bix_ token, not by the SendGrid URL secret.
+    // Handled before the secret gate so the two auth schemes stay independent.
+    // Unlike SendGrid, the extension is a live UI waiting on us, so this path
+    // returns a real status code (401/400) instead of an unconditional 200.
+    const extAuth = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
+    if (extAuth.startsWith('bix_')) {
+        let extBody: Record<string, unknown>;
+        try {
+            extBody = await req.json();
+        } catch {
+            return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+                status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' }
+            });
+        }
+
+        const resolved = await resolveExtensionAlias(extAuth);
+        if (!resolved) {
+            return new Response(JSON.stringify({ error: 'Invalid, expired, or revoked extension token' }), {
+                status: 401, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' }
+            });
+        }
+
+        if (!extRateLimitOk(resolved.userId)) {
+            return new Response(JSON.stringify({ error: 'Too many uploads in the last hour. Try again shortly.' }), {
+                status: 429, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' }
+            });
+        }
+
+        const extAttachments = Array.isArray(extBody.Attachments) ? extBody.Attachments : [];
+        if (extAttachments.length === 0) {
+            return new Response(JSON.stringify({ error: 'No files received' }), {
+                status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' }
+            });
+        }
+
+        const extPayload: Record<string, unknown> = {
+            To:          `${resolved.alias}@bids.bidintell.ai`,
+            From:        'BidIntell Extension <extension@bidintell.ai>',
+            Subject:     (extBody.Subject as string) || 'Bid package from Chrome',
+            TextBody:    (extBody.TextBody as string) || '',
+            HtmlBody:    '',
+            Attachments: extAttachments,
+            SourceLabel: 'chrome_extension'
+        };
+
+        EdgeRuntime.waitUntil(
+            processEmail(extPayload).catch((e) => {
+                console.error('processEmail error (extension):', e);
+                return alertEdge(
+                    'Extension bid processing failed',
+                    (e as Error)?.message || String(e),
+                    { stack: (e as Error)?.stack, source: 'chrome_extension' }
+                );
+            })
+        );
+
+        // Accepted, not scored — scoring runs in the background and the report
+        // arrives by email. The extension UI says exactly that.
+        return new Response(JSON.stringify({ ok: true, accepted: extAttachments.length }), {
+            status: 202, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' }
+        });
     }
 
     // Optional shared-secret gate. SendGrid Inbound Parse can't HMAC-sign its webhook,

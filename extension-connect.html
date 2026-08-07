@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect the Chrome Extension — BidIntell</title>
+<meta name="description" content="Link the BidIntell Chrome extension to your account so downloaded bid packages can be scored in two clicks.">
+<meta name="robots" content="noindex, follow">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B0F14; --panel:#141A22; --line:#263140;
+    --text:#E8EDF3; --muted:#93A1B1; --accent:#F26522;
+    --ok:#34D399; --err:#F87171;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:32px 20px;background:var(--ink);color:var(--text);
+    font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    line-height:1.6;
+  }
+  .card{width:100%;max-width:520px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+  .badge{
+    display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;
+    border-radius:8px;background:var(--accent);color:#fff;font-weight:700;letter-spacing:.5px;
+  }
+  .wordmark{font-weight:700;font-size:19px;letter-spacing:-.3px}
+  h1{font-size:26px;line-height:1.25;letter-spacing:-.5px;margin:0 0 12px}
+  p{margin:0 0 16px}
+  .muted{color:var(--muted)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;margin-top:22px}
+  button{
+    width:100%;padding:13px 18px;border:0;border-radius:9px;background:var(--accent);color:#fff;
+    font:inherit;font-weight:700;cursor:pointer;
+  }
+  button:hover:not(:disabled){background:#d9551a}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .status{margin-top:14px;font-size:14px;min-height:20px}
+  .status.ok{color:var(--ok)}
+  .status.err{color:var(--err)}
+  ol{margin:0;padding-left:20px;color:var(--muted);font-size:14px}
+  ol li{margin:6px 0}
+  a{color:var(--accent)}
+  .fineprint{font-size:13px;color:var(--muted);margin-top:22px}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="brand">
+    <span class="badge">BI</span>
+    <span class="wordmark">BidIntell</span>
+  </div>
+
+  <h1>Connect the Chrome extension</h1>
+  <p class="muted">
+    This links the extension to your account so bid packages you download can be
+    scored without a second login. It takes one click.
+  </p>
+
+  <div class="panel">
+    <div id="stepSignedOut" hidden>
+      <p>You're not signed in.</p>
+      <ol>
+        <li>Sign in on the next page.</li>
+        <li>Come back to <strong>bidintell.ai/extension-connect</strong> to finish connecting.</li>
+      </ol>
+      <p class="muted" style="font-size:13px;margin:12px 0 0">
+        Sign-in doesn't return here automatically yet, so you'll need that second step.
+      </p>
+      <button id="signInBtn" style="margin-top:14px">Go to sign in</button>
+    </div>
+
+    <div id="stepNoExtension" hidden>
+      <p>I can't see the BidIntell extension in this browser.</p>
+      <ol>
+        <li>Install the extension, then reload this page.</li>
+        <li>If it's already installed, make sure it's enabled at <code>chrome://extensions</code>.</li>
+      </ol>
+    </div>
+
+    <div id="stepReady" hidden>
+      <p id="readyLine">Signed in. Ready to connect.</p>
+      <button id="connectBtn">Connect extension</button>
+    </div>
+
+    <div id="stepDone" hidden>
+      <p><strong>Connected.</strong> You can close this tab.</p>
+      <p class="muted" style="margin:0">
+        Next time you download a bid package, the extension will offer to score it.
+      </p>
+    </div>
+
+    <p id="status" class="status"></p>
+  </div>
+
+  <p class="fineprint">
+    The extension only ever sees files you pick yourself, plus the filenames Chrome
+    already records for your own downloads. It does not read pages on
+    BuildingConnected, PlanHub or ConstructConnect.
+  </p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://szifhqmrddmdkgschkkw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6aWZocW1yZGRtZGtnc2Noa2t3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwOTkyMDUsImV4cCI6MjA4NDY3NTIwNX0.XSStBZABbfJRMkGqwG-uh2X6nco7GqtiIxUg_0HHlZE';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const $ = (id) => document.getElementById(id);
+const statusEl = $('status');
+
+function show(id) {
+  ['stepSignedOut', 'stepNoExtension', 'stepReady', 'stepDone']
+    .forEach((s) => { $(s).hidden = (s !== id); });
+}
+function setStatus(msg, kind) {
+  statusEl.textContent = msg || '';
+  statusEl.className = 'status' + (kind ? ' ' + kind : '');
+}
+
+// The content script announces itself on load, and confirms once it has stored
+// the token. Both arrive as window messages from this same page.
+let extensionPresent = false;
+let storedResolve = null;
+
+window.addEventListener('message', (event) => {
+  if (event.source !== window || event.origin !== window.location.origin) return;
+  const d = event.data;
+  if (!d || d.source !== 'bidintell-extension') return;
+
+  if (d.type === 'BIDINTELL_EXTENSION_PRESENT') extensionPresent = true;
+  if (d.type === 'BIDINTELL_TOKEN_STORED' && storedResolve) storedResolve(!!d.ok);
+});
+
+// auth.html has no ?next= support, so this is a plain hand-off — the copy above
+// tells the user to navigate back here rather than pretending it will redirect.
+$('signInBtn').addEventListener('click', () => {
+  window.location.href = '/auth.html';
+});
+
+$('connectBtn').addEventListener('click', async () => {
+  const btn = $('connectBtn');
+  btn.disabled = true;
+  setStatus('Creating a secure connection…');
+
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) { show('stepSignedOut'); setStatus(''); return; }
+
+    const res = await fetch('/.netlify/functions/extension-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token
+      },
+      body: JSON.stringify({ action: 'mint' })
+    });
+
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || ('Could not create a token (' + res.status + ')'));
+    if (!body.token) throw new Error('No token returned. Please try again.');
+
+    // Hand the token to the content script, and wait for it to confirm the
+    // extension actually stored it — otherwise "Connected" would be a guess.
+    const stored = new Promise((resolve) => {
+      storedResolve = resolve;
+      setTimeout(() => resolve(false), 4000);
+    });
+
+    window.postMessage(
+      { source: 'bidintell-web', type: 'BIDINTELL_EXTENSION_TOKEN', token: body.token },
+      window.location.origin
+    );
+
+    if (await stored) {
+      show('stepDone');
+      setStatus('');
+    } else {
+      throw new Error("The extension didn't pick that up. Make sure it's installed and enabled, then try again.");
+    }
+  } catch (e) {
+    setStatus(e.message, 'err');
+    btn.disabled = false;
+  }
+});
+
+(async function init() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+
+  if (!session) { show('stepSignedOut'); return; }
+
+  // Give the content script a moment to announce itself before deciding it's absent.
+  setTimeout(() => {
+    if (!extensionPresent) { show('stepNoExtension'); return; }
+    $('readyLine').textContent = 'Signed in as ' + session.user.email + '. Ready to connect.';
+    show('stepReady');
+  }, 400);
+})();
+</script>
+</body>
+</html>

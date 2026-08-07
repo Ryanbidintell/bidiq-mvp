@@ -143,6 +143,17 @@ git commit -m "Before [change description]"
 - PDF files in `report printouts to review/` - Reference only
 - `.git/` - Git internals
 
+### Chrome Extension (`extension/`) — added Aug 7, 2026
+- `extension/` - MV3 extension. Watches `chrome.downloads` for bid-looking PDFs → notification → user picks the files → base64 POST.
+- **It contains NO scoring code.** It posts to the existing Supabase edge function `inbound-email` with a `Bearer bix_…` token; that function resolves the token → the user's `email_alias` → runs the *unchanged* `processEmail()` pipeline. Extension bids and email forwards therefore share exactly one scoring implementation. **Do not add a second scoring path for the extension.**
+- `netlify/functions/extension-token.js` - mints/revokes the per-user token (JWT-verified mint; possession-of-token revoke).
+- `extension-connect.html` - one-click connect page (root, so it serves at `/extension-connect`).
+- `supabase/migrations/20260807_extension_tokens.sql` - `extension_tokens` table (sha256 hash only, 180-day `expires_at`, soft-delete `revoked_at`).
+- Source marker: `sourceLabel` in the edge function stamps `'chrome_extension'` into `scores.source` / `extracted_data.source` / `company_context.source` (vs `'email_forward'`). **No `extension_source` column was added to `projects`** — that column does not exist; the jsonb `source` key is the established pattern.
+- Tests: `node scripts/test-extension.js` (20 assertions — token hash parity Node↔Deno, detection heuristic, listener registration).
+- Deploy needs BOTH: Netlify deploy (page + function) AND `supabase functions deploy inbound-email`.
+- ⚠️ Not yet tested in a real browser against a real bid package.
+
 ### Backend (netlify/functions/):
 - `analyze.js` - AI API calls (Claude/OpenAI), tracks usage via api_usage table
 - `notify.js` - Email notifications via Postmark; also logs `roi_lead` events to admin_events
@@ -737,6 +748,35 @@ Recurring "company info / settings won't save" bug root-caused + fixed (commit c
 - **Prevailing-wage flag + preference:** extracted in both AI paths; awareness flag on the report. **Jul 23:** added per-contractor `prevailing_wage_pref` (want/neutral/avoid on user_settings, no CHECK) that DOES shift the BidIndex via a bounded modifier in `calculateScores` (`pwMod`: avoid −15 / want +10, halved on 'uncertain', only when PW is detected; applied in both the default and consolidated branches; returned as `scores.pwModifier`). Rationale: PW *fit* is contractor-specific (some shops want union/PW work, some avoid it), unlike universal contract clauses which stay neutral/awareness-only.
 - Company Size + Typical Project Size now captured at onboarding (office-address step, all tiers) and shown in the User Profiles founder view.
 - Extended trial = existing `is_comped` flag + admin.html "Comp" button (no new build needed).
+
+### MV3 Service Workers Lose All In-Memory State (Aug 7, 2026)
+
+A Chrome MV3 background service worker is terminated after ~30s idle and **every
+module-level variable dies with it**. The natural implementation of "wait for a
+few downloads, then notify" — an in-memory array plus a `setTimeout` debounce —
+therefore works in testing (worker still warm) and silently stops working in
+real use (worker unloaded between downloads).
+
+**Rule:** in a service worker, any state that must survive between events goes in
+`chrome.storage`, and any delay longer than the current event goes in
+`chrome.alarms`. Never a module-level variable, never `setTimeout`.
+`chrome.alarms` has a 30-second floor — design the UX around that, don't try to
+beat it. See `extension/background.js`.
+
+### Verify Backend Assumptions Against the Live Schema (Aug 7, 2026)
+
+A generated first draft of the extension inserted `project_name`, `score`,
+`recommendation`, `ai_summary` and `extension_source` into `projects`. **None of
+those columns exist** — the real shape is `extracted_data` jsonb + `scores`
+jsonb — and the insert error was swallowed by `console.warn`, so every upload
+would have emailed a score and saved nothing, with no error anywhere. Same draft
+also `require`d `postmark` (not a dependency; alert.js uses the HTTP API) and
+read `ANTHROPIC_API_KEY` (ours is `CLAUDE_API_KEY`).
+
+**Rule:** before wiring any new writer to `projects` / `user_settings`, query
+`information_schema.columns` for the real column list. Do not trust a column
+name from a doc, a comment, or a previous draft. And never downgrade a failed
+insert to `console.warn` — that's the Jul 29 silent-failure pattern again.
 
 ---
 

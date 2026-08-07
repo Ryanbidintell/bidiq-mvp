@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "BidIntell — Bid Package Sender",
+  "version": "0.2.0",
+  "description": "Spots bid packages you download and sends them to BidIntell for a BidIndex score — no second login.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://bidintell.ai/extension-connect*",
+        "https://www.bidintell.ai/extension-connect*"
+      ],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "downloads",
+    "notifications",
+    "storage",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://bidintell.ai/*",
+    "https://www.bidintell.ai/*",
+    "https://szifhqmrddmdkgschkkw.supabase.co/*"
+  ]
+}
