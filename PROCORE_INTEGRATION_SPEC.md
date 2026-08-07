@@ -385,25 +385,36 @@ Only two asks remain. §3's endpoint questions are answered, the webhook questio
 Beta isn't in Procore's lifecycle at all. **Asking any of those now would signal we hadn't
 read the docs.** Ask narrowly — a vague version of question 1 gets a vague answer.
 
-**SEQUENCING DECISION (Aug 7 2026): send Q2 now, hold Q1 until after we pass Technical
-Feasibility.** The two questions have different risk profiles:
+**DECISION (Aug 7 2026): send nothing to Procore right now. Both questions are deferred and
+both are handled in the build.**
 
-- **Q2 (permission level)** is a pure implementation detail. Asking it signals rigour, reveals
-  nothing commercial, and settles the onboarding ask before we design the setup flow. Send it
-  to `apisupport@procore.com` **with no CC** — the evaluating team has no reason to see it.
-- **Q1 (free-tier install) is NOT really a technical question.** It's "how much of your
-  ecosystem can actually use my product." Asked mid-evaluation it reads as a founder finding a
-  hole in his own proposal. And we don't need the answer: we aren't building yet, and the §4a
-  framing works either way. **Answer it in the Better Together deck instead of asking it** —
-  state the tiered architecture (Procore-paying subs get the native integration; everyone else
-  reaches BidIntell via forwarding, upload, or the extension). Procore's evaluators know their
-  own product and will spot the tension regardless; the only variable is whether we look like
-  we'd already solved for it. Confirm the detail after we pass, when it affects the build
-  rather than the evaluation.
-- Risk of waiting: if free-tier install *is* possible we'll have under-claimed reach in the
-  deck. That's the safe direction to be wrong in, and trivially revised upward.
+- **Q1 — free-tier install.** Not really a technical question; it's "how much of your ecosystem
+  can use my product." Asked mid-evaluation it reads as a founder finding a hole in his own
+  proposal, and we don't need the answer — nothing is being built yet and the §4a framing works
+  either way. **Answer it in the Better Together deck** by stating the tiered architecture
+  (Procore-paying subs get the native integration; everyone else reaches BidIntell via
+  forwarding, upload, or the extension). Confirm the detail after we pass, when it affects the
+  build rather than the evaluation.
 
-### Q2 — send now
+- **Q2 — permission level needed to see the whole Bid Board.** Skipped on Ryan's read that in a
+  real subcontractor's Procore account the estimator — the person who'd connect BidIntell —
+  will hold **Standard**, not Read Only.
+
+  ⚠️ **Note the tension, because it matters for the sandbox test.** If estimators are on
+  Standard, then *"is Standard also constrained to assigned-Estimator projects?"* is precisely
+  the unresolved question (English page names only Read Only; the localised mirror says Read
+  Only **and** Standard). That assumption doesn't route around the risk in §3h — it routes into
+  it. It's skippable anyway for two reasons:
+  1. **The connect-time count check is the real protection** and is already a build requirement
+     (§3h). A filtered board gets caught by the user at setup regardless of which level is
+     constrained. Knowing the answer early would only let us pre-empt it in onboarding copy.
+  2. **A sandbox test settles it definitively** once the app exists — real behaviour beats a
+     support answer.
+
+  **→ First sandbox test to run: connect as a Standard-level user who is NOT the assigned
+  Estimator on some bids, and compare the API response against the full board.**
+
+### Drafted but NOT sent — keep for after Technical Feasibility
 
 > **To:** `apisupport@procore.com` (no CC)
 > **Subject:** Bid Board permissions — what does a user need to see the full board?
@@ -429,15 +440,6 @@ Feasibility.** The two questions have different risk profiles:
 > Ryan Elder
 > Founder, BidIntell
 > ryan@bidintell.ai
-
-*Optional line if you want the phone answer on the record:* "Separately, I was told on a call
-today that app installation is company-level and any user on the account can then use the app —
-please correct me if that's wrong."
-
-### Q1 — hold until after Technical Feasibility
-
-Free-tier install eligibility (§4). Do not send during evaluation. The deck states the tiered
-architecture as a designed answer; this question confirms the detail afterwards, for the build.
 
 ### Superseded draft (kept for reference — do not send)
 
