@@ -159,6 +159,11 @@
 # point at the extensionless form (verified across all indexable pages). Search
 # engines were free to index either. Fix before re-running the Bing scan.
 #
+# force = true is REQUIRED here. Netlify serves a matching static file BEFORE
+# evaluating redirect rules, so an unforced rule on a path that exists on disk
+# (/contact.html does) is simply never reached — the first attempt at this
+# shipped without it and both URLs kept returning 200.
+#
 # These do NOT loop with the 200 rewrites above: a rewrite serves the file
 # directly and is not re-evaluated against the redirect rules, and the patterns
 # (/foo vs /foo.html) never overlap.
@@ -172,56 +177,67 @@
   from = "/index.html"
   to = "/"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/contact.html"
   to = "/contact"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/demo.html"
   to = "/demo"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/diagnostic.html"
   to = "/diagnostic"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/roi-calculator.html"
   to = "/roi-calculator"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/bid-no-bid-checklist.html"
   to = "/bid-no-bid-checklist"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/capacity-planning.html"
   to = "/capacity-planning"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/legal.html"
   to = "/legal"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/works-with-crm.html"
   to = "/works-with-crm"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/works-with-estimating-tools.html"
   to = "/works-with-estimating-tools"
   status = 301
+  force = true
 
 [[redirects]]
   from = "/works-with-plan-rooms.html"
   to = "/works-with-plan-rooms"
   status = 301
+  force = true
 
 # Extensionless serving for the pages that had no explicit rewrite above. They
 # worked via Netlify's implicit pretty-URL handling; making it explicit means the
