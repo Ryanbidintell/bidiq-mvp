@@ -234,6 +234,22 @@ that isn't built — the workflow diagram already tells them that part is propos
 
 ---
 
+## Automated check
+
+Once the deck is filled in, export it as `.pptx` and run:
+
+```
+python scripts/check-deck.py path/to/deck.pptx
+```
+
+It reads every text block and flags: quoted passages with no "illustrative" label (we have no
+joint customers), bare percentages with no attribution, team/per-estimator analytics claims,
+bi-directional or write-back language, Joint Solution bullets over Procore's 6-word cap, and
+blocks past their 1–2 sentence rule. `--self-test` proves the checks still fire.
+
+Text only — it can't see logo weight, screenshot legibility, or whether slides 1–3 carry the
+story. A clean run means "nothing obviously wrong in the copy," not "ready to send."
+
 ## Final pass before submitting
 
 - [ ] Read slides 1–3 alone. Does the whole joint story land without 4–7?
