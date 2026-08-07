@@ -205,9 +205,14 @@ September 30. Have real numbers ready.
 
 Submitted via a single Google Form (link in the Aug 7 email from `techpartners@procore.com`).
 
-1. **Integration Workflow Diagram (required).** User workflows, data-flow directionality,
-   Procore tools/modules touched, CRUD actions per object. Procore provides a format example.
-   **Unblocked — build from §3c, with §3d as explicit non-scope and §3f as edge states.**
+1. **Integration Workflow Diagram (required).** ✅ **Drafted — see `PROCORE_WORKFLOW_DIAGRAM.md`**
+   (Mermaid sequence + flow diagrams, CRUD matrix, explicit non-scope, edge states, open items).
+   Render the Mermaid and export to match Procore's format example.
+
+   ⚠️ **Trigger is polling, not webhooks.** Procore exposes `Bids` as a webhook resource, but
+   webhook subscriptions are created against a *project* and an invited bidder is not a project
+   member — bidder-side webhook eligibility is unconfirmed. The application said
+   "via API/webhooks"; the diagram says polling. Don't draw an arrow we can't defend.
 2. **Better Together Solution Deck (required).** Joint value proposition and specific customer
    outcomes. Template and an AI prompt provided. Ground it in what is *actually built* — do
    not claim team analytics as live (memory `bidintell-analytics-features`).
@@ -218,6 +223,9 @@ Submitted via a single Google Form (link in the Aug 7 email from `techpartners@p
 The emailed receipt does not render which radio buttons were selected:
 
 - **Development status:** Discovery/Planning · Building Integration · Active in Developer Portal
+  — almost certainly **Discovery / Planning**. Ryan has a Procore developer account but has not
+  created the app yet; that comes after the application phases. Confirm, since the diagram is
+  framed as a *proposal* on that basis.
 - **Is the integration Bi-Directional?** Yes/No — narrative says read-only initially with
   phase-two write-back, so the diagram must match whichever was ticked.
 - **Bulk data export?** Yes/No
@@ -245,9 +253,12 @@ mention of Autodesk (Procore competes with them).
 > company install and authorize a Marketplace app, or is a paid subscription effectively
 > required for API access?
 >
-> **2. Beta stability.** Both `companies/{id}/bids` (v2.0) and the planroom documents endpoint
-> are marked beta, and I can see fields added through 2026. Is there a GA timeline, and is
-> there anything you'd advise against depending on while they're in beta?
+> **2. Beta stability, and the trigger.** Both `companies/{id}/bids` (v2.0) and the planroom
+> documents endpoint are marked beta, and I can see fields added through 2026. Is there a GA
+> timeline, and anything you'd advise against depending on meanwhile? Related: I can see `Bids`
+> listed as a webhook resource, but subscriptions appear to be created against a project, and
+> our user is an invited bidder rather than a project member. Can a bidder subscribe to
+> invitation events, or should we plan on polling `companies/{id}/bids`?
 >
 > One smaller thing: neither reference page lists a required-permissions field. I'm assuming
 > Read Only or higher on Planroom / Bid Board for the authorizing user — please correct me if
