@@ -195,15 +195,29 @@ This one is commercial, not technical, and it sizes the opportunity.
 - **Tool access: yes.** Free accounts do get Bid Board (since Jan 9 2023, free users view,
   manage, estimate and submit bids there rather than being routed to Planroom). Free accounts
   are US/Canada only.
-- **API access: probably not, but not formally prohibited.** Nothing in Procore's API License
-  Agreement conditions API eligibility on a paid subscription, and the marketplace FAQ says
-  Marketplace Apps "can be installed and used by any Procore client." The practical blocker is
-  **installation**: all apps must be installed in the customer's Procore company before they
-  run, and until then company-scoped calls return 401/403 — sign-in can succeed while every
-  API call fails. As of **Jan 20 2026** Procore deprecated "Allow User Installs," so Company
-  Admins must explicitly install all apps. Free accounts have no Company Admin tool — they use
-  a **Teams** tool (Member / Team Administrator / System Administrator) — and the free-account
-  documentation never mentions App Management, Service Accounts, API, or integrations.
+- **API access: probably not, but nowhere formally prohibited.** Nothing in Procore's API
+  License Agreement conditions eligibility on a paid subscription, and the marketplace FAQ says
+  Marketplace Apps "can be installed and used by any Procore client." The blocker is
+  **installation**: apps must be installed in the customer's company before they run, and until
+  then company-scoped calls return 401/403 — sign-in succeeds while every API call fails. As of
+  **Jan 20 2026** Procore deprecated "Allow User Installs," so an admin must install all app
+  types.
+
+- **The tightest form of the argument** (from Procore's own install tutorial): the documented
+  prerequisite for installing a Marketplace app is **"'Admin' level permissions on the Company
+  level Directory tool."** Free accounts do not have a Directory tool at all — they use a
+  **Teams** tool (Member / Team Administrator / System Administrator) in its place. So there is
+  no one in a free-tier company who can hold the permission the install requires. That's a
+  cleaner chain than the App-Management framing, and it's what the email should cite.
+
+- **Note in our favour on app type:** the same tutorial distinguishes Data Connection (DMSA)
+  apps, which require a permission template for the app's user account, from **Embedded /
+  Authorization Code apps, which "need no additional permission setup."** We're the latter
+  (§3e), so once installed there is no per-customer permission-template step. Worth stating in
+  the Technical Assessment — it makes us cheaper to certify and cheaper for a customer to adopt.
+
+- **The tutorial never mentions account tiers**, which is consistent with the wider finding:
+  no Procore document states one way or the other. Hence the email.
 
 **Working assumption: paid Procore account required.** This decides whether the addressable
 base is *all Procore-invited subs* or *only paying ones* — material, given our ICP ($5M–$50M
@@ -293,11 +307,15 @@ read the docs.** Ask narrowly — a vague version of question 1 gets a vague ans
 > there any supported path for such a company to authorize a third-party app for API access?**
 >
 > I ask because our users are specialty subcontractors, many of whom will be on free accounts.
-> Free accounts have Bid Board, but App Management is documented as a Company Admin tool
-> feature, the free-account permission matrix lists only Bid Board and General Account
-> Management actions, and user-installs were deprecated in January. That reads as "no," but I'd
-> rather have it confirmed than design around an inference — it determines how much of our user
-> base we can actually serve.
+> Free accounts do have Bid Board. But your install tutorial lists the prerequisite as "'Admin'
+> level permissions on the Company level Directory tool," and free accounts have a Teams tool
+> rather than a Directory tool — so as far as I can tell nobody in a free-tier company can hold
+> the permission an install requires. Add the January deprecation of user-installs and it reads
+> as a hard no, but no document says so either way. I'd rather have it confirmed than design
+> around an inference: it determines how much of our user base we can actually serve.
+>
+> If the answer is that a paid seat is required, that's workable — I'd just want to know now so
+> we position the integration honestly rather than discovering it at launch.
 >
 > **2. Does Bid Contact designation affect *visibility* of bids via the API, or only the ability
 > to submit a proposal?**
