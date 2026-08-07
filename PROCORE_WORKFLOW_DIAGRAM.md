@@ -19,9 +19,14 @@
 | **Procore** | Bid Management / Planroom (the invitation + documents source) and Core (identity). |
 | **BidIntell** | Scores each invitation 0–100 (BidIndex) with a GO / REVIEW / PASS recommendation, personalised to that sub's trades, territory, client history and logged outcomes. |
 
-**Prerequisite (draw this explicitly — it is a real gate):** a Company Admin in the
-subcontractor's Procore company must install the BidIntell app before any company-scoped call
-succeeds. Until then calls return 401/403. See open item O-1.
+**Two prerequisites (draw both — they are real gates, and they go in the same admin
+conversation):**
+1. A Company Admin must **install** the BidIntell app in the subcontractor's Procore company.
+   Until then every company-scoped call returns 401/403. (O-1)
+2. The authorizing user must have **Admin on Bid Board**, or `Can Access Projects for All
+   Users` on their permission template. Without one of those, Read Only / Standard users see
+   **only bids where they are the assigned Estimator** — a partial board returned with no
+   error. (O-3)
 
 ---
 
@@ -48,7 +53,10 @@ sequenceDiagram
     BI->>PC: GET /rest/v1.0/companies
     PC-->>BI: Company list
     BI->>BI: Store refresh token + company_id (per user)
-    BI-->>Sub: "Connected"
+    BI->>PC: GET /rest/v2.0/companies/{company_id}/bids
+    PC-->>BI: Visible board (filtered by this user's permissions)
+    BI-->>Sub: "Connected — I can see N bids. Does that match?"
+    Note over BI,Sub: Partial-board check. Never proceed silently:<br/>a permissions-filtered board looks identical to a small one.
 ```
 
 **Why Authorization Code and not a service account** — a Developer Managed Service Account
@@ -106,9 +114,14 @@ inherits the free-tier problem in O-1 entirely — and webhook event history is 
 The application said "API/webhooks." **The diagram says polling**, and that is now a defended
 position rather than an unverified one.
 
-**Rate budget:** 3,600 requests/hour per `client_id`, **shared across all tenants** — not
-per customer. Poll intervals must be sized against total connected subs, not per-user. Draw
-this as a design constraint; it's the kind of thing a platform reviewer looks for.
+**No server-side filtering.** The endpoint takes only `page` and `per_page` — no `filters[]`,
+despite Procore supporting it on many list actions. We cannot request open bids or a due-date
+window; we page the **whole board** every cycle and filter client-side. Use each record's
+`updated_at` for change detection.
+
+**Rate budget:** 3,600 requests/hour per `client_id`, **shared across all tenants** — not per
+customer. Combined with full-board paging, this is the real scaling constraint: model it
+against projected tenant count before launch. Draw it — a platform reviewer will look for it.
 
 **`s3_source` URLs expire.** Fetch bytes immediately; never persist the URL. On expiry,
 re-request the documents endpoint rather than retrying the stale link.
@@ -210,6 +223,6 @@ not a catch block that logs and continues.
 |---|---|---|
 | **O-1** | Can a **free-tier** Procore company install a Marketplace app? | ⏳ **OPEN, but the evidence is now one-sided — plan against it.** Install requires "'Admin' on the Company level **Directory** tool"; free accounts have no Directory tool. The free-account permissions matrix is a *complete enumeration* (General Account Management + Bid Board) and contains no app/integration/API action for any role, System Administrator included. User-installs were deprecated Jan 20 2026. Marketplace *approval* governs listing, not the tenant-side install gate. No document states it either way — ask `apisupport@procore.com` (spec §8). **If confirmed paid-only, the deck's ICP needs the rewrite in spec §4a.** |
 | **O-2** | Webhooks vs polling | ✅ **RESOLVED — polling.** `Bids` is a company-scoped webhook resource but excludes `create`, so new invitations never fire an event. Useful only as a supplement for changes to known bids. Also requires company Admin (inherits O-1) and retains history 28 days. |
-| **O-3** | Required permission for the authorizing user | ✅ **Resolved for practical purposes.** Read Only or higher on the company's **Planroom** tool; access is automatic once the bidder's company is added to a bid package. **Bid Contact gates submission only** — in the free-account matrix, "Submit a Bid Proposal" is the single action carrying that requirement, and we never submit. One-line confirmation still riding along in the §8 email since the matrix covers the UI, not the API. |
+| **O-3** | Required permission for the authorizing user | 🚨 **REOPENED — and it's the biggest build risk.** Bid Contact gates *submission* only (correct), but the **visibility** gate is **Estimator assignment**: Read Only / Standard users see only bids they're the assigned Estimator on, unless they hold Admin on Bid Board or `Can Access Projects for All Users`. A partial board returns **with no error**. Requires a connect-time count check and a permission ask in onboarding. ⏳ Sub-question: English and localised permission docs disagree on whether *Standard* is constrained — decides the onboarding ask. Spec §3h. |
 | **O-4** | Beta stability / GA timeline | ✅ **RESOLVED, and not as expected — there is no GA track to wait for.** Procore's published API Lifecycle defines only Active / Deprecated / Sunset; "Beta" and "GA" appear nowhere in it. The BETA tag sits outside the documented lifecycle: no promotion criteria, no committed notice before in-version breaking changes. Only durable guarantee is 1 year of support after deprecation. See spec §3f for what this means for the build. |
 | **O-5** | Confirm the radio answers in the submitted application | ✅ **Bi-Directional = No** (confirmed Aug 7 2026). The diagram's read-only v1 agrees with the application. Remaining radios (bulk export, system-of-record migration) are almost certainly "No" too and consistent with this diagram — worth a glance, but nothing depends on them. |

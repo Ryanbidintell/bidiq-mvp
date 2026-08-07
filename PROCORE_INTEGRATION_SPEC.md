@@ -178,20 +178,64 @@ customer. Size poll intervals against the total number of connected subs.
 
 ### 3g. States to draw as normal, not as errors
 
-- **Permissions:** Read Only or higher on the company's **Planroom** tool is required to
-  download bid documents; Planroom access is automatic once the bidder's company is added to a
-  bid package. ✅ **Bid Contact almost certainly gates submission only, not visibility.** In the
-  free-account permissions matrix, *"Submit a Bid Proposal"* is the **single** action carrying
-  the Bid Contact requirement — every viewing and bid-management action is available to all
-  three roles without it. Since our integration reads and never submits, this is very likely a
-  non-issue. Caveat: that matrix describes free accounts and the UI, not paid accounts or API
-  behaviour, so it's still worth a one-line confirmation (§8 Q2). Note also that "assign bid
-  contacts" is itself a free-tier action, so even if it did gate visibility the customer could
-  self-serve it.
+- **Documents permission:** Read Only or higher on the company's **Planroom** tool; access is
+  automatic once the bidder's company is added to a bid package.
+- **Bid Contact** gates *submitting a proposal* only — confirmed, and irrelevant to us since we
+  never submit. **But that is not the visibility gate.** See §3h; an earlier version of this doc
+  closed the visibility question on the Bid Contact finding, which was wrong.
 - Some packages require the sub to **sign an NDA** before contents are viewable. A legitimate
   blocked state on the documents endpoint, not an auth error — must not page anyone.
 - A solicitor who **removes a bidder revokes visibility** — 403s and disappearing packages are
   normal states.
+
+### 3h. 🚨 Bid visibility is filtered by **Estimator assignment** — the most dangerous finding here
+
+`companies/{company_id}/bids` returns neither "all company bids" nor "bids assigned to you" in
+the Bid-Contact sense. It returns **company-scoped data projected through the authenticated
+user's Bid Board permissions.**
+
+Procore's UI documentation states the rule plainly: *"The Bid Board displays all bid invitations
+sent to your company; however, access to specific bids is determined by individual user
+permissions."* The Bid Board permissions matrix then defines two separate actions — **"View Any
+Bid Board Project"** and **"View Bid Board Projects as the Assigned 'Estimator'"** — and
+constrains the lower tiers: *"Users with 'Read Only' level permissions can only access projects
+for which they are the assigned 'Estimator'."*
+
+| Authorizing user | What the endpoint returns |
+|---|---|
+| **Admin** on Bid Board | All company bids |
+| Read Only / Standard **with** the `Can Access Projects for All Users` granular permission | All company bids |
+| Read Only / Standard **without** it | **Only bids where that user is the assigned Estimator** |
+
+⚠️ **Doc discrepancy to resolve:** the English permissions page names only *Read Only* as
+constrained; Procore's localised mirror says *"Read Only and Standard"*. That decides whether
+Standard is a sufficient onboarding ask. Resolve in a sandbox, or ask (§8 Q2).
+
+**Why this is the worst failure mode in the whole integration.** A sub authorizes BidIntell with
+a Standard or Read Only user who is Estimator on only some jobs. The endpoint returns a
+**partial board, with no error**. Everything looks healthy. We silently miss bids — for exactly
+the customer who would churn over missing one. This is the Jul 2026 silent-failure pattern
+waiting to happen in a new place.
+
+**Required build behaviour — not optional:**
+1. **Connect-time verification.** After OAuth, fetch the board and show the user the count we
+   can see, asking them to confirm it matches what they expect. If it doesn't, warn and tell
+   them what to fix. Never proceed silently on a partial board.
+2. **Onboarding carries a permission ask.** Either the authorizing user has Admin on Bid Board,
+   or their template has `Can Access Projects for All Users`. Both need their Procore admin —
+   **bundle this into the same admin conversation as the app install**, not a second round trip.
+3. **Re-check periodically**, since permissions can change under us after connect.
+
+**No server-side filtering.** The endpoint accepts only `page` and `per_page` — no `filters[]`
+support, despite Procore offering `filters[<attribute>]=` on many list actions. We cannot ask
+for open bids or a due-date window; we page the **entire board** and filter client-side. That
+materially tightens the 3,600 req/hour-per-`client_id` budget (§3f) as tenant count grows —
+model it before launch. Use each record's `updated_at` for change detection rather than
+expecting to query by it.
+
+**Reinforces the service-account conclusion (§3e).** A DMSA is never marked Estimator on
+anything, so absent an explicit grant it plausibly returns an empty array. That is now two
+independent reasons pointing the same way, and it's the cleanest single test to run first.
 
 ## 4. ⏳ OPEN — free-tier API eligibility
 
