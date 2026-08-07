@@ -385,7 +385,7 @@ function getNav(activePath) {
     <a href="/#features">Features</a>
     <a href="/#scoring">BidIndex</a>
     <a href="/takeoff/"${takeoffActive}>Take-Off</a>
-    <a href="/capacity-planning.html">Capacity</a>
+    <a href="/capacity-planning">Capacity</a>
     <a href="/diagnostic">Free Diagnostic</a>
     <a href="/#pricing">Pricing</a>
   </div>

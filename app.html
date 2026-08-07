@@ -22,6 +22,16 @@
     <script src="lib/buildingTypeExtraction.js"></script>
     <script src="lib/scoring-core.js"></script>
     <script src="lib/doc-set.js"></script>
+    <!-- initGoogleMaps must exist BEFORE the Maps script runs. `async` wins over
+         `defer`, so on a cached load the Maps script can execute before the main
+         inline script below has been parsed — Google then calls a callback that
+         isn't defined yet and throws "initGoogleMaps is not a function". The real
+         readiness test is window.google.maps.places (see initAddressAutocomplete);
+         this just guarantees the callback is always callable. -->
+    <script>
+        window.__gmapsReady = false;
+        window.initGoogleMaps = function () { window.__gmapsReady = true; };
+    </script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAPxYsWrlpVgYW4xBdXg82Zcp5Ll0_icd0&libraries=places&callback=initGoogleMaps" async defer></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18633,21 +18643,43 @@ Respond now:`;
         }
 
         // Google Maps Autocomplete
+        //
+        // The real initGoogleMaps placeholder is defined in <head> before the Maps
+        // script tag — see the comment there. Readiness is tested directly against
+        // window.google.maps.places, which is true regardless of whether the
+        // callback fired, so a cached async load can't leave this stuck.
         let addressAutocomplete = null;
-
-        function initGoogleMaps() {
-            console.log('🗺️ Google Maps API loaded');
-            // Autocomplete will be initialized when Settings tab is opened
-        }
+        let addressAutocompleteRetry = null;
+        let addressAutocompleteTries = 0;
+        const ADDRESS_AC_MAX_TRIES = 15; // ~15s, then stop rather than poll forever
 
         function initAddressAutocomplete() {
-            if (!window.google?.maps?.places) {
-                setTimeout(initAddressAutocomplete, 1000);
-                return;
+            // Only ever one pending retry. Settings can be opened repeatedly before
+            // Maps finishes loading; without this each open started its own polling
+            // loop, and they all eventually fired and bound duplicate autocompletes.
+            if (addressAutocompleteRetry) {
+                clearTimeout(addressAutocompleteRetry);
+                addressAutocompleteRetry = null;
             }
 
+            const retry = (ms) => {
+                if (++addressAutocompleteTries > ADDRESS_AC_MAX_TRIES) {
+                    console.warn('Address autocomplete: Google Maps never became ready; leaving the plain input in place.');
+                    return;
+                }
+                addressAutocompleteRetry = setTimeout(initAddressAutocomplete, ms);
+            };
+
+            if (!window.google?.maps?.places) { retry(1000); return; }
+
             const input = document.getElementById('settingStreet');
-            if (!input) { setTimeout(initAddressAutocomplete, 500); return; }
+            if (!input) { retry(500); return; }
+
+            // Already bound to this exact input — rebinding would stack a second
+            // Autocomplete and a second place_changed listener on every Settings open.
+            if (addressAutocomplete && addressAutocomplete.__bidintellInput === input) return;
+
+            addressAutocompleteTries = 0;
 
             // Remove any lingering web-component element from a previous session
             const existing = document.getElementById('settingStreetPAC');
@@ -18661,6 +18693,11 @@ Respond now:`;
                     componentRestrictions: { country: 'us' },
                     fields: ['address_components']
                 });
+
+                // Record what we bound to, so the guard above can tell "already
+                // wired up" from "Settings was re-rendered with a fresh input".
+                ac.__bidintellInput = input;
+                addressAutocomplete = ac;
 
                 ac.addListener('place_changed', () => {
                     const place = ac.getPlace();

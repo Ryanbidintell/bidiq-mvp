@@ -1491,7 +1491,7 @@ async function boot(){
   const email=(currentUser&&currentUser.email||'').toLowerCase();
   const isAdmin = /@fsikc\.com$/.test(email) || email==='ryan@bidintell.ai';
   if(currentUser && !isAdmin){
-    document.getElementById('boot').innerHTML='<div style="max-width:440px;text-align:center;padding:24px"><div style="font-family:var(--mono);color:var(--accent);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px">BidIntell Capacity</div><h2 style="margin:0 0 10px">Coming soon</h2><p class="muted" style="font-size:14px">Capacity is in early access with a few design partners. We\'ll open it to your account shortly. <a href="/capacity-planning.html">Get on the list →</a></p><p class="small muted" style="margin-top:16px"><a href="/app.html">← Back to BidIntell</a></p></div>';
+    document.getElementById('boot').innerHTML='<div style="max-width:440px;text-align:center;padding:24px"><div style="font-family:var(--mono);color:var(--accent);font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px">BidIntell Capacity</div><h2 style="margin:0 0 10px">Coming soon</h2><p class="muted" style="font-size:14px">Capacity is in early access with a few design partners. We\'ll open it to your account shortly. <a href="/capacity-planning">Get on the list →</a></p><p class="small muted" style="margin-top:16px"><a href="/app.html">← Back to BidIntell</a></p></div>';
     return; // stay on the boot screen; do not reveal the app
   }
   MODE=await detectMode();

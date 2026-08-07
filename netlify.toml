@@ -151,6 +151,101 @@
   to = "/takeoff/"
   status = 301
 
+###############################################################################
+# Canonicalize .html -> extensionless (added 2026-08-07)
+#
+# Every root page was reachable at BOTH /foo and /foo.html, each returning 200.
+# That's duplicate content: two URLs, identical page, and the canonical tags all
+# point at the extensionless form (verified across all indexable pages). Search
+# engines were free to index either. Fix before re-running the Bing scan.
+#
+# These do NOT loop with the 200 rewrites above: a rewrite serves the file
+# directly and is not re-evaluated against the redirect rules, and the patterns
+# (/foo vs /foo.html) never overlap.
+#
+# Deliberately NOT redirected — app surfaces, not indexable pages, and linked by
+# absolute URL from elsewhere (e.g. the inbound-email reply points at
+# /app.html): app.html, auth.html, admin.html, capacity.html.
+###############################################################################
+
+[[redirects]]
+  from = "/index.html"
+  to = "/"
+  status = 301
+
+[[redirects]]
+  from = "/contact.html"
+  to = "/contact"
+  status = 301
+
+[[redirects]]
+  from = "/demo.html"
+  to = "/demo"
+  status = 301
+
+[[redirects]]
+  from = "/diagnostic.html"
+  to = "/diagnostic"
+  status = 301
+
+[[redirects]]
+  from = "/roi-calculator.html"
+  to = "/roi-calculator"
+  status = 301
+
+[[redirects]]
+  from = "/bid-no-bid-checklist.html"
+  to = "/bid-no-bid-checklist"
+  status = 301
+
+[[redirects]]
+  from = "/capacity-planning.html"
+  to = "/capacity-planning"
+  status = 301
+
+[[redirects]]
+  from = "/legal.html"
+  to = "/legal"
+  status = 301
+
+[[redirects]]
+  from = "/works-with-crm.html"
+  to = "/works-with-crm"
+  status = 301
+
+[[redirects]]
+  from = "/works-with-estimating-tools.html"
+  to = "/works-with-estimating-tools"
+  status = 301
+
+[[redirects]]
+  from = "/works-with-plan-rooms.html"
+  to = "/works-with-plan-rooms"
+  status = 301
+
+# Extensionless serving for the pages that had no explicit rewrite above. They
+# worked via Netlify's implicit pretty-URL handling; making it explicit means the
+# 301s above can't strand a URL if that implicit behaviour ever changes.
+[[redirects]]
+  from = "/roi-calculator"
+  to = "/roi-calculator.html"
+  status = 200
+
+[[redirects]]
+  from = "/legal"
+  to = "/legal.html"
+  status = 200
+
+[[redirects]]
+  from = "/capacity-planning"
+  to = "/capacity-planning.html"
+  status = 200
+
+[[redirects]]
+  from = "/extension-connect"
+  to = "/extension-connect.html"
+  status = 200
+
 [[headers]]
   for = "/api/*"
   [headers.values]
