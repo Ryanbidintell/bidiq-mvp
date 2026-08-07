@@ -385,42 +385,59 @@ Only two asks remain. §3's endpoint questions are answered, the webhook questio
 Beta isn't in Procore's lifecycle at all. **Asking any of those now would signal we hadn't
 read the docs.** Ask narrowly — a vague version of question 1 gets a vague answer.
 
-> **To:** `apisupport@procore.com` · **CC:** `techpartners@procore.com`
-> **Subject:** Confirming today's call — app install and Bid Board visibility
+**SEQUENCING DECISION (Aug 7 2026): send Q2 now, hold Q1 until after we pass Technical
+Feasibility.** The two questions have different risk profiles:
+
+- **Q2 (permission level)** is a pure implementation detail. Asking it signals rigour, reveals
+  nothing commercial, and settles the onboarding ask before we design the setup flow. Send it
+  to `apisupport@procore.com` **with no CC** — the evaluating team has no reason to see it.
+- **Q1 (free-tier install) is NOT really a technical question.** It's "how much of your
+  ecosystem can actually use my product." Asked mid-evaluation it reads as a founder finding a
+  hole in his own proposal. And we don't need the answer: we aren't building yet, and the §4a
+  framing works either way. **Answer it in the Better Together deck instead of asking it** —
+  state the tiered architecture (Procore-paying subs get the native integration; everyone else
+  reaches BidIntell via forwarding, upload, or the extension). Procore's evaluators know their
+  own product and will spot the tension regardless; the only variable is whether we look like
+  we'd already solved for it. Confirm the detail after we pass, when it affects the build
+  rather than the evaluation.
+- Risk of waiting: if free-tier install *is* possible we'll have under-claimed reach in the
+  deck. That's the safe direction to be wrong in, and trivially revised upward.
+
+### Q2 — send now
+
+> **To:** `apisupport@procore.com` (no CC)
+> **Subject:** Bid Board permissions — what does a user need to see the full board?
 >
 > Hi,
 >
-> I spoke with someone at Procore today and want to confirm my understanding in writing, plus
-> two questions. BidIntell is a Technology Partner applicant in Technical Feasibility —
-> read-only, bidder-side.
+> BidIntell is a Procore Technology Partner applicant in Technical Feasibility. Ours is a
+> read-only, bidder-side integration — we read a subcontractor's bid invitations via
+> `GET /rest/v2.0/companies/{company_id}/bids`.
 >
-> From the call: once an app is installed to a company account, any user on that account can
-> use it. Installation is company-level, not per-user. Correct me if that's wrong.
+> What permission level does the authorizing user need for that endpoint to return the
+> company's entire Bid Board?
 >
-> **1. Does that hold for free Procore accounts?**
->
-> Most of our users are specialty subcontractors on free accounts. The free-account permissions
-> matrix lists no app-install action for any role, System Administrator included, and the
-> install tutorial requires Admin on the Company level Directory tool, which free accounts don't
-> have. Can a free-account company install a Marketplace app, or is a paid seat required? This
-> decides how much of our user base we can serve — if it's paid-only, that's workable, I'd
-> rather know now.
->
-> **2. What permission level does the authorizing user need to see the company's whole Bid
-> Board?**
->
-> The Bid Board permissions page says users with Read Only permissions can only access projects
-> where they're the assigned Estimator. I'm less clear on Standard, and on whether "Can Access
-> Projects for All Users" is the intended way to lift that.
+> The Bid Board permissions page says Read Only users can only access projects where they're
+> the assigned Estimator. I'm less clear on Standard, and on whether "Can Access Projects for
+> All Users" is the intended way to lift it.
 >
 > It matters because a filtered result looks identical to a small one from our side — we'd have
-> no way to know we were missing bids. So we'd like to tell customers exactly what to enable at
+> no way to know we were missing bids. We'd like to tell customers exactly what to enable at
 > setup. Is Admin on Bid Board, or "Can Access Projects for All Users," the right ask?
 >
 > Thanks,
 > Ryan Elder
 > Founder, BidIntell
 > ryan@bidintell.ai
+
+*Optional line if you want the phone answer on the record:* "Separately, I was told on a call
+today that app installation is company-level and any user on the account can then use the app —
+please correct me if that's wrong."
+
+### Q1 — hold until after Technical Feasibility
+
+Free-tier install eligibility (§4). Do not send during evaluation. The deck states the tiered
+architecture as a designed answer; this question confirms the detail afterwards, for the build.
 
 ### Superseded draft (kept for reference — do not send)
 
