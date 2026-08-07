@@ -37,8 +37,33 @@ a name on it.
 
 **2. The hero metrics are the weakest part of this deck.** Slide 5 wants numbers. We have no
 customer data, so everything is either a mechanism claim (defensible) or a labelled industry
-benchmark. ⚠️ **The ~20–25% sub win-rate figure used twice in the submitted application needs a
-real citation or must come out.** Find the source before it appears in a deck Procore circulates.
+benchmark.
+
+**2a. ⚠️ The ~20–25% win-rate figure (used twice in the submitted application) should not be
+used.** Four candidate sources were checked Aug 7 2026:
+
+| Source | Relevant figure | Sourcing quality |
+|---|---|---|
+| ConstructConnect, Aug 2025 | Hard bid / public competitive **10–20%**; negotiated **30–50%** | *"They say…"* — Jon Curry, Customer Success Manager. Explicit hearsay, no data behind it |
+| constructioncfo.net, Feb 2026 | Specialty & finish trades **25–40%**; civil 15–25%; concrete 18–28% | No source, no sample size |
+| build-folio.com, Mar 2026 | Commercial construction **target** 15–25%; public/bid target 10–20% | No source. "Target" = goals, not measured rates |
+| 4bt.us | — | 403, not retrievable |
+
+All four are content-marketing pages. **Two problems beyond weak sourcing:** (a) the only source
+that breaks out by trade puts *specialty and finish trades at 25–40%* — higher than our claim, so
+citing it would undercut the pitch; (b) the hard-bid vs negotiated spread is so wide that any
+single number for "subs" hides the thing that matters.
+
+**Use the variance as the argument instead — it's stronger and it's defensible:**
+
+> Win rates swing hard on how the work is bought — ConstructConnect puts hard-bid and public
+> competitive work at 10–20%, and negotiated or selected work at 30–50%. Which invitations you
+> chase is the biggest lever a sub has.
+
+Attributed to a named person at a named industry company, accurate about what they said, and it
+argues *for* bid selection rather than merely describing a loss rate. **Also fine to ship the
+deck with no win-rate figure at all** — slide 5's four benefits are mechanism claims that don't
+depend on one.
 
 **3. Do not claim team/per-estimator analytics.** Sold as "Team analytics," not built.
 
@@ -65,7 +90,7 @@ real citation or must come out.** Find the source before it appears in a deck Pr
 
 **Hero metrics** — ⚠️ **thin, and honestly so.**
 - *Mechanism claim (defensible):* document review compressed from hours to minutes per invitation.
-- *Industry benchmark:* **needs sourcing before use.** Do not ship the 20–25% win-rate figure unattributed.
+- *Industry benchmark (attributed, usable):* ConstructConnect puts hard-bid / public competitive work at 10–20% and negotiated work at 30–50% — cite as "ConstructConnect says," never as established fact. See §2a; do **not** use a bare 20–25% figure.
 - *Customer data:* **none.** State this rather than manufacture it.
 
 ---
@@ -112,6 +137,10 @@ customer as a sub already invested in Procore.*
 - Subs receive more invitations each week than their estimators can properly evaluate.
 - Judging fit means reading drawings and specs — hours of work before any decision.
 - GCs wait on answers, and quiet subs weaken bid coverage.
+
+*Optional attributed line if a number is wanted here (see §2a): "ConstructConnect puts hard-bid
+win rates at 10–20% and negotiated work at 30–50% — which invitations you chase is the biggest
+lever a sub has."*
 
 **The Joint Solution** *(Procore's spec: **6 words or fewer**, outcome-led)*
 - Scored bids, minutes after invitation.
