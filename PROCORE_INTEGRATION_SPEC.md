@@ -207,9 +207,11 @@ for which they are the assigned 'Estimator'."*
 | Read Only / Standard **with** the `Can Access Projects for All Users` granular permission | All company bids |
 | Read Only / Standard **without** it | **Only bids where that user is the assigned Estimator** |
 
-⚠️ **Doc discrepancy to resolve:** the English permissions page names only *Read Only* as
-constrained; Procore's localised mirror says *"Read Only and Standard"*. That decides whether
-Standard is a sufficient onboarding ask. Resolve in a sandbox, or ask (§8 Q2).
+⚠️ **Is Standard constrained too?** The English permissions page names only *Read Only*;
+a localised mirror of the same page reads as *"Read Only and Standard"*. Treat Standard as
+unknown until confirmed — it decides whether Standard is a sufficient onboarding ask. Resolve
+in a sandbox, or via §8 Q2 (which asks it directly as "what do we need?" rather than raising
+the localisation difference with Procore — cleaner, same answer).
 
 **Why this is the worst failure mode in the whole integration.** A sub authorizes BidIntell with
 a Standard or Read Only user who is Estimator on only some jobs. The endpoint returns a
@@ -404,19 +406,16 @@ read the docs.** Ask narrowly — a vague version of question 1 gets a vague ans
 > decides how much of our user base we can serve — if it's paid-only, that's workable, I'd
 > rather know now.
 >
-> **2. A possible contradiction in the Bid Board permissions docs — wanted to flag it and check
-> which is right.**
+> **2. What permission level does the authorizing user need to see the company's whole Bid
+> Board?**
 >
-> The English permissions page says users with Read Only permissions can only access projects
-> where they're the assigned Estimator. The Japanese-language version of the same page reads as
-> Read Only *and* Standard, unless the permission template has "Can Access Projects for All
-> Users." I may be misreading one of them, but the difference matters for us, so I wanted to
-> raise it rather than guess.
+> The Bid Board permissions page says users with Read Only permissions can only access projects
+> where they're the assigned Estimator. I'm less clear on Standard, and on whether "Can Access
+> Projects for All Users" is the intended way to lift that.
 >
-> It decides what we ask customers to set up at connect. We need the authorizing user to see
-> their company's whole Bid Board — a filtered result looks the same as a small one from our
-> side, so we'd have no way to know we were missing bids. Would Admin on Bid Board, or "Can
-> Access Projects for All Users," be the right thing to have their admin enable?
+> It matters because a filtered result looks identical to a small one from our side — we'd have
+> no way to know we were missing bids. So we'd like to tell customers exactly what to enable at
+> setup. Is Admin on Bid Board, or "Can Access Projects for All Users," the right ask?
 >
 > Thanks,
 > Ryan Elder
